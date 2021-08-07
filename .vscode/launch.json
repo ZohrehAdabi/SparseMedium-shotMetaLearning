@@ -12,7 +12,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/train_regression.py",
             "console": "integratedTerminal",
-           "args": ["--method","Sparse_DKT", "--n_samples", "108", "--seed","2"]  
+           "args": ["--method","Sparse_DKT", "--n_samples", "108", "--show_plots_features", "--seed","2"]  
       
         },
         {
