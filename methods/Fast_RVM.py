@@ -139,7 +139,7 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
                 k_new_K_m         = k_new.T @ K_m 
                 # p				= Phi'*PHI;
                 aligned_idx = torch.where(k_new_K_m > (1- align_zero))[0]
-                num_aligned	= len(aligned_idx);
+                num_aligned	= len(aligned_idx)
                 if num_aligned > 0:
                     # The added basis function is effectively indistinguishable from
                     # one present already
@@ -274,6 +274,7 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
 
         if terminate:
             # print(f'sigma2={1/beta:.4f}')
+            print(f'm= {active_m.shape} sigma2={1/beta:.4f}')
             return active_m.cpu().numpy(), alpha_m, Gamma, beta 
 
         if ((itr+1)%50==0) and verbose:
