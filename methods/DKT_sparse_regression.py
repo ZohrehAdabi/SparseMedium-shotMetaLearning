@@ -1,0 +1,531 @@
+## Original packages
+# from torch._C import ShortTensor
+from numpy.core.defchararray import count
+import backbone
+import torch
+import torch.nn as nn
+from torch.autograd import Variable
+import numpy as np
+import os
+from datetime import datetime
+import matplotlib
+import matplotlib.pyplot as plt
+from matplotlib import animation
+# matplotlib.use('Agg')
+from colorama import Fore
+from sklearn.manifold import TSNE
+from sklearn.cluster import KMeans
+from fast_pytorch_kmeans import KMeans as Fast_KMeans
+from methods.Fast_RVM import Fast_RVM 
+## Our packages
+import gpytorch
+import torchvision.transforms as transforms
+from time import gmtime, strftime
+import random
+from statistics import mean
+from data.qmul_loader import get_batch, train_people, test_people
+from configs import kernel_type
+from collections import namedtuple
+
+IP = namedtuple("inducing_points", "z_values index count x y i_idx j_idx")
+class Sparse_DKT(nn.Module):
+    def __init__(self, backbone, k_means=True, video_path=None, show_plots_pred=False, show_plots_features=False):
+        super(Sparse_DKT, self).__init__()
+        ## GP parameters
+        self.feature_extractor = backbone
+        self.num_induce_points = 6
+        self.k_means = k_means
+        self.device = 'cuda'
+        self.video_path = video_path
+        self.show_plots_pred = show_plots_pred
+        self.show_plots_features = show_plots_features
+        if self.show_plots_pred or self.show_plots_features:
+            self.initialize_plot(video_path)
+        self.get_model_likelihood_mll() #Init model, likelihood, and mll
+        
+    def get_model_likelihood_mll(self, train_x=None, train_y=None):
+        if(train_x is None): train_x=torch.ones(9, 2916).cuda() #2916: size of feature z
+        # if(train_x is None): train_x=torch.rand(19, 3, 100, 100).cuda()
+        if(train_y is None): train_y=torch.ones(9).cuda()
+
+        likelihood = gpytorch.likelihoods.GaussianLikelihood()
+        model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel=kernel_type, induce_point=train_x[:self.num_induce_points])
+
+        self.model      = model.cuda()
+        self.likelihood = likelihood.cuda()
+        self.mll        = gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self.model).cuda()
+        self.mse        = nn.MSELoss()
+
+        return self.model, self.likelihood, self.mll
+
+    def set_forward(self, x, is_feature=False):
+        pass
+
+    def set_forward_loss(self, x):
+        pass
+
+    def train_loop(self, epoch, n_support, n_samples, optimizer):
+        
+        batch, batch_labels = get_batch(train_people, n_samples)
+        batch, batch_labels = batch.cuda(), batch_labels.cuda()
+        for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
+
+            # support_ind = list(np.random.choice(list(range(n_samples)), replace=False, size=n_support))
+            # query_ind   = [i for i in range(n_samples) if i not in support_ind]
+
+            # x_support = inputs[support_ind,:,:,:]
+            # y_support = labels[support_ind]
+            # x_query   = inputs[query_ind,:,:,:]
+            # y_query   = labels[query_ind]
+
+            induce_ind = list(np.random.choice(list(range(n_samples)), replace=False, size=self.num_induce_points))
+            induce_point = self.feature_extractor(inputs[induce_ind, :,:,:])
+
+            z = self.feature_extractor(inputs)
+            with torch.no_grad():
+                inducing_points = self.get_inducing_points(z, labels, verbose=False)
+            
+            ip_values = inducing_points.values.cuda()
+            self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
+
+            self.model.set_train_data(inputs=z, targets=labels, strict=False)
+
+            # z = self.feature_extractor(x_query)
+            predictions = self.model(z)
+            loss = -self.mll(predictions, self.model.train_targets)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            mse = self.mse(predictions.mean, labels)
+
+            if ((epoch%2==0) & (itr%5==0)):
+                print('[%d/%d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
+                    itr, epoch, loss.item(), mse.item(),
+                    self.model.likelihood.noise.item()
+                ))
+
+    def test_loop_kmeans(self, n_support, n_samples, test_person, optimizer=None): # no optimizer needed for GP
+
+        inputs, targets = get_batch(test_people, n_samples)
+
+        # support_ind = list(np.random.choice(list(range(n_samples)), replace=False, size=n_support))
+        # query_ind   = [i for i in range(n_samples) if i not in support_ind]
+
+        x_all = inputs.cuda()
+        y_all = targets.cuda()
+
+        split = np.array([True]*15 + [False]*3)
+        # print(split)
+        shuffled_split = []
+        for _ in range(6):
+            s = split.copy()
+            np.random.shuffle(s)
+            shuffled_split.extend(s)
+        shuffled_split = np.array(shuffled_split)
+        support_ind = shuffled_split
+        query_ind = ~shuffled_split
+        x_support = x_all[test_person, support_ind,:,:,:]
+        y_support = y_all[test_person, support_ind]
+        x_query   = x_all[test_person, query_ind,:,:,:]
+        y_query   = y_all[test_person, query_ind]
+
+
+        # induce_ind = list(np.random.choice(list(range(n_samples)), replace=False, size=self.num_induce_points))
+        # induce_point = self.feature_extractor(x_support[induce_ind, :,:,:])
+        z_support = self.feature_extractor(x_support).detach()
+        with torch.no_grad():
+            inducing_points = self.get_inducing_points(z_support, y_support, verbose=False)
+        
+        ip_values = inducing_points.z_values.cuda()
+        self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
+
+        self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
+
+        self.model.eval()
+        self.feature_extractor.eval()
+        self.likelihood.eval()
+
+        with torch.no_grad():
+            z_query = self.feature_extractor(x_query).detach()
+            pred    = self.likelihood(self.model(z_query))
+            lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
+
+        mse = self.mse(pred.mean, y_query).item()
+
+        def inducing_max_similar_in_support_x(train_x, z, inducing_points, train_y):
+            y = ((train_y.detach().cpu().numpy() + 1) * 60 / 2) + 60
+    
+            z_np = z.detach().cpu().numpy()
+            Z_inducing = inducing_points.z_values.detach().cpu().numpy()
+            dist = np.linalg.norm(Z_inducing[:, None, :] - z_np[None, :, :], axis=-1)
+            # print(dist)
+            index = np.argmin(dist, axis=1)
+            x_inducing = train_x[index].detach().cpu().numpy()
+            y_inducing = y[index]
+            i_idx = []
+            j_idx = []
+            for r in range(index.shape[0]):
+                
+                t = y_inducing[r]
+                x_t_idx = np.where(y==t)[0]
+                x_t = train_x[x_t_idx].detach().cpu().numpy()
+                j = np.argmin(np.linalg.norm(x_inducing[r].reshape(-1) - x_t.reshape(15, -1), axis=-1))
+                i = int(t/10-6)
+                i_idx.append(i)
+                j_idx.append(j)
+
+            return IP(inducing_points.z_values, index, inducing_points.count, 
+                                x_inducing, y_inducing, np.array(i_idx), np.array(j_idx))
+        
+        inducing_points = inducing_max_similar_in_support_x(x_support, z_support.detach(), inducing_points, y_support)
+
+        #**************************************************************
+        y = ((y_query.detach().cpu().numpy() + 1) * 60 / 2) + 60
+        y_pred = ((pred.mean.detach().cpu().numpy() + 1) * 60 / 2) + 60
+        print(Fore.RED,"="*50, Fore.RESET)
+        print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
+        print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
+        print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
+        print(Fore.LIGHTRED_EX, f'mse:    {mse:.4f}', Fore.RESET)
+        print(Fore.RED,"-"*50, Fore.RESET)
+
+        covar_module = self.model.base_covar_module
+        kernel_matrix = covar_module(z_query, z_support).evaluate().detach().cpu().numpy()
+        max_similar_index_ys = np.argmax(kernel_matrix, axis=1)
+        y_s = ((y_support.detach().cpu().numpy() + 1) * 60 / 2) + 60
+        print(Fore.LIGHTGREEN_EX, f'target of most similar in support set:       {y_s[max_similar_index_ys]}', Fore.RESET)
+        
+        kernel_matrix = covar_module(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
+        max_similar_index_y_ip = np.argmax(kernel_matrix, axis=1)
+        print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (K kernel): {inducing_points.y[max_similar_index_y_ip]}', Fore.RESET)
+
+        kernel_matrix = self.model.covar_module(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
+        max_similar_index = np.argmax(kernel_matrix, axis=1)
+        print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (Q kernel): {inducing_points.y[max_similar_index]}', Fore.RESET)
+        #**************************************************************
+        if (self.show_plots_pred or self.show_plots_features) and self.k_means:
+            embedded_z_support = TSNE(n_components=2).fit_transform(z_support.detach().cpu().numpy())
+            self.update_plots_test_kmeans(self.plots, x_support, y_support.detach().cpu().numpy(), 
+                                            z_support.detach(), z_query.detach(), embedded_z_support,
+                                            inducing_points, x_query, y_query.detach().cpu().numpy(), pred, 
+                                            max_similar_index_ys, max_similar_index_y_ip, None, mse, None)
+            if self.show_plots_pred:
+                self.plots.fig.canvas.draw()
+                self.plots.fig.canvas.flush_events()
+                self.mw.grab_frame()
+            if self.show_plots_features:
+                self.plots.fig_feature.canvas.draw()
+                self.plots.fig_feature.canvas.flush_events()
+                self.mw_feature.grab_frame()
+
+
+
+        return mse
+
+    def test(self, n_support, n_samples, optimizer=None, test_count=None): # no optimizer needed for GP
+
+        mse_list = []
+        # choose a random test person
+        test_person = np.random.choice(np.arange(len(test_people)), size=test_count, replace=False)
+        for t in range(test_count):
+            print(f'test #{t}')
+            if self.k_means:
+                mse = self.test_loop_kmeans(n_support, n_samples, test_person[t],  optimizer)
+            else: #RVM
+                pass
+            mse_list.append(float(mse))
+
+        if self.show_plots_pred:
+            self.mw.finish()
+        if self.show_plots_features:
+            self.mw_feature.finish()
+
+        return mse_list
+        
+    def get_inducing_points(self, inputs, targets, verbose=True):
+
+        
+        IP_index = np.array([])
+        if self.k_means:
+            num_IP = 6
+            
+            # self.kmeans_clustering = KMeans(n_clusters=num_IP, init='k-means++',  n_init=10, max_iter=1000).fit(inputs.cpu().numpy())
+            # inducing_points = self.kmeans_clustering.cluster_centers_
+            # inducing_points = torch.from_numpy(inducing_points).to(torch.float)
+
+            self.kmeans_clustering = Fast_KMeans(n_clusters=num_IP, max_iter=1000)
+            self.kmeans_clustering.fit(inputs.cuda())
+            inducing_points = self.kmeans_clustering.centroids
+
+
+        else:
+            # with sigma and updating sigma converges to more sparse solution
+            N   = inputs.shape[0]
+            tol = 1e-3
+            eps = torch.finfo(torch.float32).eps
+            max_itr = 1000
+            sigma = self.model.likelihood.noise[0].clone()
+            # sigma = torch.tensor([0.0000001])
+            # sigma = torch.tensor([torch.var(targets) * 0.1]) #sigma^2
+            sigma = sigma.to(self.device)
+            beta = 1 /(sigma + eps)
+            scale = True
+            update_sigma = False
+            covar_module = self.model.base_covar_module
+            kernel_matrix = covar_module(inputs).evaluate()
+            # normalize kernel
+            if scale:
+                scales	= torch.sqrt(torch.sum(kernel_matrix**2, axis=0))
+                # print(f'scale: {Scales}')
+                scales[scales==0] = 1
+                kernel_matrix = kernel_matrix / scales
+
+            kernel_matrix = kernel_matrix.to(torch.float64)
+            targets = targets.to(torch.float64)
+            active, alpha, Gamma, beta = Fast_RVM(kernel_matrix, targets.view(-1, 1), beta, N, update_sigma,
+                                                    eps, tol, max_itr, self.device, verbose)
+
+            active = np.sort(active)
+            inducing_points = inputs[active]
+            num_IP = active.shape[0]
+            IP_index = active
+
+        return IP(inducing_points, IP_index, num_IP, None, None, None, None)
+  
+    def save_checkpoint(self, checkpoint):
+        # save state
+        gp_state_dict         = self.model.state_dict()
+        likelihood_state_dict = self.likelihood.state_dict()
+        nn_state_dict         = self.feature_extractor.state_dict()
+        torch.save({'gp': gp_state_dict, 'likelihood': likelihood_state_dict, 'net':nn_state_dict}, checkpoint)
+
+    def load_checkpoint(self, checkpoint):
+        ckpt = torch.load(checkpoint)
+        self.model.load_state_dict(ckpt['gp'])
+        self.likelihood.load_state_dict(ckpt['likelihood'])
+        self.feature_extractor.load_state_dict(ckpt['net'])
+
+    def initialize_plot(self, video_path):
+        video_path = video_path+'_video'
+        os.makedirs(video_path, exist_ok=True)
+        time_now = datetime.now().strftime('%Y-%m-%d--%H-%M')
+         
+        self.plots = self.prepare_plots()
+        # plt.show(block=False)
+        # plt.pause(0.0001)
+        if self.show_plots_pred:
+           
+            metadata = dict(title='Sparse_DKT', artist='Matplotlib')
+            FFMpegWriter = animation.writers['ffmpeg']
+            self.mw = FFMpegWriter(fps=5, metadata=metadata)   
+            file = f'{video_path}/Sparse_DKT_{time_now}.mp4'
+            self.mw.setup(fig=self.plots.fig, outfile=file, dpi=125)
+
+        if self.show_plots_features:  
+                     
+            FFMpegWriter2 = animation.writers['ffmpeg']
+            self.mw_feature = FFMpegWriter2(fps=2, metadata=metadata)
+            file = f'{video_path}/Sparse_DKT_features_test_{time_now}.mp4'
+            self.mw_feature.setup(fig=self.plots.fig_feature, outfile=file, dpi=150)
+    
+    def prepare_plots(self):
+        Plots = namedtuple("plots", "fig ax fig_feature ax_feature")
+        # fig: plt.Figure = plt.figure(1, dpi=200) #, tight_layout=True
+        # fig.subplots_adjust(hspace = 0.0001)
+        fig, ax = plt.subplots(7, 19, figsize=(16,8), sharex=True, sharey=True, dpi=100) 
+        plt.subplots_adjust(wspace=0.1,  
+                            hspace=0.8)
+        # ax = fig.subplots(7, 19, sharex=True, sharey=True)
+          
+        # fig.subplots_adjust(hspace=0.4, wspace=0.1)
+        fig_feature: plt.Figure = plt.figure(2, figsize=(6, 6), tight_layout=True, dpi=125)
+        ax_feature: plt.Axes = fig_feature.add_subplot(1, 1, 1)
+        ax_feature.set_ylim(-20, 20)
+        ax_feature.set_xlim(-20, 20)
+
+        return Plots(fig, ax, fig_feature, ax_feature)     
+
+    def update_plots_train(self, fig:plt.Figure, ax_train:plt.Axes, ax_test:plt.Axes, train_x, train_y, z,   
+                                    train_y_pred, amplitude, phase, mll, mse, epoch):
+        def f(x):
+            return amplitude * np.sin(x - phase)
+        input_range = self.input_range
+        num_sample = 1000
+        
+        ax_train.clear()
+        ax_test.clear()
+        max_amp = self.amplitudes.max()
+        ax_train.set_xlim(-50, 50)
+        ax_train.set_ylim(-50, 50)
+        
+        ax_train.set_title(f'Train epoch #{epoch}, {self.method} features')
+        # ax_test.plot(x, y,  label='real', c='b', zorder=1)
+        ax_test.set_ylim(-max_amp-1, max_amp+1)
+        ax_test.set_title(f'Train prediction, MLL= {mll:.4f} MSE= {mse:.4f}')
+        if z is not None:
+            idx = train_x.argsort()
+            z = z[idx]
+        
+            ax_train.scatter(z[:,0], z[:,1], label='train data', c='g', zorder=4)
+            ax_train.legend()
+
+        if train_x is not None:
+            idx = train_x.argsort()
+            train_x = train_x[idx]
+            if train_y is None:    
+                y_ = f(train_x)
+                ax_test.plot(train_x, y_, label='real', c='g', zorder=4)
+            else:
+                train_y = train_y[idx]
+                ax_test.plot(train_x, train_y, label='real', c='g', zorder=4)
+            if train_y_pred is not None:
+                train_y_pred_mean = train_y_pred.mean.detach().cpu().numpy()
+                train_y_pred_mean = train_y_pred_mean[idx]
+                train_y_pred_var = train_y_pred.variance
+                train_y_pred_var = train_y_pred_var[idx]
+                # ax_test.scatter(test_x, test_y_pred.mean, c='r', marker='*')
+                lower, upper = train_y_pred.confidence_region() #2 standard deviations above and below the mean
+                
+                lower = lower[idx].detach().cpu().numpy()
+                upper = upper[idx].detach().cpu().numpy()
+                # print(f'mean= {test_y_pred_mean}')
+                # print(f'var= {test_y_pred_var}')
+                # print(f'lower= {lower}\nupper= {upper}')
+                # ax_test.errorbar(test_x, test_y_pred_mean, yerr=[lower, upper], ls='none') # test_y_pred_mean-lower, test_y_pred_mean+lower
+                ax_test.fill_between(train_x, lower, upper, color="darkorange", alpha=0.3)
+                ax_test.plot(train_x, train_y_pred_mean, c='r', label='prediction', zorder=5)
+            ax_test.legend()
+    
+    def update_plots_test_kmeans(self, plots, train_x, train_y, train_z, test_z, embedded_z, inducing_points,   
+                                    test_x, test_y, test_y_pred, max_similar_index_ys, max_similar_index_y_ip, mll, mse, epoch):
+        def clear_ax(plots, i, j):
+            plots.ax[i, j].clear()
+            plots.ax[i, j].set_xticks([])
+            plots.ax[i, j].set_xticklabels([])
+            plots.ax[i, j].set_yticks([])
+            plots.ax[i, j].set_yticklabels([])
+            plots.ax[i, j].set_aspect('equal')
+            return plots
+        
+        def color_ax(plots, i, j, color, lw=0):
+            if lw > 0:
+                for axis in ['top','bottom','left','right']:
+                    plots.ax[i, j].spines[axis].set_linewidth(lw)
+            #magenta, orange
+            for axis in ['top','bottom','left','right']:
+                plots.ax[i, j].spines[axis].set_color(color)
+
+            return plots
+
+        if self.show_plots_pred:
+
+            cluster_colors = ['aqua', 'coral', 'lime', 'gold', 'purple', 'green']
+            #train images
+
+            y = ((train_y + 1) * 60 / 2) + 60
+            tilt = [60, 70, 80, 90, 100, 110, 120]
+            num = 1
+            for t in tilt:
+                idx = np.where(y==(t))[0]
+                if idx.shape[0]==0:
+                    i = int(t/10-6)
+                    for j in range(0, 19):
+                        plots = clear_ax(plots, i, j)
+                        plots = color_ax(plots, i, j, 'black', lw=0.5)
+                else:    
+                    x = train_x[idx]
+                    i = int(t/10-6)
+                    z = train_z[idx]
+                    cluster = self.kmeans_clustering.predict(z)
+                    # cluster = self.kmeans_clustering.predict(z.detach().cpu().numpy())
+                    for j in range(0, idx.shape[0]): 
+                        img = transforms.ToPILImage()(x[j]).convert("RGB")
+                        plots = clear_ax(plots, i, j)
+                        plots = color_ax(plots, i, j, cluster_colors[cluster[j]], lw=2)
+                        plots.ax[i, j].imshow(img)
+                        plots.ax[i, j].set_title(f'{num}', fontsize=9)
+                        num += 1
+                    plots.ax[i, 0].set_ylabel(f'{t}',  fontsize=10)
+                
+        
+            # test images
+            y = ((test_y + 1) * 60 / 2) + 60
+            y_mean = test_y_pred.mean.detach().cpu().numpy()
+            y_var = test_y_pred.variance.detach().cpu().numpy()
+            y_pred = ((y_mean + 1) * 60 / 2) + 60
+            num = 0
+            for t in tilt:
+                idx = np.where(y==(t))[0]
+                if idx.shape[0]==0:
+                    continue
+                else:
+                    x = test_x[idx]
+                    z = test_z[idx]
+                    cluster = self.kmeans_clustering.predict(z)
+                    y_p = y_pred[idx]
+                    y_v = y_var[idx]
+                    i = int(t/10-6)
+                    for j in range(idx.shape[0]):
+                        
+                        img = transforms.ToPILImage()(x[j]).convert("RGB")
+                        ii = 16
+                        plots = clear_ax(plots, i, j+ii)
+                        plots.ax[i, j+ii].imshow(img)
+                        plots = color_ax(plots, i, j+ii, color=cluster_colors[cluster[j]], lw=2)
+                        plots.ax[i, j+ii].set_title(f'{y_p[j]:.1f}', fontsize=10)
+                        plots.ax[i, j+ii].set_xlabel(f'{max_similar_index_ys[num]+1}|{max_similar_index_y_ip[num]+1}', fontsize=10)
+                        num +=1
+                    # plots.ax[i, j+16].legend()
+            for i in range(7):
+                plots = clear_ax(plots, i, 15)
+                plots = color_ax(plots, i, 15, 'white', lw=0.5)
+
+            # highlight inducing points
+            y = ((train_y + 1) * 60 / 2) + 60
+            if inducing_points.x is not None:
+                num = 1
+                cluster = self.kmeans_clustering.predict(inducing_points.z_values)
+                # cluster = self.kmeans_clustering.predict(z_inducing.detach().cpu().numpy())                
+                for r in range(inducing_points.index.shape[0]):
+                    
+                    # t = inducing_points.y[r]
+                    # i = int(t/10-6)
+                    plots = color_ax(plots, inducing_points.i_idx[r], inducing_points.j_idx[r], cluster_colors[cluster[r]], lw=3) 
+                    plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].spines['bottom'].set_color('red')   
+                    plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].set_xlabel(num, fontsize=10)          
+                    num +=1
+        if self.show_plots_features:
+            #features
+            y = ((train_y + 1) * 60 / 2) + 60
+            tilt = np.unique(y)
+            plots.ax_feature.clear()
+            for t in tilt:
+                idx = np.where(y==(t))[0]
+                z_t = embedded_z[idx].detach().cpu().numpy()
+                
+                plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
+
+            plots.ax_feature.legend()
+
+
+
+class ExactGPLayer(gpytorch.models.ExactGP):
+    def __init__(self, train_x, train_y, likelihood, kernel='linear', induce_point=None):
+        super(ExactGPLayer, self).__init__(train_x, train_y, likelihood)
+        self.mean_module  = gpytorch.means.ConstantMean()
+
+        ## RBF kernel
+        if(kernel=='rbf' or kernel=='RBF'):
+            # self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
+            self.base_covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
+            self.covar_module = gpytorch.kernels.InducingPointKernel(self.base_covar_module, inducing_points=induce_point , likelihood=likelihood)
+        ## Spectral kernel
+        elif(kernel=='spectral'):
+            self.covar_module = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=4, ard_num_dims=2916)
+        else:
+            raise ValueError("[ERROR] the kernel '" + str(kernel) + "' is not supported for regression, use 'rbf' or 'spectral'.")
+
+    def forward(self, x):
+        mean_x  = self.mean_module(x)
+        covar_x = self.covar_module(x)
+        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
