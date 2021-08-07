@@ -21,7 +21,8 @@
             "request": "launch",
             "program": "${workspaceFolder}/test_regression.py",
             "console": "integratedTerminal",
-           "args": ["--method","Sparse_DKT", "--n_support", "90", "--n_test_epochs", "4", "--show_plots_pred", "--seed","2"] //"--show_plots_pred",
+           "args": ["--method","Sparse_DKT", "--n_support", "90", "--n_test_epochs", "4", "--show_plots_pred", "--show_plots_features",
+            "--seed","2"] //"--show_plots_pred",
         
         },
         {
