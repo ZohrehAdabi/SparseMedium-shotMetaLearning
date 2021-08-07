@@ -78,14 +78,15 @@ class Sparse_DKT(nn.Module):
             # x_query   = inputs[query_ind,:,:,:]
             # y_query   = labels[query_ind]
 
+            # random selection of inducing points
             induce_ind = list(np.random.choice(list(range(n_samples)), replace=False, size=self.num_induce_points))
-            induce_point = self.feature_extractor(inputs[induce_ind, :,:,:])
+            # induce_point = self.feature_extractor(inputs[induce_ind, :,:,:])
 
             z = self.feature_extractor(inputs)
             with torch.no_grad():
                 inducing_points = self.get_inducing_points(z, labels, verbose=False)
             
-            ip_values = inducing_points.values.cuda()
+            ip_values = inducing_points.z_values.cuda()
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
 
             self.model.set_train_data(inputs=z, targets=labels, strict=False)
@@ -103,6 +104,19 @@ class Sparse_DKT(nn.Module):
                     itr, epoch, loss.item(), mse.item(),
                     self.model.likelihood.noise.item()
                 ))
+            
+            if (self.show_plots_pred or self.show_plots_features) and self.k_means:
+                embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
+                self.update_plots_train_kmeans(self.plots, labels.cpu().numpy(), embedded_z, None, mse, None)
+
+                if self.show_plots_pred:
+                    self.plots.fig.canvas.draw()
+                    self.plots.fig.canvas.flush_events()
+                    self.mw.grab_frame()
+                if self.show_plots_features:
+                    self.plots.fig_feature.canvas.draw()
+                    self.plots.fig_feature.canvas.flush_events()
+                    self.mw_feature.grab_frame()
 
     def test_loop_kmeans(self, n_support, n_samples, test_person, optimizer=None): # no optimizer needed for GP
 
@@ -217,8 +231,6 @@ class Sparse_DKT(nn.Module):
                 self.plots.fig_feature.canvas.draw()
                 self.plots.fig_feature.canvas.flush_events()
                 self.mw_feature.grab_frame()
-
-
 
         return mse
 
@@ -345,56 +357,19 @@ class Sparse_DKT(nn.Module):
 
         return Plots(fig, ax, fig_feature, ax_feature)     
 
-    def update_plots_train(self, fig:plt.Figure, ax_train:plt.Axes, ax_test:plt.Axes, train_x, train_y, z,   
-                                    train_y_pred, amplitude, phase, mll, mse, epoch):
-        def f(x):
-            return amplitude * np.sin(x - phase)
-        input_range = self.input_range
-        num_sample = 1000
-        
-        ax_train.clear()
-        ax_test.clear()
-        max_amp = self.amplitudes.max()
-        ax_train.set_xlim(-50, 50)
-        ax_train.set_ylim(-50, 50)
-        
-        ax_train.set_title(f'Train epoch #{epoch}, {self.method} features')
-        # ax_test.plot(x, y,  label='real', c='b', zorder=1)
-        ax_test.set_ylim(-max_amp-1, max_amp+1)
-        ax_test.set_title(f'Train prediction, MLL= {mll:.4f} MSE= {mse:.4f}')
-        if z is not None:
-            idx = train_x.argsort()
-            z = z[idx]
-        
-            ax_train.scatter(z[:,0], z[:,1], label='train data', c='g', zorder=4)
-            ax_train.legend()
-
-        if train_x is not None:
-            idx = train_x.argsort()
-            train_x = train_x[idx]
-            if train_y is None:    
-                y_ = f(train_x)
-                ax_test.plot(train_x, y_, label='real', c='g', zorder=4)
-            else:
-                train_y = train_y[idx]
-                ax_test.plot(train_x, train_y, label='real', c='g', zorder=4)
-            if train_y_pred is not None:
-                train_y_pred_mean = train_y_pred.mean.detach().cpu().numpy()
-                train_y_pred_mean = train_y_pred_mean[idx]
-                train_y_pred_var = train_y_pred.variance
-                train_y_pred_var = train_y_pred_var[idx]
-                # ax_test.scatter(test_x, test_y_pred.mean, c='r', marker='*')
-                lower, upper = train_y_pred.confidence_region() #2 standard deviations above and below the mean
+    def update_plots_train_kmeans(self,plots, train_y, embedded_z, mll, mse, epoch):
+        if self.show_plots_features:
+            #features
+            y = ((train_y + 1) * 60 / 2) + 60
+            tilt = np.unique(y)
+            plots.ax_feature.clear()
+            for t in tilt:
+                idx = np.where(y==(t))[0]
+                z_t = embedded_z[idx].detach().cpu().numpy()
                 
-                lower = lower[idx].detach().cpu().numpy()
-                upper = upper[idx].detach().cpu().numpy()
-                # print(f'mean= {test_y_pred_mean}')
-                # print(f'var= {test_y_pred_var}')
-                # print(f'lower= {lower}\nupper= {upper}')
-                # ax_test.errorbar(test_x, test_y_pred_mean, yerr=[lower, upper], ls='none') # test_y_pred_mean-lower, test_y_pred_mean+lower
-                ax_test.fill_between(train_x, lower, upper, color="darkorange", alpha=0.3)
-                ax_test.plot(train_x, train_y_pred_mean, c='r', label='prediction', zorder=5)
-            ax_test.legend()
+                plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
+
+            plots.ax_feature.legend()
     
     def update_plots_test_kmeans(self, plots, train_x, train_y, train_z, test_z, embedded_z, inducing_points,   
                                     test_x, test_y, test_y_pred, max_similar_index_ys, max_similar_index_y_ip, mll, mse, epoch):
