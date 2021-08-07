@@ -1,0 +1,51 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+
+        {
+            "name": "Sparse_DKT: train_regression",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/train_regression.py",
+            "console": "integratedTerminal",
+           "args": ["--method","Sparse_DKT", "--n_samples", "108", "--seed","2"]  
+      
+        },
+        {
+            "name": "Sparse_DKT: test_regression",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/test_regression.py",
+            "console": "integratedTerminal",
+           "args": ["--method","Sparse_DKT", "--n_support", "90", "--n_test_epochs", "4", "--show_plots_pred", "--seed","2"] //"--show_plots_pred",
+        
+        },
+        {
+            "name": "DKT: train_regression",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/train_regression.py",
+            "console": "integratedTerminal",
+           "args": ["--method","DKT", "--seed","2"] 
+            //  "args": ["--method","DKT", "--seed","1", "--dataset", "omniglot", 
+            //         "--train_n_way","5", "--test_n_way", "5", "--n_shot","1",
+            //             "--model", "Conv4"] 
+        },
+        {
+            "name": "DKT: test_regression",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/test_regression.py",
+            "console": "integratedTerminal",
+           "args": ["--method","DKT", "--n_support", "90", "--seed","2"]  
+            //  "args": ["--method","DKT", "--seed","1", "--dataset", "omniglot", 
+            //         "--train_n_way","5", "--test_n_way", "5", "--n_shot","1",
+            //             "--model", "Conv4"] 
+        }
+    ]
+    
+}
