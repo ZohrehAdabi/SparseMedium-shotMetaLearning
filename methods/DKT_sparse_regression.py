@@ -334,7 +334,7 @@ class Sparse_DKT(nn.Module):
             self.mw.setup(fig=self.plots.fig, outfile=file, dpi=125)
 
         if self.show_plots_features:  
-                     
+            metadata = dict(title='Sparse_DKT', artist='Matplotlib')         
             FFMpegWriter2 = animation.writers['ffmpeg']
             self.mw_feature = FFMpegWriter2(fps=2, metadata=metadata)
             file = f'{video_path}/Sparse_DKT_features_test_{time_now}.mp4'
@@ -365,7 +365,7 @@ class Sparse_DKT(nn.Module):
             plots.ax_feature.clear()
             for t in tilt:
                 idx = np.where(y==(t))[0]
-                z_t = embedded_z[idx].detach().cpu().numpy()
+                z_t = embedded_z[idx]
                 
                 plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
 
@@ -418,7 +418,7 @@ class Sparse_DKT(nn.Module):
                         plots = clear_ax(plots, i, j)
                         plots = color_ax(plots, i, j, cluster_colors[cluster[j]], lw=2)
                         plots.ax[i, j].imshow(img)
-                        plots.ax[i, j].set_title(f'{num}', fontsize=9)
+                        plots.ax[i, j].set_title(f'{num}', fontsize=8)
                         num += 1
                     plots.ax[i, 0].set_ylabel(f'{t}',  fontsize=10)
                 
@@ -476,7 +476,7 @@ class Sparse_DKT(nn.Module):
             plots.ax_feature.clear()
             for t in tilt:
                 idx = np.where(y==(t))[0]
-                z_t = embedded_z[idx].detach().cpu().numpy()
+                z_t = embedded_z[idx]
                 
                 plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
 
