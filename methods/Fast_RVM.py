@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.svm import SVR
 from sklearn.metrics import mean_squared_error as mse
-from torch._C import dtype
+
 
 def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='cpu', verbose=True):
     
@@ -21,12 +21,14 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
     Kt = K.T @ targets
     KK_diag = torch.diag(KK) # all K_j @ K_j
 
-    start_k = torch.argmax(Kt) #torch.argmax(kt_k)
+    start_k = torch.argmax(abs(Kt)) #torch.argmax(kt_k)
     p = beta * KK_diag[start_k]
     q = beta * Kt[start_k]
     alpha_start_k = p.pow(2) / (q.pow(2) - p)
 
     alpha_m = torch.tensor([alpha_start_k], dtype=torch.float64).to(device)
+    if alpha_m < 0:
+        alpha_m = torch.tensor([1000], dtype=torch.float64).to(device)
     active_m = torch.tensor([start_k]).to(device)
     aligned_out		= torch.tensor([], dtype=torch.int).to(device)
     aligned_in		= torch.tensor([], dtype=torch.int).to(device)
@@ -62,7 +64,7 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
         idx = ~idx #active_factor <= 1e-12
         delete = active_m[idx]
         anyToDelete = len(delete) > 0
-        if anyToDelete:
+        if anyToDelete and alpha_m.shape[0] > 1:
             deltaML[delete] = -(q[delete]**2 / (s[delete] + alpha_m[idx]) - torch.log(1 + s[delete] / alpha_m[idx])) /2
             # deltaML[delete] = -(Q[delete]**2 / (S[delete] + alpha_m[idx]) - torch.log(1 + S[delete] / alpha_m[idx])) /2
             action[delete]  = -1
@@ -83,11 +85,17 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
             action[add]     = 1
 
         # Priority of Deletion
-        delete_priority = True
+        delete_priority = False
         if anyToDelete and delete_priority:
 
             deltaML[recompute] = 0
             deltaML[add] = 0
+        # Priority of Addition
+        add_priority = True
+        if anyToAdd and add_priority:
+
+            deltaML[recompute] = 0
+            deltaML[delete] = 0
 
         #  choose the action that results in the greatest change in likelihood 
         max_idx = torch.argmax(deltaML)[None]
@@ -117,7 +125,7 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
                 terminate = True
         
         
-        align_zero = 1e-1
+        align_zero = 1e-3
         if alignment_test:
             #
             # Addition - rule out addition (from now onwards) if the new basis
@@ -141,7 +149,7 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
                     # Make a note so we don't try this next time
                     # May be more than one in the model, which we need to note was
                     # the cause of function 'nu' being rejected
-                    aligned_out = torch.cat([aligned_out, max_idx * torch.ones(num_aligned, dtype=torch.int)])
+                    aligned_out = torch.cat([aligned_out, max_idx * torch.ones(num_aligned, dtype=torch.int).to(device)])
                     aligned_in = torch.cat([aligned_in, active_m[aligned_idx]])
          
             #
@@ -154,8 +162,8 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
                 num_aligned	= len(aligned_idx)
                 if num_aligned > 0:
                     reinstated					= aligned_out[aligned_idx]
-                    aligned_in = aligned_in[torch.arange(aligned_in.size(0))!=aligned_idx]
-                    aligned_out = aligned_out[torch.arange(aligned_out.size(0))!=aligned_idx]
+                    aligned_in = aligned_in[torch.arange(aligned_in.size(0)).to(device)!=aligned_idx]
+                    aligned_out = aligned_out[torch.arange(aligned_out.size(0)).to(device)!=aligned_idx]
                 
 
         update_required = False
@@ -184,12 +192,12 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
             s_j				= Sigma_m[:, j]
             tmp				= s_j/s_jj
             Sigma_		    = Sigma_m - tmp @ s_j.T
-            Sigma_          = Sigma_[torch.arange(Sigma_.size(0))!=j]
-            Sigma_new       = Sigma_[:, torch.arange(Sigma_.size(1))!=j]
+            Sigma_          = Sigma_[torch.arange(Sigma_.size(0)).to(device)!=j]
+            Sigma_new       = Sigma_[:, torch.arange(Sigma_.size(1)).to(device)!=j]
             delta_mu		= -mu_m[j] * tmp
             mu_j			= mu_m[j]
             mu_m			= mu_m + delta_mu.squeeze()
-            mu_m			= mu_m[torch.arange(mu_m.size(0))!=j]
+            mu_m			= mu_m[torch.arange(mu_m.size(0)).to(device)!=j]
             
             jPm	            = (beta_KK_m @ s_j).squeeze()
             S	            = S + jPm.pow(2) / s_jj

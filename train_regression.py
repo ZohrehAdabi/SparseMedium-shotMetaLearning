@@ -29,7 +29,7 @@ bb           = backbone.Conv3().cuda()
 if params.method=='DKT':
     model = DKT(bb).cuda()
 elif params.method=='Sparse_DKT':
-    model = Sparse_DKT(bb, k_means=True, video_path=params.checkpoint_dir, 
+    model = Sparse_DKT(bb, k_means=False, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features).cuda()
 elif params.method=='transfer':
     model = FeatureTransfer(bb).cuda()

@@ -159,9 +159,9 @@ class Sparse_DKT(nn.Module):
                     self.model.likelihood.noise.item()
                 ))
             
-            if (self.show_plots_pred or self.show_plots_features) and self.k_means:
+            if (self.show_plots_pred or self.show_plots_features) and not self.k_means:
                 embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
-                self.update_plots_train_kmeans(self.plots, labels.cpu().numpy(), embedded_z, None, mse, None)
+                self.update_plots_train_fast_rvm(self.plots, labels.cpu().numpy(), embedded_z, None, mse, None)
 
                 if self.show_plots_pred:
                     self.plots.fig.canvas.draw()
@@ -380,7 +380,10 @@ class Sparse_DKT(nn.Module):
         self.feature_extractor.load_state_dict(ckpt['net'])
 
     def initialize_plot(self, video_path):
-        video_path = video_path+'_video'
+        if self.k_means:
+            video_path = video_path+'_KMeans_video'
+        else:
+            video_path = video_path+'_FRVM_video'
         os.makedirs(video_path, exist_ok=True)
         time_now = datetime.now().strftime('%Y-%m-%d--%H-%M')
          
@@ -433,6 +436,21 @@ class Sparse_DKT(nn.Module):
 
             plots.ax_feature.legend()
     
+    def update_plots_train_fast_rvm(self,plots, train_y, embedded_z, mll, mse, epoch):
+        if self.show_plots_features:
+            #features
+            y = ((train_y + 1) * 60 / 2) + 60
+            tilt = np.unique(y)
+            plots.ax_feature.clear()
+            for t in tilt:
+                idx = np.where(y==(t))[0]
+                z_t = embedded_z[idx]
+                
+                plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
+
+            plots.ax_feature.legend()
+    
+
     def update_plots_test_kmeans(self, plots, train_x, train_y, train_z, test_z, embedded_z, inducing_points,   
                                     test_x, test_y, test_y_pred, max_similar_index_ys, max_similar_index_y_ip, mll, mse, epoch):
         def clear_ax(plots, i, j):
