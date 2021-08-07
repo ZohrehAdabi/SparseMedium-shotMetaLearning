@@ -29,7 +29,7 @@ from collections import namedtuple
 
 IP = namedtuple("inducing_points", "z_values index count x y i_idx j_idx")
 class Sparse_DKT(nn.Module):
-    def __init__(self, backbone, k_means=True, video_path=None, show_plots_pred=False, show_plots_features=False):
+    def __init__(self, backbone, k_means=True, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
@@ -40,7 +40,7 @@ class Sparse_DKT(nn.Module):
         self.show_plots_pred = show_plots_pred
         self.show_plots_features = show_plots_features
         if self.show_plots_pred or self.show_plots_features:
-            self.initialize_plot(video_path)
+            self.initialize_plot(video_path, training)
         self.get_model_likelihood_mll() #Init model, likelihood, and mll
         
     def get_model_likelihood_mll(self, train_x=None, train_y=None):
@@ -86,6 +86,34 @@ class Sparse_DKT(nn.Module):
             with torch.no_grad():
                 inducing_points = self.get_inducing_points(z, labels, verbose=False)
             
+            def inducing_max_similar_in_support_x(train_x, z, inducing_points, train_y):
+                y = ((train_y.cpu().numpy() + 1) * 60 / 2) + 60
+        
+                z_np = z.detach().cpu().numpy()
+                Z_inducing = inducing_points.z_values.detach().cpu().numpy()
+                dist = np.linalg.norm(Z_inducing[:, None, :] - z_np[None, :, :], axis=-1)
+                # print(dist)
+                index = np.argmin(dist, axis=1)
+                x_inducing = train_x[index].cpu().numpy()
+                y_inducing = y[index]
+                z_inducing = z[index]
+                i_idx = []
+                j_idx = []
+                # for r in range(index.shape[0]):
+                    
+                #     t = y_inducing[r]
+                #     x_t_idx = np.where(y==t)[0]
+                #     x_t = train_x[x_t_idx].detach().cpu().numpy()
+                #     j = np.argmin(np.linalg.norm(x_inducing[r].reshape(-1) - x_t.reshape(15, -1), axis=-1))
+                #     i = int(t/10-6)
+                #     i_idx.append(i)
+                #     j_idx.append(j)
+
+                return IP(z_inducing, index, inducing_points.count, 
+                                    x_inducing, y_inducing, None, None)
+            with torch.no_grad():
+                inducing_points = inducing_max_similar_in_support_x(inputs, z.detach(), inducing_points, labels)
+
             ip_values = inducing_points.z_values.cuda()
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
 
@@ -204,6 +232,34 @@ class Sparse_DKT(nn.Module):
         with torch.no_grad():
             inducing_points = self.get_inducing_points(z_support, y_support, verbose=False)
         
+        
+        def inducing_max_similar_in_support_x(train_x, z, inducing_points, train_y):
+            y = ((train_y.cpu().numpy() + 1) * 60 / 2) + 60
+    
+            z_np = z.detach().cpu().numpy()
+            Z_inducing = inducing_points.z_values.detach().cpu().numpy()
+            dist = np.linalg.norm(Z_inducing[:, None, :] - z_np[None, :, :], axis=-1)
+            # print(dist)
+            index = np.argmin(dist, axis=1)
+            x_inducing = train_x[index].cpu().numpy()
+            y_inducing = y[index]
+            z_inducing = z[index]
+            i_idx = []
+            j_idx = []
+            for r in range(index.shape[0]):
+                
+                t = y_inducing[r]
+                x_t_idx = np.where(y==t)[0]
+                x_t = train_x[x_t_idx].detach().cpu().numpy()
+                j = np.argmin(np.linalg.norm(x_inducing[r].reshape(-1) - x_t.reshape(15, -1), axis=-1))
+                i = int(t/10-6)
+                i_idx.append(i)
+                j_idx.append(j)
+
+            return IP(z_inducing, index, inducing_points.count, 
+                                x_inducing, y_inducing, np.array(i_idx), np.array(j_idx))
+        
+        inducing_points = inducing_max_similar_in_support_x(x_support, z_support.detach(), inducing_points, y_support)
         ip_values = inducing_points.z_values.cuda()
         self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
 
@@ -220,32 +276,6 @@ class Sparse_DKT(nn.Module):
 
         mse = self.mse(pred.mean, y_query).item()
 
-        def inducing_max_similar_in_support_x(train_x, z, inducing_points, train_y):
-            y = ((train_y.detach().cpu().numpy() + 1) * 60 / 2) + 60
-    
-            z_np = z.detach().cpu().numpy()
-            Z_inducing = inducing_points.z_values.detach().cpu().numpy()
-            dist = np.linalg.norm(Z_inducing[:, None, :] - z_np[None, :, :], axis=-1)
-            # print(dist)
-            index = np.argmin(dist, axis=1)
-            x_inducing = train_x[index].detach().cpu().numpy()
-            y_inducing = y[index]
-            i_idx = []
-            j_idx = []
-            for r in range(index.shape[0]):
-                
-                t = y_inducing[r]
-                x_t_idx = np.where(y==t)[0]
-                x_t = train_x[x_t_idx].detach().cpu().numpy()
-                j = np.argmin(np.linalg.norm(x_inducing[r].reshape(-1) - x_t.reshape(15, -1), axis=-1))
-                i = int(t/10-6)
-                i_idx.append(i)
-                j_idx.append(j)
-
-            return IP(inducing_points.z_values, index, inducing_points.count, 
-                                x_inducing, y_inducing, np.array(i_idx), np.array(j_idx))
-        
-        inducing_points = inducing_max_similar_in_support_x(x_support, z_support.detach(), inducing_points, y_support)
 
         #**************************************************************
         y = ((y_query.detach().cpu().numpy() + 1) * 60 / 2) + 60
@@ -322,7 +352,7 @@ class Sparse_DKT(nn.Module):
         
         ip_values = inducing_points.z_values.cuda()
         self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
-
+        self.model.covar_module._clear_cache()
         self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
 
         self.model.eval()
@@ -336,7 +366,7 @@ class Sparse_DKT(nn.Module):
 
         mse = self.mse(pred.mean, y_query).item()
 
-        def inducing_max_similar_in_support_x(train_x, z, inducing_points, train_y):
+        def inducing_max_similar_in_support_x(train_x, inducing_points, train_y):
             y = ((train_y.detach().cpu().numpy() + 1) * 60 / 2) + 60
     
             index = inducing_points.index
@@ -357,7 +387,7 @@ class Sparse_DKT(nn.Module):
             return IP(inducing_points.z_values, index, inducing_points.count, 
                                 x_inducing, y_inducing, np.array(i_idx), np.array(j_idx))
         
-        inducing_points = inducing_max_similar_in_support_x(x_support, z_support.detach(), inducing_points, y_support)
+        inducing_points = inducing_max_similar_in_support_x(x_support, inducing_points, y_support)
 
         #**************************************************************
         y = ((y_query.detach().cpu().numpy() + 1) * 60 / 2) + 60
@@ -487,17 +517,22 @@ class Sparse_DKT(nn.Module):
         torch.save({'gp': gp_state_dict, 'likelihood': likelihood_state_dict, 'net':nn_state_dict}, checkpoint)
 
     def load_checkpoint(self, checkpoint):
+    
         ckpt = torch.load(checkpoint)
+        IP = torch.ones(self.num_induce_points, 2916).cuda()
+        ckpt['gp']['covar_module.inducing_points'] = IP
         self.model.load_state_dict(ckpt['gp'])
         self.likelihood.load_state_dict(ckpt['likelihood'])
         self.feature_extractor.load_state_dict(ckpt['net'])
 
-    def initialize_plot(self, video_path):
+    def initialize_plot(self, video_path, training):
         
-        if self.k_means:
-            video_path = video_path+'_KMeans_video'
+        
+        if training:
+            video_path = video_path+'_Train_video'
         else:
-            video_path = video_path+'_FRVM_video'
+            video_path = video_path+'_Test_video'
+
         os.makedirs(video_path, exist_ok=True)
         time_now = datetime.now().strftime('%Y-%m-%d--%H-%M')
          
@@ -714,11 +749,11 @@ class Sparse_DKT(nn.Module):
                 else:    
                     x = train_x[idx]
                     i = int(t/10-6)
-                    z = train_z[idx]
+                    # z = train_z[idx]
                     for j in range(0, idx.shape[0]): 
                         img = transforms.ToPILImage()(x[j]).convert("RGB")
                         plots = clear_ax(plots, i, j)
-                        # plots = color_ax(plots, i, j, 'black', lw=0.75)
+                        plots = color_ax(plots, i, j, 'black', lw=0.5)
                         plots.ax[i, j].imshow(img)
                         plots.ax[i, j].set_title(f'{num}', fontsize=8)
                         num += 1
@@ -767,8 +802,9 @@ class Sparse_DKT(nn.Module):
                     
                     # t = inducing_points.y[r]
                     # i = int(t/10-6)
-                    plots = color_ax(plots, inducing_points.i_idx[r], inducing_points.j_idx[r], 'black', lw=1.5) 
-                    plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].spines['bottom'].set_color('red')   
+                    plots = color_ax(plots, inducing_points.i_idx[r], inducing_points.j_idx[r], 'black', lw=1) 
+                    plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].spines['bottom'].set_color('red')  
+                    plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].spines['bottom'].set_linewidth(3) 
                     plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].set_xlabel(num, fontsize=10)          
                     num +=1
         if self.show_plots_features:

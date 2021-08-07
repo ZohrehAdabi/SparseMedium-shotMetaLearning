@@ -18,10 +18,12 @@ torch.backends.cudnn.benchmark = False
 
 params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s' % (configs.save_dir, params.dataset, params.model, params.method, params.sparse_method)
 bb           = backbone.Conv3().cuda()
-if params.sparse_method=='KMeaans':
+if params.sparse_method=='KMeans':
     k_means = True
-else: #RVM
+elif params.sparse_method=='FRVM':
     k_means = False
+else:
+    pass #ranndom
 if params.method=='DKT':
     model = DKT(bb).cuda()
     optimizer = None

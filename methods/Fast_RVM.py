@@ -274,7 +274,7 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
 
         if terminate:
             # print(f'sigma2={1/beta:.4f}')
-            print(f'm= {active_m.shape} sigma2={1/beta:.4f}')
+            print(f'm= {active_m.shape[0]} sigma2={1/beta:.4f}')
             return active_m.cpu().numpy(), alpha_m, Gamma, beta 
 
         if ((itr+1)%50==0) and verbose:
