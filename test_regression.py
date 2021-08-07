@@ -16,14 +16,17 @@ torch.manual_seed(params.seed)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
-params.checkpoint_dir = '%scheckpoints/%s/%s_%s' % (configs.save_dir, params.dataset, params.model, params.method)
+params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s' % (configs.save_dir, params.dataset, params.model, params.method, params.sparse_method)
 bb           = backbone.Conv3().cuda()
-
+if params.sparse_method=='KMeaans':
+    k_means = True
+else: #RVM
+    k_means = False
 if params.method=='DKT':
     model = DKT(bb).cuda()
     optimizer = None
 elif params.method=='Sparse_DKT':
-    model = Sparse_DKT(bb, k_means=True, video_path=params.checkpoint_dir, 
+    model = Sparse_DKT(bb, k_means=k_means, video_path=params.checkpoint_dir, 
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features).cuda()
     optimizer = None
 elif params.method=='transfer':

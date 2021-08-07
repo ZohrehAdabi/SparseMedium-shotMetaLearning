@@ -22,14 +22,17 @@ torch.backends.cudnn.benchmark = False
 params.checkpoint_dir = '%scheckpoints/%s/' % (configs.save_dir, params.dataset)
 if not os.path.isdir(params.checkpoint_dir):
     os.makedirs(params.checkpoint_dir)
-params.checkpoint_dir = '%scheckpoints/Train_%s/%s_%s' % (configs.save_dir, params.dataset, params.model, params.method)
-
+params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s' % (configs.save_dir, params.dataset, params.model, params.method, params.sparse_method)
+if params.sparse_method=='KMeaans':
+    k_means = True
+else: #RVM
+    k_means = False
 bb           = backbone.Conv3().cuda()
 
 if params.method=='DKT':
     model = DKT(bb).cuda()
 elif params.method=='Sparse_DKT':
-    model = Sparse_DKT(bb, k_means=False, video_path=params.checkpoint_dir, 
+    model = Sparse_DKT(bb, k_means=k_means, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features).cuda()
 elif params.method=='transfer':
     model = FeatureTransfer(bb).cuda()

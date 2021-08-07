@@ -288,6 +288,119 @@ class Sparse_DKT(nn.Module):
 
         return mse
 
+    def test_loop_fast_rvm(self, n_support, n_samples, test_person, optimizer=None): # no optimizer needed for GP
+
+        inputs, targets = get_batch(test_people, n_samples)
+
+        # support_ind = list(np.random.choice(list(range(n_samples)), replace=False, size=n_support))
+        # query_ind   = [i for i in range(n_samples) if i not in support_ind]
+
+        x_all = inputs.cuda()
+        y_all = targets.cuda()
+
+        split = np.array([True]*15 + [False]*3)
+        # print(split)
+        shuffled_split = []
+        for _ in range(6):
+            s = split.copy()
+            np.random.shuffle(s)
+            shuffled_split.extend(s)
+        shuffled_split = np.array(shuffled_split)
+        support_ind = shuffled_split
+        query_ind = ~shuffled_split
+        x_support = x_all[test_person, support_ind,:,:,:]
+        y_support = y_all[test_person, support_ind]
+        x_query   = x_all[test_person, query_ind,:,:,:]
+        y_query   = y_all[test_person, query_ind]
+
+
+        # induce_ind = list(np.random.choice(list(range(n_samples)), replace=False, size=self.num_induce_points))
+        # induce_point = self.feature_extractor(x_support[induce_ind, :,:,:])
+        z_support = self.feature_extractor(x_support).detach()
+        with torch.no_grad():
+            inducing_points = self.get_inducing_points(z_support, y_support, verbose=False)
+        
+        ip_values = inducing_points.z_values.cuda()
+        self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
+
+        self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
+
+        self.model.eval()
+        self.feature_extractor.eval()
+        self.likelihood.eval()
+
+        with torch.no_grad():
+            z_query = self.feature_extractor(x_query).detach()
+            pred    = self.likelihood(self.model(z_query))
+            lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
+
+        mse = self.mse(pred.mean, y_query).item()
+
+        def inducing_max_similar_in_support_x(train_x, z, inducing_points, train_y):
+            y = ((train_y.detach().cpu().numpy() + 1) * 60 / 2) + 60
+    
+            index = inducing_points.index
+            x_inducing = train_x[index].detach().cpu().numpy()
+            y_inducing = y[index]
+            i_idx = []
+            j_idx = []
+            for r in range(index.shape[0]):
+                
+                t = y_inducing[r]
+                x_t_idx = np.where(y==t)[0]
+                x_t = train_x[x_t_idx].detach().cpu().numpy()
+                j = np.argmin(np.linalg.norm(x_inducing[r].reshape(-1) - x_t.reshape(15, -1), axis=-1))
+                i = int(t/10-6)
+                i_idx.append(i)
+                j_idx.append(j)
+
+            return IP(inducing_points.z_values, index, inducing_points.count, 
+                                x_inducing, y_inducing, np.array(i_idx), np.array(j_idx))
+        
+        inducing_points = inducing_max_similar_in_support_x(x_support, z_support.detach(), inducing_points, y_support)
+
+        #**************************************************************
+        y = ((y_query.detach().cpu().numpy() + 1) * 60 / 2) + 60
+        y_pred = ((pred.mean.detach().cpu().numpy() + 1) * 60 / 2) + 60
+        print(Fore.RED,"="*50, Fore.RESET)
+        print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
+        print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
+        print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
+        print(Fore.LIGHTRED_EX, f'mse:    {mse:.4f}', Fore.RESET)
+        print(Fore.RED,"-"*50, Fore.RESET)
+
+        covar_module = self.model.base_covar_module
+        kernel_matrix = covar_module(z_query, z_support).evaluate().detach().cpu().numpy()
+        max_similar_index_ys = np.argmax(kernel_matrix, axis=1)
+        y_s = ((y_support.detach().cpu().numpy() + 1) * 60 / 2) + 60
+        print(Fore.LIGHTGREEN_EX, f'target of most similar in support set:       {y_s[max_similar_index_ys]}', Fore.RESET)
+        
+        kernel_matrix = covar_module(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
+        max_similar_index_y_ip = np.argmax(kernel_matrix, axis=1)
+        print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (K kernel): {inducing_points.y[max_similar_index_y_ip]}', Fore.RESET)
+
+        kernel_matrix = self.model.covar_module(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
+        max_similar_index = np.argmax(kernel_matrix, axis=1)
+        print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (Q kernel): {inducing_points.y[max_similar_index]}', Fore.RESET)
+        #**************************************************************
+        if (self.show_plots_pred or self.show_plots_features) and not self.k_means:
+            embedded_z_support = TSNE(n_components=2).fit_transform(z_support.detach().cpu().numpy())
+            self.update_plots_test_fast_rvm(self.plots, x_support, y_support.detach().cpu().numpy(), 
+                                            z_support.detach(), z_query.detach(), embedded_z_support,
+                                            inducing_points, x_query, y_query.detach().cpu().numpy(), pred, 
+                                            max_similar_index_ys, max_similar_index_y_ip, None, mse, None)
+            if self.show_plots_pred:
+                self.plots.fig.canvas.draw()
+                self.plots.fig.canvas.flush_events()
+                self.mw.grab_frame()
+            if self.show_plots_features:
+                self.plots.fig_feature.canvas.draw()
+                self.plots.fig_feature.canvas.flush_events()
+                self.mw_feature.grab_frame()
+
+        return mse
+
+    
     def train(self, epoch, n_support, n_samples, optimizer):
 
         if self.k_means:
@@ -306,7 +419,7 @@ class Sparse_DKT(nn.Module):
             if self.k_means:
                 mse = self.test_loop_kmeans(n_support, n_samples, test_person[t],  optimizer)
             else: #RVM
-                pass
+                mse = self.test_loop_fast_rvm(n_support, n_samples, test_person[t],  optimizer)
             mse_list.append(float(mse))
 
         if self.show_plots_pred:
@@ -380,6 +493,7 @@ class Sparse_DKT(nn.Module):
         self.feature_extractor.load_state_dict(ckpt['net'])
 
     def initialize_plot(self, video_path):
+        
         if self.k_means:
             video_path = video_path+'_KMeans_video'
         else:
@@ -450,7 +564,6 @@ class Sparse_DKT(nn.Module):
 
             plots.ax_feature.legend()
     
-
     def update_plots_test_kmeans(self, plots, train_x, train_y, train_z, test_z, embedded_z, inducing_points,   
                                     test_x, test_y, test_y_pred, max_similar_index_ys, max_similar_index_y_ip, mll, mse, epoch):
         def clear_ax(plots, i, j):
@@ -562,6 +675,114 @@ class Sparse_DKT(nn.Module):
 
             plots.ax_feature.legend()
 
+    def update_plots_test_fast_rvm(self, plots, train_x, train_y, train_z, test_z, embedded_z, inducing_points,   
+                                    test_x, test_y, test_y_pred, max_similar_index_ys, max_similar_index_y_ip, mll, mse, epoch):
+        def clear_ax(plots, i, j):
+            plots.ax[i, j].clear()
+            plots.ax[i, j].set_xticks([])
+            plots.ax[i, j].set_xticklabels([])
+            plots.ax[i, j].set_yticks([])
+            plots.ax[i, j].set_yticklabels([])
+            plots.ax[i, j].set_aspect('equal')
+            return plots
+        
+        def color_ax(plots, i, j, color, lw=0):
+            if lw > 0:
+                for axis in ['top','bottom','left','right']:
+                    plots.ax[i, j].spines[axis].set_linewidth(lw)
+            #magenta, orange
+            for axis in ['top','bottom','left','right']:
+                plots.ax[i, j].spines[axis].set_color(color)
+
+            return plots
+
+        if self.show_plots_pred:
+
+            cluster_colors = ['aqua', 'coral', 'lime', 'gold', 'purple', 'green']
+            #train images
+
+            y = ((train_y + 1) * 60 / 2) + 60
+            tilt = [60, 70, 80, 90, 100, 110, 120]
+            num = 1
+            for t in tilt:
+                idx = np.where(y==(t))[0]
+                if idx.shape[0]==0:
+                    i = int(t/10-6)
+                    for j in range(0, 19):
+                        plots = clear_ax(plots, i, j)
+                        plots = color_ax(plots, i, j, 'black', lw=0.5)
+                else:    
+                    x = train_x[idx]
+                    i = int(t/10-6)
+                    z = train_z[idx]
+                    for j in range(0, idx.shape[0]): 
+                        img = transforms.ToPILImage()(x[j]).convert("RGB")
+                        plots = clear_ax(plots, i, j)
+                        # plots = color_ax(plots, i, j, 'black', lw=0.75)
+                        plots.ax[i, j].imshow(img)
+                        plots.ax[i, j].set_title(f'{num}', fontsize=8)
+                        num += 1
+                    plots.ax[i, 0].set_ylabel(f'{t}',  fontsize=10)
+                
+        
+            # test images
+            y = ((test_y + 1) * 60 / 2) + 60
+            y_mean = test_y_pred.mean.detach().cpu().numpy()
+            y_var = test_y_pred.variance.detach().cpu().numpy()
+            y_pred = ((y_mean + 1) * 60 / 2) + 60
+            num = 0
+            for t in tilt:
+                idx = np.where(y==(t))[0]
+                if idx.shape[0]==0:
+                    continue
+                else:
+                    x = test_x[idx]
+                    # z = test_z[idx]
+                    # cluster = self.kmeans_clustering.predict(z)
+                    y_p = y_pred[idx]
+                    y_v = y_var[idx]
+                    i = int(t/10-6)
+                    for j in range(idx.shape[0]):
+                        
+                        img = transforms.ToPILImage()(x[j]).convert("RGB")
+                        ii = 16
+                        plots = clear_ax(plots, i, j+ii)
+                        plots.ax[i, j+ii].imshow(img)
+                        # plots = color_ax(plots, i, j+ii, color=cluster_colors[cluster[j]], lw=2)
+                        plots.ax[i, j+ii].set_title(f'{y_p[j]:.1f}', fontsize=10)
+                        plots.ax[i, j+ii].set_xlabel(f'{max_similar_index_ys[num]+1}|{max_similar_index_y_ip[num]+1}', fontsize=10)
+                        num +=1
+                    # plots.ax[i, j+16].legend()
+            for i in range(7):
+                plots = clear_ax(plots, i, 15)
+                plots = color_ax(plots, i, 15, 'white', lw=0.5)
+
+            # highlight inducing points
+            y = ((train_y + 1) * 60 / 2) + 60
+            if inducing_points.x is not None:
+                num = 1
+                # cluster = self.kmeans_clustering.predict(inducing_points.z_values)
+                # cluster = self.kmeans_clustering.predict(z_inducing.detach().cpu().numpy())                
+                for r in range(inducing_points.index.shape[0]):
+                    
+                    # t = inducing_points.y[r]
+                    # i = int(t/10-6)
+                    plots = color_ax(plots, inducing_points.i_idx[r], inducing_points.j_idx[r], 'black', lw=1.5) 
+                    plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].spines['bottom'].set_color('red')   
+                    plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].set_xlabel(num, fontsize=10)          
+                    num +=1
+        if self.show_plots_features:
+            #features
+            y = ((train_y + 1) * 60 / 2) + 60
+            tilt = np.unique(y)
+            plots.ax_feature.clear()
+            for t in tilt:
+                idx = np.where(y==(t))[0]
+                z_t = embedded_z[idx]
+                
+                plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
+
+            plots.ax_feature.legend()
 
 
 class ExactGPLayer(gpytorch.models.ExactGP):
