@@ -64,7 +64,61 @@ class Sparse_DKT(nn.Module):
     def set_forward_loss(self, x):
         pass
 
-    def train_loop(self, epoch, n_support, n_samples, optimizer):
+    def train_loop_kmeans(self, epoch, n_support, n_samples, optimizer):
+        
+        batch, batch_labels = get_batch(train_people, n_samples)
+        batch, batch_labels = batch.cuda(), batch_labels.cuda()
+        for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
+
+            # support_ind = list(np.random.choice(list(range(n_samples)), replace=False, size=n_support))
+            # query_ind   = [i for i in range(n_samples) if i not in support_ind]
+
+            # x_support = inputs[support_ind,:,:,:]
+            # y_support = labels[support_ind]
+            # x_query   = inputs[query_ind,:,:,:]
+            # y_query   = labels[query_ind]
+
+            # random selection of inducing points
+            induce_ind = list(np.random.choice(list(range(n_samples)), replace=False, size=self.num_induce_points))
+            # induce_point = self.feature_extractor(inputs[induce_ind, :,:,:])
+
+            z = self.feature_extractor(inputs)
+            with torch.no_grad():
+                inducing_points = self.get_inducing_points(z, labels, verbose=False)
+            
+            ip_values = inducing_points.z_values.cuda()
+            self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
+
+            self.model.set_train_data(inputs=z, targets=labels, strict=False)
+
+            # z = self.feature_extractor(x_query)
+            predictions = self.model(z)
+            loss = -self.mll(predictions, self.model.train_targets)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            mse = self.mse(predictions.mean, labels)
+
+            if ((epoch%2==0) & (itr%5==0)):
+                print('[%d/%d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
+                    itr, epoch, loss.item(), mse.item(),
+                    self.model.likelihood.noise.item()
+                ))
+            
+            if (self.show_plots_pred or self.show_plots_features) and self.k_means:
+                embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
+                self.update_plots_train_kmeans(self.plots, labels.cpu().numpy(), embedded_z, None, mse, None)
+
+                if self.show_plots_pred:
+                    self.plots.fig.canvas.draw()
+                    self.plots.fig.canvas.flush_events()
+                    self.mw.grab_frame()
+                if self.show_plots_features:
+                    self.plots.fig_feature.canvas.draw()
+                    self.plots.fig_feature.canvas.flush_events()
+                    self.mw_feature.grab_frame()
+
+    def train_loop_fast_rvm(self, epoch, n_support, n_samples, optimizer):
         
         batch, batch_labels = get_batch(train_people, n_samples)
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
@@ -234,6 +288,14 @@ class Sparse_DKT(nn.Module):
 
         return mse
 
+    def train(self, epoch, n_support, n_samples, optimizer):
+
+        if self.k_means:
+
+            self.train_loop_kmeans(epoch, n_support, n_samples, optimizer)
+        else:
+            self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
+    
     def test(self, n_support, n_samples, optimizer=None, test_count=None): # no optimizer needed for GP
 
         mse_list = []
