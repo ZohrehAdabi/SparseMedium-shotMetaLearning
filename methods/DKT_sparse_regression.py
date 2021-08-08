@@ -132,7 +132,7 @@ class Sparse_DKT(nn.Module):
             mse = self.mse(predictions.mean, labels)
 
             if ((epoch%2==0) & (itr%5==0)):
-                print('[%d/%d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
+                print('[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
                     itr, epoch, loss.item(), mse.item(),
                     self.model.likelihood.noise.item()
                 ))
@@ -186,7 +186,7 @@ class Sparse_DKT(nn.Module):
             mse = self.mse(predictions.mean, labels)
 
             if ((epoch%2==0) & (itr%5==0)):
-                print('[%d/%d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
+                print('[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
                     itr, epoch, loss.item(), mse.item(),
                     self.model.likelihood.noise.item()
                 ))
@@ -482,7 +482,7 @@ class Sparse_DKT(nn.Module):
         else:
             # with sigma and updating sigma converges to more sparse solution
             N   = inputs.shape[0]
-            tol = 1e-3
+            tol = 1e-4
             eps = torch.finfo(torch.float32).eps
             max_itr = 1000
             sigma = self.model.likelihood.noise[0].clone()

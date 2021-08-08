@@ -111,7 +111,7 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
         terminate = False
 
         if ~anyWorthwhileAction:
-            print(f'No positive action, m={active_m.shape[0]}')
+            print(f'{itr:03}, No positive action, m={active_m.shape[0]}')
             selected_action = torch.tensor(10)
             terminate = True
 
@@ -125,7 +125,7 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
                 terminate = True
         
         
-        align_zero = 1e-3
+        align_zero = 1e-2
         if alignment_test:
             #
             # Addition - rule out addition (from now onwards) if the new basis
@@ -274,7 +274,7 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
 
         if terminate:
             # print(f'sigma2={1/beta:.4f}')
-            print(f'm= {active_m.shape[0]} sigma2={1/beta:.4f}')
+            print(f'{itr:03}, m= {active_m.shape[0]} sigma2={1/beta:.4f}')
             return active_m.cpu().numpy(), alpha_m, Gamma, beta 
 
         if ((itr+1)%50==0) and verbose:

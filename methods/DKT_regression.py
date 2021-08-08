@@ -137,7 +137,7 @@ class DKT(nn.Module):
         print(Fore.LIGHTRED_EX, f'mse:    {mse:.4f}', Fore.RESET)
         print(Fore.RED,"-"*50, Fore.RESET)
 
-        K = self.model.base_covar_module
+        K = self.model.covar_module
         kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
         max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
         y_s = ((y_support.detach().cpu().numpy() + 1) * 60 / 2) + 60
@@ -175,7 +175,7 @@ class DKT(nn.Module):
         for t in range(test_count):
             print(f'test #{t}')
             
-            mse = self.test_loop_kmeans(n_support, n_samples, test_person[t],  optimizer)
+            mse = self.test_loop(n_support, n_samples, test_person[t],  optimizer)
             
             mse_list.append(float(mse))
 
