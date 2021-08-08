@@ -274,7 +274,6 @@ class Sparse_DKT(nn.Module):
 
         mse = self.mse(pred.mean, y_query).item()
 
-
         #**************************************************************
         y = ((y_query.detach().cpu().numpy() + 1) * 60 / 2) + 60
         y_pred = ((pred.mean.detach().cpu().numpy() + 1) * 60 / 2) + 60
