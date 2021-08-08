@@ -34,7 +34,7 @@ class Sparse_DKT(nn.Module):
         super(Sparse_DKT, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
-        self.num_induce_points = 12
+        self.num_induce_points = 45
         self.k_means = k_means
         self.device = 'cuda'
         self.video_path = video_path
@@ -523,7 +523,7 @@ class Sparse_DKT(nn.Module):
     def load_checkpoint(self, checkpoint):
     
         ckpt = torch.load(checkpoint)
-        IP = torch.ones(12, 2916).cuda()
+        IP = torch.ones(self.num_induce_points, 2916).cuda()
         ckpt['gp']['covar_module.inducing_points'] = IP
         self.model.load_state_dict(ckpt['gp'])
         self.likelihood.load_state_dict(ckpt['likelihood'])
@@ -650,7 +650,7 @@ class Sparse_DKT(nn.Module):
                     for j in range(0, idx.shape[0]): 
                         img = transforms.ToPILImage()(x[j]).convert("RGB")
                         plots = clear_ax(plots, i, j)
-                        plots = color_ax(plots, i, j, cluster_colors[cluster[j]], lw=2)
+                        # plots = color_ax(plots, i, j, cluster_colors[cluster[j]], lw=2)
                         plots.ax[i, j].imshow(img)
                         plots.ax[i, j].set_title(f'{num}', fontsize=8)
                         num += 1
@@ -683,7 +683,7 @@ class Sparse_DKT(nn.Module):
                         ii = 16
                         plots = clear_ax(plots, i, j+ii)
                         plots.ax[i, j+ii].imshow(img)
-                        plots = color_ax(plots, i, j+ii, color=cluster_colors[cluster[j]], lw=2)
+                        # plots = color_ax(plots, i, j+ii, color=cluster_colors[cluster[j]], lw=2)
                         plots.ax[i, j+ii].set_title(f'{y_p[j]:.1f}', fontsize=8)
                         id_sim_x_s = int(plots.ax[int(sim_y_s[j]/10-6),0].get_title()) +  sim_x_s_idx[j]%15
                         plots.ax[i, j+ii].set_xlabel(f'{id_sim_x_s}|{sim_x_ip[j] + 1}', fontsize=10)
@@ -703,7 +703,7 @@ class Sparse_DKT(nn.Module):
                     
                     # t = inducing_points.y[r]
                     # i = int(t/10-6)
-                    plots = color_ax(plots, inducing_points.i_idx[r], inducing_points.j_idx[r], cluster_colors[cluster[r]], lw=3) 
+                    # plots = color_ax(plots, inducing_points.i_idx[r], inducing_points.j_idx[r], cluster_colors[cluster[r]], lw=3) 
                     plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].spines['bottom'].set_color('red')   
                     plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].set_xlabel(r+1, fontsize=10)          
                 
