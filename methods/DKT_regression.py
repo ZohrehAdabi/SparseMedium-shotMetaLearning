@@ -315,6 +315,7 @@ class DKT(nn.Module):
             y_var = test_y_pred.variance.detach().cpu().numpy()
             y_pred = ((y_mean + 1) * 60 / 2) + 60
             y_s = ((train_y + 1) * 60 / 2) + 60
+            
             for t in tilt:
                 idx = np.where(y==(t))[0]
                 if idx.shape[0]==0:
@@ -334,8 +335,8 @@ class DKT(nn.Module):
                         plots.ax[i, j+ii].imshow(img)
                         # plots = color_ax(plots, i, j+ii, color=cluster_colors[cluster[j]], lw=2)
                         plots.ax[i, j+ii].set_title(f'{y_p[j]:.1f}', fontsize=10)
-                        id_sim_x_s = (sim_y_s[j]/10 - 6) * 15 +  sim_x_s_idx%15
-                        plots.ax[i, j+ii].set_xlabel(f'{id_sim_x_s+1}', fontsize=10)
+                        id_sim_x_s = int(plots.ax[int(sim_y_s[j]/10-6),0].get_title()) +  sim_x_s_idx[j]%15
+                        plots.ax[i, j+ii].set_xlabel(f'{int(id_sim_x_s)}', fontsize=10)
                 
                     # plots.ax[i, j+16].legend()
             for i in range(7):

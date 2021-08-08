@@ -34,7 +34,7 @@ class Sparse_DKT(nn.Module):
         super(Sparse_DKT, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
-        self.num_induce_points = 6
+        self.num_induce_points = 12
         self.k_means = k_means
         self.device = 'cuda'
         self.video_path = video_path
@@ -45,12 +45,12 @@ class Sparse_DKT(nn.Module):
         self.get_model_likelihood_mll() #Init model, likelihood, and mll
         
     def get_model_likelihood_mll(self, train_x=None, train_y=None):
-        if(train_x is None): train_x=torch.ones(9, 2916).cuda() #2916: size of feature z
+        if(train_x is None): train_x=torch.ones(self.num_induce_points, 2916).cuda() #2916: size of feature z
         # if(train_x is None): train_x=torch.rand(19, 3, 100, 100).cuda()
-        if(train_y is None): train_y=torch.ones(9).cuda()
+        if(train_y is None): train_y=torch.ones(self.num_induce_points).cuda()
 
         likelihood = gpytorch.likelihoods.GaussianLikelihood()
-        model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel=kernel_type, induce_point=train_x[:self.num_induce_points])
+        model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel=kernel_type, induce_point=train_x)
 
         self.model      = model.cuda()
         self.likelihood = likelihood.cuda()
@@ -468,7 +468,7 @@ class Sparse_DKT(nn.Module):
         
         IP_index = np.array([])
         if self.k_means:
-            num_IP = 6
+            num_IP = self.num_induce_points
             
             # self.kmeans_clustering = KMeans(n_clusters=num_IP, init='k-means++',  n_init=10, max_iter=1000).fit(inputs.cpu().numpy())
             # inducing_points = self.kmeans_clustering.cluster_centers_
@@ -523,7 +523,7 @@ class Sparse_DKT(nn.Module):
     def load_checkpoint(self, checkpoint):
     
         ckpt = torch.load(checkpoint)
-        IP = torch.ones(self.num_induce_points, 2916).cuda()
+        IP = torch.ones(12, 2916).cuda()
         ckpt['gp']['covar_module.inducing_points'] = IP
         self.model.load_state_dict(ckpt['gp'])
         self.likelihood.load_state_dict(ckpt['likelihood'])
@@ -684,8 +684,8 @@ class Sparse_DKT(nn.Module):
                         plots.ax[i, j+ii].imshow(img)
                         plots = color_ax(plots, i, j+ii, color=cluster_colors[cluster[j]], lw=2)
                         plots.ax[i, j+ii].set_title(f'{y_p[j]:.1f}', fontsize=8)
-                        id_sim_x_s = (sim_y_s[j]/10 - 6) * 15 +  sim_x_s_idx%15
-                        plots.ax[i, j+ii].set_xlabel(f'{id_sim_x_s + 1}|{sim_x_ip[j] + 1}', fontsize=10)
+                        id_sim_x_s = int(plots.ax[int(sim_y_s[j]/10-6),0].get_title()) +  sim_x_s_idx[j]%15
+                        plots.ax[i, j+ii].set_xlabel(f'{id_sim_x_s}|{sim_x_ip[j] + 1}', fontsize=10)
  
                     # plots.ax[i, j+16].legend()
             for i in range(7):
@@ -796,8 +796,8 @@ class Sparse_DKT(nn.Module):
                         plots.ax[i, j+ii].imshow(img)
                         # plots = color_ax(plots, i, j+ii, color=cluster_colors[cluster[j]], lw=2)
                         plots.ax[i, j+ii].set_title(f'{y_p[j]:.1f}', fontsize=8)
-                        id_sim_x_s = (sim_y_s[j]/10 - 6) * 15 +  sim_x_s_idx%15
-                        plots.ax[i, j+ii].set_xlabel(f'{id_sim_x_s+1}|{sim_x_ip[j]+1}', fontsize=10)
+                        id_sim_x_s = int(plots.ax[int(sim_y_s[j]/10-6),0].get_title()) +  sim_x_s_idx[j]%15
+                        plots.ax[i, j+ii].set_xlabel(f'{id_sim_x_s}|{sim_x_ip[j]+1}', fontsize=10)
                 
                     # plots.ax[i, j+16].legend()
             for i in range(7):
