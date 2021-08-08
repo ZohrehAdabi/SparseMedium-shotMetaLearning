@@ -111,10 +111,14 @@ class Sparse_DKT(nn.Module):
 
                 return IP(z_inducing, index, inducing_points.count, 
                                     x_inducing, y_inducing, None, None)
-            with torch.no_grad():
-                inducing_points = inducing_max_similar_in_support_x(inputs, z.detach(), inducing_points, labels)
+           
+            # with torch.no_grad():
+            #     inducing_points = inducing_max_similar_in_support_x(inputs, z.detach(), inducing_points, labels)
 
             ip_values = inducing_points.z_values.cuda()
+            with torch.no_grad():
+                inducing_points = inducing_max_similar_in_support_x(inputs, z.detach(), inducing_points, labels)
+            
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
 
             self.model.set_train_data(inputs=z, targets=labels, strict=False)
@@ -259,8 +263,9 @@ class Sparse_DKT(nn.Module):
             return IP(z_inducing, index, inducing_points.count, 
                                 x_inducing, y_inducing, np.array(i_idx), np.array(j_idx))
         
-        inducing_points = inducing_max_similar_in_support_x(x_support, z_support.detach(), inducing_points, y_support)
+        # inducing_points = inducing_max_similar_in_support_x(x_support, z_support.detach(), inducing_points, y_support)
         ip_values = inducing_points.z_values.cuda()
+        inducing_points = inducing_max_similar_in_support_x(x_support, z_support.detach(), inducing_points, y_support)
         self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
 
         self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
@@ -487,7 +492,7 @@ class Sparse_DKT(nn.Module):
             sigma = sigma.to(self.device)
             beta = 1 /(sigma + eps)
             scale = True
-            update_sigma = False
+            update_sigma = True
             covar_module = self.model.base_covar_module
             kernel_matrix = covar_module(inputs).evaluate()
             # normalize kernel

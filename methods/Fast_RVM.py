@@ -91,7 +91,7 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
             deltaML[recompute] = 0
             deltaML[add] = 0
         # Priority of Addition
-        add_priority = True
+        add_priority = active_m.shape[0]==1
         if anyToAdd and add_priority:
 
             deltaML[recompute] = 0
