@@ -661,7 +661,7 @@ class Sparse_DKT(nn.Module):
             y_mean = test_y_pred.mean.detach().cpu().numpy()
             y_var = test_y_pred.variance.detach().cpu().numpy()
             y_pred = ((y_mean + 1) * 60 / 2) + 60
-          
+            y_s = ((train_y + 1) * 60 / 2) + 60
             for t in tilt:
                 idx = np.where(y==(t))[0]
                 if idx.shape[0]==0:
@@ -669,7 +669,8 @@ class Sparse_DKT(nn.Module):
                 else:
                     x = test_x[idx]
                     z = test_z[idx]
-                    sim_x_s = similar_idx_x_s[idx]
+                    sim_x_s_idx = similar_idx_x_s[idx]
+                    sim_y_s = y_s[sim_x_s_idx] 
                     sim_x_ip = similar_idx_x_ip[idx]
                     cluster = self.kmeans_clustering.predict(z)
                     y_p = y_pred[idx]
@@ -683,7 +684,8 @@ class Sparse_DKT(nn.Module):
                         plots.ax[i, j+ii].imshow(img)
                         plots = color_ax(plots, i, j+ii, color=cluster_colors[cluster[j]], lw=2)
                         plots.ax[i, j+ii].set_title(f'{y_p[j]:.1f}', fontsize=8)
-                        plots.ax[i, j+ii].set_xlabel(f'{sim_x_s[j] + 1}|{sim_x_ip[j] + 1}', fontsize=10)
+                        id_sim_x_s = (sim_y_s[j]/10 - 6) * 15 +  sim_x_s_idx%15
+                        plots.ax[i, j+ii].set_xlabel(f'{id_sim_x_s + 1}|{sim_x_ip[j] + 1}', fontsize=10)
  
                     # plots.ax[i, j+16].legend()
             for i in range(7):
@@ -773,14 +775,15 @@ class Sparse_DKT(nn.Module):
             y_mean = test_y_pred.mean.detach().cpu().numpy()
             y_var = test_y_pred.variance.detach().cpu().numpy()
             y_pred = ((y_mean + 1) * 60 / 2) + 60
-          
+            y_s = ((train_y + 1) * 60 / 2) + 60
             for t in tilt:
                 idx = np.where(y==(t))[0]
                 if idx.shape[0]==0:
                     continue
                 else:
                     x = test_x[idx]
-                    sim_x_s = similar_idx_x_s[idx]
+                    sim_x_s_idx = similar_idx_x_s[idx]
+                    sim_y_s = y_s[sim_x_s_idx] 
                     sim_x_ip = similar_idx_x_ip[idx]
                     y_p = y_pred[idx]
                     y_v = y_var[idx]
@@ -793,7 +796,8 @@ class Sparse_DKT(nn.Module):
                         plots.ax[i, j+ii].imshow(img)
                         # plots = color_ax(plots, i, j+ii, color=cluster_colors[cluster[j]], lw=2)
                         plots.ax[i, j+ii].set_title(f'{y_p[j]:.1f}', fontsize=8)
-                        plots.ax[i, j+ii].set_xlabel(f'{sim_x_s[j]+1}|{sim_x_ip[j]+1}', fontsize=10)
+                        id_sim_x_s = (sim_y_s[j]/10 - 6) * 15 +  sim_x_s_idx%15
+                        plots.ax[i, j+ii].set_xlabel(f'{id_sim_x_s+1}|{sim_x_ip[j]+1}', fontsize=10)
                 
                     # plots.ax[i, j+16].legend()
             for i in range(7):
