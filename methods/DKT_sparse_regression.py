@@ -626,7 +626,8 @@ class Sparse_DKT(nn.Module):
 
         if self.show_plots_pred:
 
-            cluster_colors = ['aqua', 'coral', 'lime', 'gold', 'purple', 'green']
+            cluster_colors = ['aqua', 'coral', 'lime', 'gold', 'purple', 'green', 'tomato', 
+                                'fuchsia', 'chocolate', 'chartreuse', 'orange', 'teal']
 
 
             #train images
