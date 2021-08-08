@@ -88,11 +88,11 @@ class Sparse_DKT(nn.Module):
             
             def inducing_max_similar_in_support_x(train_x, train_z, inducing_points, train_y):
                 y = ((train_y.cpu().numpy() + 1) * 60 / 2) + 60
- 
-                kernel_matrix = self.model.covar_module(inducing_points.z_values, train_z).evaluate()
-                # kernel_matrix = self.model.base_covar_module(inducing_points.z_values, train_z).evaluate()
+                # self.model.covar_module._clear_cache()
+                # kernel_matrix = self.model.covar_module(inducing_points.z_values, train_z).evaluate()
+                kernel_matrix = self.model.base_covar_module(inducing_points.z_values, train_z).evaluate()
                 # max_similar_index
-                index = torch.argmax(kernel_matrix, axis=1)
+                index = torch.argmax(kernel_matrix, axis=1).cpu().numpy()
                 x_inducing = train_x[index].cpu().numpy()
                 y_inducing = y[index]
                 z_inducing = train_z[index]
@@ -111,12 +111,12 @@ class Sparse_DKT(nn.Module):
                 return IP(z_inducing, index, inducing_points.count, 
                                     x_inducing, y_inducing, None, None)
            
-            # with torch.no_grad():
-            #     inducing_points = inducing_max_similar_in_support_x(inputs, z.detach(), inducing_points, labels)
-
-            ip_values = inducing_points.z_values.cuda()
             with torch.no_grad():
                 inducing_points = inducing_max_similar_in_support_x(inputs, z.detach(), inducing_points, labels)
+
+            ip_values = inducing_points.z_values.cuda()
+            # with torch.no_grad():
+            #     inducing_points = inducing_max_similar_in_support_x(inputs, z.detach(), inducing_points, labels)
             
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
 
@@ -239,10 +239,10 @@ class Sparse_DKT(nn.Module):
         def inducing_max_similar_in_support_x(train_x, train_z, inducing_points, train_y):
             y = ((train_y.cpu().numpy() + 1) * 60 / 2) + 60
     
-            kernel_matrix = self.model.covar_module(inducing_points.z_values, train_z).evaluate()
-            # kernel_matrix = self.model.base_covar_module(inducing_points.z_values, train_z).evaluate()
+            # kernel_matrix = self.model.covar_module(inducing_points.z_values, train_z).evaluate()
+            kernel_matrix = self.model.base_covar_module(inducing_points.z_values, train_z).evaluate()
             # max_similar_index
-            index = torch.argmax(kernel_matrix, axis=1)
+            index = torch.argmax(kernel_matrix, axis=1).cpu().numpy()
             x_inducing = train_x[index].cpu().numpy()
             y_inducing = y[index]
             z_inducing = train_z[index]
@@ -261,9 +261,9 @@ class Sparse_DKT(nn.Module):
             return IP(z_inducing, index, inducing_points.count, 
                                 x_inducing, y_inducing, np.array(i_idx), np.array(j_idx))
         
-        # inducing_points = inducing_max_similar_in_support_x(x_support, z_support.detach(), inducing_points, y_support)
-        ip_values = inducing_points.z_values.cuda()
         inducing_points = inducing_max_similar_in_support_x(x_support, z_support.detach(), inducing_points, y_support)
+        ip_values = inducing_points.z_values.cuda()
+        # inducing_points = inducing_max_similar_in_support_x(x_support, z_support.detach(), inducing_points, y_support)
         self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
 
         self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
@@ -421,7 +421,7 @@ class Sparse_DKT(nn.Module):
             self.update_plots_test_fast_rvm(self.plots, x_support, y_support.detach().cpu().numpy(), 
                                             z_support.detach(), z_query.detach(), embedded_z_support,
                                             inducing_points, x_query, y_query.detach().cpu().numpy(), pred, 
-                                            similar_idx_x_s, similar_idx_x_ip, None, mse, None)
+                                            max_similar_idx_x_s, max_similar_idx_x_ip, None, mse, None)
             if self.show_plots_pred:
                 self.plots.fig.canvas.draw()
                 self.plots.fig.canvas.flush_events()
