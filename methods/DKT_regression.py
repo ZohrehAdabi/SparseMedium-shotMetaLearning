@@ -6,7 +6,14 @@ from torch.autograd import Variable
 import numpy as np
 import math
 import torch.nn.functional as F
-
+import os
+from datetime import datetime
+import matplotlib.pyplot as plt
+from matplotlib import animation
+from colorama import Fore
+from collections import namedtuple
+import torchvision.transforms as transforms
+from sklearn.manifold import TSNE
 ## Our packages
 import gpytorch
 from time import gmtime, strftime
@@ -16,10 +23,17 @@ from data.qmul_loader import get_batch, train_people, test_people
 from configs import kernel_type
 
 class DKT(nn.Module):
-    def __init__(self, backbone):
+    def __init__(self, backbone, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(DKT, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
+        self.device = 'cuda'
+        self.video_path = video_path
+        self.show_plots_pred = show_plots_pred
+        self.show_plots_features = show_plots_features
+        if self.show_plots_pred or self.show_plots_features:
+            self.initialize_plot(video_path, training)
+        
         self.get_model_likelihood_mll() #Init model, likelihood, and mll
 
     def get_model_likelihood_mll(self, train_x=None, train_y=None):
@@ -43,7 +57,8 @@ class DKT(nn.Module):
         pass
 
     def train_loop(self, epoch, n_support, n_samples, optimizer):
-        batch, batch_labels = get_batch(train_people, 108)
+
+        batch, batch_labels = get_batch(train_people, n_samples)
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
         # print(f'{epoch}: {batch_labels[0]}')
         for inputs, labels in zip(batch, batch_labels):
@@ -64,38 +79,112 @@ class DKT(nn.Module):
                     self.model.likelihood.noise.item()
                 ))
 
-    def test_loop(self, n_support, n_samples, optimizer=None): # no optimizer needed for GP
+            if (self.show_plots_pred or self.show_plots_features):
+                embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
+                self.update_plots_train(self.plots, labels.cpu().numpy(), embedded_z, None, mse, None)
+
+                if self.show_plots_pred:
+                    self.plots.fig.canvas.draw()
+                    self.plots.fig.canvas.flush_events()
+                    self.mw.grab_frame()
+                if self.show_plots_features:
+                    self.plots.fig_feature.canvas.draw()
+                    self.plots.fig_feature.canvas.flush_events()
+                    self.mw_feature.grab_frame()
+
+    def test_loop(self, n_support, n_samples, test_person, optimizer=None): # no optimizer needed for GP
         inputs, targets = get_batch(test_people, n_samples)
 
-        support_ind = list(np.random.choice(list(range(n_samples)), replace=False, size=n_support))
-        query_ind   = [i for i in range(n_samples) if i not in support_ind]
-
+        split = np.array([True]*15 + [False]*3)
+        # print(split)
+        shuffled_split = []
+        for _ in range(6):
+            s = split.copy()
+            np.random.shuffle(s)
+            shuffled_split.extend(s)
+        shuffled_split = np.array(shuffled_split)
+        support_ind = shuffled_split
+        query_ind = ~shuffled_split
         x_all = inputs.cuda()
         y_all = targets.cuda()
 
-        x_support = inputs[:,support_ind,:,:,:].cuda()
-        y_support = targets[:,support_ind].cuda()
-        x_query   = inputs[:,query_ind,:,:,:].cuda()
-        y_query   = targets[:,query_ind].cuda()
+        x_support = x_all[test_person,support_ind,:,:,:]
+        y_support = y_all[test_person,support_ind]
+        x_query   = x_all[test_person,query_ind,:,:,:]
+        y_query   = y_all[test_person,query_ind]
 
-        # choose a random test person
-        n = np.random.randint(0, len(test_people)-1)
-
-        z_support = self.feature_extractor(x_support[n]).detach()
-        self.model.set_train_data(inputs=z_support, targets=y_support[n], strict=False)
+    
+        z_support = self.feature_extractor(x_support).detach()
+        self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
 
         self.model.eval()
         self.feature_extractor.eval()
         self.likelihood.eval()
 
         with torch.no_grad():
-            z_query = self.feature_extractor(x_query[n]).detach()
+            z_query = self.feature_extractor(x_query).detach()
             pred    = self.likelihood(self.model(z_query))
             lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
 
-        mse = self.mse(pred.mean, y_query[n])
+        mse = self.mse(pred.mean, y_query).item()
+        #***************************************************
+        y = ((y_query.detach().cpu().numpy() + 1) * 60 / 2) + 60
+        y_pred = ((pred.mean.detach().cpu().numpy() + 1) * 60 / 2) + 60
+        print(Fore.RED,"="*50, Fore.RESET)
+        print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
+        print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
+        print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
+        print(Fore.LIGHTRED_EX, f'mse:    {mse:.4f}', Fore.RESET)
+        print(Fore.RED,"-"*50, Fore.RESET)
+
+        K = self.model.base_covar_module
+        kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
+        max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
+        y_s = ((y_support.detach().cpu().numpy() + 1) * 60 / 2) + 60
+        print(Fore.LIGHTGREEN_EX, f'target of most similar in support set: {y_s[max_similar_idx_x_s]}', Fore.RESET)
+        #**************************************************
+
+        if (self.show_plots_pred or self.show_plots_features):
+            embedded_z_support = TSNE(n_components=2).fit_transform(z_support.detach().cpu().numpy())
+
+            self.update_plots_test(self.plots, x_support, y_support.detach().cpu().numpy(), 
+                                            z_support.detach(), z_query.detach(), embedded_z_support,
+                                            x_query, y_query.detach().cpu().numpy(), pred, 
+                                            max_similar_idx_x_s, None, mse, None)
+            if self.show_plots_pred:
+                self.plots.fig.canvas.draw()
+                self.plots.fig.canvas.flush_events()
+                self.mw.grab_frame()
+            if self.show_plots_features:
+                self.plots.fig_feature.canvas.draw()
+                self.plots.fig_feature.canvas.flush_events()
+                self.mw_feature.grab_frame()
+
 
         return mse
+
+    def train(self, epoch, n_support, n_samples, optimizer):
+
+        self.train_loop(epoch, n_support, n_samples, optimizer)
+
+    def test(self, n_support, n_samples, optimizer=None, test_count=None):
+
+        mse_list = []
+        # choose a random test person
+        test_person = np.random.choice(np.arange(len(test_people)), size=test_count, replace=False)
+        for t in range(test_count):
+            print(f'test #{t}')
+            
+            mse = self.test_loop_kmeans(n_support, n_samples, test_person[t],  optimizer)
+            
+            mse_list.append(float(mse))
+
+        if self.show_plots_pred:
+            self.mw.finish()
+        if self.show_plots_features:
+            self.mw_feature.finish()
+
+        return mse_list
 
     def save_checkpoint(self, checkpoint):
         # save state
@@ -109,6 +198,163 @@ class DKT(nn.Module):
         self.model.load_state_dict(ckpt['gp'])
         self.likelihood.load_state_dict(ckpt['likelihood'])
         self.feature_extractor.load_state_dict(ckpt['net'])
+    
+    def initialize_plot(self, video_path, training):
+        
+        
+        if training:
+            video_path = video_path+'_Train_video'
+        else:
+            video_path = video_path+'_Test_video'
+
+        os.makedirs(video_path, exist_ok=True)
+        time_now = datetime.now().strftime('%Y-%m-%d--%H-%M')
+         
+        self.plots = self.prepare_plots()
+        # plt.show(block=False)
+        # plt.pause(0.0001)
+        if self.show_plots_pred:
+           
+            metadata = dict(title='DKT', artist='Matplotlib')
+            FFMpegWriter = animation.writers['ffmpeg']
+            self.mw = FFMpegWriter(fps=5, metadata=metadata)   
+            file = f'{video_path}/DKT_{time_now}.mp4'
+            self.mw.setup(fig=self.plots.fig, outfile=file, dpi=125)
+
+        if self.show_plots_features:  
+            metadata = dict(title='DKT', artist='Matplotlib')         
+            FFMpegWriter2 = animation.writers['ffmpeg']
+            self.mw_feature = FFMpegWriter2(fps=2, metadata=metadata)
+            file = f'{video_path}/DKT_features_{time_now}.mp4'
+            self.mw_feature.setup(fig=self.plots.fig_feature, outfile=file, dpi=150)
+    
+    def prepare_plots(self):
+        Plots = namedtuple("plots", "fig ax fig_feature ax_feature")
+        # fig: plt.Figure = plt.figure(1, dpi=200) #, tight_layout=True
+        # fig.subplots_adjust(hspace = 0.0001)
+        fig, ax = plt.subplots(7, 19, figsize=(16,8), sharex=True, sharey=True, dpi=100) 
+        plt.subplots_adjust(wspace=0.1,  
+                            hspace=0.8)
+        # ax = fig.subplots(7, 19, sharex=True, sharey=True)
+          
+        # fig.subplots_adjust(hspace=0.4, wspace=0.1)
+        fig_feature: plt.Figure = plt.figure(2, figsize=(6, 6), tight_layout=True, dpi=125)
+        ax_feature: plt.Axes = fig_feature.add_subplot(1, 1, 1)
+        ax_feature.set_ylim(-20, 20)
+        ax_feature.set_xlim(-20, 20)
+
+        return Plots(fig, ax, fig_feature, ax_feature)     
+
+    def update_plots_train(self,plots, train_y, embedded_z, mll, mse, epoch):
+        if self.show_plots_features:
+            #features
+            y = ((train_y + 1) * 60 / 2) + 60
+            tilt = np.unique(y)
+            plots.ax_feature.clear()
+            for t in tilt:
+                idx = np.where(y==(t))[0]
+                z_t = embedded_z[idx]
+                
+                plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
+
+            plots.ax_feature.legend()
+
+    def update_plots_test(self, plots, train_x, train_y, train_z, test_z, embedded_z,   
+                                    test_x, test_y, test_y_pred, similar_idx_x_s, mll, mse, epoch):
+        def clear_ax(plots, i, j):
+            plots.ax[i, j].clear()
+            plots.ax[i, j].set_xticks([])
+            plots.ax[i, j].set_xticklabels([])
+            plots.ax[i, j].set_yticks([])
+            plots.ax[i, j].set_yticklabels([])
+            plots.ax[i, j].set_aspect('equal')
+            return plots
+        
+        def color_ax(plots, i, j, color, lw=0):
+            if lw > 0:
+                for axis in ['top','bottom','left','right']:
+                    plots.ax[i, j].spines[axis].set_linewidth(lw)
+            #magenta, orange
+            for axis in ['top','bottom','left','right']:
+                plots.ax[i, j].spines[axis].set_color(color)
+
+            return plots
+
+        if self.show_plots_pred:
+
+            cluster_colors = ['aqua', 'coral', 'lime', 'gold', 'purple', 'green']
+            #train images
+
+            y = ((train_y + 1) * 60 / 2) + 60
+            tilt = [60, 70, 80, 90, 100, 110, 120]
+            num = 1
+            for t in tilt:
+                idx = np.where(y==(t))[0]
+                if idx.shape[0]==0:
+                    i = int(t/10-6)
+                    for j in range(0, 19):
+                        plots = clear_ax(plots, i, j)
+                        plots = color_ax(plots, i, j, 'black', lw=0.5)
+                else:    
+                    x = train_x[idx]
+                    i = int(t/10-6)
+                    # z = train_z[idx]
+                    for j in range(0, idx.shape[0]): 
+                        img = transforms.ToPILImage()(x[j]).convert("RGB")
+                        plots = clear_ax(plots, i, j)
+                        plots = color_ax(plots, i, j, 'black', lw=0.5)
+                        plots.ax[i, j].imshow(img)
+                        plots.ax[i, j].set_title(f'{num}', fontsize=8)
+                        num += 1
+                    plots.ax[i, 0].set_ylabel(f'{t}',  fontsize=10)
+                
+        
+            # test images
+            y = ((test_y + 1) * 60 / 2) + 60
+            y_mean = test_y_pred.mean.detach().cpu().numpy()
+            y_var = test_y_pred.variance.detach().cpu().numpy()
+            y_pred = ((y_mean + 1) * 60 / 2) + 60
+          
+            for t in tilt:
+                idx = np.where(y==(t))[0]
+                if idx.shape[0]==0:
+                    continue
+                else:
+                    x = test_x[idx]
+                    sim_x_s = similar_idx_x_s[idx]
+                    y_p = y_pred[idx]
+                    y_v = y_var[idx]
+                    i = int(t/10-6)
+                    for j in range(idx.shape[0]):
+                        
+                        img = transforms.ToPILImage()(x[j]).convert("RGB")
+                        ii = 16
+                        plots = clear_ax(plots, i, j+ii)
+                        plots.ax[i, j+ii].imshow(img)
+                        # plots = color_ax(plots, i, j+ii, color=cluster_colors[cluster[j]], lw=2)
+                        plots.ax[i, j+ii].set_title(f'{y_p[j]:.1f}', fontsize=10)
+                        plots.ax[i, j+ii].set_xlabel(f'{sim_x_s[j]+1}', fontsize=10)
+                
+                    # plots.ax[i, j+16].legend()
+            for i in range(7):
+                plots = clear_ax(plots, i, 15)
+                plots = color_ax(plots, i, 15, 'white', lw=0.5)
+
+
+        if self.show_plots_features:
+            #features
+            y = ((train_y + 1) * 60 / 2) + 60
+            tilt = np.unique(y)
+            plots.ax_feature.clear()
+            for t in tilt:
+                idx = np.where(y==(t))[0]
+                z_t = embedded_z[idx]
+                
+                plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
+
+            plots.ax_feature.legend()
+
+
 
 class ExactGPLayer(gpytorch.models.ExactGP):
     def __init__(self, train_x, train_y, likelihood, kernel='linear'):

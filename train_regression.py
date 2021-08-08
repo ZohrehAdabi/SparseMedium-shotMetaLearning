@@ -22,16 +22,19 @@ torch.backends.cudnn.benchmark = False
 params.checkpoint_dir = '%scheckpoints/%s/' % (configs.save_dir, params.dataset)
 if not os.path.isdir(params.checkpoint_dir):
     os.makedirs(params.checkpoint_dir)
-params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s' % (configs.save_dir, params.dataset, params.model, params.method, params.sparse_method)
-if params.sparse_method=='KMeans':
-    k_means = True
-else: #RVM
-    k_means = False
+params.checkpoint_dir = '%scheckpoints/%s/%s_%s' % (configs.save_dir, params.dataset, params.model, params.method)
+
 bb           = backbone.Conv3().cuda()
 
 if params.method=='DKT':
-    model = DKT(bb).cuda()
+    model = DKT(bb, video_path=params.checkpoint_dir, 
+                            show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
 elif params.method=='Sparse_DKT':
+    params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s' % (configs.save_dir, params.dataset, params.model, params.method, params.sparse_method)
+    if params.sparse_method=='KMeans':
+        k_means = True
+    else: #RVM
+        k_means = False
     model = Sparse_DKT(bb, k_means=k_means, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
 elif params.method=='transfer':

@@ -14,14 +14,15 @@ from matplotlib import animation
 # matplotlib.use('Agg')
 from colorama import Fore
 from sklearn.manifold import TSNE
+import torchvision.transforms as transforms
 from sklearn.cluster import KMeans
 from fast_pytorch_kmeans import KMeans as Fast_KMeans
-from methods.Fast_RVM import Fast_RVM 
-## Our packages
-import gpytorch
-import torchvision.transforms as transforms
 from time import gmtime, strftime
 import random
+## Our packages
+import gpytorch
+from methods.Fast_RVM import Fast_RVM 
+
 from statistics import mean
 from data.qmul_loader import get_batch, train_people, test_people
 from configs import kernel_type
@@ -538,23 +539,23 @@ class Sparse_DKT(nn.Module):
 
         os.makedirs(video_path, exist_ok=True)
         time_now = datetime.now().strftime('%Y-%m-%d--%H-%M')
-         
+        sparse_method = "KMeans" if self.k_means else "FRVM"
         self.plots = self.prepare_plots()
         # plt.show(block=False)
         # plt.pause(0.0001)
         if self.show_plots_pred:
            
-            metadata = dict(title='Sparse_DKT', artist='Matplotlib')
+            metadata = dict(title='Sparse_DKT_{sparse_method}', artist='Matplotlib')
             FFMpegWriter = animation.writers['ffmpeg']
             self.mw = FFMpegWriter(fps=5, metadata=metadata)   
-            file = f'{video_path}/Sparse_DKT_{time_now}.mp4'
+            file = f'{video_path}/Sparse_DKT_{sparse_method}_{time_now}.mp4'
             self.mw.setup(fig=self.plots.fig, outfile=file, dpi=125)
 
         if self.show_plots_features:  
-            metadata = dict(title='Sparse_DKT', artist='Matplotlib')         
+            metadata = dict(title='Sparse_DKT_{sparse_method}', artist='Matplotlib')         
             FFMpegWriter2 = animation.writers['ffmpeg']
             self.mw_feature = FFMpegWriter2(fps=2, metadata=metadata)
-            file = f'{video_path}/Sparse_DKT_features_test_{time_now}.mp4'
+            file = f'{video_path}/Sparse_DKT_{sparse_method}_features_{time_now}.mp4'
             self.mw_feature.setup(fig=self.plots.fig_feature, outfile=file, dpi=150)
     
     def prepare_plots(self):
@@ -692,7 +693,7 @@ class Sparse_DKT(nn.Module):
             # highlight inducing points
             y = ((train_y + 1) * 60 / 2) + 60
             if inducing_points.x is not None:
-                num = 1
+                
                 cluster = self.kmeans_clustering.predict(inducing_points.z_values)
                 # cluster = self.kmeans_clustering.predict(z_inducing.detach().cpu().numpy())                
                 for r in range(inducing_points.index.shape[0]):
@@ -701,8 +702,9 @@ class Sparse_DKT(nn.Module):
                     # i = int(t/10-6)
                     plots = color_ax(plots, inducing_points.i_idx[r], inducing_points.j_idx[r], cluster_colors[cluster[r]], lw=3) 
                     plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].spines['bottom'].set_color('red')   
-                    plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].set_xlabel(num, fontsize=10)          
-                    num +=1
+                    plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].set_xlabel(r+1, fontsize=10)          
+                
+        
         if self.show_plots_features:
             #features
             y = ((train_y + 1) * 60 / 2) + 60
@@ -801,7 +803,7 @@ class Sparse_DKT(nn.Module):
             # highlight inducing points
             y = ((train_y + 1) * 60 / 2) + 60
             if inducing_points.x is not None:
-                num = 1
+                
                 # cluster = self.kmeans_clustering.predict(inducing_points.z_values)
                 # cluster = self.kmeans_clustering.predict(z_inducing.detach().cpu().numpy())                
                 for r in range(inducing_points.index.shape[0]):
@@ -811,8 +813,9 @@ class Sparse_DKT(nn.Module):
                     plots = color_ax(plots, inducing_points.i_idx[r], inducing_points.j_idx[r], 'black', lw=1) 
                     plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].spines['bottom'].set_color('red')  
                     plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].spines['bottom'].set_linewidth(3) 
-                    plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].set_xlabel(num, fontsize=10)          
-                    num +=1
+                    plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].set_xlabel(r+1, fontsize=10)          
+                    
+        
         if self.show_plots_features:
             #features
             y = ((train_y + 1) * 60 / 2) + 60
