@@ -86,17 +86,16 @@ class Sparse_DKT(nn.Module):
             with torch.no_grad():
                 inducing_points = self.get_inducing_points(z, labels, verbose=False)
             
-            def inducing_max_similar_in_support_x(train_x, z, inducing_points, train_y):
+            def inducing_max_similar_in_support_x(train_x, train_z, inducing_points, train_y):
                 y = ((train_y.cpu().numpy() + 1) * 60 / 2) + 60
-        
-                z_np = z.detach().cpu().numpy()
-                Z_inducing = inducing_points.z_values.detach().cpu().numpy()
-                dist = np.linalg.norm(Z_inducing[:, None, :] - z_np[None, :, :], axis=-1)
-                # print(dist)
-                index = np.argmin(dist, axis=1)
+ 
+                kernel_matrix = self.model.covar_module(inducing_points.z_values, train_z).evaluate()
+                # kernel_matrix = self.model.base_covar_module(inducing_points.z_values, train_z).evaluate()
+                # max_similar_index
+                index = torch.argmax(kernel_matrix, axis=1)
                 x_inducing = train_x[index].cpu().numpy()
                 y_inducing = y[index]
-                z_inducing = z[index]
+                z_inducing = train_z[index]
                 i_idx = []
                 j_idx = []
                 # for r in range(index.shape[0]):
@@ -237,17 +236,16 @@ class Sparse_DKT(nn.Module):
             inducing_points = self.get_inducing_points(z_support, y_support, verbose=False)
         
         
-        def inducing_max_similar_in_support_x(train_x, z, inducing_points, train_y):
+        def inducing_max_similar_in_support_x(train_x, train_z, inducing_points, train_y):
             y = ((train_y.cpu().numpy() + 1) * 60 / 2) + 60
     
-            z_np = z.detach().cpu().numpy()
-            Z_inducing = inducing_points.z_values.detach().cpu().numpy()
-            dist = np.linalg.norm(Z_inducing[:, None, :] - z_np[None, :, :], axis=-1)
-            # print(dist)
-            index = np.argmin(dist, axis=1)
+            kernel_matrix = self.model.covar_module(inducing_points.z_values, train_z).evaluate()
+            # kernel_matrix = self.model.base_covar_module(inducing_points.z_values, train_z).evaluate()
+            # max_similar_index
+            index = torch.argmax(kernel_matrix, axis=1)
             x_inducing = train_x[index].cpu().numpy()
             y_inducing = y[index]
-            z_inducing = z[index]
+            z_inducing = train_z[index]
             i_idx = []
             j_idx = []
             for r in range(index.shape[0]):
@@ -281,7 +279,6 @@ class Sparse_DKT(nn.Module):
 
         mse = self.mse(pred.mean, y_query).item()
 
-
         #**************************************************************
         y = ((y_query.detach().cpu().numpy() + 1) * 60 / 2) + 60
         y_pred = ((pred.mean.detach().cpu().numpy() + 1) * 60 / 2) + 60
@@ -292,15 +289,15 @@ class Sparse_DKT(nn.Module):
         print(Fore.LIGHTRED_EX, f'mse:    {mse:.4f}', Fore.RESET)
         print(Fore.RED,"-"*50, Fore.RESET)
 
-        covar_module = self.model.base_covar_module
-        kernel_matrix = covar_module(z_query, z_support).evaluate().detach().cpu().numpy()
-        max_similar_index_ys = np.argmax(kernel_matrix, axis=1)
+        K = self.model.base_covar_module
+        kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
+        max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
         y_s = ((y_support.detach().cpu().numpy() + 1) * 60 / 2) + 60
-        print(Fore.LIGHTGREEN_EX, f'target of most similar in support set:       {y_s[max_similar_index_ys]}', Fore.RESET)
+        print(Fore.LIGHTGREEN_EX, f'target of most similar in support set:       {y_s[max_similar_idx_x_s]}', Fore.RESET)
         
-        kernel_matrix = covar_module(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
-        max_similar_index_y_ip = np.argmax(kernel_matrix, axis=1)
-        print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (K kernel): {inducing_points.y[max_similar_index_y_ip]}', Fore.RESET)
+        kernel_matrix = K(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
+        max_similar_idx_x_ip = np.argmax(kernel_matrix, axis=1)
+        print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (K kernel): {inducing_points.y[max_similar_idx_x_ip]}', Fore.RESET)
 
         kernel_matrix = self.model.covar_module(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
         max_similar_index = np.argmax(kernel_matrix, axis=1)
@@ -308,10 +305,11 @@ class Sparse_DKT(nn.Module):
         #**************************************************************
         if (self.show_plots_pred or self.show_plots_features) and self.k_means:
             embedded_z_support = TSNE(n_components=2).fit_transform(z_support.detach().cpu().numpy())
+
             self.update_plots_test_kmeans(self.plots, x_support, y_support.detach().cpu().numpy(), 
                                             z_support.detach(), z_query.detach(), embedded_z_support,
                                             inducing_points, x_query, y_query.detach().cpu().numpy(), pred, 
-                                            max_similar_index_ys, max_similar_index_y_ip, None, mse, None)
+                                            max_similar_idx_x_s, max_similar_idx_x_ip, None, mse, None)
             if self.show_plots_pred:
                 self.plots.fig.canvas.draw()
                 self.plots.fig.canvas.flush_events()
@@ -404,15 +402,15 @@ class Sparse_DKT(nn.Module):
         print(Fore.LIGHTRED_EX, f'mse:    {mse:.4f}', Fore.RESET)
         print(Fore.RED,"-"*50, Fore.RESET)
 
-        covar_module = self.model.base_covar_module
-        kernel_matrix = covar_module(z_query, z_support).evaluate().detach().cpu().numpy()
-        max_similar_index_ys = np.argmax(kernel_matrix, axis=1)
+        K = self.model.base_covar_module
+        kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
+        max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
         y_s = ((y_support.detach().cpu().numpy() + 1) * 60 / 2) + 60
-        print(Fore.LIGHTGREEN_EX, f'target of most similar in support set:       {y_s[max_similar_index_ys]}', Fore.RESET)
+        print(Fore.LIGHTGREEN_EX, f'target of most similar in support set:       {y_s[max_similar_idx_x_s]}', Fore.RESET)
         
-        kernel_matrix = covar_module(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
-        max_similar_index_y_ip = np.argmax(kernel_matrix, axis=1)
-        print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (K kernel): {inducing_points.y[max_similar_index_y_ip]}', Fore.RESET)
+        kernel_matrix = K(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
+        max_similar_idx_x_ip = np.argmax(kernel_matrix, axis=1)
+        print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (K kernel): {inducing_points.y[max_similar_idx_x_ip]}', Fore.RESET)
 
         kernel_matrix = self.model.covar_module(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
         max_similar_index = np.argmax(kernel_matrix, axis=1)
@@ -423,7 +421,7 @@ class Sparse_DKT(nn.Module):
             self.update_plots_test_fast_rvm(self.plots, x_support, y_support.detach().cpu().numpy(), 
                                             z_support.detach(), z_query.detach(), embedded_z_support,
                                             inducing_points, x_query, y_query.detach().cpu().numpy(), pred, 
-                                            max_similar_index_ys, max_similar_index_y_ip, None, mse, None)
+                                            similar_idx_x_s, similar_idx_x_ip, None, mse, None)
             if self.show_plots_pred:
                 self.plots.fig.canvas.draw()
                 self.plots.fig.canvas.flush_events()
@@ -605,7 +603,7 @@ class Sparse_DKT(nn.Module):
             plots.ax_feature.legend()
     
     def update_plots_test_kmeans(self, plots, train_x, train_y, train_z, test_z, embedded_z, inducing_points,   
-                                    test_x, test_y, test_y_pred, max_similar_index_ys, max_similar_index_y_ip, mll, mse, epoch):
+                                    test_x, test_y, test_y_pred, similar_idx_x_s, similar_idx_x_ip, mll, mse, epoch):
         def clear_ax(plots, i, j):
             plots.ax[i, j].clear()
             plots.ax[i, j].set_xticks([])
@@ -628,8 +626,9 @@ class Sparse_DKT(nn.Module):
         if self.show_plots_pred:
 
             cluster_colors = ['aqua', 'coral', 'lime', 'gold', 'purple', 'green']
-            #train images
 
+
+            #train images
             y = ((train_y + 1) * 60 / 2) + 60
             tilt = [60, 70, 80, 90, 100, 110, 120]
             num = 1
@@ -661,7 +660,7 @@ class Sparse_DKT(nn.Module):
             y_mean = test_y_pred.mean.detach().cpu().numpy()
             y_var = test_y_pred.variance.detach().cpu().numpy()
             y_pred = ((y_mean + 1) * 60 / 2) + 60
-            num = 0
+          
             for t in tilt:
                 idx = np.where(y==(t))[0]
                 if idx.shape[0]==0:
@@ -669,6 +668,8 @@ class Sparse_DKT(nn.Module):
                 else:
                     x = test_x[idx]
                     z = test_z[idx]
+                    sim_x_s = similar_idx_x_s[idx]
+                    sim_x_ip = similar_idx_x_ip[idx]
                     cluster = self.kmeans_clustering.predict(z)
                     y_p = y_pred[idx]
                     y_v = y_var[idx]
@@ -680,9 +681,9 @@ class Sparse_DKT(nn.Module):
                         plots = clear_ax(plots, i, j+ii)
                         plots.ax[i, j+ii].imshow(img)
                         plots = color_ax(plots, i, j+ii, color=cluster_colors[cluster[j]], lw=2)
-                        plots.ax[i, j+ii].set_title(f'{y_p[j]:.1f}', fontsize=10)
-                        plots.ax[i, j+ii].set_xlabel(f'{max_similar_index_ys[num]+1}|{max_similar_index_y_ip[num]+1}', fontsize=10)
-                        num +=1
+                        plots.ax[i, j+ii].set_title(f'{y_p[j]:.1f}', fontsize=8)
+                        plots.ax[i, j+ii].set_xlabel(f'{sim_x_s[j] + 1}|{sim_x_ip[j] + 1}', fontsize=10)
+ 
                     # plots.ax[i, j+16].legend()
             for i in range(7):
                 plots = clear_ax(plots, i, 15)
@@ -716,7 +717,7 @@ class Sparse_DKT(nn.Module):
             plots.ax_feature.legend()
 
     def update_plots_test_fast_rvm(self, plots, train_x, train_y, train_z, test_z, embedded_z, inducing_points,   
-                                    test_x, test_y, test_y_pred, max_similar_index_ys, max_similar_index_y_ip, mll, mse, epoch):
+                                    test_x, test_y, test_y_pred, similar_idx_x_s, similar_idx_x_ip, mll, mse, epoch):
         def clear_ax(plots, i, j):
             plots.ax[i, j].clear()
             plots.ax[i, j].set_xticks([])
@@ -770,15 +771,15 @@ class Sparse_DKT(nn.Module):
             y_mean = test_y_pred.mean.detach().cpu().numpy()
             y_var = test_y_pred.variance.detach().cpu().numpy()
             y_pred = ((y_mean + 1) * 60 / 2) + 60
-            num = 0
+          
             for t in tilt:
                 idx = np.where(y==(t))[0]
                 if idx.shape[0]==0:
                     continue
                 else:
                     x = test_x[idx]
-                    # z = test_z[idx]
-                    # cluster = self.kmeans_clustering.predict(z)
+                    sim_x_s = similar_idx_x_s[idx]
+                    sim_x_ip = similar_idx_x_ip[idx]
                     y_p = y_pred[idx]
                     y_v = y_var[idx]
                     i = int(t/10-6)
@@ -789,9 +790,9 @@ class Sparse_DKT(nn.Module):
                         plots = clear_ax(plots, i, j+ii)
                         plots.ax[i, j+ii].imshow(img)
                         # plots = color_ax(plots, i, j+ii, color=cluster_colors[cluster[j]], lw=2)
-                        plots.ax[i, j+ii].set_title(f'{y_p[j]:.1f}', fontsize=10)
-                        plots.ax[i, j+ii].set_xlabel(f'{max_similar_index_ys[num]+1}|{max_similar_index_y_ip[num]+1}', fontsize=10)
-                        num +=1
+                        plots.ax[i, j+ii].set_title(f'{y_p[j]:.1f}', fontsize=8)
+                        plots.ax[i, j+ii].set_xlabel(f'{sim_x_s[j]+1}|{sim_x_ip[j]+1}', fontsize=10)
+                
                     # plots.ax[i, j+16].legend()
             for i in range(7):
                 plots = clear_ax(plots, i, 15)
