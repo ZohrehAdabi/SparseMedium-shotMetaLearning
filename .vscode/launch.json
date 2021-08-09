@@ -47,6 +47,25 @@
            "args": ["--method","DKT", "--n_support", "90", "--n_test_epochs", "5", 
             "--show_plots_pred", "--show_plots_features", "--seed","2"]  
             // --method "DKT"  --n_support 90 --n_test_epochs 5 --show_plots_pred  --show_plots_features  --seed  2 
+        },
+
+        {
+            "name": "Transfer: train_regression",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/train_regression.py",
+            "console": "integratedTerminal",
+           "args": ["--method","transfer", "--n_samples", "108", "--stop_epoch", "100", "--seed","2"] 
+            // --method "transfer"  --n_samples 108 --stop_epoch 100  --seed  2 
+        },
+        {
+            "name": "Transfer: test_regression",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/test_regression.py",
+            "console": "integratedTerminal",
+           "args": ["--method","transfer", "--n_support", "90", "--n_test_epochs", "5", "--seed","2"]  
+            // --method "transfer"  --n_support 90 --n_test_epochs 5   --seed  2 
         }
     ]
     

@@ -33,24 +33,28 @@ class FeatureTransfer(nn.Module):
         self.model = Regressor()
         self.criterion = nn.MSELoss()
 
-    def train_loop(self, epoch, optimizer):
-        batch, batch_labels = get_batch(train_people)
+    def train_loop(self, epoch, n_samples, optimizer):
+        batch, batch_labels = get_batch(train_people, n_samples)
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
 
         for inputs, labels in zip(batch, batch_labels):
             optimizer.zero_grad()
             output = self.model(self.feature_extractor(inputs))
-            loss = self.criterion(output, labels)
+            loss = self.criterion(output.squeeze(), labels)
             loss.backward()
             optimizer.step()
 
-            if(epoch%10==0):
-                print('[%d] - Loss: %.3f' % (
+            if(epoch%2==0):
+                print('[%02d] - Loss: %.3f' % (
                     epoch, loss.item()
                 ))
+   
+    def train(self, epoch, n_support, n_samples, optimizer):
 
-    def test_loop(self, n_support, optimizer): # we need optimizer to take one gradient step
-        inputs, targets = get_batch(test_people)
+        self.train_loop(epoch, n_samples, optimizer)
+
+    def test_loop(self, n_support, n_samples, test_person, optimizer): # we need optimizer to take one gradient step
+        inputs, targets = get_batch(test_people, n_samples)
 
         support_ind = list(np.random.choice(list(range(19)), replace=False, size=n_support))
         query_ind   = [i for i in range(19) if i not in support_ind]
@@ -58,26 +62,45 @@ class FeatureTransfer(nn.Module):
         x_all = inputs.cuda()
         y_all = targets.cuda()
 
-        x_support = inputs[:,support_ind,:,:,:].cuda()
-        y_support = targets[:,support_ind].cuda()
-        x_query   = inputs[:,query_ind,:,:,:].cuda()
-        y_query   = targets[:,query_ind].cuda()
-
-        # choose a random test person
-        n = np.random.randint(0, len(test_people)-1)
+        split = np.array([True]*15 + [False]*3)
+        # print(split)
+        shuffled_split = []
+        for _ in range(6):
+            s = split.copy()
+            np.random.shuffle(s)
+            shuffled_split.extend(s)
+        shuffled_split = np.array(shuffled_split)
+        support_ind = shuffled_split
+        query_ind = ~shuffled_split
+        x_support = x_all[test_person, support_ind,:,:,:]
+        y_support = y_all[test_person, support_ind]
+        x_query   = x_all[test_person, query_ind,:,:,:]
+        y_query   = y_all[test_person, query_ind]
 
         optimizer.zero_grad()
-        z_support = self.feature_extractor(x_support[n]).detach()
+        z_support = self.feature_extractor(x_support).detach()
         output_support = self.model(z_support).squeeze()
-        loss = self.criterion(output_support, y_support[n])
+        loss = self.criterion(output_support.squeeze(), y_support)
         loss.backward()
         optimizer.step()
 
         self.feature_extractor.eval()
         self.model.eval()
-        z_all = self.feature_extractor(x_all[n]).detach()
-        output_all = self.model(z_all).squeeze()
-        return self.criterion(output_all, y_all[n])
+        z_query = self.feature_extractor(x_query).detach()
+        output = self.model(z_query).squeeze()
+        return self.criterion(output.squeeze(), y_query)
+
+    def test(self, n_support, n_samples, optimizer, test_count=None):
+
+        mse_list = []
+        # choose a random test person
+        test_person = np.random.choice(np.arange(len(test_people)), size=test_count, replace=False)
+        for t in range(test_count):
+            print(f'test #{t}')
+            
+            mse = self.test_loop(n_support, n_samples, test_person[t],  optimizer)
+            
+            mse_list.append(float(mse))
 
     def save_checkpoint(self, checkpoint):
         torch.save({'feature_extractor': self.feature_extractor.state_dict(), 'model':self.model.state_dict()}, checkpoint)
