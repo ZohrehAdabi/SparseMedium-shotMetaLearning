@@ -85,7 +85,7 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
             action[add]     = 1
 
         # Priority of Deletion
-        delete_priority = True
+        delete_priority = False
         if anyToDelete and delete_priority:
 
             deltaML[recompute] = 0

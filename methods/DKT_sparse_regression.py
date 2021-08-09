@@ -30,7 +30,7 @@ from collections import namedtuple
 
 IP = namedtuple("inducing_points", "z_values index count x y i_idx j_idx")
 class Sparse_DKT(nn.Module):
-    def __init__(self, backbone, k_means=True, n_inducing_points=None, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
+    def __init__(self, backbone, k_means=True, n_inducing_points=6, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
@@ -477,6 +477,7 @@ class Sparse_DKT(nn.Module):
             self.kmeans_clustering = Fast_KMeans(n_clusters=num_IP, max_iter=1000)
             self.kmeans_clustering.fit(inputs.cuda())
             inducing_points = self.kmeans_clustering.centroids
+            # print(inducing_points.shape[0])
 
 
         else:
