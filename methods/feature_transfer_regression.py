@@ -56,8 +56,8 @@ class FeatureTransfer(nn.Module):
     def test_loop(self, n_support, n_samples, test_person, optimizer): # we need optimizer to take one gradient step
         inputs, targets = get_batch(test_people, n_samples)
 
-        support_ind = list(np.random.choice(list(range(19)), replace=False, size=n_support))
-        query_ind   = [i for i in range(19) if i not in support_ind]
+        # support_ind = list(np.random.choice(list(range(19)), replace=False, size=n_support))
+        # query_ind   = [i for i in range(19) if i not in support_ind]
 
         x_all = inputs.cuda()
         y_all = targets.cuda()
@@ -88,7 +88,7 @@ class FeatureTransfer(nn.Module):
         self.model.eval()
         z_query = self.feature_extractor(x_query).detach()
         output = self.model(z_query).squeeze()
-        return self.criterion(output.squeeze(), y_query)
+        return self.criterion(output.squeeze(), y_query).item()
 
     def test(self, n_support, n_samples, optimizer, test_count=None):
 
@@ -101,6 +101,7 @@ class FeatureTransfer(nn.Module):
             mse = self.test_loop(n_support, n_samples, test_person[t],  optimizer)
             
             mse_list.append(float(mse))
+        return mse_list
 
     def save_checkpoint(self, checkpoint):
         torch.save({'feature_extractor': self.feature_extractor.state_dict(), 'model':self.model.state_dict()}, checkpoint)
