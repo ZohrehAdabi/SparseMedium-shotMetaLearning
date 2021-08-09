@@ -41,11 +41,12 @@ elif params.method=='Sparse_DKT':
         
         params.checkpoint_dir = params.checkpoint_dir +  f'KMeans_{str(params.n_centers)}'
         k_means = True
+        model = Sparse_DKT(bb, k_means=k_means, n_inducing_points=params.n_centers, video_path=video_path, 
+                            show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     else: #RVM
         params.checkpoint_dir = params.checkpoint_dir +  f'FRVM_{str(params.n_centers)}'
         k_means = False
-
-    model = Sparse_DKT(bb, k_means=k_means, video_path=video_path, 
+        model = Sparse_DKT(bb, k_means=k_means, video_path=video_path, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
 elif params.method=='transfer':
     model = FeatureTransfer(bb).cuda()
