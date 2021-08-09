@@ -125,7 +125,7 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
                 terminate = True
         
         
-        align_zero = 1e-3
+        align_zero = 1e-4
         if alignment_test:
             #
             # Addition - rule out addition (from now onwards) if the new basis
