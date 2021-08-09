@@ -30,11 +30,11 @@ from collections import namedtuple
 
 IP = namedtuple("inducing_points", "z_values index count x y i_idx j_idx")
 class Sparse_DKT(nn.Module):
-    def __init__(self, backbone, k_means=True, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
+    def __init__(self, backbone, k_means=True, n_inducing_points=None, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
-        self.num_induce_points = 18
+        self.num_induce_points = n_inducing_points
         self.k_means = k_means
         self.device = 'cuda'
         self.video_path = video_path
