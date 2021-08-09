@@ -143,4 +143,5 @@ SparseGP.py
 GP_Classification.py
 GP_Classification.ipynb
 save/*.png
-myfile.txt
+filelists/*.jpg
+*.txt
