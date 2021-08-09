@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import os
 import configs
 from data.qmul_loader import get_batch, train_people, test_people
 from io_utils import parse_args_regression, get_resume_file
@@ -27,10 +28,22 @@ elif params.method=='Sparse_DKT':
 
     params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s' % (configs.save_dir, params.dataset, params.model, params.method, params.sparse_method)
 
+    video_path = params.checkpoint_dir
+    
     if params.sparse_method=='KMeans':
+        
         k_means = True
+        params.checkpoint_dir += '/'
+        if not os.path.isdir(params.checkpoint_dir):
+            os.makedirs(params.checkpoint_dir)
+        params.checkpoint_dir = params.checkpoint_dir +  f'KMeans_{str(params.n_centers)}'
+        model = Sparse_DKT(bb, k_means=k_means, n_inducing_points=params.n_centers, video_path=video_path, 
+                            show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     elif params.sparse_method=='FRVM':
+        
         k_means = False
+        model = Sparse_DKT(bb, k_means=k_means, n_inducing_points=None, video_path=video_path, 
+                            show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     else:
         pass #ranndom
     model = Sparse_DKT(bb, k_means=k_means, video_path=params.checkpoint_dir, 
