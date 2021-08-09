@@ -19,8 +19,8 @@ for file_name, mode in zip(file_list, mode_list):
 
     t = 0
     file1 = open(f"{save}/{mode}.csv","w")#write mode
-    writer = csv.writer(file1)
-    writer.writerow(f'fname,label')
+    writer = csv.writer(file1, delimiter=' ', lineterminator='\n',  escapechar=' ', quoting=csv.QUOTE_NONE)
+    writer.writerow(['fname,label'])
 
     for name, indices in classes.items():
         data_img =images[indices]
@@ -35,7 +35,7 @@ for file_name, mode in zip(file_list, mode_list):
 
             pil_img = Image.fromarray(data_img[i])
             print(img_label)
-            writer.writerow(f'{img_label}')
+            writer.writerow([f'{img_label}'])
             print(file)
             # plt.imshow(pil_img)
             pil_img.save(file)
