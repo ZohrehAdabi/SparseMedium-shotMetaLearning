@@ -126,14 +126,22 @@ dmypy.json
 
 # checkpoints
 
-filelists
+
 filelists/QMUL/*.zip
 filelists/QMUL/images/
 filelists/QMUL/QMUL_360degreeViewSphere_FaceDatabase
 filelists/QMUL/*.json
-filelists
+
 filelists/omniglot/*.zip
 filelists/omniglot/images
+filelists/miniImagenet/miniImagenet_dataset/*.pkl
+filelists/miniImagenet/*.csv
+filelists/miniImagenet/*.json
+filelists/miniImagenet/miniimagenet/
+filelists/miniImagenet/train
+filelists/miniImagenet/test
+filelists/miniImagenet/val
+
 
 test.ipynb
 test.py
