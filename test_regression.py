@@ -47,8 +47,7 @@ elif params.method=='Sparse_DKT':
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
     else:
         pass #ranndom
-    model = Sparse_DKT(bb, k_means=k_means, video_path=params.checkpoint_dir, 
-                            show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features).cuda()
+
     optimizer = None
 elif params.method=='transfer':
     model = FeatureTransfer(bb).cuda()

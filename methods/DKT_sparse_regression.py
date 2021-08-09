@@ -30,7 +30,7 @@ from collections import namedtuple
 
 IP = namedtuple("inducing_points", "z_values index count x y i_idx j_idx")
 class Sparse_DKT(nn.Module):
-    def __init__(self, backbone, k_means=True, n_inducing_points=6, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
+    def __init__(self, backbone, k_means=True, n_inducing_points=12, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
@@ -524,6 +524,7 @@ class Sparse_DKT(nn.Module):
     def load_checkpoint(self, checkpoint):
     
         ckpt = torch.load(checkpoint)
+ 
         IP = torch.ones(self.num_induce_points, 2916).cuda()
         ckpt['gp']['covar_module.inducing_points'] = IP
         self.model.load_state_dict(ckpt['gp'])
@@ -696,6 +697,7 @@ class Sparse_DKT(nn.Module):
 
             # highlight inducing points
             y = ((train_y + 1) * 60 / 2) + 60
+            
             if inducing_points.x is not None:
                 
                 cluster = self.kmeans_clustering.predict(inducing_points.z_values)
