@@ -34,7 +34,7 @@ class Sparse_DKT(nn.Module):
         super(Sparse_DKT, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
-        self.num_induce_points = 24
+        self.num_induce_points = 18
         self.k_means = k_means
         self.device = 'cuda'
         self.video_path = video_path
