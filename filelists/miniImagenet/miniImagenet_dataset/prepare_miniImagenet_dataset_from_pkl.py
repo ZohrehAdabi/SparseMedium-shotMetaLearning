@@ -39,8 +39,8 @@ for file_name, mode in zip(file_list, mode_list):
             print(file)
             # plt.imshow(pil_img)
             pil_img.save(file)
-            if i==5: break
+            # if i==5: break
         
         t +=1
-        if t==5: break
+        # if t==5: break
     file1.close()
