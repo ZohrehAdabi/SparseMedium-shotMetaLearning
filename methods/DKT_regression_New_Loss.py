@@ -61,6 +61,7 @@ class DKT_New_Loss(nn.Module):
         batch, batch_labels = get_batch(train_people, n_samples)
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
         # print(f'{epoch}: {batch_labels[0]}')
+        mll_list = []
         for inputs, labels in zip(batch, batch_labels):
 
             split = np.array([True]*15 + [False]*3)
@@ -76,10 +77,10 @@ class DKT_New_Loss(nn.Module):
             x_all = inputs.cuda()
             y_all = labels.cuda()
 
-            x_support = x_all[:,support_ind,:,:,:]
-            y_support = y_all[:,support_ind]
-            x_query   = x_all[:,query_ind,:,:,:]
-            y_query   = y_all[:,query_ind]
+            x_support = x_all[support_ind,:,:,:]
+            y_support = y_all[support_ind]
+            x_query   = x_all[query_ind,:,:,:]
+            y_query   = y_all[query_ind]
 
             optimizer.zero_grad()
             z_support = self.feature_extractor(x_support)
@@ -94,7 +95,7 @@ class DKT_New_Loss(nn.Module):
             loss.backward()
             optimizer.step()
             mse = self.mse(predictions.mean, y_query)
-
+            mll_list.append(loss.item())
             if (epoch%2==0):
                 print('[%d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
                     epoch, loss.item(), mse.item(),
@@ -102,8 +103,8 @@ class DKT_New_Loss(nn.Module):
                 ))
 
             if (self.show_plots_pred or self.show_plots_features):
-                embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
-                self.update_plots_train(self.plots, labels.cpu().numpy(), embedded_z, None, mse, None)
+                embedded_z = TSNE(n_components=2).fit_transform(z_support.detach().cpu().numpy())
+                self.update_plots_train(self.plots, y_support.cpu().numpy(), embedded_z, None, mse, None)
 
                 if self.show_plots_pred:
                     self.plots.fig.canvas.draw()
@@ -113,6 +114,8 @@ class DKT_New_Loss(nn.Module):
                     self.plots.fig_feature.canvas.draw()
                     self.plots.fig_feature.canvas.flush_events()
                     self.mw_feature.grab_frame()
+        
+        return np.mean(mll_list)
 
     def test_loop(self, n_support, n_samples, test_person, optimizer=None): # no optimizer needed for GP
         inputs, targets = get_batch(test_people, n_samples)
@@ -187,7 +190,9 @@ class DKT_New_Loss(nn.Module):
 
     def train(self, epoch, n_support, n_samples, optimizer):
 
-        self.train_loop(epoch, n_support, n_samples, optimizer)
+        mll = self.train_loop(epoch, n_support, n_samples, optimizer)
+
+        return mll
 
     def test(self, n_support, n_samples, optimizer=None, test_count=None):
 
