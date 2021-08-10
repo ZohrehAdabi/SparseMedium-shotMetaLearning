@@ -16,6 +16,8 @@ import matplotlib.pyplot as plt
 fig_loss: plt.Figure = plt.figure(3, figsize=(6, 3), tight_layout=True, dpi=125)
 ax_mll: plt.Axes = fig_loss.add_subplot(2, 1, 1)
 ax_mse: plt.Axes = fig_loss.add_subplot(2, 1, 2)
+fig_mll_per_num_ip: plt.Figure = plt.figure(3, figsize=(6, 3), tight_layout=True, dpi=125)
+ax_mll_per_num_ip: plt.Axes = fig_loss.add_subplot(1, 1, 1)
 mll_hist = []
 mse_hist = []
 n_centers = np.arange(6, 48, 4) 
@@ -142,4 +144,12 @@ for i, n_center in enumerate(n_centers):
     ax_mse.set_ylabel("loss")
     ax_mll.set_title("Sparse DKT with KMeans")
     fig_loss.savefig(video_path+'/loss.png')
+
+    
+    ax_mll_per_num_ip.plot(mll_list, label=f'Meta-Train MLL, num IP= {n_center}')
+    ax_mll_per_num_ip.set_xlabel("number of epochs")
+    ax_mll_per_num_ip.set_ylabel("loss")
+    ax_mll_per_num_ip.legend()
+    ax_mll_per_num_ip.set_title("Sparse DKT with KMeans")
+    fig_mll_per_num_ip.savefig(video_path+'/mll_per_num_ip.png')
 
