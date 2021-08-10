@@ -13,8 +13,9 @@ import numpy as np
 from colorama import Fore
 import matplotlib.pyplot as plt
 
-fig_loss: plt.Figure = plt.figure(3, figsize=(6, 6), tight_layout=True, dpi=125)
-ax_loss: plt.Axes = fig_loss.add_subplot(1, 1, 1)
+fig_loss: plt.Figure = plt.figure(3, figsize=(6, 3), tight_layout=True, dpi=125)
+ax_mll: plt.Axes = fig_loss.add_subplot(2, 1, 1)
+ax_mse: plt.Axes = fig_loss.add_subplot(2, 1, 2)
 mll_hist = []
 mse_hist = []
 n_centers = np.arange(6, 48, 4) 
@@ -130,12 +131,15 @@ for i, n_center in enumerate(n_centers):
 
     mse_hist.append(mse)
 
-    ax_loss.clear()
-    ax_loss.plot(n_centers[:i+1], mll_hist, label='Meta-Train MLL')
-    ax_loss.plot(n_centers[:i+1], mse_hist, label='Meta-Test MSE')
-    ax_loss.legend()
-    ax_loss.set_xlabel("number of Inducing points/KMeans centers")
-    ax_loss.set_ylabel("loss")
-    ax_loss.set_title("Sparse DKT with KMeans")
-    fig_loss.savefig(video_path+'loss.png')
+    ax_mll.clear()
+    ax_mse.clear()
+    ax_mll.plot(n_centers[:i+1], mll_hist, label='Meta-Train MLL')
+    ax_mse.plot(n_centers[:i+1], mse_hist, label='Meta-Test MSE')
+    ax_mll.legend()
+    ax_mse.legend()
+    ax_mll.set_xlabel("number of Inducing points/KMeans centers")
+    ax_mll.set_ylabel("loss")
+    ax_mse.set_ylabel("loss")
+    ax_mll.set_title("Sparse DKT with KMeans")
+    fig_loss.savefig(video_path+'/loss.png')
 

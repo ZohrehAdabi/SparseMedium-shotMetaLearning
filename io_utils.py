@@ -64,7 +64,7 @@ def parse_args_regression(script):
             parser.add_argument('--n_support', default=10, type=int, help='Number of points on trajectory to be given as support points')
         elif script == 'test_regression':
             parser.add_argument('--n_support', default=90, type=int, help='Number of points on trajectory to be given as support points')
-            parser.add_argument('--n_test_epochs', default=3, type=int, help='How many test people?')
+            parser.add_argument('--n_test_epochs', default=5, type=int, help='How many test people?')
             parser.add_argument('--show_plots_pred', action='store_true', help='Show plots')
         return parser.parse_args()
 
