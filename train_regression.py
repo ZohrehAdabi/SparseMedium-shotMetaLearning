@@ -70,9 +70,15 @@ if params.method=='DKT' or params.method=='Sparse_DKT' or params.method=='DKT_Ne
         mll = model.train(epoch, params.n_support, params.n_samples, optimizer)
         mll_list.append(mll)
 
+<<<<<<< HEAD
         print(Fore.YELLOW,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
     mll = np.mean(mll_list)
     print(Fore.GREEN,"-"*40, f'\nend of meta-train => MLL: {mll}\n', "-"*40, Fore.RESET)
+=======
+        print(Fore.YELLOW,"-"*30, f'\end of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
+    mll = np.mean(mll_list)
+    print(Fore.GREEN,"="*40, f'\end of meta-train => MLL: {mll}\n', "="*40, Fore.RESET)
+>>>>>>> 2fa5c43cfbfe7346fe5ef8fad7ab785c4df94291
 
 else:
     mse_list = []
@@ -81,7 +87,11 @@ else:
         mse = model.train(epoch, params.n_support, params.n_samples, optimizer)
         mse_list.append(mse)
 
+<<<<<<< HEAD
         print(Fore.YELLOW,"-"*30, f'\nend of epoch {epoch} => MSE: {mse}\n', "-"*30, Fore.RESET)
+=======
+        print(Fore.YELLOW,"-"*30, f'\nend of epoch {epoch} => MSE: {mse}\n', "="*30, Fore.RESET)
+>>>>>>> 2fa5c43cfbfe7346fe5ef8fad7ab785c4df94291
     mll = np.mean(mse_list)
     print(Fore.GREEN,"="*40, f'\nend of meta-train => MSE: {mse}\n', "="*40, Fore.RESET)
 

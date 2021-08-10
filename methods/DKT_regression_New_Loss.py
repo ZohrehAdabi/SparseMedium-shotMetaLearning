@@ -77,10 +77,10 @@ class DKT_New_Loss(nn.Module):
             x_all = inputs.cuda()
             y_all = labels.cuda()
 
-            x_support = x_all[:,support_ind,:,:,:]
-            y_support = y_all[:,support_ind]
-            x_query   = x_all[:,query_ind,:,:,:]
-            y_query   = y_all[:,query_ind]
+            x_support = x_all[support_ind,:,:,:]
+            y_support = y_all[support_ind]
+            x_query   = x_all[query_ind,:,:,:]
+            y_query   = y_all[query_ind]
 
             optimizer.zero_grad()
             z_support = self.feature_extractor(x_support)
@@ -103,8 +103,8 @@ class DKT_New_Loss(nn.Module):
                 ))
 
             if (self.show_plots_pred or self.show_plots_features):
-                embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
-                self.update_plots_train(self.plots, labels.cpu().numpy(), embedded_z, None, mse, None)
+                embedded_z = TSNE(n_components=2).fit_transform(z_support.detach().cpu().numpy())
+                self.update_plots_train(self.plots, y_support.cpu().numpy(), embedded_z, None, mse, None)
 
                 if self.show_plots_pred:
                     self.plots.fig.canvas.draw()
@@ -114,6 +114,8 @@ class DKT_New_Loss(nn.Module):
                     self.plots.fig_feature.canvas.draw()
                     self.plots.fig_feature.canvas.flush_events()
                     self.mw_feature.grab_frame()
+        
+        return np.mean(mll_list)
 
         return np.mean(mll_list)
 
@@ -191,6 +193,10 @@ class DKT_New_Loss(nn.Module):
     def train(self, epoch, n_support, n_samples, optimizer):
 
         mll = self.train_loop(epoch, n_support, n_samples, optimizer)
+<<<<<<< HEAD
+=======
+
+>>>>>>> 2fa5c43cfbfe7346fe5ef8fad7ab785c4df94291
         return mll
 
     def test(self, n_support, n_samples, optimizer=None, test_count=None):
@@ -307,7 +313,7 @@ class DKT_New_Loss(nn.Module):
             return plots
 
         if self.show_plots_pred:
-
+            plots.fig.suptitle(f"person {person}, MSE: {mse:.2f}")
             cluster_colors = ['aqua', 'coral', 'lime', 'gold', 'purple', 'green']
             #train images
 
@@ -369,7 +375,11 @@ class DKT_New_Loss(nn.Module):
                 plots = clear_ax(plots, i, 15)
                 plots = color_ax(plots, i, 15, 'white', lw=0.5)
 
+<<<<<<< HEAD
             plots.fig.savefig(f'{self.video_path}/test_person_{person}.png') 
+=======
+            plots.fig.savefig(f'{self.video_path}/test_person_{person}.png')    
+>>>>>>> 2fa5c43cfbfe7346fe5ef8fad7ab785c4df94291
 
         if self.show_plots_features:
             #features

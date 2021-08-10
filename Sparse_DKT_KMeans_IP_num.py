@@ -17,7 +17,7 @@ fig_loss: plt.Figure = plt.figure(3, figsize=(6, 3), tight_layout=True, dpi=125)
 ax_mll: plt.Axes = fig_loss.add_subplot(2, 1, 1)
 ax_mse: plt.Axes = fig_loss.add_subplot(2, 1, 2)
 fig_mll_per_num_ip: plt.Figure = plt.figure(4, figsize=(6, 3), tight_layout=True, dpi=125)
-ax_mse_per_num_ip: plt.Axes = fig_mll_per_num_ip.add_subplot(1, 1, 1)
+ax_mll_per_num_ip: plt.Axes = fig_mll_per_num_ip.add_subplot(1, 1, 1)
 
 mll_hist = []
 mse_hist = []
