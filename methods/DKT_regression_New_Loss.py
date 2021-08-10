@@ -175,7 +175,7 @@ class DKT_New_Loss(nn.Module):
             self.update_plots_test(self.plots, x_support, y_support.detach().cpu().numpy(), 
                                             z_support.detach(), z_query.detach(), embedded_z_support,
                                             x_query, y_query.detach().cpu().numpy(), pred, 
-                                            max_similar_idx_x_s, None, mse, None)
+                                            max_similar_idx_x_s, None, mse, test_person)
             if self.show_plots_pred:
                 self.plots.fig.canvas.draw()
                 self.plots.fig.canvas.flush_events()
@@ -287,7 +287,7 @@ class DKT_New_Loss(nn.Module):
             plots.ax_feature.legend()
 
     def update_plots_test(self, plots, train_x, train_y, train_z, test_z, embedded_z,   
-                                    test_x, test_y, test_y_pred, similar_idx_x_s, mll, mse, epoch):
+                                    test_x, test_y, test_y_pred, similar_idx_x_s, mll, mse, person):
         def clear_ax(plots, i, j):
             plots.ax[i, j].clear()
             plots.ax[i, j].set_xticks([])
@@ -308,7 +308,7 @@ class DKT_New_Loss(nn.Module):
             return plots
 
         if self.show_plots_pred:
-
+            plots.fig.suptitle(f"person {person}, MSE: {mse:.2f}")
             cluster_colors = ['aqua', 'coral', 'lime', 'gold', 'purple', 'green']
             #train images
 
@@ -370,6 +370,7 @@ class DKT_New_Loss(nn.Module):
                 plots = clear_ax(plots, i, 15)
                 plots = color_ax(plots, i, 15, 'white', lw=0.5)
 
+            plots.fig.savefig(f'{self.video_path}/test_person_{person}.png')    
 
         if self.show_plots_features:
             #features
