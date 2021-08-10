@@ -36,7 +36,7 @@ class FeatureTransfer(nn.Module):
     def train_loop(self, epoch, n_samples, optimizer):
         batch, batch_labels = get_batch(train_people, n_samples)
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
-
+        mse_list = []
         for inputs, labels in zip(batch, batch_labels):
             optimizer.zero_grad()
             output = self.model(self.feature_extractor(inputs))
@@ -48,6 +48,8 @@ class FeatureTransfer(nn.Module):
                 print('[%02d] - Loss: %.3f' % (
                     epoch, loss.item()
                 ))
+            mse_list.append(loss.item())
+        return np.mean(mse_list)
    
     def train(self, epoch, n_support, n_samples, optimizer):
 

@@ -41,7 +41,7 @@ class Sparse_DKT(nn.Module):
         self.show_plots_pred = show_plots_pred
         self.show_plots_features = show_plots_features
         if self.show_plots_pred or self.show_plots_features:
-            self.initialize_plot(video_path, training)
+            self.initialize_plot(self.video_path, training)
         self.get_model_likelihood_mll() #Init model, likelihood, and mll
         
     def get_model_likelihood_mll(self, train_x=None, train_y=None):
@@ -69,6 +69,7 @@ class Sparse_DKT(nn.Module):
         
         batch, batch_labels = get_batch(train_people, n_samples)
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
+        mll_list = []
         for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
 
             # support_ind = list(np.random.choice(list(range(n_samples)), replace=False, size=n_support))
@@ -129,6 +130,7 @@ class Sparse_DKT(nn.Module):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            mll_list.append(loss.item())
             mse = self.mse(predictions.mean, labels)
 
             if ((epoch%2==0) & (itr%5==0)):
@@ -150,10 +152,13 @@ class Sparse_DKT(nn.Module):
                     self.plots.fig_feature.canvas.flush_events()
                     self.mw_feature.grab_frame()
 
+        return np.mean(mll_list)
+
     def train_loop_fast_rvm(self, epoch, n_support, n_samples, optimizer):
         
         batch, batch_labels = get_batch(train_people, n_samples)
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
+        mll_list = []
         for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
 
             # support_ind = list(np.random.choice(list(range(n_samples)), replace=False, size=n_support))
@@ -183,6 +188,7 @@ class Sparse_DKT(nn.Module):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            mll_list.append(loss.item())
             mse = self.mse(predictions.mean, labels)
 
             if ((epoch%2==0) & (itr%5==0)):
@@ -203,6 +209,8 @@ class Sparse_DKT(nn.Module):
                     self.plots.fig_feature.canvas.draw()
                     self.plots.fig_feature.canvas.flush_events()
                     self.mw_feature.grab_frame()
+        
+        return np.mean(mll_list)
 
     def test_loop_kmeans(self, n_support, n_samples, test_person, optimizer=None): # no optimizer needed for GP
 
@@ -310,7 +318,7 @@ class Sparse_DKT(nn.Module):
             self.update_plots_test_kmeans(self.plots, x_support, y_support.detach().cpu().numpy(), 
                                             z_support.detach(), z_query.detach(), embedded_z_support,
                                             inducing_points, x_query, y_query.detach().cpu().numpy(), pred, 
-                                            max_similar_idx_x_s, max_similar_idx_x_ip, None, mse, None)
+                                            max_similar_idx_x_s, max_similar_idx_x_ip, None, mse, test_person)
             if self.show_plots_pred:
                 self.plots.fig.canvas.draw()
                 self.plots.fig.canvas.flush_events()
@@ -535,9 +543,9 @@ class Sparse_DKT(nn.Module):
         
         
         if training:
-            video_path = video_path+'_Train_video'
+            self.video_path = video_path+'_Train_video'
         else:
-            video_path = video_path+'_Test_video'
+            self.video_path = video_path+'_Test_video'
 
         os.makedirs(video_path, exist_ok=True)
         time_now = datetime.now().strftime('%Y-%m-%d--%H-%M')
@@ -550,14 +558,14 @@ class Sparse_DKT(nn.Module):
             metadata = dict(title='Sparse_DKT_{sparse_method}', artist='Matplotlib')
             FFMpegWriter = animation.writers['ffmpeg']
             self.mw = FFMpegWriter(fps=5, metadata=metadata)   
-            file = f'{video_path}/Sparse_DKT_{sparse_method}_{time_now}.mp4'
+            file = f'{self.video_path}/Sparse_DKT_{sparse_method}_{time_now}.mp4'
             self.mw.setup(fig=self.plots.fig, outfile=file, dpi=125)
 
         if self.show_plots_features:  
             metadata = dict(title='Sparse_DKT_{sparse_method}', artist='Matplotlib')         
             FFMpegWriter2 = animation.writers['ffmpeg']
             self.mw_feature = FFMpegWriter2(fps=2, metadata=metadata)
-            file = f'{video_path}/Sparse_DKT_{sparse_method}_features_{time_now}.mp4'
+            file = f'{self.video_path}/Sparse_DKT_{sparse_method}_features_{time_now}.mp4'
             self.mw_feature.setup(fig=self.plots.fig_feature, outfile=file, dpi=150)
     
     def prepare_plots(self):
@@ -606,7 +614,7 @@ class Sparse_DKT(nn.Module):
             plots.ax_feature.legend()
     
     def update_plots_test_kmeans(self, plots, train_x, train_y, train_z, test_z, embedded_z, inducing_points,   
-                                    test_x, test_y, test_y_pred, similar_idx_x_s, similar_idx_x_ip, mll, mse, epoch):
+                                    test_x, test_y, test_y_pred, similar_idx_x_s, similar_idx_x_ip, mll, mse, person):
         def clear_ax(plots, i, j):
             plots.ax[i, j].clear()
             plots.ax[i, j].set_xticks([])
@@ -627,6 +635,8 @@ class Sparse_DKT(nn.Module):
             return plots
 
         if self.show_plots_pred:
+            
+            plots.fig.suptitle(f"person {person}, MSE: {mse:.2f}")
 
             cluster_colors = ['aqua', 'coral', 'lime', 'gold', 'purple', 'green', 'tomato', 
                                 'fuchsia', 'chocolate', 'chartreuse', 'orange', 'teal']
@@ -658,7 +668,7 @@ class Sparse_DKT(nn.Module):
                         num += 1
                     plots.ax[i, 0].set_ylabel(f'{t}',  fontsize=10)
                 
-        
+
             # test images
             y = ((test_y + 1) * 60 / 2) + 60
             y_mean = test_y_pred.mean.detach().cpu().numpy()
@@ -709,8 +719,9 @@ class Sparse_DKT(nn.Module):
                     plots = color_ax(plots, inducing_points.i_idx[r], inducing_points.j_idx[r], 'black', lw=3) #cluster_colors[cluster[r]]
                     plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].spines['bottom'].set_color('red')   
                     plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].set_xlabel(r+1, fontsize=10)          
-                
-        
+
+            plots.fig.savefig(f'{self.video_path}/test_person_{person}.png')    
+
         if self.show_plots_features:
             #features
             y = ((train_y + 1) * 60 / 2) + 60
@@ -725,7 +736,7 @@ class Sparse_DKT(nn.Module):
             plots.ax_feature.legend()
 
     def update_plots_test_fast_rvm(self, plots, train_x, train_y, train_z, test_z, embedded_z, inducing_points,   
-                                    test_x, test_y, test_y_pred, similar_idx_x_s, similar_idx_x_ip, mll, mse, epoch):
+                                    test_x, test_y, test_y_pred, similar_idx_x_s, similar_idx_x_ip, mll, mse, person):
         def clear_ax(plots, i, j):
             plots.ax[i, j].clear()
             plots.ax[i, j].set_xticks([])
@@ -749,7 +760,7 @@ class Sparse_DKT(nn.Module):
 
             cluster_colors = ['aqua', 'coral', 'lime', 'gold', 'purple', 'green']
             #train images
-
+            plots.fig.suptitle(f'person {person}, MSE: {mse:.2f}')
             y = ((train_y + 1) * 60 / 2) + 60
             tilt = [60, 70, 80, 90, 100, 110, 120]
             num = 1
@@ -804,6 +815,7 @@ class Sparse_DKT(nn.Module):
                         plots.ax[i, j+ii].set_xlabel(f'{id_sim_x_s}|{sim_x_ip[j]+1}', fontsize=10)
                 
                     # plots.ax[i, j+16].legend()
+            
             for i in range(7):
                 plots = clear_ax(plots, i, 15)
                 plots = color_ax(plots, i, 15, 'white', lw=0.5)
@@ -822,7 +834,8 @@ class Sparse_DKT(nn.Module):
                     plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].spines['bottom'].set_color('red')  
                     plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].spines['bottom'].set_linewidth(3) 
                     plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].set_xlabel(r+1, fontsize=10)          
-                    
+
+            plots.fig.savefig(f'{self.video_path}/test_person_{person}.png')      
         
         if self.show_plots_features:
             #features
