@@ -4,7 +4,7 @@ import torch.optim as optim
 import configs
 from data.qmul_loader import get_batch, train_people, test_people
 from io_utils import parse_args_regression, get_resume_file
-from methods.DKT_sparse_regression import Sparse_DKT
+from methods.Sparse_DKT_regression import Sparse_DKT
 from methods.DKT_regression import DKT
 from methods.feature_transfer_regression import FeatureTransfer
 import backbone
