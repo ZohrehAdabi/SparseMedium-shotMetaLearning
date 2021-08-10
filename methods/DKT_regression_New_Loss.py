@@ -193,10 +193,6 @@ class DKT_New_Loss(nn.Module):
     def train(self, epoch, n_support, n_samples, optimizer):
 
         mll = self.train_loop(epoch, n_support, n_samples, optimizer)
-<<<<<<< HEAD
-=======
-
->>>>>>> 2fa5c43cfbfe7346fe5ef8fad7ab785c4df94291
         return mll
 
     def test(self, n_support, n_samples, optimizer=None, test_count=None):
@@ -375,11 +371,7 @@ class DKT_New_Loss(nn.Module):
                 plots = clear_ax(plots, i, 15)
                 plots = color_ax(plots, i, 15, 'white', lw=0.5)
 
-<<<<<<< HEAD
             plots.fig.savefig(f'{self.video_path}/test_person_{person}.png') 
-=======
-            plots.fig.savefig(f'{self.video_path}/test_person_{person}.png')    
->>>>>>> 2fa5c43cfbfe7346fe5ef8fad7ab785c4df94291
 
         if self.show_plots_features:
             #features
