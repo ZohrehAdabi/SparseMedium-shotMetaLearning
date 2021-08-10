@@ -1,0 +1,74 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+
+        {
+            "name": "Sparse_DKT: train_regression",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/train_regression.py",
+            "console": "integratedTerminal",
+           "args": ["--method","Sparse_DKT", "--sparse_method", "KMeans", "--n_samples", "108", "--n_centers", "24", "--stop_epoch", "100",
+             "--show_plots_features", "--seed","2"]  
+      // --method "Sparse_DKT" --sparse_method "KMeans"  --n_samples 108 --n_centers 24 --stop_epoch 150  --show_plots_features  --seed  2 
+      // --method "Sparse_DKT" --sparse_method "FRVM"  --n_samples 108 --stop_epoch 100  --show_plots_features  --seed  2 
+        },
+        {
+            "name": "Sparse_DKT: test_regression",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/test_regression.py",
+            "console": "integratedTerminal",
+           "args": ["--method","Sparse_DKT", "--sparse_method", "KMeans", "--n_support", "90", "--n_centers", "24", "--n_test_epochs", "5", 
+                        "--show_plots_pred", "--show_plots_features",
+                        "--seed","2"] //"--show_plots_pred",
+
+        //    --method "Sparse_DKT" --sparse_method "KMeans"  --n_support 90  --n_centers 24 --n_test_epochs 5 --show_plots_pred  --show_plots_features  --seed  2 
+        //  --method "Sparse_DKT" --sparse_method "FRVM"  --n_support 90  --n_test_epochs 5 --show_plots_pred  --show_plots_features  --seed  2 
+        
+        },
+        {
+            "name": "DKT: train_regression",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/train_regression.py",
+            "console": "integratedTerminal",
+           "args": ["--method","DKT", "--n_samples", "108", "--stop_epoch", "100", "--show_plots_features", "--seed","2"] 
+            // --method "DKT"  --n_samples 108 --stop_epoch 100 --show_plots_features  --seed  2 
+        },
+        {
+            "name": "DKT: test_regression",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/test_regression.py",
+            "console": "integratedTerminal",
+           "args": ["--method","DKT", "--n_support", "90", "--n_test_epochs", "5", 
+            "--show_plots_pred", "--show_plots_features", "--seed","2"]  
+            // --method "DKT"  --n_support 90 --n_test_epochs 5 --show_plots_pred  --show_plots_features  --seed  2 
+        },
+
+        {
+            "name": "Transfer: train_regression",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/train_regression.py",
+            "console": "integratedTerminal",
+           "args": ["--method","transfer", "--n_samples", "108", "--stop_epoch", "100", "--seed","2"] 
+            // --method "transfer"  --n_samples 108 --stop_epoch 100  --seed  2 
+        },
+        {
+            "name": "Transfer: test_regression",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/test_regression.py",
+            "console": "integratedTerminal",
+           "args": ["--method","transfer", "--n_support", "90", "--n_test_epochs", "5", "--seed","2"]  
+            // --method "transfer"  --n_support 90 --n_test_epochs 5   --seed  2 
+        }
+    ]
+    
+}

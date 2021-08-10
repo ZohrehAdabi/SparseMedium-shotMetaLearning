@@ -161,3 +161,7 @@ save/*.png
 filelists/*.jpg
 *.txt
 filelists/QMUL/images_all.rar
+save/checkpoints/QMUL/*.png
+save/checkpoints/QMUL/Conv3_DKT_Test_video/
+
+filelists/CUB/CUB_200_2011.tgz
