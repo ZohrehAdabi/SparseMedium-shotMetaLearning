@@ -430,7 +430,7 @@ class Sparse_DKT(nn.Module):
             self.update_plots_test_fast_rvm(self.plots, x_support, y_support.detach().cpu().numpy(), 
                                             z_support.detach(), z_query.detach(), embedded_z_support,
                                             inducing_points, x_query, y_query.detach().cpu().numpy(), pred, 
-                                            max_similar_idx_x_s, max_similar_idx_x_ip, None, mse, None)
+                                            max_similar_idx_x_s, max_similar_idx_x_ip, None, mse, test_person)
             if self.show_plots_pred:
                 self.plots.fig.canvas.draw()
                 self.plots.fig.canvas.flush_events()

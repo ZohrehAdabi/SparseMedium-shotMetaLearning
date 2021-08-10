@@ -20,7 +20,7 @@ fig_mll_per_num_ip: plt.Figure = plt.figure(3, figsize=(6, 3), tight_layout=True
 ax_mll_per_num_ip: plt.Axes = fig_loss.add_subplot(1, 1, 1)
 mll_hist = []
 mse_hist = []
-n_centers = np.arange(6, 48, 4) 
+n_centers = np.arange(6, 83, 4) 
 for i, n_center in enumerate(n_centers):
     
     params = parse_args_regression('train_regression')
