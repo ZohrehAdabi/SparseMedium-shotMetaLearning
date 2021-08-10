@@ -638,7 +638,7 @@ class Sparse_DKT(nn.Module):
 
         if self.show_plots_pred:
             
-            plots.fig.suptitle(f"person {person}, MSE: {mse:.2f}")
+            plots.fig.suptitle(f"person {person}, MSE: {mse:.4f}")
 
             cluster_colors = ['aqua', 'coral', 'lime', 'gold', 'purple', 'green', 'tomato', 
                                 'fuchsia', 'chocolate', 'chartreuse', 'orange', 'teal']
@@ -762,7 +762,7 @@ class Sparse_DKT(nn.Module):
 
             cluster_colors = ['aqua', 'coral', 'lime', 'gold', 'purple', 'green']
             #train images
-            plots.fig.suptitle(f'person {person}, MSE: {mse:.2f}')
+            plots.fig.suptitle(f'person {person}, MSE: {mse:.4f}')
             y = ((train_y + 1) * 60 / 2) + 60
             tilt = [60, 70, 80, 90, 100, 110, 120]
             num = 1

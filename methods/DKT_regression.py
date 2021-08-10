@@ -289,7 +289,7 @@ class DKT(nn.Module):
 
             cluster_colors = ['aqua', 'coral', 'lime', 'gold', 'purple', 'green']
             #train images
-
+            plots.fig.suptitle(f'person {person}, MSE: {mse:.4f}')
             y = ((train_y + 1) * 60 / 2) + 60
             tilt = [60, 70, 80, 90, 100, 110, 120]
             num = 1
