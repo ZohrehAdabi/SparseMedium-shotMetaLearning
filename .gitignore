@@ -141,6 +141,8 @@ filelists/miniImagenet/miniimagenet/
 filelists/miniImagenet/train
 filelists/miniImagenet/test
 filelists/miniImagenet/val
+filelists/CUB/*.zip
+filelists/CUB/*.zip
 
 
 test.ipynb
