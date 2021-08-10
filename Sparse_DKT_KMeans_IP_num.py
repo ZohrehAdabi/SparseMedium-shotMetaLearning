@@ -28,7 +28,7 @@ for i, n_center in enumerate(n_centers):
 
     params.sparse_method=='KMeans'
     params.n_centers = n_center
-
+    print(Fore.CYAN, f'num Inducing points: {params.n_centers}', Fore.RESET)
     params.checkpoint_dir = '%scheckpoints/%s/' % (configs.save_dir, params.dataset)
     if not os.path.isdir(params.checkpoint_dir):
         os.makedirs(params.checkpoint_dir)
@@ -64,12 +64,13 @@ for i, n_center in enumerate(n_centers):
     mll_list = []
     for epoch in range(params.stop_epoch):
         
+        print(f"ephoc {epoch}")
         mll = model.train(epoch, params.n_support, params.n_samples, optimizer)
         mll_list.append(mll)
 
-        print(Fore.YELLOW,"="*30, f'end of epoch {epoch}=> MLL: {mll}\n', "="*30, Fore.RESET)
+        print(Fore.LIGHTYELLOW_EX,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
     mll = np.mean(mll_list)
-    print(Fore.GREEN,"="*40, f'end of meta-train {epoch}=> MLL: {mll}\n', "="*40, Fore.RESET)
+    print(Fore.GREEN,"="*40, f'\nend of meta-train  => MLL: {mll}\n', "="*40, Fore.RESET)
 
     mll_hist.append(mll)
 

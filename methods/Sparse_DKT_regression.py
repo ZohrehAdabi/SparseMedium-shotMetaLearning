@@ -447,9 +447,11 @@ class Sparse_DKT(nn.Module):
 
         if self.k_means:
 
-            self.train_loop_kmeans(epoch, n_support, n_samples, optimizer)
+            mll = self.train_loop_kmeans(epoch, n_support, n_samples, optimizer)
         else:
-            self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
+            mll = self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
+
+        return mll
     
     def test(self, n_support, n_samples, optimizer=None, test_count=None): # no optimizer needed for GP
 
