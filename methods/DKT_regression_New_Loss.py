@@ -62,7 +62,7 @@ class DKT_New_Loss(nn.Module):
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
         # print(f'{epoch}: {batch_labels[0]}')
         mll_list = []
-        for inputs, labels in zip(batch, batch_labels):
+        for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
 
             split = np.array([True]*15 + [False]*3)
             # print(split)
@@ -96,9 +96,9 @@ class DKT_New_Loss(nn.Module):
             optimizer.step()
             mse = self.mse(predictions.mean, y_query)
             mll_list.append(loss.item())
-            if (epoch%2==0):
-                print('[%d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
-                    epoch, loss.item(), mse.item(),
+            if ((epoch%2==0) & (itr%5==0)):
+                print('[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
+                    itr, epoch, loss.item(), mse.item(),
                     self.model.likelihood.noise.item()
                 ))
 
