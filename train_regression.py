@@ -7,6 +7,7 @@ from data.qmul_loader import get_batch, train_people, test_people
 from io_utils import parse_args_regression, get_resume_file
 from methods.Sparse_DKT_regression import Sparse_DKT
 from methods.DKT_regression import DKT
+from methods.DKT_regression_New_Loss import DKT_New_Loss
 from methods.feature_transfer_regression import FeatureTransfer
 import backbone
 import os
@@ -30,6 +31,10 @@ bb           = backbone.Conv3().cuda()
 if params.method=='DKT':
     model = DKT(bb, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
+elif params.method=='DKT_New_Loss':
+    model = DKT_New_Loss(bb, video_path=params.checkpoint_dir, 
+                            show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
+
 elif params.method=='Sparse_DKT':
     params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s' % (configs.save_dir, params.dataset, params.model, params.method, 
                                                         params.sparse_method)
@@ -58,7 +63,7 @@ else:
 optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr': 0.001},
                               {'params': model.feature_extractor.parameters(), 'lr': 0.001}
                               ])
-if params.method=='DKT' or params.method=='Sparse_DKT':
+if params.method=='DKT' or params.method=='Sparse_DKT' or params.method=='DKT_New_Loss':
     mll_list = []
     for epoch in range(params.stop_epoch):
         

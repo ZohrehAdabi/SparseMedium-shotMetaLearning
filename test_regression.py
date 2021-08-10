@@ -7,6 +7,7 @@ from data.qmul_loader import get_batch, train_people, test_people
 from io_utils import parse_args_regression, get_resume_file
 from methods.DKT_regression import DKT
 from methods.Sparse_DKT_regression import Sparse_DKT
+from methods.DKT_regression_New_Loss import DKT_New_Loss
 from methods.feature_transfer_regression import FeatureTransfer
 import backbone
 import numpy as np
@@ -22,6 +23,10 @@ bb           = backbone.Conv3().cuda()
 
 if params.method=='DKT':
     model = DKT(bb, video_path=params.checkpoint_dir, 
+                            show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features).cuda()
+    optimizer = None
+elif params.method=='DKT_New_Loss':
+    model = DKT_New_Loss(bb, video_path=params.checkpoint_dir, 
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features).cuda()
     optimizer = None
 elif params.method=='Sparse_DKT':
