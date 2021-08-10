@@ -26,6 +26,7 @@ for i, n_center in enumerate(n_centers):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
+    params.method = 'Sparse_DKT'
     params.sparse_method=='KMeans'
     params.n_centers = n_center
     print(Fore.CYAN, f'num Inducing points: {params.n_centers}', Fore.RESET)
@@ -85,50 +86,49 @@ for i, n_center in enumerate(n_centers):
     torch.backends.cudnn.benchmark = False
 
 
-    params.method=='Sparse_DKT'
+    params.method = 'Sparse_DKT'
+    params.sparse_method=='KMeans'
     params.n_centers = n_center
 
     params.checkpoint_dir = '%scheckpoints/%s/%s_%s' % (configs.save_dir, params.dataset, params.model, params.method)
     bb           = backbone.Conv3().cuda()
 
 
-    if params.method=='Sparse_DKT':
+    params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s' % (configs.save_dir, params.dataset, params.model, params.method, params.sparse_method)
 
-        params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s' % (configs.save_dir, params.dataset, params.model, params.method, params.sparse_method)
-
-        video_path = params.checkpoint_dir
+    video_path = params.checkpoint_dir
+    
+    if params.sparse_method=='KMeans':
         
-        if params.sparse_method=='KMeans':
-            
-            k_means = True
-            params.checkpoint_dir += '/'
-            if not os.path.isdir(params.checkpoint_dir):
-                os.makedirs(params.checkpoint_dir)
-            params.checkpoint_dir = params.checkpoint_dir +  f'KMeans_{str(params.n_centers)}'
-            # print(params.checkpoint_dir)
-            model = Sparse_DKT(bb, k_means=k_means, n_inducing_points=params.n_centers, video_path=video_path, 
-                                show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
-        elif params.sparse_method=='FRVM':
-            
-            k_means = False
-            model = Sparse_DKT(bb, k_means=k_means, video_path=video_path, 
-                                show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
-        else:
-            pass #ranndom
-
-        optimizer = None
-
-
-        model.load_checkpoint(params.checkpoint_dir)
-
+        k_means = True
+        params.checkpoint_dir += '/'
+        if not os.path.isdir(params.checkpoint_dir):
+            os.makedirs(params.checkpoint_dir)
+        params.checkpoint_dir = params.checkpoint_dir +  f'KMeans_{str(params.n_centers)}'
+        # print(params.checkpoint_dir)
+        model = Sparse_DKT(bb, k_means=k_means, n_inducing_points=params.n_centers, video_path=video_path, 
+                            show_plots_pred=True, show_plots_features=params.show_plots_features, training=False).cuda()
+    elif params.sparse_method=='FRVM':
         
-        mse_list = model.test(params.n_support, params.n_samples, optimizer, params.n_test_epochs)
-        mse = np.mean(mse_list)
-        print("------------------- ", n_center)
-        print("Average MSE: " + str(np.mean(mse_list)) + " +- " + str(np.std(mse_list)))
-        print("-------------------")
+        k_means = False
+        model = Sparse_DKT(bb, k_means=k_means, video_path=video_path, 
+                            show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
+    else:
+        pass #ranndom
 
-        mse_hist.append(mse)
+    optimizer = None
+
+
+    model.load_checkpoint(params.checkpoint_dir)
+
+    
+    mse_list = model.test(params.n_support, params.n_samples, optimizer, params.n_test_epochs)
+    mse = np.mean(mse_list)
+    print("------------------- ", n_center)
+    print("Average MSE: " + str(np.mean(mse_list)) + " +- " + str(np.std(mse_list)))
+    print("-------------------")
+
+    mse_hist.append(mse)
 
     ax_loss.clear()
     ax_loss.plot(n_centers[:i+1], mll_hist, label='Meta-Train MLL')
@@ -137,5 +137,5 @@ for i, n_center in enumerate(n_centers):
     ax_loss.set_xlabel("number of Inducing points/KMeans centers")
     ax_loss.set_ylabel("loss")
     ax_loss.set_title("Sparse DKT with KMeans")
-    fig_loss.savefig(video_path)
+    fig_loss.savefig(video_path+'loss.png')
 
