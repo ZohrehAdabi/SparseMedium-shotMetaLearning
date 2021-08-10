@@ -549,7 +549,7 @@ class Sparse_DKT(nn.Module):
         else:
             self.video_path = video_path+'_Test_video'
 
-        os.makedirs(video_path, exist_ok=True)
+        os.makedirs(self.video_path, exist_ok=True)
         time_now = datetime.now().strftime('%Y-%m-%d--%H-%M')
         sparse_method = "KMeans" if self.k_means else "FRVM"
         self.plots = self.prepare_plots()

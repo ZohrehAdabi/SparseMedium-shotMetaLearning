@@ -61,6 +61,7 @@ class DKT_New_Loss(nn.Module):
         batch, batch_labels = get_batch(train_people, n_samples)
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
         # print(f'{epoch}: {batch_labels[0]}')
+        mll_list = []
         for inputs, labels in zip(batch, batch_labels):
 
             split = np.array([True]*15 + [False]*3)
@@ -94,7 +95,7 @@ class DKT_New_Loss(nn.Module):
             loss.backward()
             optimizer.step()
             mse = self.mse(predictions.mean, y_query)
-
+            mll_list.append(loss.item())
             if (epoch%2==0):
                 print('[%d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
                     epoch, loss.item(), mse.item(),
@@ -113,6 +114,8 @@ class DKT_New_Loss(nn.Module):
                     self.plots.fig_feature.canvas.draw()
                     self.plots.fig_feature.canvas.flush_events()
                     self.mw_feature.grab_frame()
+
+        return np.mean(mll_list)
 
     def test_loop(self, n_support, n_samples, test_person, optimizer=None): # no optimizer needed for GP
         inputs, targets = get_batch(test_people, n_samples)
@@ -172,7 +175,7 @@ class DKT_New_Loss(nn.Module):
             self.update_plots_test(self.plots, x_support, y_support.detach().cpu().numpy(), 
                                             z_support.detach(), z_query.detach(), embedded_z_support,
                                             x_query, y_query.detach().cpu().numpy(), pred, 
-                                            max_similar_idx_x_s, None, mse, None)
+                                            max_similar_idx_x_s, None, mse, test_person)
             if self.show_plots_pred:
                 self.plots.fig.canvas.draw()
                 self.plots.fig.canvas.flush_events()
@@ -187,7 +190,8 @@ class DKT_New_Loss(nn.Module):
 
     def train(self, epoch, n_support, n_samples, optimizer):
 
-        self.train_loop(epoch, n_support, n_samples, optimizer)
+        mll = self.train_loop(epoch, n_support, n_samples, optimizer)
+        return mll
 
     def test(self, n_support, n_samples, optimizer=None, test_count=None):
 
@@ -225,11 +229,11 @@ class DKT_New_Loss(nn.Module):
         
         
         if training:
-            video_path = video_path+'_Train_video'
+            self.video_path = video_path+'_Train_video'
         else:
-            video_path = video_path+'_Test_video'
+            self.video_path = video_path+'_Test_video'
 
-        os.makedirs(video_path, exist_ok=True)
+        os.makedirs(self.video_path, exist_ok=True)
         time_now = datetime.now().strftime('%Y-%m-%d--%H-%M')
          
         self.plots = self.prepare_plots()
@@ -240,14 +244,14 @@ class DKT_New_Loss(nn.Module):
             metadata = dict(title='DKT', artist='Matplotlib')
             FFMpegWriter = animation.writers['ffmpeg']
             self.mw = FFMpegWriter(fps=5, metadata=metadata)   
-            file = f'{video_path}/DKT_{time_now}.mp4'
+            file = f'{self.video_path}/DKT_{time_now}.mp4'
             self.mw.setup(fig=self.plots.fig, outfile=file, dpi=125)
 
         if self.show_plots_features:  
             metadata = dict(title='DKT', artist='Matplotlib')         
             FFMpegWriter2 = animation.writers['ffmpeg']
             self.mw_feature = FFMpegWriter2(fps=2, metadata=metadata)
-            file = f'{video_path}/DKT_features_{time_now}.mp4'
+            file = f'{self.video_path}/DKT_features_{time_now}.mp4'
             self.mw_feature.setup(fig=self.plots.fig_feature, outfile=file, dpi=150)
     
     def prepare_plots(self):
@@ -282,7 +286,7 @@ class DKT_New_Loss(nn.Module):
             plots.ax_feature.legend()
 
     def update_plots_test(self, plots, train_x, train_y, train_z, test_z, embedded_z,   
-                                    test_x, test_y, test_y_pred, similar_idx_x_s, mll, mse, epoch):
+                                    test_x, test_y, test_y_pred, similar_idx_x_s, mll, mse, person):
         def clear_ax(plots, i, j):
             plots.ax[i, j].clear()
             plots.ax[i, j].set_xticks([])
@@ -365,6 +369,7 @@ class DKT_New_Loss(nn.Module):
                 plots = clear_ax(plots, i, 15)
                 plots = color_ax(plots, i, 15, 'white', lw=0.5)
 
+            plots.fig.savefig(f'{self.video_path}/test_person_{person}.png') 
 
         if self.show_plots_features:
             #features
