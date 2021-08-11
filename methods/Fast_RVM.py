@@ -41,6 +41,10 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
     beta_KK_m = beta * KK_m
     Sigma_m, mu_m, S, Q, s, q, logML, Gamma = Statistics(K_m, KK_m, KK_mm, Kt, K_mt, alpha_m, active_m, beta, targets, N)
 
+    delete_priority = False
+    add_priority = False
+    alignment_test = True
+
     for itr in range(max_itr):
 
         # 'Relevance Factor' (q^2-s) values for basis functions in model
@@ -72,7 +76,7 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
         # ADDITION: must be a POSITIVE factor and OUT of the model
         good_factor = Factor > 0
         good_factor[active_m] = False
-        alignment_test = True
+        
         if alignment_test and len(aligned_out) > 0:
             
             good_factor[aligned_out] = False
@@ -84,14 +88,12 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
             deltaML[add]    = (Q_S - 1 - torch.log(Q_S)) /2
             action[add]     = 1
 
-        # Priority of Deletion
-        delete_priority = False
+        # Priority of Deletion   
         if anyToDelete and delete_priority:
 
             deltaML[recompute] = 0
             deltaML[add] = 0
-        # Priority of Addition
-        add_priority = False
+        # Priority of Addition       
         if anyToAdd and add_priority:
 
             deltaML[recompute] = 0
@@ -120,7 +122,7 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
             no_change_in_alpha = len(no_change_in_alpha) == 1
             if no_change_in_alpha:
                 # print(selected_action)
-                print(f'No change in alpha, m={active_m.shape[0]}')
+                print(f'{itr:03}, No change in alpha, m={active_m.shape[0]}')
                 selected_action = torch.tensor(11)
                 terminate = True
         
@@ -265,7 +267,7 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
             delta_beta	= torch.log(beta)-torch.log(beta_old)
             beta_KK_m       = beta * KK_m
             if torch.abs(delta_beta) > 1e-6:
-                print(f'update statistics after beta update')
+                print(f'{itr:03}, update statistics after beta update')
                 Sigma_m, mu_m, S, Q, s, q, logML, Gamma = Statistics(K_m, KK_m, KK_mm, Kt, K_mt, alpha_m, active_m, beta, targets, N)
                 logMarginalLog.append(logML.item())
                 terminate = False
@@ -274,7 +276,7 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
 
         if terminate:
             # print(f'sigma2={1/beta:.4f}')
-            print(f'{itr:03}, m= {active_m.shape[0]} sigma2={1/beta:.4f}')
+            print(f'Finished at {itr:03}, m= {active_m.shape[0]} sigma2={1/beta:.4f}')
             return active_m.cpu().numpy(), alpha_m, Gamma, beta 
 
         if ((itr+1)%50==0) and verbose:
