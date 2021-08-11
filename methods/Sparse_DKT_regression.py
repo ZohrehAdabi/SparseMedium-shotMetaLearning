@@ -30,12 +30,13 @@ from collections import namedtuple
 
 IP = namedtuple("inducing_points", "z_values index count x y i_idx j_idx")
 class Sparse_DKT(nn.Module):
-    def __init__(self, backbone, k_means=True, n_inducing_points=12, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
+    def __init__(self, backbone, k_means=True, n_inducing_points=12, random=False, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
         self.num_induce_points = n_inducing_points
         self.k_means = k_means
+        self.random = random
         self.device = 'cuda'
         self.video_path = video_path
         self.show_plots_pred = show_plots_pred
@@ -71,18 +72,6 @@ class Sparse_DKT(nn.Module):
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
         mll_list = []
         for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
-
-            # support_ind = list(np.random.choice(list(range(n_samples)), replace=False, size=n_support))
-            # query_ind   = [i for i in range(n_samples) if i not in support_ind]
-
-            # x_support = inputs[support_ind,:,:,:]
-            # y_support = labels[support_ind]
-            # x_query   = inputs[query_ind,:,:,:]
-            # y_query   = labels[query_ind]
-
-            # random selection of inducing points
-            induce_ind = list(np.random.choice(list(range(n_samples)), replace=False, size=self.num_induce_points))
-            # induce_point = self.feature_extractor(inputs[induce_ind, :,:,:])
 
             z = self.feature_extractor(inputs)
             with torch.no_grad():
@@ -120,7 +109,7 @@ class Sparse_DKT(nn.Module):
             # with torch.no_grad():
             #     inducing_points = inducing_max_similar_in_support_x(inputs, z.detach(), inducing_points, labels)
             
-            self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
+            self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
 
             self.model.set_train_data(inputs=z, targets=labels, strict=False)
 
