@@ -432,7 +432,7 @@ class Sparse_DKT(nn.Module):
 
             z = self.feature_extractor(inputs)
 
-            inducing_points_z = z[inducing_points_index,: ,:, :]
+            inducing_points_z = z[inducing_points_index,:]
             
             ip_values = inducing_points_z.cuda()
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
@@ -496,7 +496,7 @@ class Sparse_DKT(nn.Module):
 
         z_support = self.feature_extractor(x_support).detach()
 
-        inducing_points_z = z_support[inducing_points_index,: ,:, :]
+        inducing_points_z = z_support[inducing_points_index,:]
 
         ip_values = inducing_points_z.cuda()
         self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
