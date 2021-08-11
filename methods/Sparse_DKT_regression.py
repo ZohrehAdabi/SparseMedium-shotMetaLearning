@@ -616,9 +616,9 @@ class Sparse_DKT(nn.Module):
             print(f'test #{t}')
             if self.k_means:
                 mse = self.test_loop_kmeans(n_support, n_samples, test_person[t],  optimizer)
-            elif self.random 
+            elif self.random:
                 mse = self.test_loop_fast_rvm(n_support, n_samples, test_person[t],  optimizer)
-            elif not self.k_means::
+            elif not self.k_means:
                 mse = self.test_loop_random(n_support, n_samples, test_person[t],  optimizer)
             else:
                 ValueError()
