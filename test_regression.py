@@ -52,7 +52,7 @@ elif params.method=='Sparse_DKT':
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
     elif params.sparse_method=='random':
         k_means = False
-        model = Sparse_DKT(bb, k_means=k_means, random=True, video_path=video_path, 
+        model = Sparse_DKT(bb, k_means=k_means, random=True,  n_inducing_points=params.n_centers, video_path=video_path, 
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
     else:
         ValueError('Unrecognised sparse method')
