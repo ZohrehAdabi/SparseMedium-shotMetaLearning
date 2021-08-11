@@ -120,7 +120,7 @@ class Sparse_DKT(nn.Module):
             # with torch.no_grad():
             #     inducing_points = inducing_max_similar_in_support_x(inputs, z.detach(), inducing_points, labels)
             
-            self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
+            self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
 
             self.model.set_train_data(inputs=z, targets=labels, strict=False)
 
