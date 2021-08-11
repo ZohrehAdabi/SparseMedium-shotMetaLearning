@@ -54,8 +54,8 @@ for i, n_center in enumerate(n_centers):
         if not os.path.isdir(params.checkpoint_dir):
             os.makedirs(params.checkpoint_dir)
         params.checkpoint_dir = params.checkpoint_dir +  f'random_{str(params.n_centers)}'
-        k_means = True
-        model = Sparse_DKT(bb, k_means=k_means, n_inducing_points=params.n_centers, video_path=video_path, 
+        k_means = False
+        model = Sparse_DKT(bb, k_means=k_means, random=True, n_inducing_points=params.n_centers, video_path=video_path, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     else: #RVM
 
@@ -99,13 +99,13 @@ for i, n_center in enumerate(n_centers):
     
     if params.sparse_method=='random':
         
-        k_means = True
+        k_means = False
         params.checkpoint_dir += '/'
         if not os.path.isdir(params.checkpoint_dir):
             os.makedirs(params.checkpoint_dir)
         params.checkpoint_dir = params.checkpoint_dir +  f'random_{str(params.n_centers)}'
         # print(params.checkpoint_dir)
-        model = Sparse_DKT(bb, k_means=k_means, n_inducing_points=params.n_centers, video_path=video_path, 
+        model = Sparse_DKT(bb, k_means=k_means, random=True, n_inducing_points=params.n_centers, video_path=video_path, 
                             show_plots_pred=True, show_plots_features=params.show_plots_features, training=False).cuda()
     elif params.sparse_method=='FRVM':
         
