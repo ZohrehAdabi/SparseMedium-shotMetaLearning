@@ -492,7 +492,7 @@ class Sparse_DKT(nn.Module):
         y_query   = y_all[test_person, query_ind]
 
 
-        inducing_points_index = list(np.random.choice(list(range(n_support)), replace=False, size=self.num_induce_points))
+        inducing_points_index = np.random.choice(list(range(n_support)), replace=False, size=self.num_induce_points)
 
         z_support = self.feature_extractor(x_support).detach()
 
@@ -617,9 +617,9 @@ class Sparse_DKT(nn.Module):
             if self.k_means:
                 mse = self.test_loop_kmeans(n_support, n_samples, test_person[t],  optimizer)
             elif self.random:
-                mse = self.test_loop_fast_rvm(n_support, n_samples, test_person[t],  optimizer)
-            elif not self.k_means:
                 mse = self.test_loop_random(n_support, n_samples, test_person[t],  optimizer)
+            elif not self.k_means:
+                mse = self.test_loop_fast_rvm(n_support, n_samples, test_person[t],  optimizer)
             else:
                 ValueError()
 
