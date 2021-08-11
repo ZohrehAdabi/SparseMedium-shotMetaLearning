@@ -67,15 +67,8 @@ for i, n_center in enumerate(n_centers):
                                 {'params': model.feature_extractor.parameters(), 'lr': 0.001}
                                 ])
 
-    mll_list = []
-    for epoch in range(params.stop_epoch):
-        
-        print(f"ephoc {epoch}")
-        mll = model.train(epoch, params.n_support, params.n_samples, optimizer)
-        mll_list.append(mll)
-
-        print(Fore.LIGHTYELLOW_EX,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
-    mll = np.mean(mll_list)
+    mll = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer)
+ 
     print(Fore.GREEN,"="*40, f'\nend of meta-train  => MLL: {mll}\n', "="*40, Fore.RESET)
 
     mll_hist.append(mll)
