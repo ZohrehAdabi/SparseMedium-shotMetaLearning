@@ -13,7 +13,7 @@ import numpy as np
 from colorama import Fore
 import matplotlib.pyplot as plt
 
-fig_loss: plt.Figure = plt.figure(3, figsize=(8, 6), tight_layout=True, dpi=125)
+fig_loss: plt.Figure = plt.figure(3, figsize=(16, 8), tight_layout=True, dpi=125)
 ax_mll: plt.Axes = fig_loss.add_subplot(2, 1, 1)
 ax_mse: plt.Axes = fig_loss.add_subplot(2, 1, 2)
 fig_mll_per_num_ip: plt.Figure = plt.figure(4, figsize=(8, 4), tight_layout=True, dpi=150)
@@ -147,7 +147,7 @@ for i, n_center in enumerate(n_centers):
     ax_mll_per_num_ip.plot(mll_list, label=f'num IP= {n_center}')
     ax_mll_per_num_ip.set_xlabel("number of epochs")
     ax_mll_per_num_ip.set_ylabel("loss")
-    ax_mll_per_num_ip.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=8)
+    ax_mll_per_num_ip.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=8, ncol=2)
     fig_mll_per_num_ip.tight_layout()
     ax_mll_per_num_ip.set_title("Sparse DKT with random selection (Meta-Train MLL)")
     fig_mll_per_num_ip.savefig(video_path+'/mll_per_num_ip.png')
