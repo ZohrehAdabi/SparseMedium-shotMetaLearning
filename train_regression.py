@@ -73,7 +73,7 @@ optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr': 0.001},
                               ])
 if params.method=='DKT' or params.method=='Sparse_DKT' or params.method=='DKT_New_Loss':
 
-    mll = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer)
+    mll, _ = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer)
 
     print(Fore.GREEN,"-"*40, f'\nend of meta-train => MLL: {mll}\n', "-"*40, Fore.RESET)
 

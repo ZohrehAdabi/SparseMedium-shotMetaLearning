@@ -31,7 +31,7 @@ for i, n_center in enumerate(n_centers):
     torch.backends.cudnn.benchmark = False
 
     params.method = 'Sparse_DKT'
-    params.sparse_method=='KMeans'
+    params.sparse_method=='random'
     params.n_centers = n_center
     params.show_plots_features = True
     print(Fore.CYAN, f'num Inducing points: {params.n_centers}', Fore.RESET)
@@ -48,12 +48,12 @@ for i, n_center in enumerate(n_centers):
     video_path = params.checkpoint_dir
 
 
-    if params.sparse_method=='KMeans':
+    if params.sparse_method=='random':
         
         params.checkpoint_dir += '/'
         if not os.path.isdir(params.checkpoint_dir):
             os.makedirs(params.checkpoint_dir)
-        params.checkpoint_dir = params.checkpoint_dir +  f'KMeans_{str(params.n_centers)}'
+        params.checkpoint_dir = params.checkpoint_dir +  f'random_{str(params.n_centers)}'
         k_means = True
         model = Sparse_DKT(bb, k_means=k_means, n_inducing_points=params.n_centers, video_path=video_path, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
@@ -67,7 +67,7 @@ for i, n_center in enumerate(n_centers):
                                 {'params': model.feature_extractor.parameters(), 'lr': 0.001}
                                 ])
 
-    mll, mll_list = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer)
+    mll = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer)
  
     print(Fore.GREEN,"="*40, f'\nend of meta-train  => MLL: {mll}\n', "="*40, Fore.RESET)
 
@@ -85,7 +85,7 @@ for i, n_center in enumerate(n_centers):
 
 
     params.method = 'Sparse_DKT'
-    params.sparse_method=='KMeans'
+    params.sparse_method=='random'
     params.n_centers = n_center
     params.show_plots_features = True
 
@@ -97,13 +97,13 @@ for i, n_center in enumerate(n_centers):
 
     video_path = params.checkpoint_dir
     
-    if params.sparse_method=='KMeans':
+    if params.sparse_method=='random':
         
         k_means = True
         params.checkpoint_dir += '/'
         if not os.path.isdir(params.checkpoint_dir):
             os.makedirs(params.checkpoint_dir)
-        params.checkpoint_dir = params.checkpoint_dir +  f'KMeans_{str(params.n_centers)}'
+        params.checkpoint_dir = params.checkpoint_dir +  f'random_{str(params.n_centers)}'
         # print(params.checkpoint_dir)
         model = Sparse_DKT(bb, k_means=k_means, n_inducing_points=params.n_centers, video_path=video_path, 
                             show_plots_pred=True, show_plots_features=params.show_plots_features, training=False).cuda()
@@ -135,10 +135,10 @@ for i, n_center in enumerate(n_centers):
     ax_mse.plot(n_centers[:i+1], mse_hist, label='Meta-Test MSE')
     ax_mll.legend()
     ax_mse.legend()
-    ax_mll.set_xlabel("number of Inducing points/KMeans centers")
+    ax_mll.set_xlabel("number of Inducing points")
     ax_mll.set_ylabel("loss")
     ax_mse.set_ylabel("loss")
-    ax_mll.set_title("Sparse DKT with KMeans")
+    ax_mll.set_title("Sparse DKT with random selection")
     fig_loss.tight_layout()
     fig_loss.savefig(video_path+'/loss.png')
 
@@ -148,6 +148,6 @@ for i, n_center in enumerate(n_centers):
     ax_mll_per_num_ip.set_ylabel("loss")
     ax_mll_per_num_ip.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=8)
     fig_mll_per_num_ip.tight_layout()
-    ax_mll_per_num_ip.set_title("Sparse DKT with KMeans (Meta-Train MLL)")
+    ax_mll_per_num_ip.set_title("Sparse DKT with random selection (Meta-Train MLL)")
     fig_mll_per_num_ip.savefig(video_path+'/mll_per_num_ip.png')
 

@@ -180,7 +180,7 @@ class DKT(nn.Module):
             self.mw.finish()
         if self.show_plots_features:
             self.mw_feature.finish()
-        return mll
+        return mll, mll_list
 
     def test(self, n_support, n_samples, optimizer=None, test_count=None):
 
