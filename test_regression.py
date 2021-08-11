@@ -30,7 +30,7 @@ elif params.method=='DKT_New_Loss':
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features).cuda()
     optimizer = None
 elif params.method=='Sparse_DKT':
-
+    print(f'\n{params.sparse_method}\n')
     params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s' % (configs.save_dir, params.dataset, params.model, params.method, params.sparse_method)
 
     video_path = params.checkpoint_dir
