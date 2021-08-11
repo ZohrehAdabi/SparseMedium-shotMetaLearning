@@ -584,10 +584,10 @@ class Sparse_DKT(nn.Module):
         if self.k_means:
 
             mll = self.train_loop_kmeans(epoch, n_support, n_samples, optimizer)
-        elif not self.k_means:
-            mll = self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
         elif self.random:
             mll = self.train_loop_random(epoch, n_support, n_samples, optimizer)
+        elif not self.k_means:
+            mll = self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
         else:
             ValueError("Error")
         if self.show_plots_pred:
