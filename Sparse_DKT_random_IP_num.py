@@ -57,11 +57,12 @@ for i, n_center in enumerate(n_centers):
         k_means = False
         model = Sparse_DKT(bb, k_means=k_means, random=True, n_inducing_points=params.n_centers, video_path=video_path, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
-    else: #RVM
+    elif params.sparse_method=='FRVM':
 
         k_means = False
         model = Sparse_DKT(bb, k_means=k_means, video_path=video_path, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
+    else: ValueError()
 
     optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr': 0.001},
                                 {'params': model.feature_extractor.parameters(), 'lr': 0.001}
