@@ -13,7 +13,7 @@
             "console": "integratedTerminal"
         }, 
         {
-            "name": "Sparse_DKT: train_regression",
+            "name": "Sparse_DKT_KMeans: train_regression",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/train_regression.py",
@@ -21,6 +21,15 @@
            "args": ["--method","Sparse_DKT", "--sparse_method", "KMeans", "--n_samples", "108", "--n_centers", "24", "--stop_epoch", "100",
              "--show_plots_features", "--seed","2"]  
       // --method "Sparse_DKT" --sparse_method "KMeans"  --n_samples 108 --n_centers 24 --stop_epoch 150  --show_plots_features  --seed  2 
+    },
+        {
+            "name": "Sparse_DKT_FRVM: train_regression",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/train_regression.py",
+            "console": "integratedTerminal",
+           "args": ["--method","Sparse_DKT", "--sparse_method", "FRVM", "--n_samples", "108", "--stop_epoch", "100",
+             "--show_plots_features", "--seed","2"]  
       // --method "Sparse_DKT" --sparse_method "FRVM"  --n_samples 108 --stop_epoch 100  --show_plots_features  --seed  2 
         },
         {
@@ -34,6 +43,18 @@
                         "--seed","2"] //"--show_plots_pred",
 
         //    --method "Sparse_DKT" --sparse_method "KMeans"  --n_support 90  --n_centers 24 --n_test_epochs 5 --show_plots_pred  --show_plots_features  --seed  2 
+       
+        },
+        {
+            "name": "Sparse_DKT: test_regression",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/test_regression.py",
+            "console": "integratedTerminal",
+           "args": ["--method","Sparse_DKT", "--sparse_method", "FRVM", "--n_support", "90", "--n_test_epochs", "5", 
+                        "--show_plots_pred", "--show_plots_features",
+                        "--seed","2"] 
+
         //  --method "Sparse_DKT" --sparse_method "FRVM"  --n_support 90  --n_test_epochs 5 --show_plots_pred  --show_plots_features  --seed  2 
         
         },
