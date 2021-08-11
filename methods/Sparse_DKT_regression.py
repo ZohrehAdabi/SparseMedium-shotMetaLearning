@@ -711,19 +711,20 @@ class Sparse_DKT(nn.Module):
         os.makedirs(self.video_path, exist_ok=True)
         time_now = datetime.now().strftime('%Y-%m-%d--%H-%M')
         sparse_method = "KMeans" if self.k_means else "FRVM"
+        if self.random: sparse_method = "random"  
         self.plots = self.prepare_plots()
         # plt.show(block=False)
         # plt.pause(0.0001)
         if self.show_plots_pred:
            
-            metadata = dict(title='Sparse_DKT_{sparse_method}', artist='Matplotlib')
+            metadata = dict(title=f'Sparse_DKT_{sparse_method}', artist='Matplotlib')
             FFMpegWriter = animation.writers['ffmpeg']
             self.mw = FFMpegWriter(fps=5, metadata=metadata)   
             file = f'{self.video_path}/Sparse_DKT_{sparse_method}_{time_now}.mp4'
             self.mw.setup(fig=self.plots.fig, outfile=file, dpi=125)
 
         if self.show_plots_features:  
-            metadata = dict(title='Sparse_DKT_{sparse_method}', artist='Matplotlib')         
+            metadata = dict(title=f'Sparse_DKT_{sparse_method}', artist='Matplotlib')         
             FFMpegWriter2 = animation.writers['ffmpeg']
             self.mw_feature = FFMpegWriter2(fps=2, metadata=metadata)
             file = f'{self.video_path}/Sparse_DKT_{sparse_method}_features_{time_now}.mp4'

@@ -86,7 +86,7 @@ for i, n_center in enumerate(n_centers):
 
 
     params.method = 'Sparse_DKT'
-    params.sparse_method=='random'
+    params.sparse_method='random'
     params.n_centers = n_center
     params.show_plots_features = True
 
