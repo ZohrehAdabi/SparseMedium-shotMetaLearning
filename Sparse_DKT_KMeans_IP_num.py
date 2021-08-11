@@ -144,13 +144,15 @@ for i, n_center in enumerate(n_centers):
     ax_mll.set_ylabel("loss")
     ax_mse.set_ylabel("loss")
     ax_mll.set_title("Sparse DKT with KMeans")
+    fig_loss.tight_layout()
     fig_loss.savefig(video_path+'/loss.png')
 
     
-    ax_mll_per_num_ip.plot(mll_list, label=f'Meta-Train MLL, num IP= {n_center}')
+    ax_mll_per_num_ip.plot(mll_list, label=f'num IP= {n_center}')
     ax_mll_per_num_ip.set_xlabel("number of epochs")
     ax_mll_per_num_ip.set_ylabel("loss")
-    ax_mll_per_num_ip.legend()
-    ax_mll_per_num_ip.set_title("Sparse DKT with KMeans")
+    ax_mll_per_num_ip.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    fig_mll_per_num_ip.tight_layout()
+    ax_mll_per_num_ip.set_title("Sparse DKT with KMeans (Meta-Train MLL)")
     fig_mll_per_num_ip.savefig(video_path+'/mll_per_num_ip.png')
 

@@ -117,7 +117,6 @@ class DKT_New_Loss(nn.Module):
         
         return np.mean(mll_list)
 
-        return np.mean(mll_list)
 
     def test_loop(self, n_support, n_samples, test_person, optimizer=None): # no optimizer needed for GP
         inputs, targets = get_batch(test_people, n_samples)
@@ -309,7 +308,7 @@ class DKT_New_Loss(nn.Module):
             return plots
 
         if self.show_plots_pred:
-            plots.fig.suptitle(f"person {person}, MSE: {mse:.2f}")
+            plots.fig.suptitle(f"person {person}, MSE: {mse:.4f}")
             cluster_colors = ['aqua', 'coral', 'lime', 'gold', 'purple', 'green']
             #train images
 
