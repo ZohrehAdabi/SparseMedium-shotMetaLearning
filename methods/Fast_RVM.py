@@ -120,12 +120,12 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
             no_change_in_alpha = len(no_change_in_alpha) == 1
             if no_change_in_alpha:
                 # print(selected_action)
-                # print(f'No change in alpha, m={active_m.shape[0]}')
+                print(f'No change in alpha, m={active_m.shape[0]}')
                 selected_action = torch.tensor(11)
                 terminate = True
         
         
-        align_zero = 1e-4
+        align_zero = 1e-5
         if alignment_test:
             #
             # Addition - rule out addition (from now onwards) if the new basis
@@ -265,7 +265,7 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
             delta_beta	= torch.log(beta)-torch.log(beta_old)
             beta_KK_m       = beta * KK_m
             if torch.abs(delta_beta) > 1e-6:
-                # print(f'update statistics after beta update')
+                print(f'update statistics after beta update')
                 Sigma_m, mu_m, S, Q, s, q, logML, Gamma = Statistics(K_m, KK_m, KK_mm, Kt, K_mt, alpha_m, active_m, beta, targets, N)
                 logMarginalLog.append(logML.item())
                 terminate = False
