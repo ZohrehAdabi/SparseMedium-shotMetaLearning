@@ -47,7 +47,7 @@ for i, n_center in enumerate(n_centers):
                                                         params.sparse_method)
     video_path = params.checkpoint_dir
 
-
+    print(f'{params.sparse_method}')
     if params.sparse_method=='random':
         
         params.checkpoint_dir += '/'
@@ -96,7 +96,7 @@ for i, n_center in enumerate(n_centers):
     params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s' % (configs.save_dir, params.dataset, params.model, params.method, params.sparse_method)
 
     video_path = params.checkpoint_dir
-    
+    print(f'{params.sparse_method}')
     if params.sparse_method=='random':
         
         k_means = False
