@@ -21,7 +21,7 @@ ax_mll_per_num_ip: plt.Axes = fig_mll_per_num_ip.add_subplot(1, 1, 1)
 
 mll_hist = []
 mse_hist = []
-n_centers = np.arange(6, 83, 4) 
+n_centers = np.arange(6, 62, 4) 
 for i, n_center in enumerate(n_centers):
     
     params = parse_args_regression('train_regression')
