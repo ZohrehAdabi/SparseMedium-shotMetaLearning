@@ -72,25 +72,15 @@ optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr': 0.001},
                               {'params': model.feature_extractor.parameters(), 'lr': 0.001}
                               ])
 if params.method=='DKT' or params.method=='Sparse_DKT' or params.method=='DKT_New_Loss':
-    mll_list = []
-    for epoch in range(params.stop_epoch):
-        
-        mll = model.train(epoch, params.n_support, params.n_samples, optimizer)
-        mll_list.append(mll)
 
-        print(Fore.YELLOW,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
-    mll = np.mean(mll_list)
+    mll = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer)
+
     print(Fore.GREEN,"-"*40, f'\nend of meta-train => MLL: {mll}\n', "-"*40, Fore.RESET)
 
 else:
-    mse_list = []
-    for epoch in range(params.stop_epoch):
-        
-        mse = model.train(epoch, params.n_support, params.n_samples, optimizer)
-        mse_list.append(mse)
 
-        print(Fore.YELLOW,"-"*30, f'\nend of epoch {epoch} => MSE: {mse}\n', "-"*30, Fore.RESET)
-    mll = np.mean(mse_list)
+    mse = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer)
+
     print(Fore.GREEN,"="*40, f'\nend of meta-train => MSE: {mse}\n', "="*40, Fore.RESET)
 
 model.save_checkpoint(params.checkpoint_dir)

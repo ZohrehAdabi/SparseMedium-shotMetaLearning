@@ -579,17 +579,26 @@ class Sparse_DKT(nn.Module):
         return mse
 
     
-    def train(self, epoch, n_support, n_samples, optimizer):
+    def train(self, stop_epoch, n_support, n_samples, optimizer):
 
-        if self.k_means:
+        mll_list = []
+        for epoch in range(stop_epoch):
+            
+            if self.k_means:
+                mll = self.train_loop_kmeans(epoch, n_support, n_samples, optimizer)
+            elif self.random:
+                mll = self.train_loop_random(epoch, n_support, n_samples, optimizer)
+            elif not self.k_means:
+                mll = self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
+            else:
+                ValueError("Error")
+            mll_list.append(mll)
 
-            mll = self.train_loop_kmeans(epoch, n_support, n_samples, optimizer)
-        elif self.random:
-            mll = self.train_loop_random(epoch, n_support, n_samples, optimizer)
-        elif not self.k_means:
-            mll = self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
-        else:
-            ValueError("Error")
+            print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
+        
+        mll = np.mean(mll_list)
+
+        
         if self.show_plots_pred:
             self.mw.finish()
         if self.show_plots_features:

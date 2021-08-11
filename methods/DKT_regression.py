@@ -166,9 +166,16 @@ class DKT(nn.Module):
 
         return mse
 
-    def train(self, epoch, n_support, n_samples, optimizer):
+    def train(self, stop_epoch, n_support, n_samples, optimizer):
 
-        mll = self.train_loop(epoch, n_support, n_samples, optimizer)
+        mll_list = []
+        for epoch in range(stop_epoch):
+            mll = self.train_loop(epoch, n_support, n_samples, optimizer)
+            mll_list.append(mll)
+
+            print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
+        
+        mll = np.mean(mll_list)
         if self.show_plots_pred:
             self.mw.finish()
         if self.show_plots_features:

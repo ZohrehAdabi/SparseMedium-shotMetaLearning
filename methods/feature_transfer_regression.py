@@ -79,9 +79,15 @@ class FeatureTransfer(nn.Module):
                 self.mw_feature.grab_frame()
         return np.mean(mse_list)
    
-    def train(self, epoch, n_support, n_samples, optimizer):
-
-        mse = self.train_loop(epoch, n_samples, optimizer)
+    def train(self, stop_epoch, n_support, n_samples, optimizer):
+        
+        mse_list = []
+        for epoch in range(stop_epoch):
+            mse = self.train_loop(epoch, n_samples, optimizer)
+            mse_list.append(mse)
+            print(Fore.LIGHTYELLOW_EX,"-"*30, f'\nend of epoch {epoch} => MSE: {mse}\n', "-"*30, Fore.RESET)
+        
+        mse = np.mean(mse_list)
 
         if self.show_plots_pred:
             self.mw.finish()
