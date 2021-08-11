@@ -73,3 +73,18 @@ def get_batch(train_people=train_people, num_samples=108):
         targets.append(targs)
 
     return torch.stack(inputs), torch.stack(targets)
+
+def get_unnormalized_label(pitch_norm):
+
+    pitch = ((pitch_norm + 1) *(130-50) / 2) + 50
+    pitch = ((pitch_norm + 1) *(120-60) / 2) + 60
+    return pitch
+
+def grt_normalized_label(pitch):
+
+    # pitch_norm = 2 * ((pitch - 60) /  (120 - 60)) -1
+    pitch_norm = 2 * ((pitch - 50) /  (130 - 50)) -1
+    return pitch_norm
+
+
+        
