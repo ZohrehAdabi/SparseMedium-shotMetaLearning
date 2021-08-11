@@ -130,7 +130,7 @@ class Sparse_DKT(nn.Module):
             
             if (self.show_plots_pred or self.show_plots_features) and self.k_means:
                 embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
-                self.update_plots_train_kmeans(self.plots, labels.cpu().numpy(), embedded_z, None, mse, None)
+                self.update_plots_train_kmeans(self.plots, labels.cpu().numpy(), embedded_z, None, mse, epoch)
 
                 if self.show_plots_pred:
                     self.plots.fig.canvas.draw()
@@ -150,17 +150,6 @@ class Sparse_DKT(nn.Module):
         mll_list = []
         for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
 
-            # support_ind = list(np.random.choice(list(range(n_samples)), replace=False, size=n_support))
-            # query_ind   = [i for i in range(n_samples) if i not in support_ind]
-
-            # x_support = inputs[support_ind,:,:,:]
-            # y_support = labels[support_ind]
-            # x_query   = inputs[query_ind,:,:,:]
-            # y_query   = labels[query_ind]
-
-            # random selection of inducing points
-            induce_ind = list(np.random.choice(list(range(n_samples)), replace=False, size=self.num_induce_points))
-            # induce_point = self.feature_extractor(inputs[induce_ind, :,:,:])
 
             z = self.feature_extractor(inputs)
             with torch.no_grad():
@@ -188,7 +177,7 @@ class Sparse_DKT(nn.Module):
             
             if (self.show_plots_pred or self.show_plots_features) and not self.k_means:
                 embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
-                self.update_plots_train_fast_rvm(self.plots, labels.cpu().numpy(), embedded_z, None, mse, None)
+                self.update_plots_train_fast_rvm(self.plots, labels.cpu().numpy(), embedded_z, None, mse, epoch)
 
                 if self.show_plots_pred:
                     self.plots.fig.canvas.draw()
@@ -431,28 +420,200 @@ class Sparse_DKT(nn.Module):
 
         return mse
 
+    def train_loop_random(self, epoch, n_support, n_samples, optimizer):
+
+        batch, batch_labels = get_batch(train_people, n_samples)
+        batch, batch_labels = batch.cuda(), batch_labels.cuda()
+        mll_list = []
+        for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
+
+            # random selection of inducing points
+            inducing_points_index = list(np.random.choice(list(range(n_samples)), replace=False, size=self.num_induce_points))
+
+            z = self.feature_extractor(inputs)
+
+            inducing_points_z = z[inducing_points_index,: ,:, :]
+            
+            ip_values = inducing_points_z.cuda()
+            self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
+
+            self.model.set_train_data(inputs=z, targets=labels, strict=False)
+
+            # z = self.feature_extractor(x_query)
+            predictions = self.model(z)
+            loss = -self.mll(predictions, self.model.train_targets)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            mll_list.append(loss.item())
+            mse = self.mse(predictions.mean, labels)
+            
+            if ((epoch%2==0) & (itr%5==0)):
+                print('[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
+                    itr, epoch, loss.item(), mse.item(),
+                    self.model.likelihood.noise.item()
+                ))
+            
+            if (self.show_plots_pred or self.show_plots_features) and not self.k_means:
+                embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
+                self.update_plots_train_kmeans(self.plots, labels.cpu().numpy(), embedded_z, None, mse, epoch)
+
+                if self.show_plots_pred:
+                    self.plots.fig.canvas.draw()
+                    self.plots.fig.canvas.flush_events()
+                    self.mw.grab_frame()
+                if self.show_plots_features:
+                    self.plots.fig_feature.canvas.draw()
+                    self.plots.fig_feature.canvas.flush_events()
+                    self.mw_feature.grab_frame()
+
+        return np.mean(mll_list)
+    
+    def test_loop_random(self, n_support, n_samples, test_person, optimizer=None): # no optimizer needed for GP
+
+        inputs, targets = get_batch(test_people, n_samples)
+
+        x_all = inputs.cuda()
+        y_all = targets.cuda()
+
+        split = np.array([True]*15 + [False]*3)
+        # print(split)
+        shuffled_split = []
+        for _ in range(6):
+            s = split.copy()
+            np.random.shuffle(s)
+            shuffled_split.extend(s)
+        shuffled_split = np.array(shuffled_split)
+        support_ind = shuffled_split
+        query_ind = ~shuffled_split
+        x_support = x_all[test_person, support_ind,:,:,:]
+        y_support = y_all[test_person, support_ind]
+        x_query   = x_all[test_person, query_ind,:,:,:]
+        y_query   = y_all[test_person, query_ind]
+
+
+        inducing_points_index = list(np.random.choice(list(range(n_support)), replace=False, size=self.num_induce_points))
+
+        z_support = self.feature_extractor(x_support).detach()
+
+        inducing_points_z = z_support[inducing_points_index,: ,:, :]
+
+        ip_values = inducing_points_z.cuda()
+        self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
+        self.model.covar_module._clear_cache()
+        self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
+
+        self.model.eval()
+        self.feature_extractor.eval()
+        self.likelihood.eval()
+
+        with torch.no_grad():
+            z_query = self.feature_extractor(x_query).detach()
+            pred    = self.likelihood(self.model(z_query))
+            lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
+
+        mse = self.mse(pred.mean, y_query).item()
+
+        def inducing_max_similar_in_support_x(train_x, inducing_points_z, inducing_points_index, train_y):
+            y = ((train_y.detach().cpu().numpy() + 1) * 60 / 2) + 60
+    
+            index = inducing_points_index
+            x_inducing = train_x[index].detach().cpu().numpy()
+            y_inducing = y[index]
+            i_idx = []
+            j_idx = []
+            for r in range(index.shape[0]):
+                
+                t = y_inducing[r]
+                x_t_idx = np.where(y==t)[0]
+                x_t = train_x[x_t_idx].detach().cpu().numpy()
+                j = np.argmin(np.linalg.norm(x_inducing[r].reshape(-1) - x_t.reshape(15, -1), axis=-1))
+                i = int(t/10-6)
+                i_idx.append(i)
+                j_idx.append(j)
+
+            return IP(inducing_points_z, index, index.shape, 
+                                x_inducing, y_inducing, np.array(i_idx), np.array(j_idx))
+        
+        inducing_points = inducing_max_similar_in_support_x(x_support, inducing_points_z, inducing_points_index, y_support)
+
+        #**************************************************************
+        y = ((y_query.detach().cpu().numpy() + 1) * 60 / 2) + 60
+        y_pred = ((pred.mean.detach().cpu().numpy() + 1) * 60 / 2) + 60
+        print(Fore.RED,"="*50, Fore.RESET)
+        print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
+        print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
+        print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
+        print(Fore.LIGHTRED_EX, f'mse:    {mse:.4f}', Fore.RESET)
+        print(Fore.RED,"-"*50, Fore.RESET)
+
+        K = self.model.base_covar_module
+        kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
+        max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
+        y_s = ((y_support.detach().cpu().numpy() + 1) * 60 / 2) + 60
+        print(Fore.LIGHTGREEN_EX, f'target of most similar in support set:       {y_s[max_similar_idx_x_s]}', Fore.RESET)
+        
+        kernel_matrix = K(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
+        max_similar_idx_x_ip = np.argmax(kernel_matrix, axis=1)
+        print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (K kernel): {inducing_points.y[max_similar_idx_x_ip]}', Fore.RESET)
+
+        kernel_matrix = self.model.covar_module(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
+        max_similar_index = np.argmax(kernel_matrix, axis=1)
+        print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (Q kernel): {inducing_points.y[max_similar_index]}', Fore.RESET)
+        #**************************************************************
+        if (self.show_plots_pred or self.show_plots_features) and not self.k_means:
+            embedded_z_support = TSNE(n_components=2).fit_transform(z_support.detach().cpu().numpy())
+            self.update_plots_test_fast_rvm(self.plots, x_support, y_support.detach().cpu().numpy(), 
+                                            z_support.detach(), z_query.detach(), embedded_z_support,
+                                            inducing_points, x_query, y_query.detach().cpu().numpy(), pred, 
+                                            max_similar_idx_x_s, max_similar_idx_x_ip, None, mse, test_person)
+            if self.show_plots_pred:
+                self.plots.fig.canvas.draw()
+                self.plots.fig.canvas.flush_events()
+                self.mw.grab_frame()
+            if self.show_plots_features:
+                self.plots.fig_feature.canvas.draw()
+                self.plots.fig_feature.canvas.flush_events()
+                self.mw_feature.grab_frame()
+
+        return mse
+
     
     def train(self, epoch, n_support, n_samples, optimizer):
 
         if self.k_means:
 
             mll = self.train_loop_kmeans(epoch, n_support, n_samples, optimizer)
-        else:
+        elif not self.k_means:
             mll = self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
-
+        elif self.random:
+            mll = self.train_loop_random(epoch, n_support, n_samples, optimizer)
+        else:
+            ValueError("Error")
+        if self.show_plots_pred:
+            self.mw.finish()
+        if self.show_plots_features:
+            self.mw_feature.finish()
         return mll
     
     def test(self, n_support, n_samples, optimizer=None, test_count=None): # no optimizer needed for GP
 
         mse_list = []
         # choose a random test person
-        test_person = np.random.choice(np.arange(len(test_people)), size=test_count, replace=False)
+        rep = True if test_count > len(test_people) else False
+
+        test_person = np.random.choice(np.arange(len(test_people)), size=test_count, replace=rep)
         for t in range(test_count):
             print(f'test #{t}')
             if self.k_means:
                 mse = self.test_loop_kmeans(n_support, n_samples, test_person[t],  optimizer)
-            else: #RVM
+            elif not self.k_means:
                 mse = self.test_loop_fast_rvm(n_support, n_samples, test_person[t],  optimizer)
+            elif self.random:
+                mse = self.test_loop_random(n_support, n_samples, test_person[t],  optimizer)
+            else:
+                ValueError()
+
             mse_list.append(float(mse))
 
         if self.show_plots_pred:
@@ -589,6 +750,7 @@ class Sparse_DKT(nn.Module):
                 plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
 
             plots.ax_feature.legend()
+            plots.ax_feature.set_title(f'epoch {epoch}')
     
     def update_plots_train_fast_rvm(self,plots, train_y, embedded_z, mll, mse, epoch):
         if self.show_plots_features:
@@ -603,6 +765,7 @@ class Sparse_DKT(nn.Module):
                 plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
 
             plots.ax_feature.legend()
+            plots.ax_feature.set_title(f'epoch {epoch}')
     
     def update_plots_test_kmeans(self, plots, train_x, train_y, train_z, test_z, embedded_z, inducing_points,   
                                     test_x, test_y, test_y_pred, similar_idx_x_s, similar_idx_x_ip, mll, mse, person):

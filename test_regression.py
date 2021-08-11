@@ -50,12 +50,18 @@ elif params.method=='Sparse_DKT':
         k_means = False
         model = Sparse_DKT(bb, k_means=k_means, video_path=video_path, 
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
+    elif params.sparse_method=='random':
+        k_means = False
+        model = Sparse_DKT(bb, k_means=k_means, random=True, video_path=video_path, 
+                            show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
     else:
-        pass #ranndom
+        ValueError('Unrecognised sparse method')
 
     optimizer = None
 elif params.method=='transfer':
-    model = FeatureTransfer(bb).cuda()
+    model = FeatureTransfer(bb, video_path=params.checkpoint_dir, 
+                            show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features).cuda()
+                            
     optimizer = optim.Adam([{'params':model.parameters(),'lr':0.001}])
 else:
     ValueError('Unrecognised method')

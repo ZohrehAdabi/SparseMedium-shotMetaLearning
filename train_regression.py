@@ -57,13 +57,14 @@ elif params.method=='Sparse_DKT':
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     elif params.sparse_method=='random':
         k_means = False
-        model = Sparse_DKT(bb, k_means=k_means, video_path=video_path, 
+        model = Sparse_DKT(bb, k_means=k_means, random=True, video_path=video_path, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     else:
         ValueError('Unrecognised sparse method')
 
 elif params.method=='transfer':
-    model = FeatureTransfer(bb).cuda()
+    model = FeatureTransfer(bb, video_path=params.checkpoint_dir, 
+                            show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
 else:
     ValueError('Unrecognised method')
 

@@ -82,7 +82,7 @@ class DKT(nn.Module):
 
             if (self.show_plots_pred or self.show_plots_features):
                 embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
-                self.update_plots_train(self.plots, labels.cpu().numpy(), embedded_z, None, mse, None)
+                self.update_plots_train(self.plots, labels.cpu().numpy(), embedded_z, None, mse, epoch)
 
                 if self.show_plots_pred:
                     self.plots.fig.canvas.draw()
@@ -169,13 +169,19 @@ class DKT(nn.Module):
     def train(self, epoch, n_support, n_samples, optimizer):
 
         mll = self.train_loop(epoch, n_support, n_samples, optimizer)
+        if self.show_plots_pred:
+            self.mw.finish()
+        if self.show_plots_features:
+            self.mw_feature.finish()
         return mll
 
     def test(self, n_support, n_samples, optimizer=None, test_count=None):
 
         mse_list = []
         # choose a random test person
-        test_person = np.random.choice(np.arange(len(test_people)), size=test_count, replace=False)
+        rep = True if test_count > len(test_people) else False
+
+        test_person = np.random.choice(np.arange(len(test_people)), size=test_count, replace=rep)
         for t in range(test_count):
             print(f'test #{t}')
             
@@ -263,6 +269,7 @@ class DKT(nn.Module):
                 plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
 
             plots.ax_feature.legend()
+            plots.ax_feature.set_title(f'epoch {epoch}')
 
     def update_plots_test(self, plots, train_x, train_y, train_z, test_z, embedded_z,   
                                     test_x, test_y, test_y_pred, similar_idx_x_s, mll, mse, person):

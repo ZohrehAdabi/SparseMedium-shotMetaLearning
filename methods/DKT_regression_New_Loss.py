@@ -192,6 +192,10 @@ class DKT_New_Loss(nn.Module):
     def train(self, epoch, n_support, n_samples, optimizer):
 
         mll = self.train_loop(epoch, n_support, n_samples, optimizer)
+        if self.show_plots_pred:
+            self.mw.finish()
+        if self.show_plots_features:
+            self.mw_feature.finish()
         return mll
 
     def test(self, n_support, n_samples, optimizer=None, test_count=None):
