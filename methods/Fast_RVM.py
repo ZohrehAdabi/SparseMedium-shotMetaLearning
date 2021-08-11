@@ -42,8 +42,8 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
     Sigma_m, mu_m, S, Q, s, q, logML, Gamma = Statistics(K_m, KK_m, KK_mm, Kt, K_mt, alpha_m, active_m, beta, targets, N)
 
     delete_priority = False
-    add_priority = False
-    alignment_test = True
+    add_priority = True
+    alignment_test = False
 
     for itr in range(max_itr):
 
