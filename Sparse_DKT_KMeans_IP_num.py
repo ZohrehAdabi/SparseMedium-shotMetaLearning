@@ -13,10 +13,10 @@ import numpy as np
 from colorama import Fore
 import matplotlib.pyplot as plt
 
-fig_loss: plt.Figure = plt.figure(3, figsize=(6, 3), tight_layout=True, dpi=125)
+fig_loss: plt.Figure = plt.figure(3, figsize=(8, 6), tight_layout=True, dpi=125)
 ax_mll: plt.Axes = fig_loss.add_subplot(2, 1, 1)
 ax_mse: plt.Axes = fig_loss.add_subplot(2, 1, 2)
-fig_mll_per_num_ip: plt.Figure = plt.figure(4, figsize=(6, 3), tight_layout=True, dpi=125)
+fig_mll_per_num_ip: plt.Figure = plt.figure(4, figsize=(8, 4), tight_layout=True, dpi=150)
 ax_mll_per_num_ip: plt.Axes = fig_mll_per_num_ip.add_subplot(1, 1, 1)
 
 mll_hist = []
@@ -33,6 +33,7 @@ for i, n_center in enumerate(n_centers):
     params.method = 'Sparse_DKT'
     params.sparse_method=='KMeans'
     params.n_centers = n_center
+    params.show_plots_features = True
     print(Fore.CYAN, f'num Inducing points: {params.n_centers}', Fore.RESET)
     params.checkpoint_dir = '%scheckpoints/%s/' % (configs.save_dir, params.dataset)
     if not os.path.isdir(params.checkpoint_dir):
@@ -93,6 +94,7 @@ for i, n_center in enumerate(n_centers):
     params.method = 'Sparse_DKT'
     params.sparse_method=='KMeans'
     params.n_centers = n_center
+    params.show_plots_features = True
 
     params.checkpoint_dir = '%scheckpoints/%s/%s_%s' % (configs.save_dir, params.dataset, params.model, params.method)
     bb           = backbone.Conv3().cuda()
@@ -151,7 +153,7 @@ for i, n_center in enumerate(n_centers):
     ax_mll_per_num_ip.plot(mll_list, label=f'num IP= {n_center}')
     ax_mll_per_num_ip.set_xlabel("number of epochs")
     ax_mll_per_num_ip.set_ylabel("loss")
-    ax_mll_per_num_ip.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    ax_mll_per_num_ip.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=8)
     fig_mll_per_num_ip.tight_layout()
     ax_mll_per_num_ip.set_title("Sparse DKT with KMeans (Meta-Train MLL)")
     fig_mll_per_num_ip.savefig(video_path+'/mll_per_num_ip.png')
