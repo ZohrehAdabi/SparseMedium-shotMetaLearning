@@ -33,7 +33,7 @@
       // --method "Sparse_DKT" --sparse_method "FRVM"  --n_samples 108 --stop_epoch 100  --show_plots_features  --seed  2 
         },
         {
-            "name": "Sparse_DKT: test_regression",
+            "name": "Sparse_DKT_KMeans: test_regression",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/test_regression.py",
@@ -46,7 +46,7 @@
        
         },
         {
-            "name": "Sparse_DKT: test_regression",
+            "name": "Sparse_DKT_FRVM: test_regression",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/test_regression.py",
