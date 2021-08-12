@@ -59,7 +59,7 @@ def get_batch(train_people=train_people, num_samples=108):
     # pitches = np.random.choice(tilt, size=num_samples, replace=True)
     pitches = []
     tilt = np.arange(60, 130, step=10)
-    p = np.random.choice(tilt, size=6, replace=False)
+    p = np.random.choice(tilt, size=(num_samples//18), replace=False)
     for e in p:
         pitches.extend([e]*18)
     curve   = [(p,a) for p, a in zip(pitches, angles)]
