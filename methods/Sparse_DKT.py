@@ -21,7 +21,7 @@ from time import gmtime, strftime
 import random
 ## Our packages
 import gpytorch
-from methods.Fast_RVM_regression import Fast_RVM_regression
+from methods.Fast_RVM import Fast_RVM 
 
 from statistics import mean
 from data.qmul_loader import get_batch, train_people, test_people
@@ -29,9 +29,9 @@ from configs import kernel_type
 from collections import namedtuple
 
 IP = namedtuple("inducing_points", "z_values index count x y i_idx j_idx")
-class Sparse_DKT_regression(nn.Module):
+class Sparse_DKT(nn.Module):
     def __init__(self, backbone, k_means=True, n_inducing_points=12, random=False, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
-        super(Sparse_DKT_regression, self).__init__()
+        super(Sparse_DKT, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
         self.num_induce_points = n_inducing_points
@@ -673,7 +673,7 @@ class Sparse_DKT_regression(nn.Module):
 
             kernel_matrix = kernel_matrix.to(torch.float64)
             targets = targets.to(torch.float64)
-            active, alpha, Gamma, beta = Fast_RVM_regression(kernel_matrix, targets.view(-1, 1), beta, N, update_sigma,
+            active, alpha, Gamma, beta = Fast_RVM(kernel_matrix, targets.view(-1, 1), beta, N, update_sigma,
                                                     eps, tol, max_itr, self.device, verbose)
 
             active = np.sort(active)

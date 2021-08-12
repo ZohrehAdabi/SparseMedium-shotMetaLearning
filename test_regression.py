@@ -6,7 +6,7 @@ import configs
 from data.qmul_loader import get_batch, train_people, test_people
 from io_utils import parse_args_regression, get_resume_file
 from methods.DKT_regression import DKT
-from methods.Sparse_DKT_regression import Sparse_DKT
+from methods.Sparse_DKT_regression import Sparse_DKT_regression
 from methods.DKT_regression_New_Loss import DKT_New_Loss
 from methods.feature_transfer_regression import FeatureTransfer
 import backbone
@@ -43,12 +43,12 @@ elif params.method=='Sparse_DKT':
             os.makedirs(params.checkpoint_dir)
         params.checkpoint_dir = params.checkpoint_dir +  f'KMeans_{str(params.n_centers)}'
         # print(params.checkpoint_dir)
-        model = Sparse_DKT(bb, k_means=k_means, n_inducing_points=params.n_centers, video_path=video_path, 
+        model = Sparse_DKT_regression(bb, k_means=k_means, n_inducing_points=params.n_centers, video_path=video_path, 
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
     elif params.sparse_method=='FRVM':
         
         k_means = False
-        model = Sparse_DKT(bb, k_means=k_means, video_path=video_path, 
+        model = Sparse_DKT_regression(bb, k_means=k_means, video_path=video_path, 
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
     elif params.sparse_method=='random':
         k_means = False
@@ -56,7 +56,7 @@ elif params.method=='Sparse_DKT':
         if not os.path.isdir(params.checkpoint_dir):
             os.makedirs(params.checkpoint_dir)
         params.checkpoint_dir = params.checkpoint_dir +  f'random_{str(params.n_centers)}'
-        model = Sparse_DKT(bb, k_means=k_means, random=True,  n_inducing_points=params.n_centers, video_path=video_path, 
+        model = Sparse_DKT_regression(bb, k_means=k_means, random=True,  n_inducing_points=params.n_centers, video_path=video_path, 
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
     else:
         ValueError('Unrecognised sparse method')

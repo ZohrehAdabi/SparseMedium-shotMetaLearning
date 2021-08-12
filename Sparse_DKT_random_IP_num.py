@@ -6,7 +6,7 @@ import torch
 import configs
 from data.qmul_loader import get_batch, train_people, test_people
 from io_utils import parse_args_regression, get_resume_file
-from methods.Sparse_DKT_regression import Sparse_DKT
+from methods.Sparse_DKT_regression import Sparse_DKT_regression
 import backbone
 import os
 import numpy as np
@@ -55,12 +55,12 @@ for i, n_center in enumerate(n_centers):
             os.makedirs(params.checkpoint_dir)
         params.checkpoint_dir = params.checkpoint_dir +  f'random_{str(params.n_centers)}'
         k_means = False
-        model = Sparse_DKT(bb, k_means=k_means, random=True, n_inducing_points=params.n_centers, video_path=video_path, 
+        model = Sparse_DKT_regression(bb, k_means=k_means, random=True, n_inducing_points=params.n_centers, video_path=video_path, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     elif params.sparse_method=='FRVM':
 
         k_means = False
-        model = Sparse_DKT(bb, k_means=k_means, video_path=video_path, 
+        model = Sparse_DKT_regression(bb, k_means=k_means, video_path=video_path, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     else: ValueError()
 
@@ -106,12 +106,12 @@ for i, n_center in enumerate(n_centers):
             os.makedirs(params.checkpoint_dir)
         params.checkpoint_dir = params.checkpoint_dir +  f'random_{str(params.n_centers)}'
         # print(params.checkpoint_dir)
-        model = Sparse_DKT(bb, k_means=k_means, random=True, n_inducing_points=params.n_centers, video_path=video_path, 
+        model = Sparse_DKT_regression(bb, k_means=k_means, random=True, n_inducing_points=params.n_centers, video_path=video_path, 
                             show_plots_pred=True, show_plots_features=params.show_plots_features, training=False).cuda()
     elif params.sparse_method=='FRVM':
         
         k_means = False
-        model = Sparse_DKT(bb, k_means=k_means, video_path=video_path, 
+        model = Sparse_DKT_regression(bb, k_means=k_means, video_path=video_path, 
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
     else:
         pass #ranndom
