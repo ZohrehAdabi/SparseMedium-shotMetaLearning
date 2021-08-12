@@ -124,7 +124,7 @@ class DKT_New_Loss(nn.Module):
         split = np.array([True]*15 + [False]*3)
         # print(split)
         shuffled_split = []
-        for _ in range(6):
+        for _ in range(int(n_support/15)):
             s = split.copy()
             np.random.shuffle(s)
             shuffled_split.extend(s)
