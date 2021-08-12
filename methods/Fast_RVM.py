@@ -11,7 +11,7 @@ from sklearn.svm import SVR
 from sklearn.metrics import mean_squared_error as mse
 
 
-def Fast_RVM_Classification(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='cpu', verbose=True):
+def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='cpu', verbose=True):
     
 
     M = K.shape[1]
