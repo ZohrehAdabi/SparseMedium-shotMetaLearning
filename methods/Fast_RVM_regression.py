@@ -42,7 +42,7 @@ def Fast_RVM_regression(K, targets, beta, N, update_sigma, eps, tol, max_itr=300
     Sigma_m, mu_m, S, Q, s, q, logML, Gamma = Statistics(K_m, KK_m, KK_mm, Kt, K_mt, alpha_m, active_m, beta, targets, N)
 
     delete_priority = False
-    add_priority = True
+    add_priority = False
     alignment_test = False
 
     for itr in range(max_itr):
@@ -205,7 +205,7 @@ def Fast_RVM_regression(K, targets, beta, N, update_sigma, eps, tol, max_itr=300
             
             jPm	            = (beta_KK_m @ s_j).squeeze()
             S	            = S + jPm.pow(2) / s_jj
-            Q	            = Q + jPm @ mu_j / s_jj
+            Q	            = Q + jPm * mu_j / s_jj
 
             K_m             = K[:, active_m]
             KK_m            = KK[:, active_m]

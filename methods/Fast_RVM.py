@@ -48,7 +48,7 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
     Sigma_m, mu_m, S, Q, s, q, beta, beta_KK_m, logML, Gamma = Statistics(K, K_m, mu_m, alpha_m, active_m, beta, targets, N, device)
 
     delete_priority = False
-    add_priority = True
+    add_priority = False
     alignment_test = False
 
     for itr in range(max_itr):
@@ -204,7 +204,7 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
             
             jPm	            = (beta_KK_m @ s_j).squeeze()
             S	            = S + jPm.pow(2) / s_jj
-            Q	            = Q + jPm @ mu_j / s_jj
+            Q	            = Q + jPm * mu_j / s_jj
 
             K_m             = K[:, active_m]
             KK_m            = KK[:, active_m]
