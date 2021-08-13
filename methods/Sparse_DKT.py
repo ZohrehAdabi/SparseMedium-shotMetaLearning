@@ -660,6 +660,7 @@ class Sparse_DKT(nn.Module):
             # sigma = torch.tensor([torch.var(targets) * 0.1]) #sigma^2
             sigma = sigma.to(self.device)
             beta = 1 /(sigma + eps)
+
             scale = True
             update_sigma = False
             covar_module = self.model.base_covar_module
@@ -673,6 +674,7 @@ class Sparse_DKT(nn.Module):
 
             kernel_matrix = kernel_matrix.to(torch.float64)
             targets = targets.to(torch.float64)
+            
             active, alpha, Gamma, beta = Fast_RVM(kernel_matrix, targets.view(-1, 1), beta, N, update_sigma,
                                                     eps, tol, max_itr, self.device, verbose)
 

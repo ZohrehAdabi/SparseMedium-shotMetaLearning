@@ -58,7 +58,7 @@ def Fast_RVM_regression(K, targets, beta, N, update_sigma, eps, tol, max_itr=300
         idx                 = active_factor > 1e-12
         recompute           = active_m[idx]
         alpha_prim          =  s[recompute]**2 / (Factor[recompute])
-        delta_alpha         = (1./alpha_prim - 1./alpha_m[idx])
+        delta_alpha         = (1/alpha_prim - 1/alpha_m[idx])
         # d_alpha =  ((alpha_m[idx] - alpha_prim)/(alpha_prim * alpha_m[idx]))
         d_alpha_S           = delta_alpha * S[recompute] + 1 
         # deltaML[recompute] = ((delta_alpha * Q[recompute]**2) / (S[recompute] + 1/delta_alpha) - torch.log(d_alpha_S)) /2
@@ -68,13 +68,15 @@ def Fast_RVM_regression(K, targets, beta, N, update_sigma, eps, tol, max_itr=300
         idx = ~idx #active_factor <= 1e-12
         delete = active_m[idx]
         anyToDelete = len(delete) > 0
-        if anyToDelete and alpha_m.shape[0] > 1:
+        if anyToDelete and alpha_m.shape[0] > 1: 	   # if there is only one basis function (M=1) (In practice, this latter event ought only to happen with the Gaussian
+                                                        #    likelihood when initial noise is too high. In that case, a later beta
+                                                        #    update should 'cure' this.)
             deltaML[delete] = -(q[delete]**2 / (s[delete] + alpha_m[idx]) - torch.log(1 + s[delete] / alpha_m[idx])) /2
             # deltaML[delete] = -(Q[delete]**2 / (S[delete] + alpha_m[idx]) - torch.log(1 + S[delete] / alpha_m[idx])) /2
             action[delete]  = -1
 
         # ADDITION: must be a POSITIVE factor and OUT of the model
-        good_factor = Factor > 0
+        good_factor = Factor > 1e-12
         good_factor[active_m] = False
         
         if alignment_test and len(aligned_out) > 0:
@@ -203,7 +205,7 @@ def Fast_RVM_regression(K, targets, beta, N, update_sigma, eps, tol, max_itr=300
             
             jPm	            = (beta_KK_m @ s_j).squeeze()
             S	            = S + jPm.pow(2) / s_jj
-            Q	            = Q + jPm * mu_j / s_jj
+            Q	            = Q + jPm @ mu_j / s_jj
 
             K_m             = K[:, active_m]
             KK_m            = KK[:, active_m]
@@ -255,6 +257,7 @@ def Fast_RVM_regression(K, targets, beta, N, update_sigma, eps, tol, max_itr=300
             Gamma = 1 - alpha_m * torch.diag(Sigma_m)
             logML = logML + deltaLogMarginal
             logMarginalLog.append(logML.item())
+            beta_KK_m = beta * KK_m
 
 
         #compute mu and beta
@@ -264,6 +267,7 @@ def Fast_RVM_regression(K, targets, beta, N, update_sigma, eps, tol, max_itr=300
             y_      = K_m @ mu_m  
             e       = (targets.squeeze() - y_)
             beta	= (N - torch.sum(Gamma))/(e.T @ e)
+            beta	= torch.min(torch.tensor([beta, 1e6/torch.var(targets)]).to(device))
             delta_beta	= torch.log(beta)-torch.log(beta_old)
             beta_KK_m       = beta * KK_m
             if torch.abs(delta_beta) > 1e-6:
