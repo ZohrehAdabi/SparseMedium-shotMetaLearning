@@ -155,7 +155,7 @@ test.py
 test_plots.py
 SparseGP.ipynb
 SparseGP.py
-GP_Classification.py
+# GP_Classification.py
 GP_Classification.ipynb
 save/*.png
 filelists/*.jpg
