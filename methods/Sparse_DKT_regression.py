@@ -652,7 +652,7 @@ class Sparse_DKT_regression(nn.Module):
         else:
             # with sigma and updating sigma converges to more sparse solution
             N   = inputs.shape[0]
-            tol = 1e-4
+            tol = 1e-6
             eps = torch.finfo(torch.float32).eps
             max_itr = 1000
             sigma = self.model.likelihood.noise[0].clone()

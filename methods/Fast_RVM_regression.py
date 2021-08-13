@@ -43,7 +43,7 @@ def Fast_RVM_regression(K, targets, beta, N, update_sigma, eps, tol, max_itr=300
 
     delete_priority = False
     add_priority = False
-    alignment_test = False
+    alignment_test = True
 
     for itr in range(max_itr):
 

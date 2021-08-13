@@ -21,7 +21,7 @@
                 "console": "integratedTerminal",
                "args": ["--method","Sparse_DKT", "--sparse_method", "FRVM", "--dataset", "CUB", 
                 "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "1",
-                 "--show_plots_features", "--seed","1"]  
+                 "--seed","1"]  
              // python train.py --method "Sparse_DKT"  --sparse_method "FRVM" --dataset="CUB"  --train_n_way=5 --test_n_way=5 --n_shot=1 --seed=1 
         },
         // python train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=1 --seed=1 --train_aug
@@ -34,7 +34,7 @@
             "console": "integratedTerminal",
            "args": ["--method","Sparse_DKT", "--sparse_method", "FRVM", "--dataset", "CUB", 
             "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "1",
-             "--show_plots_features", "--seed","1"]
+              "--seed","1"]
             // python test.py --method "Sparse_DKT"  --sparse_method "FRVM" --dataset="CUB"  --train_n_way=5 --test_n_way=5 --n_shot=1 --seed=1 
         },
         {
@@ -45,7 +45,7 @@
             "console": "integratedTerminal",
            "args": ["--method","DKT", "--dataset", "CUB", 
             "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "1",
-             "--show_plots_features", "--seed","1"]  
+            "--seed","1"]  
          // python train.py --method "DKT"  --dataset="CUB"  --train_n_way=5 --test_n_way=5 --n_shot=1 --seed=1 
         },
     // python train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=1 --seed=1 --train_aug
@@ -58,7 +58,7 @@
             "console": "integratedTerminal",
         "args": ["--method","DKT", "--dataset", "CUB", 
             "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "1",
-            "--show_plots_features", "--seed","1"]
+             "--seed","1"]
             // python test.py --method "DKT"  --dataset="CUB"  --train_n_way=5 --test_n_way=5 --n_shot=1 --seed=1 
         },
         //*****************************************************************
