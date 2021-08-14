@@ -21,7 +21,7 @@ ax_mll_per_num_ip: plt.Axes = fig_mll_per_num_ip.add_subplot(1, 1, 1)
 
 mll_hist = []
 mse_hist = []
-align_thr = 1e-3
+align_thr = 1e-4
 for i in range(16):
     
     params = parse_args_regression('train_regression')
@@ -31,12 +31,13 @@ for i in range(16):
     torch.backends.cudnn.benchmark = False
 
     params.method = 'Sparse_DKT'
-    params.sparse_method=='FRVM'
+    params.sparse_method='FRVM'
     params.config = f'{i:04b}'
     params.align_thr = align_thr
     params.show_plots_features = True
+    params.n_samples = 72
 
-    print(Fore.CYAN, f'num Inducing points: {params.n_centers}', Fore.RESET)
+    # print(Fore.CYAN, f'num Inducing points: {params.n_centers}', Fore.RESET)
     params.checkpoint_dir = '%scheckpoints/%s/' % (configs.save_dir, params.dataset)
     if not os.path.isdir(params.checkpoint_dir):
         os.makedirs(params.checkpoint_dir)
@@ -94,10 +95,12 @@ for i in range(16):
 
 
     params.method = 'Sparse_DKT'
-    params.sparse_method=='FRVM'
+    params.sparse_method='FRVM'
     params.config = f'{i:04b}'
     params.align_thr = align_thr
     params.show_plots_features = True
+    params.n_support = 60 
+    params.n_samples = 72
 
     params.checkpoint_dir = '%scheckpoints/%s/%s_%s' % (configs.save_dir, params.dataset, params.model, params.method)
     bb           = backbone.Conv3().cuda()
