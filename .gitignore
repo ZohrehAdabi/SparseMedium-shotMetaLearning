@@ -151,7 +151,6 @@ filelists/CUB/*.txt
 
 
 test.ipynb
-test.py
 test_plots.py
 SparseGP.ipynb
 SparseGP.py

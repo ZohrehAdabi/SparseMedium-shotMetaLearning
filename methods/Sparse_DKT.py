@@ -32,6 +32,7 @@ except ImportError:
 class Sparse_DKT(MetaTemplate):
     def __init__(self, model_func, n_way, n_support):
         super(Sparse_DKT, self).__init__(model_func, n_way, n_support)
+        self.num_inducing_points = 10
         ## GP parameters
         self.leghtscale_list = None
         self.noise_list = None
@@ -62,7 +63,7 @@ class Sparse_DKT(MetaTemplate):
         likelihood_list = list()
         for train_x, train_y in zip(train_x_list, train_y_list):
             likelihood = gpytorch.likelihoods.GaussianLikelihood()
-            model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel=kernel_type)
+            model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, inducing_points=train_x, kernel=kernel_type)
             model_list.append(model)
             likelihood_list.append(model.likelihood)
         self.model = gpytorch.models.IndependentModelList(*model_list).cuda()
@@ -341,7 +342,7 @@ class ExactGPLayer(gpytorch.models.ExactGP):
         covar_module.raw_outputscale
         covar_module.base_kernel.raw_lengthscale
     '''
-    def __init__(self, train_x, train_y, likelihood, kernel='linear'):
+    def __init__(self, train_x, train_y, likelihood, inducing_points, kernel='linear'):
         #Set the likelihood noise and enable/disable learning
         likelihood.noise_covar.raw_noise.requires_grad = False
         likelihood.noise_covar.noise = torch.tensor(0.1)
@@ -372,7 +373,7 @@ class ExactGPLayer(gpytorch.models.ExactGP):
             raise ValueError("[ERROR] the kernel '" + str(kernel) + "' is not supported!")
 
         self.covar_module = gpytorch.kernels.InducingPointKernel(self.base_covar_module,
-                                        , inducing_points=induce_point, likelihood=likelihood)
+                                         inducing_points=inducing_points, likelihood=likelihood)
 
 
     def forward(self, x):
