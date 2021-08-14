@@ -110,7 +110,7 @@ class Sparse_DKT_regression(nn.Module):
             #     inducing_points = inducing_max_similar_in_support_x(inputs, z.detach(), inducing_points, labels)
             
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
-
+            self.model.train()
             self.model.set_train_data(inputs=z, targets=labels, strict=False)
 
             # z = self.feature_extractor(x_query)
@@ -157,7 +157,7 @@ class Sparse_DKT_regression(nn.Module):
             
             ip_values = inducing_points.z_values.cuda()
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
-
+            self.model.train()
             self.model.set_train_data(inputs=z, targets=labels, strict=False)
 
             # z = self.feature_extractor(x_query)
@@ -436,7 +436,7 @@ class Sparse_DKT_regression(nn.Module):
             
             ip_values = inducing_points_z.cuda()
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
-
+            self.model.train()
             self.model.set_train_data(inputs=z, targets=labels, strict=False)
 
             # z = self.feature_extractor(x_query)
