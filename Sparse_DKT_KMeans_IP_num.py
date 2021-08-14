@@ -54,13 +54,11 @@ for i, n_center in enumerate(n_centers):
         if not os.path.isdir(params.checkpoint_dir):
             os.makedirs(params.checkpoint_dir)
         params.checkpoint_dir = params.checkpoint_dir +  f'KMeans_{str(params.n_centers)}'
-        k_means = True
-        model = Sparse_DKT_regression(bb, k_means=k_means, n_inducing_points=params.n_centers, video_path=video_path, 
+        model = Sparse_DKT_regression(bb, f_rvm=False, n_inducing_points=params.n_centers, video_path=video_path, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     elif params.sparse_method=='FRVM':
 
-        k_means = False
-        model = Sparse_DKT_regression(bb, k_means=k_means, video_path=video_path, 
+        model = Sparse_DKT_regression(bb, f_rvm=True, config=params.config, align_threshold=params.align_thr, video_path=video_path, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     else: ValueError()
     optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr': 0.001},
@@ -99,21 +97,19 @@ for i, n_center in enumerate(n_centers):
     
     if params.sparse_method=='KMeans':
         
-        k_means = True
         params.checkpoint_dir += '/'
         if not os.path.isdir(params.checkpoint_dir):
             os.makedirs(params.checkpoint_dir)
         params.checkpoint_dir = params.checkpoint_dir +  f'KMeans_{str(params.n_centers)}'
         # print(params.checkpoint_dir)
-        model = Sparse_DKT_regression(bb, k_means=k_means, n_inducing_points=params.n_centers, video_path=video_path, 
+        model = Sparse_DKT_regression(bb, f_rvm=False, n_inducing_points=params.n_centers, video_path=video_path, 
                             show_plots_pred=True, show_plots_features=params.show_plots_features, training=False).cuda()
     elif params.sparse_method=='FRVM':
-        
-        k_means = False
-        model = Sparse_DKT_regression(bb, k_means=k_means, video_path=video_path, 
+     
+        model = Sparse_DKT_regression(bb, f_rvm=True, config=params.config, align_threshold=params.align_thr, video_path=video_path, 
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
     else:
-        pass #ranndom
+         ValueError('Unrecognised sparse method')
 
     optimizer = None
 

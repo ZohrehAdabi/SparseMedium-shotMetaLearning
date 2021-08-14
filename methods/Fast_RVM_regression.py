@@ -11,7 +11,7 @@ from sklearn.svm import SVR
 from sklearn.metrics import mean_squared_error as mse
 
 
-def Fast_RVM_regression(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='cpu', verbose=True):
+def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_itr=3000, device='cpu', verbose=True):
     
 
     M = K.shape[1]
@@ -41,11 +41,11 @@ def Fast_RVM_regression(K, targets, beta, N, update_sigma, eps, tol, max_itr=300
     beta_KK_m = beta * KK_m
     Sigma_m, mu_m, S, Q, s, q, logML, Gamma = Statistics(K_m, KK_m, KK_mm, Kt, K_mt, alpha_m, active_m, beta, targets, N)
 
-    update_sigma = True
-    delete_priority = False
-    add_priority = False
-    alignment_test = True
-    align_zero = 1e-3
+    update_sigma    = config[0]=="1"
+    delete_priority = config[1]=="1"
+    add_priority    = config[2]=="1"
+    alignment_test  = config[3]=="1"
+    align_zero      = align_thr
     for itr in range(max_itr):
 
         # 'Relevance Factor' (q^2-s) values for basis functions in model
@@ -128,8 +128,7 @@ def Fast_RVM_regression(K, targets, beta, N, update_sigma, eps, tol, max_itr=300
                 print(f'{itr:03}, No change in alpha, m={active_m.shape[0]}')
                 selected_action = torch.tensor(11)
                 terminate = True
-        
-        
+
         
         if alignment_test:
             #

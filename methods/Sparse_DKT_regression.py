@@ -30,12 +30,15 @@ from collections import namedtuple
 
 IP = namedtuple("inducing_points", "z_values index count x y i_idx j_idx")
 class Sparse_DKT_regression(nn.Module):
-    def __init__(self, backbone, k_means=True, n_inducing_points=12, random=False, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
+    def __init__(self, backbone, f_rvm=True, config="0000", align_threshold=1e-3, n_inducing_points=12, random=False, 
+                    video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_regression, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
         self.num_induce_points = n_inducing_points
-        self.k_means = k_means
+        self.config = config
+        self.align_threshold = align_threshold
+        self.f_rvm = f_rvm
         self.random = random
         self.device = 'cuda'
         self.video_path = video_path
@@ -128,7 +131,7 @@ class Sparse_DKT_regression(nn.Module):
                     self.model.likelihood.noise.item()
                 ))
             
-            if (self.show_plots_pred or self.show_plots_features) and self.k_means:
+            if (self.show_plots_pred or self.show_plots_features) and not self.f_rvm:
                 embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
                 self.update_plots_train_kmeans(self.plots, labels.cpu().numpy(), embedded_z, None, mse, epoch)
 
@@ -175,7 +178,7 @@ class Sparse_DKT_regression(nn.Module):
                     self.model.likelihood.noise.item()
                 ))
             
-            if (self.show_plots_pred or self.show_plots_features) and not self.k_means:
+            if (self.show_plots_pred or self.show_plots_features) and  self.f_rvm:
                 embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
                 self.update_plots_train_fast_rvm(self.plots, labels.cpu().numpy(), embedded_z, None, mse, epoch)
 
@@ -290,7 +293,7 @@ class Sparse_DKT_regression(nn.Module):
         max_similar_index = np.argmax(kernel_matrix, axis=1)
         print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (Q kernel): {inducing_points.y[max_similar_index]}', Fore.RESET)
         #**************************************************************
-        if (self.show_plots_pred or self.show_plots_features) and self.k_means:
+        if (self.show_plots_pred or self.show_plots_features) and not self.f_rvm:
             embedded_z_support = TSNE(n_components=2).fit_transform(z_support.detach().cpu().numpy())
 
             self.update_plots_test_kmeans(self.plots, x_support, y_support.detach().cpu().numpy(), 
@@ -403,7 +406,7 @@ class Sparse_DKT_regression(nn.Module):
         max_similar_index = np.argmax(kernel_matrix, axis=1)
         print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (Q kernel): {inducing_points.y[max_similar_index]}', Fore.RESET)
         #**************************************************************
-        if (self.show_plots_pred or self.show_plots_features) and not self.k_means:
+        if (self.show_plots_pred or self.show_plots_features) and self.f_rvm:
             embedded_z_support = TSNE(n_components=2).fit_transform(z_support.detach().cpu().numpy())
             self.update_plots_test_fast_rvm(self.plots, x_support, y_support.detach().cpu().numpy(), 
                                             z_support.detach(), z_query.detach(), embedded_z_support,
@@ -454,7 +457,7 @@ class Sparse_DKT_regression(nn.Module):
                     self.model.likelihood.noise.item()
                 ))
             
-            if (self.show_plots_pred or self.show_plots_features) and not self.k_means:
+            if (self.show_plots_pred or self.show_plots_features) and self.random:
                 embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
                 self.update_plots_train_kmeans(self.plots, labels.cpu().numpy(), embedded_z, None, mse, epoch)
 
@@ -561,7 +564,7 @@ class Sparse_DKT_regression(nn.Module):
         max_similar_index = np.argmax(kernel_matrix, axis=1)
         print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (Q kernel): {inducing_points.y[max_similar_index]}', Fore.RESET)
         #**************************************************************
-        if (self.show_plots_pred or self.show_plots_features) and not self.k_means:
+        if (self.show_plots_pred or self.show_plots_features) and  self.random:
             embedded_z_support = TSNE(n_components=2).fit_transform(z_support.detach().cpu().numpy())
             self.update_plots_test_fast_rvm(self.plots, x_support, y_support.detach().cpu().numpy(), 
                                             z_support.detach(), z_query.detach(), embedded_z_support,
@@ -584,12 +587,12 @@ class Sparse_DKT_regression(nn.Module):
         mll_list = []
         for epoch in range(stop_epoch):
             
-            if self.k_means:
-                mll = self.train_loop_kmeans(epoch, n_support, n_samples, optimizer)
+            if  self.f_rvm:
+                mll = self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
             elif self.random:
                 mll = self.train_loop_random(epoch, n_support, n_samples, optimizer)
-            elif not self.k_means:
-                mll = self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
+            elif  not self.f_rvm:
+                mll = self.train_loop_kmeans(epoch, n_support, n_samples, optimizer)
             else:
                 ValueError("Error")
             mll_list.append(mll)
@@ -614,12 +617,12 @@ class Sparse_DKT_regression(nn.Module):
         test_person = np.random.choice(np.arange(len(test_people)), size=test_count, replace=rep)
         for t in range(test_count):
             print(f'test #{t}')
-            if self.k_means:
-                mse = self.test_loop_kmeans(n_support, n_samples, test_person[t],  optimizer)
+            if self.f_rvm:
+                mse = self.test_loop_fast_rvm(n_support, n_samples, test_person[t],  optimizer)
             elif self.random:
                 mse = self.test_loop_random(n_support, n_samples, test_person[t],  optimizer)
-            elif not self.k_means:
-                mse = self.test_loop_fast_rvm(n_support, n_samples, test_person[t],  optimizer)
+            elif not self.f_rvm:
+                mse = self.test_loop_kmeans(n_support, n_samples, test_person[t],  optimizer)
             else:
                 ValueError()
 
@@ -636,7 +639,7 @@ class Sparse_DKT_regression(nn.Module):
 
         
         IP_index = np.array([])
-        if self.k_means:
+        if not self.f_rvm:
             num_IP = self.num_induce_points
             
             # self.kmeans_clustering = KMeans(n_clusters=num_IP, init='k-means++',  n_init=10, max_iter=1000).fit(inputs.cpu().numpy())
@@ -652,7 +655,7 @@ class Sparse_DKT_regression(nn.Module):
         else:
             # with sigma and updating sigma converges to more sparse solution
             N   = inputs.shape[0]
-            tol = 1e-6
+            tol = 1e-4
             eps = torch.finfo(torch.float32).eps
             max_itr = 1000
             sigma = self.model.likelihood.noise[0].clone()
@@ -661,7 +664,6 @@ class Sparse_DKT_regression(nn.Module):
             sigma = sigma.to(self.device)
             beta = 1 /(sigma + eps)
             scale = True
-            update_sigma = False
             covar_module = self.model.base_covar_module
             kernel_matrix = covar_module(inputs).evaluate()
             # normalize kernel
@@ -673,7 +675,7 @@ class Sparse_DKT_regression(nn.Module):
 
             kernel_matrix = kernel_matrix.to(torch.float64)
             targets = targets.to(torch.float64)
-            active, alpha, Gamma, beta = Fast_RVM_regression(kernel_matrix, targets.view(-1, 1), beta, N, update_sigma,
+            active, alpha, Gamma, beta = Fast_RVM_regression(kernel_matrix, targets.view(-1, 1), beta, N, self.config, self.align_threshold,
                                                     eps, tol, max_itr, self.device, verbose)
 
             active = np.sort(active)
@@ -710,7 +712,7 @@ class Sparse_DKT_regression(nn.Module):
 
         os.makedirs(self.video_path, exist_ok=True)
         time_now = datetime.now().strftime('%Y-%m-%d--%H-%M')
-        sparse_method = "KMeans" if self.k_means else "FRVM"
+        sparse_method = "f_rvm" if self.f_rvm else "KMeans"
         if self.random: sparse_method = "random"  
         self.plots = self.prepare_plots()
         # plt.show(block=False)
