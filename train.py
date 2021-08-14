@@ -143,7 +143,7 @@ if __name__ == '__main__':
         # a batch for SetDataManager: a [n_way, n_support + n_query, dim, w, h] tensor
 
         if(params.method == 'Sparse_DKT'):
-            model = Sparse_DKT(model_dict[params.model], **train_few_shot_params, params.config, params.align_thr)
+            model = Sparse_DKT(model_dict[params.model], **train_few_shot_params, config=params.config, align_thr=params.align_thr)
             model.init_summary()
         elif(params.method == 'DKT'):
             model = DKT(model_dict[params.model], **train_few_shot_params)
