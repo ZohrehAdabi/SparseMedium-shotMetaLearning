@@ -44,7 +44,7 @@ def Fast_RVM_regression(K, targets, beta, N, update_sigma, eps, tol, max_itr=300
     delete_priority = False
     add_priority = False
     alignment_test = True
-
+    align_zero = 1e-3
     for itr in range(max_itr):
 
         # 'Relevance Factor' (q^2-s) values for basis functions in model
@@ -129,7 +129,7 @@ def Fast_RVM_regression(K, targets, beta, N, update_sigma, eps, tol, max_itr=300
                 terminate = True
         
         
-        align_zero = 1e-5
+        
         if alignment_test:
             #
             # Addition - rule out addition (from now onwards) if the new basis
