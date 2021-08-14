@@ -168,3 +168,4 @@ filelists/CUB/CUB_200_2011.tgz
 model.txt
 save/checkpoints/QMUL/*.png
 loss
+filelists/omniglot/base.json
