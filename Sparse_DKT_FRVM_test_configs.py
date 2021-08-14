@@ -128,7 +128,7 @@ for i in range(16):
         params.checkpoint_dir = params.checkpoint_dir +  f'FRVM_{params.config}_{params.align_thr:.6f}'
         model = Sparse_DKT_regression(bb, f_rvm=True, config=params.config, align_threshold=params.align_thr, 
                             video_path=params.checkpoint_dir, 
-                            show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
+                            show_plots_pred=True, show_plots_features=params.show_plots_features, training=False).cuda()
     else:
          ValueError('Unrecognised sparse method')
 

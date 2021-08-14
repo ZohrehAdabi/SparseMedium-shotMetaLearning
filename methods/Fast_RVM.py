@@ -364,7 +364,7 @@ def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
             #  Make sure its positive definite
         except:
             print('pd_err of Hessian')
-            return None, None, None, True
+            return None, None, None, None, True
         
         #  Before progressing, check for termination based on the gradient norm
         if all(abs(g)< grad_min): break
