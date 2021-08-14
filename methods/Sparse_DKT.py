@@ -6,12 +6,14 @@ from torch.autograd import Variable
 import numpy as np
 import torch.nn.functional as F
 from methods.meta_template import MetaTemplate
-
+from fast_pytorch_kmeans import KMeans as Fast_KMeans
+from collections import namedtuple
 ## Our packages
 import gpytorch
 from time import gmtime, strftime
 import random
 from configs import kernel_type
+from methods.Fast_RVM import Fast_RVM
 #Check if tensorboardx is installed
 try:
     from tensorboardX import SummaryWriter
@@ -28,11 +30,13 @@ except ImportError:
 # CUB + data augmentation
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=1 --train_aug
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=5 --train_aug
-
+IP = namedtuple("inducing_points", "z_values index count x y i_idx j_idx")
 class Sparse_DKT(MetaTemplate):
     def __init__(self, model_func, n_way, n_support):
         super(Sparse_DKT, self).__init__(model_func, n_way, n_support)
         self.num_inducing_points = 10
+        self.fast_rvm = True
+        self.device ='cuda'
         ## GP parameters
         self.leghtscale_list = None
         self.noise_list = None
@@ -148,6 +152,14 @@ class Sparse_DKT(MetaTemplate):
             outputscale = 0.0
             for idx, single_model in enumerate(self.model.models):
                 single_model.set_train_data(inputs=z_train, targets=target_list[idx], strict=False)
+
+                with torch.no_grad():
+                    inducing_points = self.get_inducing_points(z_train, target_list[idx], verbose=False)
+            
+                ip_values = inducing_points.z_values.cuda()
+                single_model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
+                single_model.train()
+
                 if(single_model.covar_module.base_kernel.lengthscale is not None):
                     lenghtscale+=single_model.covar_module.base_kernel.lengthscale.mean().cpu().detach().numpy().squeeze()
                 noise+=single_model.likelihood.noise.cpu().detach().numpy().squeeze()
@@ -195,8 +207,60 @@ class Sparse_DKT(MetaTemplate):
 
             if i % print_freq==0:
                 if(self.writer is not None): self.writer.add_histogram('z_support', z_support, self.iteration)
-                print('Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} | Noise {:f} | Loss {:f} | Supp. {:f} | Query {:f}'.format(epoch, i, len(train_loader), outputscale, lenghtscale, noise, loss.item(), accuracy_support, accuracy_query))
+                print('Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} | Noise {:f} | Loss {:f} | Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
+                 outputscale, lenghtscale, noise, loss.item(), accuracy_support, accuracy_query))
 
+    def get_inducing_points(self, inputs, targets, verbose=True):
+
+        
+        IP_index = np.array([])
+        if not self.fast_rvm:
+            num_IP = self.num_induce_points
+            
+            # self.kmeans_clustering = KMeans(n_clusters=num_IP, init='k-means++',  n_init=10, max_iter=1000).fit(inputs.cpu().numpy())
+            # inducing_points = self.kmeans_clustering.cluster_centers_
+            # inducing_points = torch.from_numpy(inducing_points).to(torch.float)
+
+            self.kmeans_clustering = Fast_KMeans(n_clusters=num_IP, max_iter=1000)
+            self.kmeans_clustering.fit(inputs.cuda())
+            inducing_points = self.kmeans_clustering.centroids
+            # print(inducing_points.shape[0])
+
+
+        else:
+            # with sigma and updating sigma converges to more sparse solution
+            N   = inputs.shape[0]
+            tol = 1e-6
+            eps = torch.finfo(torch.float32).eps
+            max_itr = 1000
+            sigma = self.model.likelihood.noise[0].clone()
+            # sigma = torch.tensor([0.0000001])
+            # sigma = torch.tensor([torch.var(targets) * 0.1]) #sigma^2
+            sigma = sigma.to(self.device)
+            beta = 1 /(sigma + eps)
+            scale = True
+            update_sigma = False
+            covar_module = self.model.base_covar_module
+            kernel_matrix = covar_module(inputs).evaluate()
+            # normalize kernel
+            if scale:
+                scales	= torch.sqrt(torch.sum(kernel_matrix**2, axis=0))
+                # print(f'scale: {Scales}')
+                scales[scales==0] = 1
+                kernel_matrix = kernel_matrix / scales
+
+            kernel_matrix = kernel_matrix.to(torch.float64)
+            targets = targets.to(torch.float64)
+            active, alpha, Gamma, beta = Fast_RVM(kernel_matrix, targets.view(-1, 1), beta, N, update_sigma,
+                                                    eps, tol, max_itr, self.device, verbose)
+
+            active = np.sort(active)
+            inducing_points = inputs[active]
+            num_IP = active.shape[0]
+            IP_index = active
+
+        return IP(inducing_points, IP_index, num_IP, None, None, None, None)
+  
     def correct(self, x, N=0, laplace=False):
         ##Dividing input x in query and support set
         x_support = x[:,:self.n_support,:,:,:].contiguous().view(self.n_way * (self.n_support), *x.size()[2:]).cuda()
