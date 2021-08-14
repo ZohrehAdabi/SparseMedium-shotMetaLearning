@@ -26,6 +26,7 @@ def parse_args(script):
     parser.add_argument('--train_aug'   , action='store_true',  help='perform data augmentation or not during training ') #still required for save_features.py and test.py to find the model path correctly
     parser.add_argument('--config', default='000', type=str, help='config for Fast RVM = {delete_priority|add_priority|align_test}')
     parser.add_argument('--align_thr', default=1e-3, type=float, help='1e-3, larger value leads to more rejection and sparseness')
+    parser.add_argument('--sparse_method', default='FRVM', type=str, help='FRVM|KMeans|random')
     if script == 'train':
         parser.add_argument('--num_classes' , default=200, type=int, help='total number of classes in softmax, only used in baseline') #make it larger than the maximum label value in base class
         parser.add_argument('--save_freq'   , default=50, type=int, help='Save frequency')

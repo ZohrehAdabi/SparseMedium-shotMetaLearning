@@ -36,7 +36,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/test.py",
             "console": "integratedTerminal",
-           "args": ["--method","Sparse_DKT", "--sparse_method", "FRVM", "--dataset", "CUB", 
+           "args": ["--method","Sparse_DKT", "--sparse_method", "FRVM", "--dataset", "omniglot", 
             "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "1",
               "--seed","1", "--config", "000", "--align_thr", "1e-3"]
             // python test.py --method "Sparse_DKT"  --sparse_method "FRVM" --dataset="CUB"  --train_n_way=5 --test_n_way=5 --n_shot=1 --seed=1 --config "000", --align_thr 1e-3
