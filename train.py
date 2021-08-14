@@ -15,6 +15,7 @@ from data.datamgr import SimpleDataManager, SetDataManager
 from methods.baselinetrain import BaselineTrain
 from methods.baselinefinetune import BaselineFinetune
 from methods.DKT import DKT
+from methods.Sparse_DKT import Sparse_DKT
 from methods.protonet import ProtoNet
 from methods.matchingnet import MatchingNet
 from methods.relationnet import RelationNet
@@ -128,7 +129,7 @@ if __name__ == '__main__':
         elif params.method == 'baseline++':
             model = BaselineTrain(model_dict[params.model], params.num_classes, loss_type='dist')
 
-    elif params.method in ['DKT', 'protonet', 'matchingnet', 'relationnet', 'relationnet_softmax', 'maml', 'maml_approx']:
+    elif params.method in ['Sparse_DKT', 'DKT', 'protonet', 'matchingnet', 'relationnet', 'relationnet_softmax', 'maml', 'maml_approx']:
         n_query = max(1, int(
             16 * params.test_n_way / params.train_n_way))  # if test_n_way is smaller than train_n_way, reduce n_query to keep batch size small
 
@@ -141,7 +142,10 @@ if __name__ == '__main__':
         val_loader = val_datamgr.get_data_loader(val_file, aug=False)
         # a batch for SetDataManager: a [n_way, n_support + n_query, dim, w, h] tensor
 
-        if(params.method == 'DKT'):
+        if(params.method == 'Sparse_DKT'):
+            model = Sparse_DKT(model_dict[params.model], **train_few_shot_params)
+            model.init_summary()
+        elif(params.method == 'DKT'):
             model = DKT(model_dict[params.model], **train_few_shot_params)
             model.init_summary()
         elif params.method == 'protonet':

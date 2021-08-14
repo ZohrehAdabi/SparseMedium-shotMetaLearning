@@ -17,7 +17,7 @@ from methods.Fast_RVM import Fast_RVM
 #Check if tensorboardx is installed
 try:
     from tensorboardX import SummaryWriter
-    IS_TBX_INSTALLED = True
+    IS_TBX_INSTALLED = False
 except ImportError:
     IS_TBX_INSTALLED = False
     print('[WARNING] install tensorboardX to record simulation logs.')
