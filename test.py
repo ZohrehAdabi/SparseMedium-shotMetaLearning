@@ -181,7 +181,7 @@ def single_test(params):
         else:
             exp_setting = '%s-%s-%s-%s%s %sshot %sway_train %sway_test' %(params.dataset, split_str, params.model, params.method, aug_str , params.n_shot , params.train_n_way, params.test_n_way )
         acc_str = '%d Test Acc = %4.2f%% +- %4.2f%%' %(iter_num, acc_mean, 1.96* acc_std/np.sqrt(iter_num))
-        f.write( 'Time: %s, Setting: %s, Acc: %s \n' %(timestamp,exp_setting,acc_str)  )
+        f.write( 'Time: %s, Setting: %s, Stop_epoch: %s \n' %(timestamp,exp_setting,acc_str)  )
     return acc_mean
 
 def main():        
