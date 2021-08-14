@@ -156,7 +156,8 @@ class Sparse_DKT(MetaTemplate):
                 single_model.set_train_data(inputs=z_train, targets=target_list[idx], strict=False)
 
                 with torch.no_grad():
-                    inducing_points = self.get_inducing_points(z_train, target_list[idx], verbose=False)
+                    inducing_points = self.get_inducing_points(single_model.base_covar_module,
+                                                            z_train, target_list[idx], verbose=False)
             
                 ip_values = inducing_points.z_values.cuda()
                 single_model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
@@ -212,7 +213,7 @@ class Sparse_DKT(MetaTemplate):
                 print('Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} | Noise {:f} | Loss {:f} | Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
                  outputscale, lenghtscale, noise, loss.item(), accuracy_support, accuracy_query))
 
-    def get_inducing_points(self, inputs, targets, verbose=True):
+    def get_inducing_points(self, base_covar_module, inputs, targets, verbose=True):
 
         
         IP_index = np.array([])
@@ -237,7 +238,7 @@ class Sparse_DKT(MetaTemplate):
             max_itr = 1000
             
             scale = True
-            covar_module = self.model.base_covar_module
+            covar_module = base_covar_module
             kernel_matrix = covar_module(inputs).evaluate()
             # normalize kernel
             if scale:
