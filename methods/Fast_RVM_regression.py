@@ -41,6 +41,7 @@ def Fast_RVM_regression(K, targets, beta, N, update_sigma, eps, tol, max_itr=300
     beta_KK_m = beta * KK_m
     Sigma_m, mu_m, S, Q, s, q, logML, Gamma = Statistics(K_m, KK_m, KK_mm, Kt, K_mt, alpha_m, active_m, beta, targets, N)
 
+    update_sigma = True
     delete_priority = False
     add_priority = False
     alignment_test = True
