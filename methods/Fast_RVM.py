@@ -18,6 +18,7 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
 
     M = K.shape[1]
     logMarginalLog = []
+    targets[targets == -1] = 0
     targets = targets.to(device)
     K = K.to(device)
     targets_pseudo_linear	= 2 * targets - 1
@@ -351,12 +352,12 @@ def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
 
         #  Construct the gradient
         e	= (targets-y)
-        g	= K_m.T @ e -alpha_m * mu_m
+        g	= K_m.T @ e - (alpha_m * mu_m)
         #  Compute the likelihood-dependent analogue of the noise precision.
         #  NB: Beta now a vector.
         beta	= y * (1-y)
         #   Compute the Hessian
-        beta_K_m	= K_m * (beta * torch.ones(1, K_m.shape[1]).to(device))
+        beta_K_m	= K_m * (beta @ torch.ones(1, K_m.shape[1], dtype=torch.float64).to(device))
         H			= (beta_K_m.T @ K_m + torch.diag(alpha_m))
         #  Invert Hessian via Cholesky, watching out for ill-conditioning
         try:

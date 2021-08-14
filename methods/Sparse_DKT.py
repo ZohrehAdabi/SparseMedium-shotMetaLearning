@@ -108,14 +108,14 @@ class Sparse_DKT(MetaTemplate):
             self.noise_list = list()
             self.outputscale_list = list()
             for idx, single_model in enumerate(self.model.models):
-                self.leghtscale_list.append(single_model.covar_module.base_kernel.lengthscale.clone().detach())
+                self.leghtscale_list.append(single_model.base_covar_module.base_kernel.lengthscale.clone().detach())
                 self.noise_list.append(single_model.likelihood.noise.clone().detach())
-                self.outputscale_list.append(single_model.covar_module.outputscale.clone().detach())
+                self.outputscale_list.append(single_model.base_covar_module.outputscale.clone().detach())
         else:
             for idx, single_model in enumerate(self.model.models):
-                single_model.covar_module.base_kernel.lengthscale=self.leghtscale_list[idx].clone().detach()#.requires_grad_(True)
+                single_model.base_covar_module.base_kernel.lengthscale=self.leghtscale_list[idx].clone().detach()#.requires_grad_(True)
                 single_model.likelihood.noise=self.noise_list[idx].clone().detach()
-                single_model.covar_module.outputscale=self.outputscale_list[idx].clone().detach()
+                single_model.base_covar_module.outputscale=self.outputscale_list[idx].clone().detach()
 
     def train_loop(self, epoch, train_loader, optimizer, print_freq=10):
         optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
@@ -164,13 +164,13 @@ class Sparse_DKT(MetaTemplate):
                 single_model.train()
 
                 if(single_model.covar_module.base_kernel.lengthscale is not None):
-                    lenghtscale+=single_model.covar_module.base_kernel.lengthscale.mean().cpu().detach().numpy().squeeze()
+                    lenghtscale+=single_model.base_covar_module.base_kernel.lengthscale.mean().cpu().detach().numpy().squeeze()
                 noise+=single_model.likelihood.noise.cpu().detach().numpy().squeeze()
-                if(single_model.covar_module.outputscale is not None):
-                    outputscale+=single_model.covar_module.outputscale.cpu().detach().numpy().squeeze()
-            if(single_model.covar_module.base_kernel.lengthscale is not None): lenghtscale /= float(len(self.model.models))
+                if(single_model.base_covar_module.outputscale is not None):
+                    outputscale+=single_model.base_covar_module.outputscale.cpu().detach().numpy().squeeze()
+            if(single_model.base_covar_module.base_kernel.lengthscale is not None): lenghtscale /= float(len(self.model.models))
             noise /= float(len(self.model.models))
-            if(single_model.covar_module.outputscale is not None): outputscale /= float(len(self.model.models))
+            if(single_model.base_covar_module.outputscale is not None): outputscale /= float(len(self.model.models))
 
             ## Optimize
             optimizer.zero_grad()
@@ -238,8 +238,7 @@ class Sparse_DKT(MetaTemplate):
             max_itr = 1000
             
             scale = True
-            covar_module = base_covar_module
-            kernel_matrix = covar_module(inputs).evaluate()
+            kernel_matrix = base_covar_module(inputs).evaluate()
             # normalize kernel
             if scale:
                 scales	= torch.sqrt(torch.sum(kernel_matrix**2, axis=0))
@@ -401,8 +400,8 @@ class ExactGPLayer(gpytorch.models.ExactGP):
     '''
     Parameters learned by the model:
         likelihood.noise_covar.raw_noise
-        covar_module.raw_outputscale
-        covar_module.base_kernel.raw_lengthscale
+        base_covar_module.raw_outputscale
+        base_covar_module.base_kernel.raw_lengthscale
     '''
     def __init__(self, train_x, train_y, likelihood, inducing_points, kernel='linear'):
         #Set the likelihood noise and enable/disable learning
