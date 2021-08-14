@@ -13,7 +13,7 @@ from sklearn.metrics import mean_squared_error as mse
 from torch.utils import data
 
 
-def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='cuda', verbose=True):
+def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='cuda', verbose=True):
     
 
     M = K.shape[1]
@@ -45,12 +45,13 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
     # Sigma_m = torch.inverse(A_m + beta * KK_mm)
     
 
-    Sigma_m, mu_m, S, Q, s, q, beta, beta_KK_m, logML, Gamma = Statistics(K, K_m, mu_m, alpha_m, active_m, beta, targets, N, device)
+    Sigma_m, mu_m, S, Q, s, q, beta, beta_KK_m, logML, Gamma = Statistics(K, K_m, mu_m, alpha_m, active_m, targets, N, device)
 
-    delete_priority = False
-    add_priority = False
-    alignment_test = False
-    align_zero = 1e-5
+    delete_priority = config[0]=="1"
+    add_priority    = config[1]=="1"
+    alignment_test  = config[2]=="1"
+    align_zero      = align_thr
+    
     for itr in range(max_itr):
 
         # 'Relevance Factor' (q^2-s) values for basis functions in model
@@ -272,7 +273,7 @@ def Fast_RVM(K, targets, beta, N, update_sigma, eps, tol, max_itr=3000, device='
     return active_m.cpu().numpy(), alpha_m, Gamma, beta 
 
 
-def Statistics(K, K_m, mu_m, alpha_m, active_m, beta, targets, N, device):
+def Statistics(K, K_m, mu_m, alpha_m, active_m, targets, N, device):
         
         
         mu_m, U, beta, dataLikely, bad_Hess = posterior_mode(K_m, targets, alpha_m, mu_m, max_itr=25, device=device)

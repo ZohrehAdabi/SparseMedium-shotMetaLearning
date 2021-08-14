@@ -24,7 +24,8 @@ def parse_args(script):
     parser.add_argument('--test_n_way'  , default=5, type=int,  help='class num to classify for testing (validation) ') #baseline and baseline++ only use this parameter in finetuning
     parser.add_argument('--n_shot'      , default=5, type=int,  help='number of labeled data in each class, same as n_support') #baseline and baseline++ only use this parameter in finetuning
     parser.add_argument('--train_aug'   , action='store_true',  help='perform data augmentation or not during training ') #still required for save_features.py and test.py to find the model path correctly
-
+    parser.add_argument('--config', default='000', type=str, help='config for Fast RVM = {delete_priority|add_priority|align_test}')
+    parser.add_argument('--align_thr', default=1e-3, type=float, help='1e-3, larger value leads to more rejection and sparseness')
     if script == 'train':
         parser.add_argument('--num_classes' , default=200, type=int, help='total number of classes in softmax, only used in baseline') #make it larger than the maximum label value in base class
         parser.add_argument('--save_freq'   , default=50, type=int, help='Save frequency')
@@ -54,11 +55,11 @@ def parse_args_regression(script):
         parser.add_argument('--sparse_method', default='KMeans', type=str, help='KMeans / FRVM / random')
         parser.add_argument('--dataset'     , default='QMUL',    help='QMUL / sines')
         parser.add_argument('--spectral', action='store_true', help='Use a spectral covariance kernel function')
-        parser.add_argument('--n_samples', default=108, type=int, help='Number of points on trajectory') #at most 19 
+        parser.add_argument('--n_samples', default=72, type=int, help='Number of points on trajectory') #at most 19 
         parser.add_argument('--show_plots_features', action='store_true', help='Show plots') 
         parser.add_argument('--n_centers', default=24, type=int, help='Number of Inducing points/ KMeans centers in Kmeans sparsifying')
         parser.add_argument('--config', default='0000', type=str, help='config for Fast RVM = {update_sigma|delete_priority|add_priority|align_test}')
-        parser.add_argument('--align_thr', default=1e-3, type=float, help='1e-3, large value leads to more rejection and sparseness')
+        parser.add_argument('--align_thr', default=1e-3, type=float, help='1e-3, larger value leads to more rejection and sparseness')
         if script == 'train_regression':
             parser.add_argument('--start_epoch' , default=0, type=int, help ='Starting epoch')
             parser.add_argument('--stop_epoch'  , default=100, type=int, help ='Stopping epoch') #for meta-learning methods, each epoch contains 100 episodes. The default epoch number is dataset dependent. See train.py

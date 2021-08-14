@@ -32,10 +32,12 @@ except ImportError:
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=5 --train_aug
 IP = namedtuple("inducing_points", "z_values index count x y i_idx j_idx")
 class Sparse_DKT(MetaTemplate):
-    def __init__(self, model_func, n_way, n_support):
+    def __init__(self, model_func, n_way, n_support, config="000", align_threshold=1e-3):
         super(Sparse_DKT, self).__init__(model_func, n_way, n_support)
         self.num_inducing_points = 10
         self.fast_rvm = True
+        self.config = config
+        self.align_threshold = align_threshold
         self.device ='cuda'
         ## GP parameters
         self.leghtscale_list = None
@@ -233,13 +235,8 @@ class Sparse_DKT(MetaTemplate):
             tol = 1e-6
             eps = torch.finfo(torch.float32).eps
             max_itr = 1000
-            sigma = self.model.likelihood.noise[0].clone()
-            # sigma = torch.tensor([0.0000001])
-            # sigma = torch.tensor([torch.var(targets) * 0.1]) #sigma^2
-            sigma = sigma.to(self.device)
-            beta = 1 /(sigma + eps)
+            
             scale = True
-            update_sigma = False
             covar_module = self.model.base_covar_module
             kernel_matrix = covar_module(inputs).evaluate()
             # normalize kernel
@@ -251,7 +248,7 @@ class Sparse_DKT(MetaTemplate):
 
             kernel_matrix = kernel_matrix.to(torch.float64)
             targets = targets.to(torch.float64)
-            active, alpha, Gamma, beta = Fast_RVM(kernel_matrix, targets.view(-1, 1), beta, N, update_sigma,
+            active, alpha, Gamma, beta = Fast_RVM(kernel_matrix, targets.view(-1, 1), N, self.config, self.align_threshold,
                                                     eps, tol, max_itr, self.device, verbose)
 
             active = np.sort(active)
