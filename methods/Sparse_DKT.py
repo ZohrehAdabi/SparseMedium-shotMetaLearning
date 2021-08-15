@@ -38,6 +38,7 @@ class Sparse_DKT(MetaTemplate):
         self.fast_rvm = True
         self.config = config
         self.align_threshold = align_threshold
+        self.dirichlet = False
         self.device ='cuda'
         ## GP parameters
         self.leghtscale_list = None
@@ -68,8 +69,14 @@ class Sparse_DKT(MetaTemplate):
         model_list = list()
         likelihood_list = list()
         for train_x, train_y in zip(train_x_list, train_y_list):
-            likelihood = gpytorch.likelihoods.GaussianLikelihood()
-            model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, inducing_points=train_x, kernel=kernel_type)
+            
+            if self.dirichlet:
+                likelihood = gpytorch.likelihoods.DirichletClassificationLikelihood(targets=train_y, learn_additional_noise=False)
+            else:
+                likelihood = gpytorch.likelihoods.GaussianLikelihood()
+
+            model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, dirichlet=self.dirichlet,
+                                 inducing_points=train_x, kernel=kernel_type)
             model_list.append(model)
             likelihood_list.append(model.likelihood)
         self.model = gpytorch.models.IndependentModelList(*model_list).cuda()
@@ -153,7 +160,16 @@ class Sparse_DKT(MetaTemplate):
             noise = 0.0
             outputscale = 0.0
             for idx, single_model in enumerate(self.model.models):
-                single_model.set_train_data(inputs=z_train, targets=target_list[idx], strict=False)
+
+                if self.dirichlet:
+                    single_model.likelihood.targets = target_list[idx]
+                    sigma2_labels, transformed_targets, _ = single_model.likelihood._prepare_targets(single_model.likelihood.targets, 
+                                            alpha_epsilon=single_model.likelihood.alpha_epsilon, dtype=torch.float)
+                    single_model.likelihood.transformed_targets = transformed_targets.transpose(-2, -1)
+                    single_model.likelihood.noise.data = sigma2_labels
+                    single_model.set_train_data(inputs=z_train, targets=single_model.likelihood.transformed_targets, strict=False)
+                else: 
+                    single_model.set_train_data(inputs=z_train, targets=target_list[idx], strict=False)
 
                 with torch.no_grad():
                     inducing_points = self.get_inducing_points(single_model.base_covar_module,
@@ -175,7 +191,11 @@ class Sparse_DKT(MetaTemplate):
             ## Optimize
             optimizer.zero_grad()
             output = self.model(*self.model.train_inputs)
-            loss = -self.mll(output, self.model.train_targets)
+            if self.dirichlet:
+                transformed_targets = [model.likelihood.transformed_targets for model in model.models]
+                loss = -self.mll(output, transformed_targets)
+            else:
+                loss = -self.mll(output, self.model.train_targets)
             loss.backward()
             optimizer.step()
 
@@ -399,16 +419,21 @@ class Sparse_DKT(MetaTemplate):
 class ExactGPLayer(gpytorch.models.ExactGP):
     '''
     Parameters learned by the model:
-        likelihood.noise_covar.raw_noise
+        likelihood.noise_covar.raw_noise (Gaussian)
         base_covar_module.raw_outputscale
         base_covar_module.base_kernel.raw_lengthscale
     '''
-    def __init__(self, train_x, train_y, likelihood, inducing_points, kernel='linear'):
+    def __init__(self, train_x, train_y, likelihood, dirichlet, inducing_points, kernel='linear'):
         #Set the likelihood noise and enable/disable learning
-        likelihood.noise_covar.raw_noise.requires_grad = False
-        likelihood.noise_covar.noise = torch.tensor(0.1)
+        if not dirichlet:
+            likelihood.noise_covar.raw_noise.requires_grad = False
+            likelihood.noise_covar.noise = torch.tensor(0.1)
         super().__init__(train_x, train_y, likelihood)
-        self.mean_module = gpytorch.means.ConstantMean()
+
+        if dirichlet:
+            self.mean_module  = gpytorch.means.ConstantMean(batch_shape=torch.Size((2,)))
+        else:
+            self.mean_module = gpytorch.means.ConstantMean()
 
         ## Linear kernel
         if(kernel=='linear'):
