@@ -184,6 +184,7 @@ class Sparse_DKT(MetaTemplate):
                 noise+=single_model.likelihood.noise.cpu().detach().numpy().squeeze()
                 if(single_model.base_covar_module.outputscale is not None):
                     outputscale+=single_model.base_covar_module.outputscale.cpu().detach().numpy().squeeze()
+            
             if(single_model.base_covar_module.base_kernel.lengthscale is not None): lenghtscale /= float(len(self.model.models))
             noise /= float(len(self.model.models))
             if(single_model.base_covar_module.outputscale is not None): outputscale /= float(len(self.model.models))
@@ -210,20 +211,37 @@ class Sparse_DKT(MetaTemplate):
                 z_support = self.feature_extractor.forward(x_support).detach()
                 if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1)
                 z_support_list = [z_support]*len(y_support)
-                predictions = self.likelihood(*self.model(*z_support_list)) #return 20 MultiGaussian Distributions
+
+                if self.dirichlet:
+                    predictions = self.likelihood(*self.model(*z_support_list)) #return 2 * 20 MultiGaussian Distributions
+                else:
+                    predictions = self.likelihood(*self.model(*z_support_list)) #return 20 MultiGaussian Distributions
                 predictions_list = list()
-                for gaussian in predictions:
-                    predictions_list.append(torch.sigmoid(gaussian.mean).cpu().detach().numpy())
+                
+                if self.dirichlet:
+                    for dirichlet in predictions:
+                        predictions_list.append(((dirichlet.mean[0] < dirichlet.mean[1]).to(float)).cpu().detach().numpy())
+                else:
+                    for gaussian in predictions:
+                        predictions_list.append(torch.sigmoid(gaussian.mean).cpu().detach().numpy())
                 y_pred = np.vstack(predictions_list).argmax(axis=0) #[model, classes]
                 accuracy_support = (np.sum(y_pred==y_support) / float(len(y_support))) * 100.0
                 if(self.writer is not None): self.writer.add_scalar('GP_support_accuracy', accuracy_support, self.iteration)
                 z_query = self.feature_extractor.forward(x_query).detach()
                 if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
                 z_query_list = [z_query]*len(y_query)
-                predictions = self.likelihood(*self.model(*z_query_list)) #return 20 MultiGaussian Distributions
-                predictions_list = list()
-                for gaussian in predictions:
-                    predictions_list.append(torch.sigmoid(gaussian.mean).cpu().detach().numpy())
+                if self.dirichlet:
+                    predictions = self.likelihood(*self.model(*z_query_list)) #return 2 * 20 MultiGaussian Distributions
+                else:
+                    predictions = self.likelihood(*self.model(*z_query_list)) #return 20 MultiGaussian Distributions
+
+                if self.dirichlet:
+                    for dirichlet in predictions:
+                        predictions_list.append(((dirichlet.mean[0] < dirichlet.mean[1]).to(float)).cpu().detach().numpy())
+                else:
+                    for gaussian in predictions:
+                        predictions_list.append(torch.sigmoid(gaussian.mean).cpu().detach().numpy())
+
                 y_pred = np.vstack(predictions_list).argmax(axis=0) #[model, classes]
                 accuracy_query = (np.sum(y_pred==y_query) / float(len(y_query))) * 100.0
                 if(self.writer is not None): self.writer.add_scalar('GP_query_accuracy', accuracy_query, self.iteration)

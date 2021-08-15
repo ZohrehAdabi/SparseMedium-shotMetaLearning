@@ -77,7 +77,7 @@ def one():
         # Get the predicted labels (probabilites of belonging to the positive class)
         # Transform these probabilities to be 0/1 labels
         print(observed_pred)
-        pred_labels = observed_pred.mean.ge(0.5).float()
+        # pred_labels = observed_pred.mean.ge(0.5).float()
         pred_labels = (observed_pred.mean[0] < observed_pred.mean[1]).to(int)
         ax.plot(test_x.numpy(), pred_labels.numpy(), 'b')
         ax.set_ylim([-1, 2])
@@ -171,3 +171,6 @@ if dirichlet:
     #     print(f'loss {-mll_loss(out, tt).sum()}')
         # loss += -mll_loss(out, tt).sum()
 loss
+
+output = model(train_x_list)
+observed_pred = likelihood(output) 
