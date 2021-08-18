@@ -39,7 +39,7 @@ for dataset in dataset_list:
                 sorted_fnames = list(zip( *sorted(  zip(fnames, fname_number), key = lambda f_tuple: f_tuple[1] )))[0]
                  
             fid = int(fid[-5:])-1
-            fname = join( data_path,label, sorted_fnames[fid] )
+            fname = join( data_path, datasetmap[dataset], label, sorted_fnames[fid] )
             filelists[dataset][label].append(fname)
 
     for key, filelist in filelists[dataset].items():
@@ -58,7 +58,7 @@ for dataset in dataset_list:
     fo.write('],')
 
     fo.write('"image_names": [')
-    fo.writelines(['"%s",' % item  for item in filelists_flat[dataset]])
+    fo.writelines(['"%s",' % item.replace("\\","\\\\")  for item in filelists_flat[dataset]])
     fo.seek(0, os.SEEK_END) 
     fo.seek(fo.tell()-1, os.SEEK_SET)
     fo.write('],')
