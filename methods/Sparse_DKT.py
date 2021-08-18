@@ -235,7 +235,7 @@ class Sparse_DKT(MetaTemplate):
                     predictions = self.likelihood(*self.model(*z_query_list)) #return 2 * 20 MultiGaussian Distributions
                 else:
                     predictions = self.likelihood(*self.model(*z_query_list)) #return 20 MultiGaussian Distributions
-
+                # NOTE predictions_list = list()
                 if self.dirichlet:
                     for dirichlet in predictions:
                         predictions_list.append(torch.max(dirichlet.mean).cpu().detach().numpy())
@@ -338,7 +338,17 @@ class Sparse_DKT(MetaTemplate):
         if(self.normalize): z_train = F.normalize(z_train, p=2, dim=1)
         train_list = [z_train]*self.n_way
         for idx, single_model in enumerate(self.model.models):
-            single_model.set_train_data(inputs=z_train, targets=target_list[idx], strict=False)
+
+            if self.dirichlet:
+                single_model.likelihood.targets = target_list[idx]
+                sigma2_labels, transformed_targets, _ = single_model.likelihood._prepare_targets(single_model.likelihood.targets, 
+                                        alpha_epsilon=single_model.likelihood.alpha_epsilon, dtype=torch.float)
+                single_model.likelihood.transformed_targets = transformed_targets.transpose(-2, -1)
+                single_model.likelihood.noise.data = sigma2_labels
+                single_model.set_train_data(inputs=z_train, targets=single_model.likelihood.transformed_targets, strict=False)
+            else: 
+                single_model.set_train_data(inputs=z_train, targets=target_list[idx], strict=False)
+            # single_model.set_train_data(inputs=z_train, targets=target_list[idx], strict=False)
 
         optimizer = torch.optim.Adam([{'params': self.model.parameters()}], lr=1e-3)
 
@@ -363,10 +373,19 @@ class Sparse_DKT(MetaTemplate):
             z_query = self.feature_extractor.forward(x_query).detach()
             if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
             z_query_list = [z_query]*len(y_query)
-            predictions = self.likelihood(*self.model(*z_query_list)) #return n_way MultiGaussians
+            if self.dirichlet:
+                    predictions = self.likelihood(*self.model(*z_query_list)) #return 2 * 20 MultiGaussian Distributions
+            else:
+                predictions = self.likelihood(*self.model(*z_query_list)) ##return n_way MultiGaussians
+            
             predictions_list = list()
-            for gaussian in predictions:
-                predictions_list.append(torch.sigmoid(gaussian.mean).cpu().detach().numpy())
+            if self.dirichlet:
+                    for dirichlet in predictions:
+                        predictions_list.append(torch.max(dirichlet.mean).cpu().detach().numpy())
+            else:
+                for gaussian in predictions:
+                    predictions_list.append(torch.sigmoid(gaussian.mean).cpu().detach().numpy())
+            
             y_pred = np.vstack(predictions_list).argmax(axis=0) #[model, classes]
             top1_correct = np.sum(y_pred == y_query)
             count_this = len(y_query)

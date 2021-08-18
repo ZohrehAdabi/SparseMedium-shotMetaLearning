@@ -177,7 +177,12 @@ filelists/omniglot/*.rar
 filelists/omniglot/*.png
 
 filelists/FSC147
-filelists/MSC44
+filelists/MSC44/*.zip
+filelists/MSC44/*.json
+filelists/MSC44/images
+filelists/MSC44/gt_density
+filelists/MSC44/annotations
+
 
 
 test_old.ipynb
