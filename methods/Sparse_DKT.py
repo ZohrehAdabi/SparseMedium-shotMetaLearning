@@ -235,7 +235,7 @@ class Sparse_DKT(MetaTemplate):
                     predictions = self.likelihood(*self.model(*z_query_list)) #return 2 * 20 MultiGaussian Distributions
                 else:
                     predictions = self.likelihood(*self.model(*z_query_list)) #return 20 MultiGaussian Distributions
-                # NOTE predictions_list = list()
+                predictions_list = list()
                 if self.dirichlet:
                     for dirichlet in predictions:
                         predictions_list.append(torch.max(dirichlet.mean).cpu().detach().numpy())

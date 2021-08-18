@@ -116,7 +116,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
         terminate = False
 
         if ~anyWorthwhileAction:
-            print(f'{itr:03}, No positive action, m={active_m.shape[0]}')
+            print(f'{itr:3}, No positive action, m={active_m.shape[0]:3}')
             selected_action = torch.tensor(10)
             terminate = True
 
@@ -125,7 +125,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             no_change_in_alpha = len(no_change_in_alpha) == 1
             if no_change_in_alpha:
                 # print(selected_action)
-                print(f'{itr:03}, No change in alpha, m={active_m.shape[0]}')
+                print(f'{itr:3}, No change in alpha, m={active_m.shape[0]:3}')
                 selected_action = torch.tensor(11)
                 terminate = True
 
@@ -271,7 +271,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             delta_beta	= torch.log(beta)-torch.log(beta_old)
             beta_KK_m       = beta * KK_m
             if torch.abs(delta_beta) > 1e-6:
-                print(f'{itr:03}, update statistics after beta update')
+                print(f'{itr:3}, update statistics after beta update')
                 Sigma_m, mu_m, S, Q, s, q, logML, Gamma = Statistics(K_m, KK_m, KK_mm, Kt, K_mt, alpha_m, active_m, beta, targets, N)
                 logMarginalLog.append(logML.item())
                 terminate = False
@@ -280,11 +280,11 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
 
         if terminate:
             # print(f'sigma2={1/beta:.4f}')
-            print(f'Finished at {itr:3}, m= {active_m.shape[0]:2} sigma2={1/beta:.4f}')
+            print(f'Finished at {itr:3}, m= {active_m.shape[0]:3} sigma2={1/beta:4.4f}')
             return active_m.cpu().numpy(), alpha_m, Gamma, beta 
 
         if ((itr+1)%50==0) and verbose:
-            print(f'#{itr+1:03},     m={active_m.shape[0]}, selected_action= {selected_action.item():.0f}, logML= {logML.item()/N:.5f}, sigma2={1/beta:.4f}')
+            print(f'#{itr+1:3},     m={active_m.shape[0]}, selected_action= {selected_action.item():.0f}, logML= {logML.item()/N:.5f}, sigma2={1/beta:.4f}')
 
 
     print(f'logML= {logML/N}\n{logMarginalLog}')

@@ -119,7 +119,7 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
         terminate = False
 
         if ~anyWorthwhileAction:
-            print(f'{itr:03}, No positive action, m={active_m.shape[0]}')
+            print(f'{itr:3}, No positive action, m={active_m.shape[0]:3}')
             selected_action = torch.tensor(10)
             terminate = True
 
@@ -128,7 +128,7 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
             no_change_in_alpha = len(no_change_in_alpha) == 1
             if no_change_in_alpha:
                 # print(selected_action)
-                print(f'{itr:03}, No change in alpha, m={active_m.shape[0]}')
+                print(f'{itr:3}, No change in alpha, m={active_m.shape[0]:3}')
                 selected_action = torch.tensor(11)
                 terminate = True
         
@@ -262,7 +262,7 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
 
         if terminate:
             # print(f'sigma2={1/beta:.4f}')
-            print(f'Finished at {itr:3}, m= {active_m.shape[0]}:2')
+            print(f'Finished at {itr:3}, m= {active_m.shape[0]:3}')
             return active_m.cpu().numpy(), alpha_m, Gamma, beta 
 
         if ((itr+1)%50==0) and verbose:
