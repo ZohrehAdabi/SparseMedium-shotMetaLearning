@@ -170,4 +170,7 @@ loss
 filelists/omniglot/*.rar
 filelists/omniglot/*.png
 
-log
+filelists/FSC147
+
+
+test_old.ipynb

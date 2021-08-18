@@ -220,7 +220,8 @@ class Sparse_DKT(MetaTemplate):
                 
                 if self.dirichlet:
                     for dirichlet in predictions:
-                        predictions_list.append(((dirichlet.mean[0] < dirichlet.mean[1]).to(float)).cpu().detach().numpy())
+
+                        predictions_list.append(torch.max(dirichlet.mean).cpu().detach().numpy())
                 else:
                     for gaussian in predictions:
                         predictions_list.append(torch.sigmoid(gaussian.mean).cpu().detach().numpy())
@@ -237,7 +238,7 @@ class Sparse_DKT(MetaTemplate):
 
                 if self.dirichlet:
                     for dirichlet in predictions:
-                        predictions_list.append(((dirichlet.mean[0] < dirichlet.mean[1]).to(float)).cpu().detach().numpy())
+                        predictions_list.append(torch.max(dirichlet.mean).cpu().detach().numpy())
                 else:
                     for gaussian in predictions:
                         predictions_list.append(torch.sigmoid(gaussian.mean).cpu().detach().numpy())

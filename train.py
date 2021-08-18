@@ -43,7 +43,8 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
         raise ValueError('Unknown optimization, please define by yourself')
 
     max_acc = 0
-
+    print(f'num train task {len(base_loader)}')
+    print(f'num val task {len(val_loader)}')
     for epoch in range(start_epoch, stop_epoch):
         #model.eval()
         #acc = model.test_loop(val_loader)
@@ -130,15 +131,16 @@ if __name__ == '__main__':
             model = BaselineTrain(model_dict[params.model], params.num_classes, loss_type='dist')
 
     elif params.method in ['Sparse_DKT', 'DKT', 'protonet', 'matchingnet', 'relationnet', 'relationnet_softmax', 'maml', 'maml_approx']:
-        n_query = max(1, int(
-            16 * params.test_n_way / params.train_n_way))  # if test_n_way is smaller than train_n_way, reduce n_query to keep batch size small
+        # for fewshot setting
+        # n_query = max(1, int(
+        #     16 * params.test_n_way / params.train_n_way))  # if test_n_way is smaller than train_n_way, reduce n_query to keep batch size small
 
         train_few_shot_params = dict(n_way=params.train_n_way, n_support=params.n_shot)
-        base_datamgr = SetDataManager(image_size, n_query=n_query, **train_few_shot_params) #n_eposide=100
+        base_datamgr = SetDataManager(image_size, n_query=params.n_query, **train_few_shot_params) #n_eposide=100
         base_loader = base_datamgr.get_data_loader(base_file, aug=params.train_aug)
 
         test_few_shot_params = dict(n_way=params.test_n_way, n_support=params.n_shot)
-        val_datamgr = SetDataManager(image_size, n_query=n_query, **test_few_shot_params)
+        val_datamgr = SetDataManager(image_size, n_query=params.n_query, **test_few_shot_params)
         val_loader = val_datamgr.get_data_loader(val_file, aug=False)
         # a batch for SetDataManager: a [n_way, n_support + n_query, dim, w, h] tensor
 
