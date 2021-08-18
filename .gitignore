@@ -1,5 +1,5 @@
-#For error in VSCode in too mant activity
-
+#For error in VSCode in too many activity
+# node_modules
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -158,7 +158,7 @@ SparseGP.py
 GP_Classification.ipynb
 save/*.png
 filelists/*.jpg
-*.txt
+
 filelists/QMUL/images_all.rar
 save/checkpoints/QMUL/*.png
 save/checkpoints/QMUL/Conv3_DKT_Test_video/
