@@ -17,6 +17,7 @@ from data.datamgr import SetDataManager
 from methods.baselinetrain import BaselineTrain
 from methods.baselinefinetune import BaselineFinetune
 from methods.protonet import ProtoNet
+from methods.Sparse_DKT import Sparse_DKT
 from methods.DKT import DKT
 from methods.matchingnet import MatchingNet
 from methods.relationnet import RelationNet
@@ -78,6 +79,8 @@ def single_test(params):
         model           = ProtoNet( model_dict[params.model], **few_shot_params )
     elif params.method == 'DKT':
         model           = DKT(model_dict[params.model], **few_shot_params)
+    elif params.method == 'Sparse_DKT':
+        model           = Sparse_DKT(model_dict[params.model], **few_shot_params)
     elif params.method == 'matchingnet':
         model           = MatchingNet( model_dict[params.model], **few_shot_params )
     elif params.method in ['relationnet', 'relationnet_softmax']:
@@ -130,7 +133,7 @@ def single_test(params):
         split_str = split + "_" +str(params.save_iter)
     else:
         split_str = split
-    if params.method in ['maml', 'maml_approx', 'DKT']: #maml do not support testing with feature
+    if params.method in ['maml', 'maml_approx', 'DKT', 'Sparse_DKT']: #maml do not support testing with feature
         if 'Conv' in params.model:
             if params.dataset in ['omniglot', 'cross_char']:
                 image_size = 28

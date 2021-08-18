@@ -262,11 +262,11 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
 
         if terminate:
             # print(f'sigma2={1/beta:.4f}')
-            print(f'Finished at {itr:03}, m= {active_m.shape[0]}')
+            print(f'Finished at {itr:3}, m= {active_m.shape[0]}:2')
             return active_m.cpu().numpy(), alpha_m, Gamma, beta 
 
         if ((itr+1)%50==0) and verbose:
-            print(f'#{itr+1:03},     m={active_m.shape[0]}, selected_action= {selected_action.item():.0f}, logML= {logML.item()/N:.5f}, sigma2={1/beta:.4f}')
+            print(f'#{itr+1:3},     m={active_m.shape[0]}, selected_action= {selected_action.item():.0f}, logML= {logML.item()/N:.5f}, sigma2={1/beta:.4f}')
 
 
     print(f'logML= {logML/N}\n{logMarginalLog}')
