@@ -45,7 +45,7 @@ for dataset in dataset_list:
     fo.write('],')
 
     fo.write('"image_names": [')
-    fo.writelines(['"%s",' % item  for item in filelists_flat[dataset]])
+    fo.writelines(['"%s",' % item.replace("\\","\\\\")  for item in filelists_flat[dataset]])
     fo.seek(0, os.SEEK_END) 
     fo.seek(fo.tell()-1, os.SEEK_SET)
     fo.write('],')

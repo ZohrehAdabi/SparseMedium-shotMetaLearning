@@ -158,7 +158,13 @@ SparseGP.py
 GP_Classification.ipynb
 save/*.png
 filelists/*.jpg
-
+filelists/*.json
+filelists/omniglot/*.json
+filelists/QMUL/*.json
+filelists/CUB/*.json
+filelists/miniImagenet/*.json
+filelists/FSC147/*.json
+filelists/MSC44/*.json
 filelists/QMUL/images_all.rar
 save/checkpoints/QMUL/*.png
 save/checkpoints/QMUL/Conv3_DKT_Test_video/
@@ -171,6 +177,9 @@ filelists/omniglot/*.rar
 filelists/omniglot/*.png
 
 filelists/FSC147
+filelists/MSC44
 
 
 test_old.ipynb
+
+filelists/omniglot/base.json
