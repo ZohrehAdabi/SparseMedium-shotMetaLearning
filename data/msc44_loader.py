@@ -35,7 +35,7 @@ class MediumShotCountingDataset(Dataset):
         images_path = [im_p.replace("'", '').replace(" ", '') for im_p in images_path]
         gt_densities_path = gt_densities_path.replace('[', '').replace(']', '').split(',')
         gt_densities_path = [d_p.replace("'", '').replace(" ", '') for d_p in gt_densities_path]
-        # print(f'class_name {class_name}')
+        print(f'class_name {class_name}')
         # print(f'images_path {images_path}')
         assert self.cls[idx] in annotation_path
         assert self.cls[idx] in images_path[0]
@@ -97,7 +97,7 @@ class resizeImageWithGT(object):
         image,lines_boxes,density = sample['image'], sample['lines_boxes'],sample['gt_density']
         
         W, H = image.size
-        print(H)
+        # print(H)
         if W > self.max_hw or H > self.max_hw:
             
             scale_factor = float(self.max_hw)/ max(H, W)
@@ -140,7 +140,8 @@ def get_task(data_file, n_samples):
     transform = resizeImageWithGT()
 
     dataset = MediumShotCountingDataset(data_file=data_file, n_samples=n_samples, transform=transform)
-
-    for i in range(len(dataset)):
+    task_indices  = np.arange(len(dataset))
+    task_indices = np.random.permutation(task_indices)
+    for i in task_indices:
 
         yield dataset[i]
