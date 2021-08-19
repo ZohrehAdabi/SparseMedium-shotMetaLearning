@@ -23,6 +23,8 @@ for dataset in dataset_list:
     filelists = {}
     density_lists = {}
     folderlist = []
+    filelists_flat = []
+    labellists_flat = []
     print(data_path + datasetmap[dataset])
   #  with open(data_path + datasetmap[dataset] + ".csv", "r") as lines:
     class_folders = os.listdir(data_path+'/images/' + datasetmap[dataset])
@@ -42,7 +44,12 @@ for dataset in dataset_list:
 
     annotations = listdir( join(data_path, 'annotations', datasetmap[dataset]) )    
     annotations = list(join( data_path, 'annotations', datasetmap[dataset], annotation) for annotation in annotations)
-
+    
+    for key, filelist in filelists.items():
+        filelists_flat += filelist
+        
+    for key, density in density_lists.items():
+        labellists_flat += density
 
     fo = open(savedir + dataset + ".json", "w")
     fo.write('{"class_names": [')
@@ -50,12 +57,12 @@ for dataset in dataset_list:
     fo.seek(0, os.SEEK_END) 
     fo.seek(fo.tell()-1, os.SEEK_SET)
     fo.write('],')
-
-    fo.write('"image_names": [')
-    fo.writelines(['"%s",' % item  for item in list(filelists.values())])
+    
+    fo.write('"image_names":{')
+    fo.writelines(['"%s": "%s",' % (key,item)   for key,item in filelists.items()])
     fo.seek(0, os.SEEK_END) 
     fo.seek(fo.tell()-1, os.SEEK_SET)
-    fo.write('],')
+    fo.write('},')
 
     fo.write('"annotation_names": [')
     fo.writelines(['"%s",' % item.replace("\\","\\\\")  for item in annotations])
@@ -63,11 +70,11 @@ for dataset in dataset_list:
     fo.seek(fo.tell()-1, os.SEEK_SET)
     fo.write('],')
 
-    fo.write('"density_names": [')
-    fo.writelines(['"%s",' %  item  for item in list(density_lists.values())])
+    fo.write('"image_labels": {')
+    fo.writelines(['"%s": "%s",' % (key,item)   for key,item in density_lists.items()])  #.replace("\\","\\\\") 
     fo.seek(0, os.SEEK_END) 
     fo.seek(fo.tell()-1, os.SEEK_SET)
-    fo.write(']}')
+    fo.write('}}')
 
     fo.close()
     print("%s -OK" %dataset)

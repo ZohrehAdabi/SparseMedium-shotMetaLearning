@@ -1,13 +1,13 @@
 # This code is modified from https://github.com/facebookresearch/low-shot-shrink-hallucinate
 
-import torch
+import torch, torchvision
 from torch.autograd import Variable
 import torch.nn as nn
 import math
 import numpy as np
 import torch.nn.functional as F
 from torch.nn.utils.weight_norm import WeightNorm
-
+from collections import OrderedDict
 # Basic ResNet model
 
 def init_layer(L):
@@ -433,3 +433,76 @@ def ResNet50( flatten = True):
 
 def ResNet101( flatten = True):
     return ResNet(BottleneckBlock, [3,4,23,3],[256,512,1024,2048], flatten)
+
+#=============================================
+
+class Resnet50FPN(nn.Module):
+    def __init__(self):
+        super(Resnet50FPN, self).__init__()
+        self.resnet = torchvision.models.resnet50(pretrained=True)
+        children = list(self.resnet.children())
+        self.conv1 = nn.Sequential(*children[:4])
+        self.conv2 = children[4]
+        self.conv3 = children[5]
+        self.conv4 = children[6]
+    def forward(self, im_data):
+        feat = OrderedDict()
+        feat_map = self.conv1(im_data)
+        feat_map = self.conv2(feat_map)
+        feat_map3 = self.conv3(feat_map)
+        feat_map4 = self.conv4(feat_map3)
+        feat['map3'] = feat_map3
+        feat['map4'] = feat_map4
+        return feat
+
+
+class CountRegressor(nn.Module):
+    def __init__(self, input_channels,pool='mean'):
+        super(CountRegressor, self).__init__()
+        self.pool = pool
+        self.regressor = nn.Sequential(
+            nn.Conv2d(input_channels, 196, 7, padding=3),
+            nn.ReLU(),
+            nn.UpsamplingBilinear2d(scale_factor=2),
+            nn.Conv2d(196, 128, 5, padding=2),
+            nn.ReLU(),
+            nn.UpsamplingBilinear2d(scale_factor=2),
+            nn.Conv2d(128, 64, 3, padding=1),
+            nn.ReLU(),
+            nn.UpsamplingBilinear2d(scale_factor=2),
+            nn.Conv2d(64, 32, 1),
+            nn.ReLU(),
+            nn.Conv2d(32, 1, 1),
+            nn.ReLU(),
+        )
+
+    def forward(self, im):
+        num_sample =  im.shape[0]
+        if num_sample == 1:
+            output = self.regressor(im.squeeze(0))
+            if self.pool == 'mean':
+                output = torch.mean(output, dim=(0),keepdim=True)  
+                return output
+            elif self.pool == 'max':
+                output, _ = torch.max(output, 0,keepdim=True)
+                return output
+        else:
+            for i in range(0,num_sample):
+                output = self.regressor(im[i])
+                if self.pool == 'mean':
+                    output = torch.mean(output, dim=(0),keepdim=True)
+                elif self.pool == 'max':
+                    output, _ = torch.max(output, 0,keepdim=True)
+                if i == 0:
+                    Output = output
+                else:
+                    Output = torch.cat((Output,output),dim=0)
+            return Output
+
+
+def ResNet_Regrs():
+
+    resnet50_conv = Resnet50FPN()
+    regressor = CountRegressor(6, pool='mean')
+
+    return resnet50_conv, regressor

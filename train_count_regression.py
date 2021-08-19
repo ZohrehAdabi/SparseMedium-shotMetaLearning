@@ -5,9 +5,8 @@ from colorama import Fore
 import configs
 from data.qmul_loader import get_batch, train_people, test_people
 from io_utils import parse_args_regression, get_resume_file
-from methods.Sparse_DKT_regression import Sparse_DKT_regression
-from methods.DKT_regression import DKT_regression
-from methods.DKT_regression_New_Loss import DKT_New_Loss
+from methods.Sparse_DKT_count_regression import Sparse_DKT_count_regression
+from methods.DKT_count_regression import DKT_count_regression
 from methods.feature_transfer_regression import FeatureTransfer
 import backbone
 import os
@@ -26,13 +25,10 @@ if not os.path.isdir(params.checkpoint_dir):
     os.makedirs(params.checkpoint_dir)
 params.checkpoint_dir = '%scheckpoints/%s/%s_%s' % (configs.save_dir, params.dataset, params.model, params.method)
 
-bb           = backbone.Conv3().cuda()
+resnet50_conv, regressor = backbone.ResNet_Regrs()
 
 if params.method=='DKT':
-    model = DKT_regression(bb, video_path=params.checkpoint_dir, 
-                            show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
-elif params.method=='DKT_New_Loss':
-    model = DKT_New_Loss(bb, video_path=params.checkpoint_dir, 
+    model = DKT_count_regression(resnet50_conv, regressor, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
 
 elif params.method=='Sparse_DKT':
@@ -48,7 +44,7 @@ elif params.method=='Sparse_DKT':
             os.makedirs(params.checkpoint_dir)
         params.checkpoint_dir = params.checkpoint_dir +  f'KMeans_{str(params.n_centers)}'
         
-        model = Sparse_DKT_regression(bb, f_rvm=False, n_inducing_points=params.n_centers, video_path=video_path, 
+        model = Sparse_DKT_count_regression(resnet50_conv, regressor, f_rvm=False, n_inducing_points=params.n_centers, video_path=video_path, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     
     
@@ -58,7 +54,7 @@ elif params.method=='Sparse_DKT':
             os.makedirs(params.checkpoint_dir)
         params.checkpoint_dir = params.checkpoint_dir +  f'FRVM_{params.config}_{params.align_thr:.6f}'
 
-        model = Sparse_DKT_regression(bb, f_rvm=True, config=params.config, align_threshold=params.align_thr, 
+        model = Sparse_DKT_count_regression(resnet50_conv, regressor, f_rvm=True, config=params.config, align_threshold=params.align_thr, 
                             video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     
@@ -67,13 +63,13 @@ elif params.method=='Sparse_DKT':
         if not os.path.isdir(params.checkpoint_dir):
             os.makedirs(params.checkpoint_dir)
         params.checkpoint_dir = params.checkpoint_dir +  f'random_{str(params.n_centers)}'
-        model = Sparse_DKT_regression(bb, f_rvm=False, random=True,  n_inducing_points=params.n_centers, video_path=video_path, 
+        model = Sparse_DKT_count_regression(resnet50_conv, regressor, f_rvm=False, random=True,  n_inducing_points=params.n_centers, video_path=video_path, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     else:
         ValueError('Unrecognised sparse method')
 
 elif params.method=='transfer':
-    model = FeatureTransfer(bb, video_path=params.checkpoint_dir, 
+    model = FeatureTransfer(resnet50_conv, regressor, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
 else:
     ValueError('Unrecognised method')

@@ -8,6 +8,7 @@ import data.additional_transforms as add_transforms
 from data.dataset import SimpleDataset, SetDataset, EpisodicBatchSampler
 from abc import abstractmethod
 
+
 def _init_fn(worker_id):
     np.random.seed(0)
     
@@ -85,5 +86,4 @@ class SetDataManager(DataManager):
         data_loader_params = dict(batch_sampler = sampler,  num_workers = 0, pin_memory=True)       
         data_loader = torch.utils.data.DataLoader(dataset, **data_loader_params)
         return data_loader
-
 
