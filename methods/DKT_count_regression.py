@@ -29,11 +29,8 @@ class DKT_count_regression(nn.Module):
         ## GP parameters
         self.feature_extractor = backbone
         self.regressor = regressor
-        if training:
-            self.train_file = base_file
-            self.val_file = val_file
-        else:
-            self.test_file = val_file
+        self.train_file = base_file
+        self.val_file = val_file
         self.device = 'cuda'
         self.video_path = video_path
         self.show_plots_pred = show_plots_pred
@@ -68,10 +65,12 @@ class DKT_count_regression(nn.Module):
 
         # print(f'{epoch}: {batch_labels[0]}')
         mll_list = []
+        mse_list = []
         for itr, samples in enumerate(get_batch(self.train_file, n_samples)):
             optimizer.zero_grad()
 
             inputs = samples['image']
+            labels = samples['gt_count']
             z = self.feature_extractor(inputs)
 
             self.model.set_train_data(inputs=z, targets=labels, strict=False)
@@ -100,79 +99,106 @@ class DKT_count_regression(nn.Module):
                     self.plots.fig_feature.canvas.draw()
                     self.plots.fig_feature.canvas.flush_events()
                     self.mw_feature.grab_frame()
+            #*********************************************************
+            #validate on train data
+            validation = True
+            if validation:
+                support_ind = np.random.choice(np.range(n_samples), size=n_support, replace=False)
+                query_ind   = [i for i in range(n_samples) if i not in support_ind]
+                x_support = x_all[support_ind,:,:,:]
+                y_support = y_all[support_ind]
+                x_query   = x_all[query_ind,:,:,:]
+                y_query   = y_all[query_ind]
+
+            
+                z_support = self.feature_extractor(x_support).detach()
+                self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
+
+                self.model.eval()
+                self.feature_extractor.eval()
+                self.likelihood.eval()
+
+                with torch.no_grad():
+                    z_query = self.feature_extractor(x_query).detach()
+                    pred    = self.likelihood(self.model(z_query))
+                    lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
+
+                mse = self.mse(pred.mean, y_query).item()
+                mse_list.append(mse)
+
+        if validation:
+            print(Fore.CYAN,"-"*30, f'\n epoch {epoch} => Avg. MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
 
         return np.mean(mll_list)
 
-    def test_loop(self, n_support, n_samples, test_person, optimizer=None): # no optimizer needed for GP
-        inputs, targets = get_batch(test_people, n_samples)
+    def test_loop(self, n_support, n_samples, epoch, optimizer=None): # no optimizer needed for GP
+        mse_list = []       
+        for itr, samples in enumerate(get_batch(self.val_file, n_samples)):
+ 
+            inputs = samples['image']
+            targets = samples['gt_count']
 
-        split = np.array([True]*15 + [False]*3)
-        # print(split)
-        shuffled_split = []
-        for _ in range(int(n_support/15)):
-            s = split.copy()
-            np.random.shuffle(s)
-            shuffled_split.extend(s)
-        shuffled_split = np.array(shuffled_split)
-        support_ind = shuffled_split
-        query_ind = ~shuffled_split
-        x_all = inputs.cuda()
-        y_all = targets.cuda()
+            x_all = inputs.cuda()
+            y_all = targets.cuda()
+            support_ind = np.random.choice(np.range(n_samples), size=n_support, replace=False)
+            query_ind   = [i for i in range(n_samples) if i not in support_ind]
+            x_support = x_all[support_ind,:,:,:]
+            y_support = y_all[support_ind]
+            x_query   = x_all[query_ind,:,:,:]
+            y_query   = y_all[query_ind]
 
-        x_support = x_all[test_person,support_ind,:,:,:]
-        y_support = y_all[test_person,support_ind]
-        x_query   = x_all[test_person,query_ind,:,:,:]
-        y_query   = y_all[test_person,query_ind]
+        
+            z_support = self.feature_extractor(x_support).detach()
+            self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
 
-    
-        z_support = self.feature_extractor(x_support).detach()
-        self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
+            self.model.eval()
+            self.feature_extractor.eval()
+            self.likelihood.eval()
 
-        self.model.eval()
-        self.feature_extractor.eval()
-        self.likelihood.eval()
+            with torch.no_grad():
+                z_query = self.feature_extractor(x_query).detach()
+                pred    = self.likelihood(self.model(z_query))
+                lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
 
-        with torch.no_grad():
-            z_query = self.feature_extractor(x_query).detach()
-            pred    = self.likelihood(self.model(z_query))
-            lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
+            mse = self.mse(pred.mean, y_query).item()
+            mse_list.append(mse)
+            #***************************************************
+            y = ((y_query.detach().cpu().numpy() + 1) * 60 / 2) + 60
+            y_pred = ((pred.mean.detach().cpu().numpy() + 1) * 60 / 2) + 60
+            print(Fore.RED,"="*50, Fore.RESET)
+            print(f'itr #{itr}')
+            print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
+            print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
+            print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
+            print(Fore.LIGHTRED_EX, f'mse:    {mse:.4f}', Fore.RESET)
+            print(Fore.RED,"-"*50, Fore.RESET)
 
-        mse = self.mse(pred.mean, y_query).item()
-        #***************************************************
-        y = ((y_query.detach().cpu().numpy() + 1) * 60 / 2) + 60
-        y_pred = ((pred.mean.detach().cpu().numpy() + 1) * 60 / 2) + 60
-        print(Fore.RED,"="*50, Fore.RESET)
-        print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
-        print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
-        print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
-        print(Fore.LIGHTRED_EX, f'mse:    {mse:.4f}', Fore.RESET)
-        print(Fore.RED,"-"*50, Fore.RESET)
+            K = self.model.covar_module
+            kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
+            max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
+            y_s = ((y_support.detach().cpu().numpy() + 1) * 60 / 2) + 60
+            print(Fore.LIGHTGREEN_EX, f'target of most similar in support set: {y_s[max_similar_idx_x_s]}', Fore.RESET)
+            #**************************************************
 
-        K = self.model.covar_module
-        kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
-        max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
-        y_s = ((y_support.detach().cpu().numpy() + 1) * 60 / 2) + 60
-        print(Fore.LIGHTGREEN_EX, f'target of most similar in support set: {y_s[max_similar_idx_x_s]}', Fore.RESET)
-        #**************************************************
+            if (self.show_plots_pred or self.show_plots_features):
+                embedded_z_support = TSNE(n_components=2).fit_transform(z_support.detach().cpu().numpy())
 
-        if (self.show_plots_pred or self.show_plots_features):
-            embedded_z_support = TSNE(n_components=2).fit_transform(z_support.detach().cpu().numpy())
+                self.update_plots_test(self.plots, x_support, y_support.detach().cpu().numpy(), 
+                                                z_support.detach(), z_query.detach(), embedded_z_support,
+                                                x_query, y_query.detach().cpu().numpy(), pred, 
+                                                max_similar_idx_x_s, None, mse, itr)
+                if self.show_plots_pred:
+                    self.plots.fig.canvas.draw()
+                    self.plots.fig.canvas.flush_events()
+                    self.mw.grab_frame()
+                if self.show_plots_features:
+                    self.plots.fig_feature.canvas.draw()
+                    self.plots.fig_feature.canvas.flush_events()
+                    self.mw_feature.grab_frame()
 
-            self.update_plots_test(self.plots, x_support, y_support.detach().cpu().numpy(), 
-                                            z_support.detach(), z_query.detach(), embedded_z_support,
-                                            x_query, y_query.detach().cpu().numpy(), pred, 
-                                            max_similar_idx_x_s, None, mse, test_person)
-            if self.show_plots_pred:
-                self.plots.fig.canvas.draw()
-                self.plots.fig.canvas.flush_events()
-                self.mw.grab_frame()
-            if self.show_plots_features:
-                self.plots.fig_feature.canvas.draw()
-                self.plots.fig_feature.canvas.flush_events()
-                self.mw_feature.grab_frame()
+        print(Fore.CYAN,"-"*30, f'\n epoch {epoch} => Avg. MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
 
-
-        return mse
+        return np.mean(mse_list)
 
     def train(self, stop_epoch, n_support, n_samples, optimizer):
 
@@ -190,18 +216,14 @@ class DKT_count_regression(nn.Module):
             self.mw_feature.finish()
         return mll, mll_list
 
-    def test(self, n_support, n_samples, optimizer=None, test_count=None):
+    def test(self, n_support, n_samples, optimizer=None, n_test_epoch=1):
 
         mse_list = []
-        # choose a random test person
-        rep = True if test_count > len(test_people) else False
 
-        test_person = np.random.choice(np.arange(len(test_people)), size=test_count, replace=rep)
-        for t in range(test_count):
-            print(f'test #{t}')
+        for e in range(n_test_epoch):
+            print(f'test on all test tasks epoch #{e}')
             
-            mse = self.test_loop(n_support, n_samples, test_person[t],  optimizer)
-            
+            mse = self.test_loop(n_support, n_samples, e,  optimizer)
             mse_list.append(float(mse))
 
         if self.show_plots_pred:
@@ -258,7 +280,7 @@ class DKT_count_regression(nn.Module):
         Plots = namedtuple("plots", "fig ax fig_feature ax_feature")
         # fig: plt.Figure = plt.figure(1, dpi=200) #, tight_layout=True
         # fig.subplots_adjust(hspace = 0.0001)
-        fig, ax = plt.subplots(7, 19, figsize=(16,8), sharex=True, sharey=True, dpi=100) 
+        fig, ax = plt.subplots(5, 5, figsize=(16,8), sharex=True, sharey=True, dpi=100) 
         plt.subplots_adjust(wspace=0.1,  
                             hspace=0.8)
         # ax = fig.subplots(7, 19, sharex=True, sharey=True)
