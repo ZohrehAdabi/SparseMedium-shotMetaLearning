@@ -65,12 +65,13 @@ class DKT_count_regression(nn.Module):
 
     def train_loop(self, epoch, n_support, n_samples, optimizer):
 
-        batch, batch_labels = get_batch(train_people, n_samples)
-        batch, batch_labels = batch.cuda(), batch_labels.cuda()
+
         # print(f'{epoch}: {batch_labels[0]}')
         mll_list = []
-        for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
+        for itr, samples in enumerate(get_batch(self.train_file, n_samples)):
             optimizer.zero_grad()
+
+            inputs = samples['image']
             z = self.feature_extractor(inputs)
 
             self.model.set_train_data(inputs=z, targets=labels, strict=False)

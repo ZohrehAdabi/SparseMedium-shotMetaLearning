@@ -40,7 +40,7 @@ class MediumShotCountingDataset(Dataset):
             annotations = json.load(f)
         # print(f'anno {annotations}')
         sample_indices = np.random.choice(np.arange(len(images_path)), size=self.n_samples, replace=False)
-        samples = []
+        samples = {'image': [], 'boxes': [], 'gt_density': [], 'gt_count': []}
         for im_id in sample_indices:
 
             assert class_name in images_path[im_id]
@@ -63,8 +63,19 @@ class MediumShotCountingDataset(Dataset):
             density = np.load(gt_densities_path[im_id]).astype('float32')    
             sample = {'image':image,'lines_boxes':rects,'gt_density':density}
             sample = self.transform(sample)
-            #image, boxes, gt_density = sample['image'].cuda(), sample['boxes'].cuda(),sample['gt_density'].cuda()
-            samples.append(sample)
+            image, boxes, gt_density, gt_count = sample['image'].cuda(), sample['boxes'].cuda(),\
+                                                            sample['gt_density'].cuda(), sample['gt_count'].cuda()
+                                                            
+            samples['image'].append(image)
+            samples['gt_density'].append(gt_density)
+            samples['boxes'].append(boxes)
+            samples['gt_count'].append(gt_count)
+            # print(f'key image {image.shape}, key gt_density {gt_density.shape}, key boxes {boxes.shape}, key gt_count {gt_count.shape}')
+        
+        for key in samples.keys():
+            # print(f'key {key}, {len(samples[key])}')
+            samples[key] = torch.stack(samples[key])
+            # print(f'after, key {key}, {samples[key].shape}')
       
         return samples  #image, boxes, gt_density
 
@@ -126,8 +137,9 @@ class resizeImageWithGT(object):
         resized_image = self.Normalize(resized_image)
         # resized_image = transforms.ToTensor()(resized_image)
         resized_density = torch.from_numpy(resized_density).unsqueeze(0).unsqueeze(0)
-        # print(f'shape { resized_density.shape} gt count { resized_density.sum():.0f}')
-        sample = {'image':resized_image,'boxes':boxes, 'gt_density':resized_density, 'gt_count': f'{resized_density.sum():.0f}'}
+        # print(f'shape { resized_density.shape} gt count {torch.round(resized_density.sum())}')
+        sample = {'image':resized_image,'boxes':boxes, 'gt_density':resized_density, 
+                        'gt_count': torch.round(resized_density.sum()).unsqueeze(0)}
         
         return sample
 

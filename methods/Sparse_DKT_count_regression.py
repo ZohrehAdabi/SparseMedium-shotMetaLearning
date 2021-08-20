@@ -81,7 +81,7 @@ class Sparse_DKT_count_regression(nn.Module):
         # batch, batch_labels = get_batch(train_people, n_samples)
         # batch, batch_labels = batch.cuda(), batch_labels.cuda()
         mll_list = []
-        for itr, (inputs, labels) in enumerate(get_batch):
+        for itr, (inputs, labels) in enumerate(get_batch(self.train_file, n_samples)):
 
             z = self.feature_extractor(inputs)
             with torch.no_grad():
