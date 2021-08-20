@@ -62,11 +62,14 @@ class DKT_count_regression(nn.Module):
 
     def train_loop(self, epoch, n_support, n_samples, optimizer):
 
-
         # print(f'{epoch}: {batch_labels[0]}')
         mll_list = []
         mse_list = []
         for itr, samples in enumerate(get_batch(self.train_file, n_samples)):
+            
+            self.model.train()
+            self.feature_extractor.train()
+            self.likelihood.train()
             optimizer.zero_grad()
 
             inputs = samples['image']
@@ -105,13 +108,11 @@ class DKT_count_regression(nn.Module):
             if validation:
                 support_ind = np.random.choice(np.range(n_samples), size=n_support, replace=False)
                 query_ind   = [i for i in range(n_samples) if i not in support_ind]
-                x_support = x_all[support_ind,:,:,:]
-                y_support = y_all[support_ind]
-                x_query   = x_all[query_ind,:,:,:]
-                y_query   = y_all[query_ind]
+                z_support = z[support_ind,:,:,:]
+                y_support = labels[support_ind]
+                z_query   = z[query_ind,:,:,:]
+                y_query   = labels[query_ind]
 
-            
-                z_support = self.feature_extractor(x_support).detach()
                 self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
 
                 self.model.eval()
@@ -119,7 +120,6 @@ class DKT_count_regression(nn.Module):
                 self.likelihood.eval()
 
                 with torch.no_grad():
-                    z_query = self.feature_extractor(x_query).detach()
                     pred    = self.likelihood(self.model(z_query))
                     lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
 
@@ -127,7 +127,7 @@ class DKT_count_regression(nn.Module):
                 mse_list.append(mse)
 
         if validation:
-            print(Fore.CYAN,"-"*30, f'\n epoch {epoch} => Avg. MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
+            print(Fore.CYAN,"-"*30, f'\n epoch {epoch} => Avg. Train MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
 
         return np.mean(mll_list)
 
@@ -163,8 +163,8 @@ class DKT_count_regression(nn.Module):
             mse = self.mse(pred.mean, y_query).item()
             mse_list.append(mse)
             #***************************************************
-            y = ((y_query.detach().cpu().numpy() + 1) * 60 / 2) + 60
-            y_pred = ((pred.mean.detach().cpu().numpy() + 1) * 60 / 2) + 60
+            y = y_query.detach().cpu().numpy()
+            y_pred = pred.mean.detach().cpu().numpy()
             print(Fore.RED,"="*50, Fore.RESET)
             print(f'itr #{itr}')
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
@@ -208,7 +208,10 @@ class DKT_count_regression(nn.Module):
             mll_list.append(mll)
 
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
-        
+            print(Fore.GREEN,"-"*30, f'Validation:', Fore.RESET)
+            self.test_loop(n_support, n_samples, epoch, optimizer)
+            print(Fore.GREEN,"-"*30, Fore.RESET)
+
         mll = np.mean(mll_list)
         if self.show_plots_pred:
             self.mw.finish()
@@ -280,9 +283,9 @@ class DKT_count_regression(nn.Module):
         Plots = namedtuple("plots", "fig ax fig_feature ax_feature")
         # fig: plt.Figure = plt.figure(1, dpi=200) #, tight_layout=True
         # fig.subplots_adjust(hspace = 0.0001)
-        fig, ax = plt.subplots(5, 5, figsize=(16,8), sharex=True, sharey=True, dpi=100) 
-        plt.subplots_adjust(wspace=0.1,  
-                            hspace=0.8)
+        fig, ax = plt.subplots(2, 5, figsize=(10, 5), sharex=True, sharey=True, dpi=150) 
+        plt.subplots_adjust(wspace=0.03,  
+                    hspace=0.05) 
         # ax = fig.subplots(7, 19, sharex=True, sharey=True)
           
         # fig.subplots_adjust(hspace=0.4, wspace=0.1)
@@ -309,7 +312,7 @@ class DKT_count_regression(nn.Module):
             plots.ax_feature.set_title(f'epoch {epoch}')
 
     def update_plots_test(self, plots, train_x, train_y, train_z, test_z, embedded_z,   
-                                    test_x, test_y, test_y_pred, similar_idx_x_s, mll, mse, person):
+                                    test_x, test_y, test_y_pred, similar_idx_x_s, mll, mse, itr):
         def clear_ax(plots, i, j):
             plots.ax[i, j].clear()
             plots.ax[i, j].set_xticks([])
@@ -333,78 +336,36 @@ class DKT_count_regression(nn.Module):
 
             cluster_colors = ['aqua', 'coral', 'lime', 'gold', 'purple', 'green']
             #train images
-            plots.fig.suptitle(f'person {person}, MSE: {mse:.4f}')
-            y = ((train_y + 1) * 60 / 2) + 60
-            tilt = [60, 70, 80, 90, 100, 110, 120]
-            num = 1
-            for t in tilt:
-                idx = np.where(y==(t))[0]
-                if idx.shape[0]==0:
-                    i = int(t/10-6)
-                    for j in range(0, 19):
-                        plots = clear_ax(plots, i, j)
-                        plots = color_ax(plots, i, j, 'black', lw=0.5)
-                else:    
-                    x = train_x[idx]
-                    i = int(t/10-6)
-                    # z = train_z[idx]
-                    for j in range(0, idx.shape[0]): 
-                        img = transforms.ToPILImage()(x[j]).convert("RGB")
-                        plots = clear_ax(plots, i, j)
-                        plots = color_ax(plots, i, j, 'black', lw=0.5)
-                        plots.ax[i, j].imshow(img)
-                        plots.ax[i, j].set_title(f'{num}', fontsize=8)
-                        num += 1
-                    plots.ax[i, 0].set_ylabel(f'{t}',  fontsize=10)
-                
-        
+            plots.fig.suptitle(f'DKT, itr {itr}, MSE: {mse:.4f}')
+
             # test images
-            y = ((test_y + 1) * 60 / 2) + 60
+            x_q = test_x
+            y_q = test_y 
             y_mean = test_y_pred.mean.detach().cpu().numpy()
             y_var = test_y_pred.variance.detach().cpu().numpy()
-            y_pred = ((y_mean + 1) * 60 / 2) + 60
-            y_s = ((train_y + 1) * 60 / 2) + 60
-            
-            for t in tilt:
-                idx = np.where(y==(t))[0]
-                if idx.shape[0]==0:
-                    continue
-                else:
-                    x = test_x[idx]
-                    sim_x_s_idx = similar_idx_x_s[idx]
-                    sim_y_s = y_s[sim_x_s_idx]
-                    y_p = y_pred[idx]
-                    y_v = y_var[idx]
-                    i = int(t/10-6)
-                    for j in range(idx.shape[0]):
-                        
-                        img = transforms.ToPILImage()(x[j]).convert("RGB")
-                        ii = 16
-                        plots = clear_ax(plots, i, j+ii)
-                        plots.ax[i, j+ii].imshow(img)
-                        # plots = color_ax(plots, i, j+ii, color=cluster_colors[cluster[j]], lw=2)
-                        plots.ax[i, j+ii].set_title(f'{y_p[j]:.1f}', fontsize=10)
-                        id_sim_x_s = int(plots.ax[int(sim_y_s[j]/10-6),0].get_title()) +  sim_x_s_idx[j]%15
-                        plots.ax[i, j+ii].set_xlabel(f'{int(id_sim_x_s)}', fontsize=10)
-                
-                    # plots.ax[i, j+16].legend()
-            for i in range(7):
-                plots = clear_ax(plots, i, 15)
-                plots = color_ax(plots, i, 15, 'white', lw=0.5)
+            y_pred = y_mean
 
-            plots.fig.savefig(f'{self.video_path}/test_person_{person}.png') 
+            k = 0
+            r, c = plots.ax.shape
+            for i in range(r):
+                for j in range(c):
+                
+                    img = transforms.ToPILImage()(x_q[k]).convert("RGB")
+                    
+                    plots = clear_ax(plots, i, j)
+                    plots.ax[i, j].imshow(img)
+                    plots = color_ax(plots, i, j, color='white')
+                    # plots.ax[i, j].set_title(f'prd:{y_pred[k]:.0f}', fontsize=10)
+                    plots.ax[i, j].set_xlabel(f'prd:{y_pred[k]:.0f}|gt: {y_q[k]:.0f}', fontsize=10)
+                    
+                    k += 1
+
+            plots.fig.savefig(f'{self.video_path}/test_{itr}.png') 
 
         if self.show_plots_features:
             #features
-            y = ((train_y + 1) * 60 / 2) + 60
-            tilt = np.unique(y)
-            plots.ax_feature.clear()
-            for t in tilt:
-                idx = np.where(y==(t))[0]
-                z_t = embedded_z[idx]
-                
-                plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
-
+        
+            plots.ax_feature.scatter(embedded_z[:, 0], embedded_z[:, 1], label=f'{t}')
             plots.ax_feature.legend()
 
 

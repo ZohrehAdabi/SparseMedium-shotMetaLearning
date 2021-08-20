@@ -28,7 +28,7 @@ from data.msc44_loader import get_batch
 from configs import kernel_type
 from collections import namedtuple
 
-IP = namedtuple("inducing_points", "z_values index count x y i_idx j_idx")
+IP = namedtuple("inducing_points", "z_values index count x y")
 class Sparse_DKT_count_regression(nn.Module):
     def __init__(self, backbone, regressor, base_file=None, val_file=None,
                     f_rvm=True, config="0000", align_threshold=1e-3, n_inducing_points=12, random=False, 
@@ -76,7 +76,13 @@ class Sparse_DKT_count_regression(nn.Module):
     def train_loop_kmeans(self, epoch, n_support, n_samples, optimizer):
 
         mll_list = []
+        mse_list = []
+        validation = True
         for itr, samples in enumerate(get_batch(self.train_file, n_samples)):
+            
+            self.model.train()
+            self.feature_extractor.train()
+            self.likelihood.train()
 
             inputs = samples['image']
             labels = samples['gt_count']
@@ -86,7 +92,7 @@ class Sparse_DKT_count_regression(nn.Module):
                 inducing_points = self.get_inducing_points(z, labels, verbose=False)
             
             def inducing_max_similar_in_support_x(train_x, train_z, inducing_points, train_y):
-                y = ((train_y.cpu().numpy() + 1) * 60 / 2) + 60
+                y = train_y.cpu().numpy()
                 # self.model.covar_module._clear_cache()
                 # kernel_matrix = self.model.covar_module(inducing_points.z_values, train_z).evaluate()
                 kernel_matrix = self.model.base_covar_module(inducing_points.z_values, train_z).evaluate()
@@ -95,8 +101,8 @@ class Sparse_DKT_count_regression(nn.Module):
                 x_inducing = train_x[index].cpu().numpy()
                 y_inducing = y[index]
                 z_inducing = train_z[index]
-                i_idx = []
-                j_idx = []
+                # i_idx = []
+                # j_idx = []
                 # for r in range(index.shape[0]):
                     
                 #     t = y_inducing[r]
@@ -108,7 +114,7 @@ class Sparse_DKT_count_regression(nn.Module):
                 #     j_idx.append(j)
 
                 return IP(z_inducing, index, inducing_points.count, 
-                                    x_inducing, y_inducing, None, None)
+                                    x_inducing, y_inducing)
            
             with torch.no_grad():
                 inducing_points = inducing_max_similar_in_support_x(inputs, z.detach(), inducing_points, labels)
@@ -129,7 +135,7 @@ class Sparse_DKT_count_regression(nn.Module):
             optimizer.step()
             mll_list.append(loss.item())
             mse = self.mse(predictions.mean, labels)
-
+            mse_list.append(mse)
             if ((epoch%2==0) & (itr%5==0)):
                 print('[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
                     itr, epoch, loss.item(), mse.item(),
@@ -148,6 +154,39 @@ class Sparse_DKT_count_regression(nn.Module):
                     self.plots.fig_feature.canvas.draw()
                     self.plots.fig_feature.canvas.flush_events()
                     self.mw_feature.grab_frame()
+            #****************************************************
+            # validate on train data
+           
+            if validation:
+                support_ind = np.random.choice(np.range(n_samples), size=n_support, replace=False)
+                query_ind   = [i for i in range(n_samples) if i not in support_ind]
+                z_support = z[support_ind,:,:,:]
+                y_support = labels[support_ind]
+                z_query   = z[query_ind,:,:,:]
+                y_query   = labels[query_ind]
+
+                with torch.no_grad():
+                    inducing_points = self.get_inducing_points(z_support, y_support, verbose=False)
+            
+                ip_values = inducing_points.z_values.cuda()
+                self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
+                self.model.covar_module._clear_cache()
+                self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
+
+                self.model.eval()
+                self.feature_extractor.eval()
+                self.likelihood.eval()
+
+                with torch.no_grad():
+                    pred    = self.likelihood(self.model(z_query.detach()))
+                    lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
+
+                mse = self.mse(pred.mean, y_query).item()
+                mse_list.append(mse)
+                print(Fore.YELLOW, f'epoch {epoch}, itr {itr+1}, Train MSE: {mse:.4f}', Fore.RESET)
+        
+        if validation:
+            print(Fore.CYAN,"-"*30, f'\n epoch {epoch} => Avg. Train MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
 
         return np.mean(mll_list)
 
@@ -155,7 +194,11 @@ class Sparse_DKT_count_regression(nn.Module):
         
         mll_list = []
         mse_list = []
+        validation = True
         for itr, samples in enumerate(get_batch(self.train_file, n_samples)):
+            self.model.train()
+            self.feature_extractor.train()
+            self.likelihood.train()
 
             inputs = samples['image']
             labels = samples['gt_count']
@@ -197,7 +240,7 @@ class Sparse_DKT_count_regression(nn.Module):
                     self.mw_feature.grab_frame()
             #****************************************************
             # validate on train data
-            validation=True
+          
             if validation:
                 support_ind = np.random.choice(np.range(n_samples), size=n_support, replace=False)
                 query_ind   = [i for i in range(n_samples) if i not in support_ind]
@@ -227,12 +270,13 @@ class Sparse_DKT_count_regression(nn.Module):
                 print(Fore.YELLOW, f'epoch {epoch}, itr {itr+1}, Train MSE: {mse:.4f}', Fore.RESET)
         
         if validation:
-            print(Fore.CYAN,"-"*30, f'\n epoch {epoch} => Avg. MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
+            print(Fore.CYAN,"-"*30, f'\n epoch {epoch} => Avg. Train MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
 
         return np.mean(mll_list)
 
-    def test_loop_kmeans(self, n_support, n_samples, test_person, optimizer=None): # no optimizer needed for GP
+    def test_loop_kmeans(self, n_support, n_samples, epoch, optimizer=None): # no optimizer needed for GP
 
+        mse_list = []
         for itr, samples in enumerate(get_batch(self.val_file, n_samples)):
  
             inputs = samples['image']
@@ -294,11 +338,12 @@ class Sparse_DKT_count_regression(nn.Module):
                 lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
 
             mse = self.mse(pred.mean, y_query).item()
-
+            mse_list.append(mse)
             #**************************************************************
             y = ((y_query.detach().cpu().numpy() + 1) * 60 / 2) + 60
             y_pred = ((pred.mean.detach().cpu().numpy() + 1) * 60 / 2) + 60
             print(Fore.RED,"="*50, Fore.RESET)
+            print(f'itr #{itr}')
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
             print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
             print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
@@ -335,9 +380,11 @@ class Sparse_DKT_count_regression(nn.Module):
                     self.plots.fig_feature.canvas.flush_events()
                     self.mw_feature.grab_frame()
 
-        return mse
+        print(Fore.CYAN,"-"*30, f'\n epoch {epoch} => Avg. MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
 
-    def test_loop_fast_rvm(self, n_support, n_samples, test_person, optimizer=None): # no optimizer needed for GP
+        return np.mean(mse_list)
+
+    def test_loop_fast_rvm(self, n_support, n_samples, epoch, optimizer=None): # no optimizer needed for GP
         
         mse_list = []
         for itr, samples in enumerate(get_batch(self.val_file, n_samples)):
@@ -375,8 +422,7 @@ class Sparse_DKT_count_regression(nn.Module):
             mse = self.mse(pred.mean, y_query).item()
             mse_list.append(mse)
             def inducing_max_similar_in_support_x(train_x, inducing_points, train_y):
-                y = ((train_y.detach().cpu().numpy() + 1) * 60 / 2) + 60
-        
+                y = train_y.detach().cpu().numpy() 
                 index = inducing_points.index
                 x_inducing = train_x[index].detach().cpu().numpy()
                 y_inducing = y[index]
@@ -393,14 +439,17 @@ class Sparse_DKT_count_regression(nn.Module):
                     j_idx.append(j)
 
                 return IP(inducing_points.z_values, index, inducing_points.count, 
-                                    x_inducing, y_inducing, np.array(i_idx), np.array(j_idx))
+                                    x_inducing, y_inducing)
             
-            inducing_points = inducing_max_similar_in_support_x(x_support, inducing_points, y_support)
+            index = inducing_points.index
+            inducing_points = IP(inducing_points.z_values, index, inducing_points.count,
+                                    x_support[index], y_support[index])
 
             #**************************************************************
-            y = ((y_query.detach().cpu().numpy() + 1) * 60 / 2) + 60
-            y_pred = ((pred.mean.detach().cpu().numpy() + 1) * 60 / 2) + 60
+            y = y_query.detach().cpu().numpy() 
+            y_pred = pred.mean.detach().cpu().numpy() 
             print(Fore.RED,"="*50, Fore.RESET)
+            print(f'itr #{itr}')
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
             print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
             print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
@@ -417,16 +466,16 @@ class Sparse_DKT_count_regression(nn.Module):
             max_similar_idx_x_ip = np.argmax(kernel_matrix, axis=1)
             print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (K kernel): {inducing_points.y[max_similar_idx_x_ip]}', Fore.RESET)
 
-            kernel_matrix = self.model.covar_module(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
-            max_similar_index = np.argmax(kernel_matrix, axis=1)
-            print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (Q kernel): {inducing_points.y[max_similar_index]}', Fore.RESET)
+            # kernel_matrix = self.model.covar_module(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
+            # max_similar_index = np.argmax(kernel_matrix, axis=1)
+            # print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (Q kernel): {inducing_points.y[max_similar_index]}', Fore.RESET)
             #**************************************************************
             if (self.show_plots_pred or self.show_plots_features) and self.f_rvm:
                 embedded_z_support = TSNE(n_components=2).fit_transform(z_support.detach().cpu().numpy())
                 self.update_plots_test_fast_rvm(self.plots, x_support, y_support.detach().cpu().numpy(), 
                                                 z_support.detach(), z_query.detach(), embedded_z_support,
                                                 inducing_points, x_query, y_query.detach().cpu().numpy(), pred, 
-                                                max_similar_idx_x_s, max_similar_idx_x_ip, None, mse, test_person)
+                                                max_similar_idx_x_s, max_similar_idx_x_ip, None, mse, itr)
                 if self.show_plots_pred:
                     self.plots.fig.canvas.draw()
                     self.plots.fig.canvas.flush_events()
@@ -436,12 +485,20 @@ class Sparse_DKT_count_regression(nn.Module):
                     self.plots.fig_feature.canvas.flush_events()
                     self.mw_feature.grab_frame()
 
-        return mse_list
+        print(Fore.CYAN,"-"*30, f'\n epoch {epoch} => Avg. MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
+
+        return np.mean(mse_list)
+
 
     def train_loop_random(self, epoch, n_support, n_samples, optimizer):
 
         mll_list = []
+        mse_list = []
+        validation = True
         for itr, samples in enumerate(get_batch(self.train_file, n_samples)):
+            self.model.train()
+            self.feature_extractor.train()
+            self.likelihood.train()
 
             inputs = samples['image']
             labels = samples['gt_count']
@@ -484,11 +541,45 @@ class Sparse_DKT_count_regression(nn.Module):
                     self.plots.fig_feature.canvas.draw()
                     self.plots.fig_feature.canvas.flush_events()
                     self.mw_feature.grab_frame()
+            #****************************************************
+            # validate on train data
+            
+            if validation:
+                support_ind = np.random.choice(np.range(n_samples), size=n_support, replace=False)
+                query_ind   = [i for i in range(n_samples) if i not in support_ind]
+                z_support = z[support_ind,:,:,:]
+                y_support = labels[support_ind]
+                z_query   = z[query_ind,:,:,:]
+                y_query   = labels[query_ind]
+
+                inducing_points_index = list(np.random.choice(list(range(n_support)), replace=False, size=self.num_induce_points))
+
+                inducing_points_z = z_support[inducing_points_index,:]
+                
+                ip_values = inducing_points_z.cuda()
+                self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
+                self.model.covar_module._clear_cache()
+                self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
+
+                self.model.eval()
+                self.feature_extractor.eval()
+                self.likelihood.eval()
+
+                with torch.no_grad():
+                    pred    = self.likelihood(self.model(z_query.detach()))
+                    lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
+
+                mse = self.mse(pred.mean, y_query).item()
+                mse_list.append(mse)
+                print(Fore.YELLOW, f'epoch {epoch}, itr {itr+1}, Train MSE: {mse:.4f}', Fore.RESET)
+        
+        if validation:
+            print(Fore.CYAN,"-"*30, f'\n epoch {epoch} => Avg. Train MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
 
         return np.mean(mll_list)
     
-    def test_loop_random(self, n_support, n_samples, test_person, optimizer=None): # no optimizer needed for GP
-
+    def test_loop_random(self, n_support, n_samples, epoch, optimizer=None): # no optimizer needed for GP
+        mse_list = []
         for itr, samples in enumerate(get_batch(self.val_file, n_samples)):
  
             inputs = samples['image']
@@ -525,7 +616,7 @@ class Sparse_DKT_count_regression(nn.Module):
                 lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
 
             mse = self.mse(pred.mean, y_query).item()
-
+            mse_list.append(mse)
             def inducing_max_similar_in_support_x(train_x, inducing_points_z, inducing_points_index, train_y):
                 y = ((train_y.detach().cpu().numpy() + 1) * 60 / 2) + 60
         
@@ -545,14 +636,16 @@ class Sparse_DKT_count_regression(nn.Module):
                     j_idx.append(j)
 
                 return IP(inducing_points_z, index, index.shape, 
-                                    x_inducing, y_inducing, np.array(i_idx), np.array(j_idx))
+                                    x_inducing, y_inducing)
             
-            inducing_points = inducing_max_similar_in_support_x(x_support, inducing_points_z, inducing_points_index, y_support)
-
+            index = inducing_points_index
+            inducing_points = IP(inducing_points_z, index, index.shape, x_support[index], y_support[index])
+  
             #**************************************************************
-            y = ((y_query.detach().cpu().numpy() + 1) * 60 / 2) + 60
-            y_pred = ((pred.mean.detach().cpu().numpy() + 1) * 60 / 2) + 60
+            y = y_query.detach().cpu().numpy() 
+            y_pred = pred.mean.detach().cpu().numpy() 
             print(Fore.RED,"="*50, Fore.RESET)
+            print(f'itr #{itr}')
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
             print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
             print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
@@ -569,16 +662,16 @@ class Sparse_DKT_count_regression(nn.Module):
             max_similar_idx_x_ip = np.argmax(kernel_matrix, axis=1)
             print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (K kernel): {inducing_points.y[max_similar_idx_x_ip]}', Fore.RESET)
 
-            kernel_matrix = self.model.covar_module(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
-            max_similar_index = np.argmax(kernel_matrix, axis=1)
-            print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (Q kernel): {inducing_points.y[max_similar_index]}', Fore.RESET)
+            # kernel_matrix = self.model.covar_module(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
+            # max_similar_index = np.argmax(kernel_matrix, axis=1)
+            # print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (Q kernel): {inducing_points.y[max_similar_index]}', Fore.RESET)
             #**************************************************************
             if (self.show_plots_pred or self.show_plots_features) and  self.random:
                 embedded_z_support = TSNE(n_components=2).fit_transform(z_support.detach().cpu().numpy())
                 self.update_plots_test_fast_rvm(self.plots, x_support, y_support.detach().cpu().numpy(), 
                                                 z_support.detach(), z_query.detach(), embedded_z_support,
                                                 inducing_points, x_query, y_query.detach().cpu().numpy(), pred, 
-                                                max_similar_idx_x_s, max_similar_idx_x_ip, None, mse, test_person)
+                                                max_similar_idx_x_s, max_similar_idx_x_ip, None, mse, itr)
                 if self.show_plots_pred:
                     self.plots.fig.canvas.draw()
                     self.plots.fig.canvas.flush_events()
@@ -588,8 +681,9 @@ class Sparse_DKT_count_regression(nn.Module):
                     self.plots.fig_feature.canvas.flush_events()
                     self.mw_feature.grab_frame()
 
-        return mse
+        print(Fore.CYAN,"-"*30, f'\n epoch {epoch} => Avg. MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
 
+        return np.mean(mse_list)
     
     def train(self, stop_epoch, n_support, n_samples, optimizer):
 
@@ -692,7 +786,7 @@ class Sparse_DKT_count_regression(nn.Module):
             num_IP = active.shape[0]
             IP_index = active
 
-        return IP(inducing_points, IP_index, num_IP, None, None, None, None)
+        return IP(inducing_points, IP_index, num_IP, None, None)
   
     def save_checkpoint(self, checkpoint):
         # save state
@@ -721,7 +815,7 @@ class Sparse_DKT_count_regression(nn.Module):
 
         os.makedirs(self.video_path, exist_ok=True)
         time_now = datetime.now().strftime('%Y-%m-%d--%H-%M')
-        sparse_method = "f_rvm" if self.f_rvm else "KMeans"
+        sparse_method = "FRVM" if self.f_rvm else "KMeans"
         if self.random: sparse_method = "random"  
         self.plots = self.prepare_plots()
         # plt.show(block=False)

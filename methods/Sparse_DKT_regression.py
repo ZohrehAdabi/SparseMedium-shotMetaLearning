@@ -712,7 +712,7 @@ class Sparse_DKT_regression(nn.Module):
 
         os.makedirs(self.video_path, exist_ok=True)
         time_now = datetime.now().strftime('%Y-%m-%d--%H-%M')
-        sparse_method = "f_rvm" if self.f_rvm else "KMeans"
+        sparse_method = "FRVM" if self.f_rvm else "KMeans"
         if self.random: sparse_method = "random"  
         self.plots = self.prepare_plots()
         # plt.show(block=False)
