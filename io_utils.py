@@ -55,7 +55,7 @@ def parse_args_regression(script):
         parser.add_argument('--model'       , default='Conv3',   help='model: Conv{3} / MLP{2}')
         parser.add_argument('--method'      , default='DKT',   help='DKT / Sparse_DKT / transfer')
         parser.add_argument('--sparse_method', default='KMeans', type=str, help='KMeans / FRVM / random')
-        parser.add_argument('--dataset'     , default='QMUL',    help='QMUL / sines')
+        parser.add_argument('--dataset'     , default='QMUL',    help='QMUL / MSC44')
         parser.add_argument('--spectral', action='store_true', help='Use a spectral covariance kernel function')
         parser.add_argument('--n_samples', default=72, type=int, help='Number of points on trajectory') #at most 19 
         parser.add_argument('--show_plots_features', action='store_true', help='Show plots') 

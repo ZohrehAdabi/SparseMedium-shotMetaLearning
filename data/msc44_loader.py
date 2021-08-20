@@ -132,7 +132,7 @@ class resizeImageWithGT(object):
         return sample
 
 
-def get_task(data_file, n_samples):
+def get_batch(data_file, n_samples):
 
     transform = resizeImageWithGT()
 

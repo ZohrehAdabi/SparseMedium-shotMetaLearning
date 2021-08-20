@@ -24,18 +24,24 @@ import gpytorch
 from methods.Fast_RVM_regression import Fast_RVM_regression
 
 from statistics import mean
-from data.qmul_loader import get_batch, train_people, test_people
+from data.msc44_loader import get_batch
 from configs import kernel_type
 from collections import namedtuple
 
 IP = namedtuple("inducing_points", "z_values index count x y i_idx j_idx")
 class Sparse_DKT_count_regression(nn.Module):
-    def __init__(self, backbone, regressor, f_rvm=True, config="0000", align_threshold=1e-3, n_inducing_points=12, random=False, 
+    def __init__(self, backbone, regressor, base_file=None, val_file=None,
+                    f_rvm=True, config="0000", align_threshold=1e-3, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_count_regression, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
         self.regressor = regressor
+        if training:
+            self.train_file = base_file
+            self.val_file = val_file
+        else:
+            self.test_file = val_file
         self.num_induce_points = n_inducing_points
         self.config = config
         self.align_threshold = align_threshold
@@ -72,10 +78,10 @@ class Sparse_DKT_count_regression(nn.Module):
 
     def train_loop_kmeans(self, epoch, n_support, n_samples, optimizer):
         
-        batch, batch_labels = get_batch(train_people, n_samples)
-        batch, batch_labels = batch.cuda(), batch_labels.cuda()
+        # batch, batch_labels = get_batch(train_people, n_samples)
+        # batch, batch_labels = batch.cuda(), batch_labels.cuda()
         mll_list = []
-        for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
+        for itr, (inputs, labels) in enumerate(get_batch):
 
             z = self.feature_extractor(inputs)
             with torch.no_grad():

@@ -19,15 +19,21 @@ import gpytorch
 from time import gmtime, strftime
 import random
 from statistics import mean
-from data.qmul_loader import get_batch, train_people, test_people
+from data.msc44_loader import get_batch
 from configs import kernel_type
 
 class DKT_count_regression(nn.Module):
-    def __init__(self, backbone, regressor, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
+    def __init__(self, backbone, regressor, base_file=None, val_file=None,
+        video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(DKT_count_regression, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
         self.regressor = regressor
+        if training:
+            self.train_file = base_file
+            self.val_file = val_file
+        else:
+            self.test_file = val_file
         self.device = 'cuda'
         self.video_path = video_path
         self.show_plots_pred = show_plots_pred

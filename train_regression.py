@@ -26,7 +26,8 @@ if not os.path.isdir(params.checkpoint_dir):
     os.makedirs(params.checkpoint_dir)
 params.checkpoint_dir = '%scheckpoints/%s/%s_%s' % (configs.save_dir, params.dataset, params.model, params.method)
 
-bb           = backbone.Conv3().cuda()
+if params.dataset=='QMUL':
+    bb           = backbone.Conv3().cuda()
 
 if params.method=='DKT':
     model = DKT_regression(bb, video_path=params.checkpoint_dir, 
