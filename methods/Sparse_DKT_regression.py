@@ -712,24 +712,24 @@ class Sparse_DKT_regression(nn.Module):
 
         os.makedirs(self.video_path, exist_ok=True)
         time_now = datetime.now().strftime('%Y-%m-%d--%H-%M')
-        sparse_method = "FRVM" if self.f_rvm else "KMeans"
-        if self.random: sparse_method = "random"  
+        self.sparse_method = "FRVM" if self.f_rvm else "KMeans"
+        if self.random: self.sparse_method = "random"  
         self.plots = self.prepare_plots()
         # plt.show(block=False)
         # plt.pause(0.0001)
         if self.show_plots_pred:
            
-            metadata = dict(title=f'Sparse_DKT_{sparse_method}', artist='Matplotlib')
+            metadata = dict(title=f'Sparse_DKT_{self.sparse_method}', artist='Matplotlib')
             FFMpegWriter = animation.writers['ffmpeg']
             self.mw = FFMpegWriter(fps=5, metadata=metadata)   
-            file = f'{self.video_path}/Sparse_DKT_{sparse_method}_{time_now}.mp4'
+            file = f'{self.video_path}/Sparse_DKT_{self.sparse_method}_{time_now}.mp4'
             self.mw.setup(fig=self.plots.fig, outfile=file, dpi=125)
 
         if self.show_plots_features:  
-            metadata = dict(title=f'Sparse_DKT_{sparse_method}', artist='Matplotlib')         
+            metadata = dict(title=f'Sparse_DKT_{self.sparse_method}', artist='Matplotlib')         
             FFMpegWriter2 = animation.writers['ffmpeg']
             self.mw_feature = FFMpegWriter2(fps=2, metadata=metadata)
-            file = f'{self.video_path}/Sparse_DKT_{sparse_method}_features_{time_now}.mp4'
+            file = f'{self.video_path}/Sparse_DKT_{self.sparse_method}_features_{time_now}.mp4'
             self.mw_feature.setup(fig=self.plots.fig_feature, outfile=file, dpi=150)
     
     def prepare_plots(self):
@@ -802,7 +802,7 @@ class Sparse_DKT_regression(nn.Module):
 
         if self.show_plots_pred:
             
-            plots.fig.suptitle(f"person {person}, MSE: {mse:.4f}")
+            plots.fig.suptitle(f"Sparse DKT ({self.sparse_method}), person {person}, MSE: {mse:.4f}, num IP: {inducing_points.count}")
 
             cluster_colors = ['aqua', 'coral', 'lime', 'gold', 'purple', 'green', 'tomato', 
                                 'fuchsia', 'chocolate', 'chartreuse', 'orange', 'teal']
@@ -926,7 +926,8 @@ class Sparse_DKT_regression(nn.Module):
 
             cluster_colors = ['aqua', 'coral', 'lime', 'gold', 'purple', 'green']
             #train images
-            plots.fig.suptitle(f'person {person}, MSE: {mse:.4f}')
+            plots.fig.suptitle(f"Sparse DKT ({self.sparse_method}), person {person}, MSE: {mse:.4f}, num IP: {inducing_points.count}")
+
             y = ((train_y + 1) * 60 / 2) + 60
             tilt = [60, 70, 80, 90, 100, 110, 120]
             num = 1

@@ -208,7 +208,7 @@ class DKT_count_regression(nn.Module):
             mll_list.append(mll)
 
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
-            print(Fore.GREEN,"-"*30, f'Validation:', Fore.RESET)
+            print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
             self.test_loop(n_support, n_samples, epoch, optimizer)
             print(Fore.GREEN,"-"*30, Fore.RESET)
 
@@ -299,17 +299,10 @@ class DKT_count_regression(nn.Module):
     def update_plots_train(self,plots, train_y, embedded_z, mll, mse, epoch):
         if self.show_plots_features:
             #features
-            y = ((train_y + 1) * 60 / 2) + 60
-            tilt = np.unique(y)
-            plots.ax_feature.clear()
-            for t in tilt:
-                idx = np.where(y==(t))[0]
-                z_t = embedded_z[idx]
-                
-                plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
+            plots.ax_feature.scatter(embedded_z[:, 0], embedded_z[:, 1])
 
             plots.ax_feature.legend()
-            plots.ax_feature.set_title(f'epoch {epoch}')
+            plots.ax_feature.set_title(f'epoch {epoch}, train feature')
 
     def update_plots_test(self, plots, train_x, train_y, train_z, test_z, embedded_z,   
                                     test_x, test_y, test_y_pred, similar_idx_x_s, mll, mse, itr):
