@@ -503,6 +503,6 @@ class CountRegressor(nn.Module):
 def ResNet_Regrs():
 
     resnet50_conv = Resnet50FPN()
-    regressor = CountRegressor(6, pool='mean')
+    regressor = CountRegressor(512, pool='mean')
 
     return resnet50_conv, regressor
