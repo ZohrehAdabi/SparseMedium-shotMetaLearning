@@ -31,11 +31,7 @@ class MediumShotCountingDataset(Dataset):
         images_path = self.meta['image_names'][class_name]
         gt_densities_path = self.meta['image_labels'][class_name]
         annotation_path = self.meta['annotation_names'][idx]
-        images_path = images_path.replace('[', '').replace(']', '').split(',')
-        images_path = [im_p.replace("'", '').replace(" ", '') for im_p in images_path]
-        gt_densities_path = gt_densities_path.replace('[', '').replace(']', '').split(',')
-        gt_densities_path = [d_p.replace("'", '').replace(" ", '') for d_p in gt_densities_path]
-        print(f'class_name {class_name}')
+        # print(f'class_name {class_name}')
         # print(f'images_path {images_path}')
         assert self.cls[idx] in annotation_path
         assert self.cls[idx] in images_path[0]
@@ -130,7 +126,8 @@ class resizeImageWithGT(object):
         resized_image = self.Normalize(resized_image)
         # resized_image = transforms.ToTensor()(resized_image)
         resized_density = torch.from_numpy(resized_density).unsqueeze(0).unsqueeze(0)
-        sample = {'image':resized_image,'boxes':boxes, 'gt_density':resized_density}
+        # print(f'shape { resized_density.shape} gt count { resized_density.sum():.0f}')
+        sample = {'image':resized_image,'boxes':boxes, 'gt_density':resized_density, 'gt_count': f'{resized_density.sum():.0f}'}
         
         return sample
 
