@@ -20,11 +20,11 @@ torch.backends.cudnn.benchmark = False
 params.checkpoint_dir = '%scheckpoints/%s/%s_%s' % (configs.save_dir, params.dataset, params.model, params.method)
 
 
-if  params.dataset=='MSC44':
+if  params.model=='ResNet50':
     resnet50_conv, regressor = backbone.ResNet_Regrs()
     novel_file = configs.data_dir[params.dataset] + 'test.json'
 else:
-    ValueError('Unknown dataset')
+    ValueError('Unknown model')
 if params.method=='DKT':
     model = DKT_count_regression(resnet50_conv, regressor, val_file=novel_file, 
                             video_path=params.checkpoint_dir, 

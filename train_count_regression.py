@@ -30,7 +30,7 @@ if  params.model=='ResNet50':
     base_file = configs.data_dir[params.dataset] + 'base.json'
     val_file =  configs.data_dir[params.dataset] + 'val.json'
 else:
-    ValueError('Unknown dataset')
+    ValueError('Unknown model')
 
 if params.method=='DKT':
     model = DKT_count_regression(resnet50_conv, regressor, base_file, val_file,
