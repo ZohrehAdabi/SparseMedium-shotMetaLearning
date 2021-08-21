@@ -167,12 +167,12 @@ for i in config_frvm:
     fig_loss.savefig(video_path+f'/loss_{align_thr}.png')
 
     
-    ax_mll_per_num_ip.plot(mll_list, label=f'c- {params.config}, a- {params.align_thr}')
+    ax_mll_per_num_ip.plot(mll_list, label=f'c- {params.config}')
     ax_mll_per_num_ip.set_xlabel("number of epochs")
     ax_mll_per_num_ip.set_ylabel("loss")
     ax_mll_per_num_ip.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=6, ncol=2)
     ax_mll_per_num_ip.hlines(y=0.1, xmin=0, xmax=100, linestyles='dashed')
     fig_mll_per_num_ip.tight_layout()
-    ax_mll_per_num_ip.set_title("Sparse DKT with KMeans (Meta-Train MLL) [config][align_thr]")
+    ax_mll_per_num_ip.set_title(f"Sparse DKT with KMeans (Meta-Train MLL) [config][align_thr={params.align_thr}]")
     fig_mll_per_num_ip.savefig(video_path+f'/mll_per_config_{align_thr}.png')
 
