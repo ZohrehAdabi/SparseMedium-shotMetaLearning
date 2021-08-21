@@ -112,7 +112,7 @@ class resizeImageWithGT(object):
             new_H = H #8*int(H*scale_factor/8)
             new_W = int(np.round(W*scale_factor))
 
-            print(f'new_W {new_W}, new_H {new_H}')
+            # print(f'new_W {new_W}, new_H {new_H}')
             resized_image = transforms.Resize((new_H, new_W))(image)
             resized_density = cv2.resize(density, (new_W, new_H))
             orig_count = np.sum(density)
