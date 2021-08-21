@@ -177,6 +177,7 @@ filelists/omniglot/*.rar
 filelists/omniglot/*.png
 
 filelists/FSC147
+# filelists/MSC44
 filelists/MSC44/*.zip
 filelists/MSC44/*.json
 filelists/MSC44/images
