@@ -51,6 +51,7 @@ class DKT_count_regression(nn.Module):
         self.likelihood = likelihood.cuda()
         self.mll        = gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self.model).cuda()
         self.mse        = nn.MSELoss()
+        self.mae        = nn.L1Loss()
 
         return self.model, self.likelihood, self.mll
 
@@ -63,8 +64,10 @@ class DKT_count_regression(nn.Module):
     def train_loop(self, epoch, n_support, n_samples, optimizer):
 
         # print(f'{epoch}: {batch_labels[0]}')
+        validation = True
         mll_list = []
         mse_list = []
+        mae_list = []
         for itr, samples in enumerate(get_batch(self.train_file, n_samples)):
             
             self.model.train()
@@ -84,6 +87,7 @@ class DKT_count_regression(nn.Module):
             optimizer.step()
             mse = self.mse(predictions.mean, labels)
             mll_list.append(loss.item())
+            
             if ((epoch%2==0) & (itr%5==0)):
                 print('[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
                     itr, epoch, loss.item(), mse.item(),
@@ -104,7 +108,6 @@ class DKT_count_regression(nn.Module):
                     self.mw_feature.grab_frame()
             #*********************************************************
             #validate on train data
-            validation = True
             if validation:
                 support_ind = np.random.choice(np.range(n_samples), size=n_support, replace=False)
                 query_ind   = [i for i in range(n_samples) if i not in support_ind]
@@ -125,9 +128,13 @@ class DKT_count_regression(nn.Module):
 
                 mse = self.mse(pred.mean, y_query).item()
                 mse_list.append(mse)
+                mae = self.mae(predictions.mean, labels).item()
+                mae_list.append(mae)
+                print(Fore.YELLOW, f'epoch {epoch}, itr {itr+1}, Train  MAE:{mae:.2f}, MSE: {mse:.4f}', Fore.RESET)
 
         if validation:
-            print(Fore.CYAN,"-"*30, f'\n epoch {epoch} => Avg. Train MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
+            print(Fore.CYAN,"-"*30, f'\n epoch {epoch} => Avg. Val. on Train    MAE: {np.mean(mae_list):.2f}, RMSE: {np.sqrt(np.mean(mse_list)):.2f}'
+                                    f', MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
 
         return np.mean(mll_list)
 
@@ -201,7 +208,7 @@ class DKT_count_regression(nn.Module):
         return np.mean(mse_list)
 
     def train(self, stop_epoch, n_support, n_samples, optimizer):
-
+        best_mae, best_rmse = 10e7, 10e7
         mll_list = []
         for epoch in range(stop_epoch):
             mll = self.train_loop(epoch, n_support, n_samples, optimizer)
@@ -209,7 +216,7 @@ class DKT_count_regression(nn.Module):
 
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
             print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
-            self.test_loop(n_support, n_samples, epoch, optimizer)
+            rmse, mae = self.test_loop(n_support, n_samples, epoch, optimizer)
             print(Fore.GREEN,"-"*30, Fore.RESET)
 
         mll = np.mean(mll_list)

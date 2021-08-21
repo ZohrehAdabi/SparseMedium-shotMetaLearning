@@ -101,7 +101,7 @@ class resizeImageWithGT(object):
 
     def __call__(self, sample):
 
-        image,lines_boxes,density = sample['image'], sample['lines_boxes'],sample['gt_density']
+        image,lines_boxes,density = sample['image'], sample['lines_boxes'], sample['gt_density']
         
         W, H = image.size
         # print(H)

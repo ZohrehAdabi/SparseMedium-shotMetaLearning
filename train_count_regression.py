@@ -87,7 +87,7 @@ else:
 optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr': 0.001},
                               {'params': model.feature_extractor.parameters(), 'lr': 0.001}
                               ])
-if params.method=='DKT' or params.method=='Sparse_DKT' or params.method=='DKT_New_Loss':
+if params.method=='DKT' or params.method=='Sparse_DKT' :
 
     mll, _ = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer)
 

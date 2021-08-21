@@ -64,6 +64,7 @@ class Sparse_DKT_count_regression(nn.Module):
         self.likelihood = likelihood.cuda()
         self.mll        = gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self.model).cuda()
         self.mse        = nn.MSELoss()
+        self.mae        = nn.L1Loss()
 
         return self.model, self.likelihood, self.mll
 
@@ -77,6 +78,7 @@ class Sparse_DKT_count_regression(nn.Module):
 
         mll_list = []
         mse_list = []
+        mae_list = []
         validation = True
         for itr, samples in enumerate(get_batch(self.train_file, n_samples)):
             
@@ -183,17 +185,20 @@ class Sparse_DKT_count_regression(nn.Module):
 
                 mse = self.mse(pred.mean, y_query).item()
                 mse_list.append(mse)
-                print(Fore.YELLOW, f'epoch {epoch}, itr {itr+1}, Train MSE: {mse:.4f}', Fore.RESET)
+                mae = self.mae(pred.mean, y_query).item()
+                mae_list.append(mae)
+                print(Fore.YELLOW, f'epoch {epoch}, itr {itr+1}, Train  MAE:{mae:.2f}, MSE: {mse:.4f}', Fore.RESET)
         
         if validation:
-            print(Fore.CYAN,"-"*30, f'\n epoch {epoch} => Avg. Train MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
-
+            print(Fore.CYAN,"-"*30, f'\n epoch {epoch} => Avg. Val. on Train    MAE: {np.mean(mae_list):.2f}, RMSE: {np.sqrt(np.mean(mse_list)):.2f}'
+                                    f', MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
         return np.mean(mll_list)
 
     def train_loop_fast_rvm(self, epoch, n_support, n_samples, optimizer):
         
         mll_list = []
         mse_list = []
+        mae_list = []
         validation = True
         for itr, samples in enumerate(get_batch(self.train_file, n_samples)):
             self.model.train()
@@ -267,11 +272,13 @@ class Sparse_DKT_count_regression(nn.Module):
 
                 mse = self.mse(pred.mean, y_query).item()
                 mse_list.append(mse)
-                print(Fore.YELLOW, f'epoch {epoch}, itr {itr+1}, Train MSE: {mse:.4f}', Fore.RESET)
+                mae = self.mae(pred.mean, y_query).item()
+                mae_list.append(mae)
+                print(Fore.YELLOW, f'epoch {epoch}, itr {itr+1}, Train  MAE:{mae:.2f}, MSE: {mse:.4f}', Fore.RESET)
         
         if validation:
-            print(Fore.CYAN,"-"*30, f'\n epoch {epoch} => Avg. Train MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
-
+            print(Fore.CYAN,"-"*30, f'\n epoch {epoch} => Avg. Val. on Train    MAE: {np.mean(mae_list):.2f}, RMSE: {np.sqrt(np.mean(mse_list)):.2f}'
+                                    f', MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
         return np.mean(mll_list)
 
     def test_loop_kmeans(self, n_support, n_samples, epoch, optimizer=None): # no optimizer needed for GP
@@ -494,6 +501,7 @@ class Sparse_DKT_count_regression(nn.Module):
 
         mll_list = []
         mse_list = []
+        mae_list = []
         validation = True
         for itr, samples in enumerate(get_batch(self.train_file, n_samples)):
             self.model.train()
@@ -571,11 +579,13 @@ class Sparse_DKT_count_regression(nn.Module):
 
                 mse = self.mse(pred.mean, y_query).item()
                 mse_list.append(mse)
-                print(Fore.YELLOW, f'epoch {epoch}, itr {itr+1}, Train MSE: {mse:.4f}', Fore.RESET)
+                mae = self.mae(pred.mean, y_query).item()
+                mae_list.append(mae)
+                print(Fore.YELLOW, f'epoch {epoch}, itr {itr+1}, Train  MAE:{mae:.2f}, MSE: {mse:.4f}', Fore.RESET)
         
         if validation:
-            print(Fore.CYAN,"-"*30, f'\n epoch {epoch} => Avg. Train MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
-
+            print(Fore.CYAN,"-"*30, f'\n epoch {epoch} => Avg. Val. on Train    MAE: {np.mean(mae_list):.2f}, RMSE: {np.sqrt(np.mean(mse_list)):.2f}'
+                                    f', MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
         return np.mean(mll_list)
     
     def test_loop_random(self, n_support, n_samples, epoch, optimizer=None): # no optimizer needed for GP
