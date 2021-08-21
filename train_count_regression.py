@@ -25,7 +25,7 @@ if not os.path.isdir(params.checkpoint_dir):
     os.makedirs(params.checkpoint_dir)
 params.checkpoint_dir = '%scheckpoints/%s/%s_%s' % (configs.save_dir, params.dataset, params.model, params.method)
 
-if  params.dataset=='MSC44':
+if  params.model=='ResNet50':
     resnet50_conv, regressor = backbone.ResNet_Regrs()
     base_file = configs.data_dir[params.dataset] + 'base.json'
     val_file =  configs.data_dir[params.dataset] + 'val.json'

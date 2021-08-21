@@ -110,14 +110,16 @@ class resizeImageWithGT(object):
             scale_factor = float(self.max_hw)/ max(H, W)
             # print(f'*{scale_factor}')
             new_H = H #8*int(H*scale_factor/8)
-            new_W = 8*int(W*scale_factor/8)
-            # print(f'new_W {new_W}, new_H {new_H}')
+            new_W = int(np.round(W*scale_factor))
+
+            print(f'new_W {new_W}, new_H {new_H}')
             resized_image = transforms.Resize((new_H, new_W))(image)
             resized_density = cv2.resize(density, (new_W, new_H))
             orig_count = np.sum(density)
             new_count = np.sum(resized_density)
 
             if new_count > 0: resized_density = resized_density * (orig_count / new_count)
+            
             
         else:    
             scale_factor = 1
@@ -137,6 +139,11 @@ class resizeImageWithGT(object):
         resized_image = self.Normalize(resized_image)
         # resized_image = transforms.ToTensor()(resized_image)
         resized_density = torch.from_numpy(resized_density).unsqueeze(0).unsqueeze(0)
+        if resized_density.shape[3] != self.max_hw:
+                orig_count = resized_density.sum()
+                resized_density = F.interpolate(resized_density, size=(self.max_hw, self.max_hw), mode='bilinear', align_corners=True)
+                new_count = resized_density.sum().detach().item()
+                if new_count > 0: resized_density = resized_density * (orig_count / new_count)
         # print(f'shape { resized_density.shape} gt count {torch.round(resized_density.sum())}')
         sample = {'image':resized_image,'boxes':boxes, 'gt_density':resized_density, 
                         'gt_count': torch.round(resized_density.sum()).unsqueeze(0)}
