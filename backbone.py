@@ -453,7 +453,7 @@ class Resnet50FPN(nn.Module):
         feat_map4 = self.conv4(feat_map3)
         feat['map3'] = feat_map3
         feat['map4'] = feat_map4
-        return feat
+        return feat_map3.unsqueeze(0)
 
 
 class CountRegressor(nn.Module):
