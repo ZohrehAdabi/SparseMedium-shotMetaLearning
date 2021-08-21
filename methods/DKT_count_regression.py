@@ -139,7 +139,8 @@ class DKT_count_regression(nn.Module):
         return np.mean(mll_list)
 
     def test_loop(self, n_support, n_samples, epoch, optimizer=None): # no optimizer needed for GP
-        mse_list = []       
+        mse_list = []    
+        mae_list = []   
         for itr, samples in enumerate(get_batch(self.val_file, n_samples)):
  
             inputs = samples['image']
@@ -169,6 +170,8 @@ class DKT_count_regression(nn.Module):
 
             mse = self.mse(pred.mean, y_query).item()
             mse_list.append(mse)
+            mae = self.mae(pred.mean, y_query).item()
+            mae_list.append(mae)
             #***************************************************
             y = y_query.detach().cpu().numpy()
             y_pred = pred.mean.detach().cpu().numpy()
@@ -183,7 +186,7 @@ class DKT_count_regression(nn.Module):
             K = self.model.covar_module
             kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
             max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
-            y_s = ((y_support.detach().cpu().numpy() + 1) * 60 / 2) + 60
+            y_s = y_support.detach().cpu().numpy()
             print(Fore.LIGHTGREEN_EX, f'target of most similar in support set: {y_s[max_similar_idx_x_s]}', Fore.RESET)
             #**************************************************
 
@@ -203,9 +206,10 @@ class DKT_count_regression(nn.Module):
                     self.plots.fig_feature.canvas.flush_events()
                     self.mw_feature.grab_frame()
 
-        print(Fore.CYAN,"-"*30, f'\n epoch {epoch} => Avg. MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
-
-        return np.mean(mse_list)
+        print(Fore.CYAN,"-"*30, f'\n epoch {epoch} => Avg.   MAE: {np.mean(mae_list):.2f}, RMSE: {np.sqrt(np.mean(mse_list)):.2f}'
+                                    f', MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
+   
+        return np.mean(mse_list), np.mean(mae_list), np.sqrt(np.mean(mse_list))
 
     def train(self, stop_epoch, n_support, n_samples, optimizer):
         best_mae, best_rmse = 10e7, 10e7
@@ -216,7 +220,13 @@ class DKT_count_regression(nn.Module):
 
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
             print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
-            rmse, mae = self.test_loop(n_support, n_samples, epoch, optimizer)
+            val_mse, val_mae, val_rmse = self.test_loop(n_support, n_samples, epoch, optimizer)
+            if best_mae >= val_mae:
+                best_mae = val_mae
+                best_rmse = val_rmse
+                model_name = self.best_path + f'_best_mae{best_mae:.2f}.pth'
+                self.save_checkpoint(model_name)
+                print(Fore.LIGHTRED_EX, f'Best MAE: {best_mae:.2f}, RMSE: {best_rmse}', Fore.RESET)
             print(Fore.GREEN,"-"*30, Fore.RESET)
 
         mll = np.mean(mll_list)

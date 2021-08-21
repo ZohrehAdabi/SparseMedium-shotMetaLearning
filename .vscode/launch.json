@@ -125,9 +125,9 @@
             "program": "${workspaceFolder}/train_count_regression.py",
             "console": "integratedTerminal",
            "args": ["--method","Sparse_DKT", "--sparse_method", "FRVM", "--n_samples", "50", "--n_support", "40",
-                "--dataset", "MSC44", "--stop_epoch", "100",
+                "--dataset", "MSC44", "--model", "ResNet50", "--stop_epoch", "100",
                 "--show_plots_features", "--seed","2", "--config", "0000", "--align_thr", "1e-3"]  
-      // --method "Sparse_DKT" --sparse_method "FRVM"  --n_samples 50 --n_support 40 --dataset "MSC44" --stop_epoch 100  --show_plots_features  --seed  2 --config "0000", --align_thr 1e-3
+      // --method "Sparse_DKT" --sparse_method "FRVM"  --n_samples 50 --n_support 40 --dataset "MSC44" --model "ResNet50" --stop_epoch 100  --show_plots_features  --seed  2 --config "0000", --align_thr 1e-3
         },
         {
             "name": "Sparse_DKT_FRVM [MSC44]: test_count_regression",
@@ -136,11 +136,11 @@
             "program": "${workspaceFolder}/test_regression.py",
             "console": "integratedTerminal",
            "args": ["--method","Sparse_DKT", "--sparse_method", "FRVM", "--n_samples", "50", "--n_support", "40",
-                        "--dataset", "MSC44", "--n_test_epochs", "1", 
+                        "--dataset", "MSC44", "--model", "ResNet50", "--n_test_epochs", "1", 
                         "--show_plots_pred", "--show_plots_features",
                         "--seed","2", "--config", "0000", "--align_thr", "1e-3"] 
 
-        //  --method "Sparse_DKT" --sparse_method "FRVM" --n_samples 50 --n_support 40 --dataset "MSC44"  --n_test_epochs 1 --show_plots_pred  --show_plots_features  --seed  2 --config "0000" --align_thr 1e-3  
+        //  --method "Sparse_DKT" --sparse_method "FRVM" --n_samples 50 --n_support 40 --dataset "MSC44" --model "ResNet50" --n_test_epochs 1 --show_plots_pred  --show_plots_features  --seed  2 --config "0000" --align_thr 1e-3  
         },
 
         //*****************************************************************

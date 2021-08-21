@@ -21,8 +21,11 @@ ax_mll_per_num_ip: plt.Axes = fig_mll_per_num_ip.add_subplot(1, 1, 1)
 
 mll_hist = []
 mse_hist = []
-align_thr = 1e-3   #[1e-4]
-for i in range(16):
+align_thr = 1e-2   #[1e-3, 1e-4]
+                            # update_sugma, del, add, alig_test
+              #'0001', '0010', '0011', '0110', '0111', '1000', '1010', '1100', '1101'
+config_frvm = [  1,      2,       3,      6,      7,      8,     10,     12,     13] 
+for i in config_frvm:
     
     params = parse_args_regression('train_regression')
     np.random.seed(params.seed)
@@ -36,6 +39,7 @@ for i in range(16):
     params.align_thr = align_thr
     params.show_plots_features = True
     params.n_samples = 72
+    params.dataset = 'QMUL'
 
     # print(Fore.CYAN, f'num Inducing points: {params.n_centers}', Fore.RESET)
     params.checkpoint_dir = '%scheckpoints/%s/' % (configs.save_dir, params.dataset)
@@ -101,6 +105,7 @@ for i in range(16):
     params.show_plots_features = True
     params.n_support = 60 
     params.n_samples = 72
+    params.dataset = 'QMUL'
 
     params.checkpoint_dir = '%scheckpoints/%s/%s_%s' % (configs.save_dir, params.dataset, params.model, params.method)
     bb           = backbone.Conv3().cuda()

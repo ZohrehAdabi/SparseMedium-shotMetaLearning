@@ -51,7 +51,7 @@ elif params.method=='Sparse_DKT':
         params.checkpoint_dir = params.checkpoint_dir +  f'KMeans_{str(params.n_centers)}'
         
         model = Sparse_DKT_count_regression(resnet50_conv, regressor, base_file, val_file, 
-                            f_rvm=False, n_inducing_points=params.n_centers, video_path=video_path, 
+                            f_rvm=False, n_inducing_points=params.n_centers, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     
     
@@ -72,7 +72,7 @@ elif params.method=='Sparse_DKT':
             os.makedirs(params.checkpoint_dir)
         params.checkpoint_dir = params.checkpoint_dir +  f'random_{str(params.n_centers)}'
         model = Sparse_DKT_count_regression(resnet50_conv, regressor, base_file, val_file,
-                            f_rvm=False, random=True,  n_inducing_points=params.n_centers, video_path=video_path, 
+                            f_rvm=False, random=True,  n_inducing_points=params.n_centers, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     else:
         ValueError('Unrecognised sparse method')
