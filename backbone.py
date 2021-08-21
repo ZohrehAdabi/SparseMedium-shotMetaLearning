@@ -435,7 +435,7 @@ def ResNet101( flatten = True):
     return ResNet(BottleneckBlock, [3,4,23,3],[256,512,1024,2048], flatten)
 
 #=============================================
-
+MAP = 'map3'
 class Resnet50FPN(nn.Module):
     def __init__(self):
         super(Resnet50FPN, self).__init__()
@@ -453,7 +453,10 @@ class Resnet50FPN(nn.Module):
         feat_map4 = self.conv4(feat_map3)
         feat['map3'] = feat_map3
         feat['map4'] = feat_map4
-        return feat_map3.unsqueeze(0)
+        if MAP=='map3':
+            return feat_map3.unsqueeze(0)
+        else:
+            return feat_map4.unsqueeze(0)
 
 
 class CountRegressor(nn.Module):
@@ -503,6 +506,9 @@ class CountRegressor(nn.Module):
 def ResNet_Regrs():
 
     resnet50_conv = Resnet50FPN()
-    regressor = CountRegressor(512, pool='mean')
+    if MAP=='map3':
+        regressor = CountRegressor(512, pool='mean')
+    else:
+        regressor = CountRegressor(1024, pool='mean')
 
     return resnet50_conv, regressor
