@@ -162,7 +162,7 @@ for align_thr in align_threshold:
         ax_mse.plot(config_frvm[:idx+1], mse_hist, label='Meta-Test MSE')
         if mse < best_mse:
             best_mse = mse
-            ax_mse.scatter(config_frvm[idx+1], best_mse,  c='r', marker='*', label=f'Best MSE: {best_mse}')
+            ax_mse.scatter(config_frvm[idx], best_mse,  c='r', marker='*', label=f'Best MSE: {best_mse:5f}')
         ax_mll.legend()
         ax_mse.legend()
         ax_mll.hlines(y=0.1, xmin=0, xmax=len(mll_hist), linestyles='dashed')
