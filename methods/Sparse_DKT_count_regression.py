@@ -98,7 +98,7 @@ class Sparse_DKT_count_regression(nn.Module):
             z = self.regressor(feature)
             #if image size isn't divisible by 8, gt size is slightly different from output size
             for i in range(z.shape[0]):
-                if z[i].shape[2] != gt_density[i].shape[2] or z[i].shape[3] != gt_density[i].shape[3]:
+                if z[i].shape[1] != gt_density[i].shape[1] or z[i].shape[1] != gt_density[i].shape[2]:
                     # print(z[i].shape)
                     orig_count_i = gt_density[i].sum().detach().item()
                     gt_density[i] = F.interpolate(gt_density[i], size=(z[i].shape[2], z[i].shape[3]), mode='bilinear',  align_corners=True)

@@ -138,7 +138,7 @@ class resizeImageWithGT(object):
         boxes = torch.Tensor(boxes).unsqueeze(0)
         resized_image = self.Normalize(resized_image)
         # resized_image = transforms.ToTensor()(resized_image)
-        resized_density = torch.from_numpy(resized_density).unsqueeze(0).unsqueeze(0)
+        resized_density = torch.from_numpy(resized_density).unsqueeze(0)
         
         # print(f'shape { resized_density.shape} gt count {torch.round(resized_density.sum())}')
         sample = {'image':resized_image,'boxes':boxes, 'gt_density':resized_density, 

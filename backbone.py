@@ -454,7 +454,7 @@ class Resnet50FPN(nn.Module):
         feat['map3'] = feat_map3
         feat['map4'] = feat_map4
         if MAP=='map3':
-            return feat_map3.unsqueeze(0)
+            return feat_map3
         else:
             return feat_map4.unsqueeze(0)
 
@@ -480,27 +480,9 @@ class CountRegressor(nn.Module):
         )
 
     def forward(self, im):
-        num_sample =  im.shape[0]
-        if num_sample == 1:
-            output = self.regressor(im.squeeze(0))
-            if self.pool == 'mean':
-                output = torch.mean(output, dim=(0),keepdim=True)  
-                return output
-            elif self.pool == 'max':
-                output, _ = torch.max(output, 0,keepdim=True)
-                return output
-        else:
-            for i in range(0,num_sample):
-                output = self.regressor(im[i])
-                if self.pool == 'mean':
-                    output = torch.mean(output, dim=(0),keepdim=True)
-                elif self.pool == 'max':
-                    output, _ = torch.max(output, 0,keepdim=True)
-                if i == 0:
-                    Output = output
-                else:
-                    Output = torch.cat((Output,output),dim=0)
-            return Output
+        output = self.regressor(im.squeeze(0))
+        return output
+        
 
 
 def ResNet_Regrs():
