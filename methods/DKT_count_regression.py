@@ -107,8 +107,8 @@ class DKT_count_regression(nn.Module):
             mll_list.append(loss.item())
             
             if ((epoch%2==0) & (itr%5==0)):
-                print('[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
-                    itr, epoch, loss.item(), mse.item(),
+                print('[%2d/%2d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
+                    itr, epoch+1, loss.item(), mse.item(),
                     self.model.likelihood.noise.item()
                 ))
 
