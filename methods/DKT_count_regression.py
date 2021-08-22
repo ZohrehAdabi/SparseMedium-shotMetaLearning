@@ -84,6 +84,7 @@ class DKT_count_regression(nn.Module):
             z = self.regressor(feature)
             #if image size isn't divisible by 8, gt size is slightly different from output size
             with torch.no_grad():
+                gt_density_resized = torch.empty([1, 1, z[i].shape[1], z[i].shape[2]])
                 for i in range(z.shape[0]):
                     if z[i].shape[1] != gt_density[i].shape[2] or z[i].shape[2] != gt_density[i].shape[3]:
                         print(i, z[i].shape)
