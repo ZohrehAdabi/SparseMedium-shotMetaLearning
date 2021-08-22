@@ -8,6 +8,7 @@ import data.additional_transforms as add_transforms
 from data.dataset import SimpleDataset, SetDataset, EpisodicBatchSampler
 from abc import abstractmethod
 
+
 def _init_fn(worker_id):
     np.random.seed(0)
     
@@ -66,7 +67,10 @@ class SimpleDataManager(DataManager):
         return data_loader
 
 class SetDataManager(DataManager):
-    def __init__(self, image_size, n_way, n_support, n_query, n_eposide =100):        
+    def __init__(self, image_size, n_way, n_support, n_query, n_eposide =100): 
+        """
+        n_episode: num tasks
+        """       
         super(SetDataManager, self).__init__()
         self.image_size = image_size
         self.n_way = n_way
@@ -82,5 +86,4 @@ class SetDataManager(DataManager):
         data_loader_params = dict(batch_sampler = sampler,  num_workers = 0, pin_memory=True)       
         data_loader = torch.utils.data.DataLoader(dataset, **data_loader_params)
         return data_loader
-
 

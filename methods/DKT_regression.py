@@ -22,9 +22,9 @@ from statistics import mean
 from data.qmul_loader import get_batch, train_people, test_people
 from configs import kernel_type
 
-class DKT(nn.Module):
+class DKT_regression(nn.Module):
     def __init__(self, backbone, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
-        super(DKT, self).__init__()
+        super(DKT_regression, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
         self.device = 'cuda'
@@ -61,7 +61,8 @@ class DKT(nn.Module):
         batch, batch_labels = get_batch(train_people, n_samples)
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
         # print(f'{epoch}: {batch_labels[0]}')
-        for inputs, labels in zip(batch, batch_labels):
+        mll_list = []
+        for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
             optimizer.zero_grad()
             z = self.feature_extractor(inputs)
 
@@ -72,16 +73,16 @@ class DKT(nn.Module):
             loss.backward()
             optimizer.step()
             mse = self.mse(predictions.mean, labels)
-
-            if (epoch%2==0):
-                print('[%d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
-                    epoch, loss.item(), mse.item(),
+            mll_list.append(loss.item())
+            if ((epoch%2==0) & (itr%5==0)):
+                print('[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
+                    itr, epoch, loss.item(), mse.item(),
                     self.model.likelihood.noise.item()
                 ))
 
             if (self.show_plots_pred or self.show_plots_features):
                 embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
-                self.update_plots_train(self.plots, labels.cpu().numpy(), embedded_z, None, mse, None)
+                self.update_plots_train(self.plots, labels.cpu().numpy(), embedded_z, None, mse, epoch)
 
                 if self.show_plots_pred:
                     self.plots.fig.canvas.draw()
@@ -92,13 +93,15 @@ class DKT(nn.Module):
                     self.plots.fig_feature.canvas.flush_events()
                     self.mw_feature.grab_frame()
 
+        return np.mean(mll_list)
+
     def test_loop(self, n_support, n_samples, test_person, optimizer=None): # no optimizer needed for GP
         inputs, targets = get_batch(test_people, n_samples)
 
         split = np.array([True]*15 + [False]*3)
         # print(split)
         shuffled_split = []
-        for _ in range(6):
+        for _ in range(int(n_support/15)):
             s = split.copy()
             np.random.shuffle(s)
             shuffled_split.extend(s)
@@ -150,7 +153,7 @@ class DKT(nn.Module):
             self.update_plots_test(self.plots, x_support, y_support.detach().cpu().numpy(), 
                                             z_support.detach(), z_query.detach(), embedded_z_support,
                                             x_query, y_query.detach().cpu().numpy(), pred, 
-                                            max_similar_idx_x_s, None, mse, None)
+                                            max_similar_idx_x_s, None, mse, test_person)
             if self.show_plots_pred:
                 self.plots.fig.canvas.draw()
                 self.plots.fig.canvas.flush_events()
@@ -163,15 +166,29 @@ class DKT(nn.Module):
 
         return mse
 
-    def train(self, epoch, n_support, n_samples, optimizer):
+    def train(self, stop_epoch, n_support, n_samples, optimizer):
 
-        self.train_loop(epoch, n_support, n_samples, optimizer)
+        mll_list = []
+        for epoch in range(stop_epoch):
+            mll = self.train_loop(epoch, n_support, n_samples, optimizer)
+            mll_list.append(mll)
+
+            print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
+        
+        mll = np.mean(mll_list)
+        if self.show_plots_pred:
+            self.mw.finish()
+        if self.show_plots_features:
+            self.mw_feature.finish()
+        return mll, mll_list
 
     def test(self, n_support, n_samples, optimizer=None, test_count=None):
 
         mse_list = []
         # choose a random test person
-        test_person = np.random.choice(np.arange(len(test_people)), size=test_count, replace=False)
+        rep = True if test_count > len(test_people) else False
+
+        test_person = np.random.choice(np.arange(len(test_people)), size=test_count, replace=rep)
         for t in range(test_count):
             print(f'test #{t}')
             
@@ -203,11 +220,12 @@ class DKT(nn.Module):
         
         
         if training:
-            video_path = video_path+'_Train_video'
+            self.video_path = video_path+'_Train_video'
         else:
-            video_path = video_path+'_Test_video'
+            self.video_path = video_path+'_Test_video'
 
-        os.makedirs(video_path, exist_ok=True)
+        os.makedirs(self.video_path, exist_ok=True)
+
         time_now = datetime.now().strftime('%Y-%m-%d--%H-%M')
          
         self.plots = self.prepare_plots()
@@ -218,14 +236,14 @@ class DKT(nn.Module):
             metadata = dict(title='DKT', artist='Matplotlib')
             FFMpegWriter = animation.writers['ffmpeg']
             self.mw = FFMpegWriter(fps=5, metadata=metadata)   
-            file = f'{video_path}/DKT_{time_now}.mp4'
+            file = f'{self.video_path}/DKT_{time_now}.mp4'
             self.mw.setup(fig=self.plots.fig, outfile=file, dpi=125)
 
         if self.show_plots_features:  
             metadata = dict(title='DKT', artist='Matplotlib')         
             FFMpegWriter2 = animation.writers['ffmpeg']
             self.mw_feature = FFMpegWriter2(fps=2, metadata=metadata)
-            file = f'{video_path}/DKT_features_{time_now}.mp4'
+            file = f'{self.video_path}/DKT_features_{time_now}.mp4'
             self.mw_feature.setup(fig=self.plots.fig_feature, outfile=file, dpi=150)
     
     def prepare_plots(self):
@@ -258,9 +276,10 @@ class DKT(nn.Module):
                 plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
 
             plots.ax_feature.legend()
+            plots.ax_feature.set_title(f'epoch {epoch}')
 
     def update_plots_test(self, plots, train_x, train_y, train_z, test_z, embedded_z,   
-                                    test_x, test_y, test_y_pred, similar_idx_x_s, mll, mse, epoch):
+                                    test_x, test_y, test_y_pred, similar_idx_x_s, mll, mse, person):
         def clear_ax(plots, i, j):
             plots.ax[i, j].clear()
             plots.ax[i, j].set_xticks([])
@@ -284,7 +303,7 @@ class DKT(nn.Module):
 
             cluster_colors = ['aqua', 'coral', 'lime', 'gold', 'purple', 'green']
             #train images
-
+            plots.fig.suptitle(f'person {person}, MSE: {mse:.4f}')
             y = ((train_y + 1) * 60 / 2) + 60
             tilt = [60, 70, 80, 90, 100, 110, 120]
             num = 1
@@ -343,6 +362,7 @@ class DKT(nn.Module):
                 plots = clear_ax(plots, i, 15)
                 plots = color_ax(plots, i, 15, 'white', lw=0.5)
 
+            plots.fig.savefig(f'{self.video_path}/test_person_{person}.png') 
 
         if self.show_plots_features:
             #features

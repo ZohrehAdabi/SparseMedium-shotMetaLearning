@@ -15,7 +15,7 @@ from configs import kernel_type
 #Check if tensorboardx is installed
 try:
     from tensorboardX import SummaryWriter
-    IS_TBX_INSTALLED = True
+    IS_TBX_INSTALLED = False
 except ImportError:
     IS_TBX_INSTALLED = False
     print('[WARNING] install tensorboardX to record simulation logs.')
