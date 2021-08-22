@@ -171,7 +171,7 @@ class DKT_count_regression(nn.Module):
 
             x_all = inputs.cuda()
             y_all = targets.cuda()
-            support_ind = np.random.choice(np.range(n_samples), size=n_support, replace=False)
+            support_ind = np.random.choice(np.arange(n_samples), size=n_support, replace=False)
             query_ind   = [i for i in range(n_samples) if i not in support_ind]
             x_support = x_all[support_ind,:,:,:]
             y_support = y_all[support_ind]
