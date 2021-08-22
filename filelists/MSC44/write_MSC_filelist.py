@@ -29,6 +29,7 @@ for dataset in dataset_list:
   #  with open(data_path + datasetmap[dataset] + ".csv", "r") as lines:
     class_folders = os.listdir(data_path+'/images/' + datasetmap[dataset])
     class_folders.sort()
+    print(class_folders)
     for i, c in enumerate(class_folders):
 
         class_name = c
@@ -46,6 +47,7 @@ for dataset in dataset_list:
 
     annotations = listdir( join(data_path, 'annotations', datasetmap[dataset]) )   
     annotations.sort()
+    print(annotations)
     annotations = list(join( data_path, 'annotations', datasetmap[dataset], annotation) for annotation in annotations)
     
     # for key, filelist in filelists.items():
