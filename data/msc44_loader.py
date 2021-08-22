@@ -92,7 +92,7 @@ class resizeImageWithGT(object):
     Modified by: Viresh
     """
     
-    def __init__(self, MAX_HW=384):
+    def __init__(self, MAX_HW=84):
         self.max_hw = MAX_HW
         IM_NORM_MEAN = [0.485, 0.456, 0.406]
         IM_NORM_STD = [0.229, 0.224, 0.225]
@@ -107,10 +107,11 @@ class resizeImageWithGT(object):
         # print(H)
         if W > self.max_hw or H > self.max_hw:
             
-            scale_factor = float(self.max_hw)/ max(H, W)
-            # print(f'*{scale_factor}')
-            new_H = H #8*int(H*scale_factor/8)
-            new_W = int(np.round(W*scale_factor))
+            scale_factor_H = float(self.max_hw)/ H
+            scale_factor_W = float(self.max_hw)/ W
+            print(f'{W}, {H}, {scale_factor_W}, {scale_factor_H}')
+            new_H = int(np.round(H*scale_factor_H)) #8*int(H*scale_factor/8)
+            new_W = int(np.round(W*scale_factor_W))
 
             # print(f'new_W {new_W}, new_H {new_H}')
             resized_image = transforms.Resize((new_H, new_W))(image)
@@ -122,17 +123,18 @@ class resizeImageWithGT(object):
             
             
         else:    
-            scale_factor = 1
+            scale_factor_W = 1
+            scale_factor_H = 1
             # print(f'\*{scale_factor}')
             resized_image = image
             resized_density = density
         boxes = list()
         for box in lines_boxes:
             # print(f'box1 {box}')
-            box2 = [int(k*scale_factor) for k in box]
+            # box2 = [int(k*scale_factor) for k in box]
             # print(f'box2 {box2}')
-            y1, x1, y2, x2 = box2[0], box2[1], box2[2], box2[3]
-            y1, x1, y2, x2 = box[0], box2[1], box[2], box2[3]
+            # y1, x1, y2, x2 = box2[0], box2[1], box2[2], box2[3]
+            y1, x1, y2, x2 = box[0]*scale_factor_H, box[1] * scale_factor_W, box[2] * scale_factor_H, box[3] * scale_factor_W
             boxes.append([0, y1,x1,y2,x2])
 
         boxes = torch.Tensor(boxes).unsqueeze(0)
