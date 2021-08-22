@@ -158,8 +158,8 @@ for align_thr in align_threshold:
 
         ax_mll.clear()
         ax_mse.clear()
-        ax_mll.plot(config_frvm[:idx+1], mll_hist, label='Meta-Train MLL')
-        ax_mse.plot(config_frvm[:idx+1], mse_hist, label='Meta-Test MSE')
+        ax_mll.plot(config_frvm[:idx+1], mll_hist, marker='.', label='Meta-Train MLL')
+        ax_mse.plot(config_frvm[:idx+1], mse_hist, marker='.', label='Meta-Test MSE')
         if mse < best_mse:
             best_mse = mse
             ax_mse.scatter(config_frvm[idx], best_mse,  c='r', marker='*', label=f'Best MSE: {best_mse:5f}')
