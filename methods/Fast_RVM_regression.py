@@ -116,7 +116,8 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
         terminate = False
 
         if ~anyWorthwhileAction:
-            print(f'{itr:3}, No positive action, m={active_m.shape[0]:3}')
+            if verbose:
+              print(f'{itr:3}, No positive action, m={active_m.shape[0]:3}')
             selected_action = torch.tensor(10)
             terminate = True
 
@@ -125,7 +126,8 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             no_change_in_alpha = len(no_change_in_alpha) == 1
             if no_change_in_alpha:
                 # print(selected_action)
-                print(f'{itr:3}, No change in alpha, m={active_m.shape[0]:3}')
+                if verbose:
+                    print(f'{itr:3}, No change in alpha, m={active_m.shape[0]:3}')
                 selected_action = torch.tensor(11)
                 terminate = True
 
@@ -271,7 +273,8 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             delta_beta	= torch.log(beta)-torch.log(beta_old)
             beta_KK_m       = beta * KK_m
             if torch.abs(delta_beta) > 1e-6:
-                print(f'{itr:3}, update statistics after beta update')
+                if verbose:
+                    print(f'{itr:3}, update statistics after beta update')
                 Sigma_m, mu_m, S, Q, s, q, logML, Gamma = Statistics(K_m, KK_m, KK_mm, Kt, K_mt, alpha_m, active_m, beta, targets, N)
                 logMarginalLog.append(logML.item())
                 terminate = False

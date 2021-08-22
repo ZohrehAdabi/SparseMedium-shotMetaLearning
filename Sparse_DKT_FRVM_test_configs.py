@@ -27,9 +27,10 @@ align_threshold = [1e-2, 1e-3, 1e-4]
               #'0010', '1000', '1010', '1011','1100', '1101'
 config_frvm = [  2,       8,      10,    11,    12,     13] 
 for align_thr in align_threshold:
+    print(f'\n\t{align_thr}\n')
     best_mse = 10e7
     for idx, i in enumerate(config_frvm):
-        
+        print(f'\n\t{i:04b}\n')
         params = parse_args_regression('train_regression')
         np.random.seed(params.seed)
         torch.manual_seed(params.seed)
@@ -162,6 +163,7 @@ for align_thr in align_threshold:
         ax_mse.plot(config_frvm[:idx+1], mse_hist, marker='.', label='Meta-Test MSE')
         if mse < best_mse:
             best_mse = mse
+            print(f'Best MSE:{best_mse} at c={params.config}, a {params.align_thr}')
             ax_mse.scatter(config_frvm[idx], best_mse,  c='r', marker='*', label=f'Best MSE: {best_mse:5f}')
         ax_mll.legend()
         ax_mse.legend()

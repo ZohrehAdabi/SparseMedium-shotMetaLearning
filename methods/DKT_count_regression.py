@@ -151,7 +151,7 @@ class DKT_count_regression(nn.Module):
 
                 mse = self.mse(pred.mean, y_query).item()
                 mse_list.append(mse)
-                mae = self.mae(predictions.mean, labels).item()
+                mae = self.mae(pred.mean, y_query).item()
                 mae_list.append(mae)
                 print(Fore.YELLOW, f'epoch {epoch+1}, itr {itr+1}, Val. on Train  MAE:{mae:.2f}, MSE: {mse:.4f}', Fore.RESET)
 
