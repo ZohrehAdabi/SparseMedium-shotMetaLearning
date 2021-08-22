@@ -139,11 +139,7 @@ class resizeImageWithGT(object):
         resized_image = self.Normalize(resized_image)
         # resized_image = transforms.ToTensor()(resized_image)
         resized_density = torch.from_numpy(resized_density).unsqueeze(0).unsqueeze(0)
-        if resized_density.shape[3] != self.max_hw:
-                orig_count = resized_density.sum()
-                resized_density = F.interpolate(resized_density, size=(self.max_hw, self.max_hw), mode='bilinear', align_corners=True)
-                new_count = resized_density.sum().detach().item()
-                if new_count > 0: resized_density = resized_density * (orig_count / new_count)
+        
         # print(f'shape { resized_density.shape} gt count {torch.round(resized_density.sum())}')
         sample = {'image':resized_image,'boxes':boxes, 'gt_density':resized_density, 
                         'gt_count': torch.round(resized_density.sum()).unsqueeze(0)}

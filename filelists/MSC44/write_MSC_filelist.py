@@ -28,6 +28,7 @@ for dataset in dataset_list:
     print(data_path + datasetmap[dataset])
   #  with open(data_path + datasetmap[dataset] + ".csv", "r") as lines:
     class_folders = os.listdir(data_path+'/images/' + datasetmap[dataset])
+    class_folders.sort()
     for i, c in enumerate(class_folders):
 
         class_name = c
@@ -43,7 +44,8 @@ for dataset in dataset_list:
         gt_densities = list(join( data_path, 'gt_density', datasetmap[dataset],  class_name, gt_density) for gt_density in gt_densities)     
         density_lists[class_name] = gt_densities
 
-    annotations = listdir( join(data_path, 'annotations', datasetmap[dataset]) )    
+    annotations = listdir( join(data_path, 'annotations', datasetmap[dataset]) )   
+    annotations.sort()
     annotations = list(join( data_path, 'annotations', datasetmap[dataset], annotation) for annotation in annotations)
     
     # for key, filelist in filelists.items():

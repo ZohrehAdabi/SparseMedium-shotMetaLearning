@@ -15,6 +15,7 @@ from matplotlib import animation
 from colorama import Fore
 from sklearn.manifold import TSNE
 import torchvision.transforms as transforms
+import torch.nn.functional as F
 from sklearn.cluster import KMeans
 from fast_pytorch_kmeans import KMeans as Fast_KMeans
 from time import gmtime, strftime
@@ -414,6 +415,11 @@ class Sparse_DKT_count_regression(nn.Module):
             y_query   = y_all[query_ind]
 
             z_support = self.feature_extractor(x_support).detach()
+            if z_support.shape[3] != :
+                orig_count = resized_density.sum()
+                resized_density = F.interpolate(resized_density, size=(self.max_hw, self.max_hw), mode='bilinear', align_corners=True)
+                new_count = resized_density.sum().detach().item()
+                if new_count > 0: resized_density = resized_density * (orig_count / new_count)
             with torch.no_grad():
                 inducing_points = self.get_inducing_points(z_support, y_support, verbose=False)
             
