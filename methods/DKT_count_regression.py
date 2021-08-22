@@ -250,7 +250,7 @@ class DKT_count_regression(nn.Module):
             mll = self.train_loop(epoch, n_support, n_samples, optimizer)
             mll_list.append(mll)
 
-            print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
+            print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch+1} => MLL: {mll}\n', "-"*30, Fore.RESET)
             print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
             val_mse, val_mae, val_rmse = self.test_loop(n_support, n_samples, epoch, optimizer)
             if best_mae >= val_mae:
