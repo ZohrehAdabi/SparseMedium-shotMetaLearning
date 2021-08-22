@@ -129,9 +129,9 @@ class DKT_count_regression(nn.Module):
             if validation:
                 support_ind = np.random.choice(np.arange(n_samples), size=n_support, replace=False)
                 query_ind   = [i for i in range(n_samples) if i not in support_ind]
-                z_support = z[support_ind,:,:,:]
+                z_support = z[support_ind]
                 y_support = labels[support_ind]
-                z_query   = z[query_ind,:,:,:]
+                z_query   = z[query_ind]
                 y_query   = labels[query_ind]
 
                 self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
