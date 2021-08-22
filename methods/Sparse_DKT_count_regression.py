@@ -90,8 +90,23 @@ class Sparse_DKT_count_regression(nn.Module):
 
             inputs = samples['image']
             labels = samples['gt_count']
+            gt_density = samples['gt_density']
 
-            z = self.feature_extractor(inputs)
+            with torch.no_grad():
+                feature = self.feature_extractor(inputs)
+            #predict density map
+            z = self.regressor(feature)
+            #if image size isn't divisible by 8, gt size is slightly different from output size
+            for i in range(z.shape[0]):
+                if z[i].shape[2] != gt_density[i].shape[2] or z[i].shape[3] != gt_density[i].shape[3]:
+                    # print(z[i].shape)
+                    orig_count_i = gt_density[i].sum().detach().item()
+                    gt_density[i] = F.interpolate(gt_density[i], size=(z[i].shape[2], z[i].shape[3]), mode='bilinear',  align_corners=True)
+                    new_count_i = gt_density[i].sum().detach().item()
+                    if new_count_i > 0: 
+                        gt_density[i] = gt_density[i] * (orig_count_i / new_count_i)
+                        labels[i] = torch.round(gt_density[i].sum()).unsqueeze(0)
+
             with torch.no_grad():
                 inducing_points = self.get_inducing_points(z, labels, verbose=False)
             
@@ -415,11 +430,6 @@ class Sparse_DKT_count_regression(nn.Module):
             y_query   = y_all[query_ind]
 
             z_support = self.feature_extractor(x_support).detach()
-            if z_support.shape[3] != :
-                orig_count = resized_density.sum()
-                resized_density = F.interpolate(resized_density, size=(self.max_hw, self.max_hw), mode='bilinear', align_corners=True)
-                new_count = resized_density.sum().detach().item()
-                if new_count > 0: resized_density = resized_density * (orig_count / new_count)
             with torch.no_grad():
                 inducing_points = self.get_inducing_points(z_support, y_support, verbose=False)
             

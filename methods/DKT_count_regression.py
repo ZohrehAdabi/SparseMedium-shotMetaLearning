@@ -77,7 +77,21 @@ class DKT_count_regression(nn.Module):
 
             inputs = samples['image']
             labels = samples['gt_count']
-            z = self.feature_extractor(inputs)
+            gt_density = samples['gt_density']
+            with torch.no_grad():
+                feature = self.feature_extractor(inputs)
+            #predict density map
+            z = self.regressor(feature)
+            #if image size isn't divisible by 8, gt size is slightly different from output size
+            for i in range(z.shape[0]):
+                if z[i].shape[2] != gt_density[i].shape[2] or z[i].shape[3] != gt_density[i].shape[3]:
+                    # print(z[i].shape)
+                    orig_count_i = gt_density[i].sum().detach().item()
+                    gt_density[i] = F.interpolate(gt_density[i], size=(z[i].shape[2], z[i].shape[3]), mode='bilinear',  align_corners=True)
+                    new_count_i = gt_density[i].sum().detach().item()
+                    if new_count_i > 0: 
+                        gt_density[i] = gt_density[i] * (orig_count_i / new_count_i)
+                        labels[i] = torch.round(gt_density[i].sum()).unsqueeze(0)
 
             self.model.set_train_data(inputs=z, targets=labels, strict=False)
             predictions = self.model(z)
