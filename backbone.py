@@ -456,7 +456,7 @@ class Resnet50FPN(nn.Module):
         if MAP=='map3':
             return feat_map3
         else:
-            return feat_map4.unsqueeze(0)
+            return feat_map4
 
 
 class CountRegressor(nn.Module):

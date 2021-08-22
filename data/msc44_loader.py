@@ -109,7 +109,7 @@ class resizeImageWithGT(object):
             
             scale_factor_H = float(self.max_hw)/ H
             scale_factor_W = float(self.max_hw)/ W
-            print(f'{W}, {H}, {scale_factor_W}, {scale_factor_H}')
+            # print(f'{W}, {H}, {scale_factor_W}, {scale_factor_H}')
             new_H = int(np.round(H*scale_factor_H)) #8*int(H*scale_factor/8)
             new_W = int(np.round(W*scale_factor_W))
 
@@ -140,7 +140,7 @@ class resizeImageWithGT(object):
         boxes = torch.Tensor(boxes).unsqueeze(0)
         resized_image = self.Normalize(resized_image)
         # resized_image = transforms.ToTensor()(resized_image)
-        resized_density = torch.from_numpy(resized_density).unsqueeze(0)
+        resized_density = torch.from_numpy(resized_density).unsqueeze(0).unsqueeze(0)
         
         # print(f'shape { resized_density.shape} gt count {torch.round(resized_density.sum())}')
         sample = {'image':resized_image,'boxes':boxes, 'gt_density':resized_density, 
