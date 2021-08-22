@@ -186,7 +186,7 @@ class DKT_count_regression(nn.Module):
             z_support = self.regressor(feature_s).detach()
             with torch.no_grad():
                 gt_density_s_resized, y_support = self.resize_gt_density(z_support, gt_density_s, y_support)
-
+            z_support = z_support.reshape(z_support.shape[0], -1)
             self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
 
             self.model.eval()
@@ -197,6 +197,7 @@ class DKT_count_regression(nn.Module):
                 feature_q = self.feature_extractor(x_query)
                 z_query = self.regressor(feature_q).detach()
                 gt_density_q_resized, y_query = self.resize_gt_density(z_query, gt_density_q, y_query)
+                z_query = z_query.reshape(z_query.shape[0], -1)
                 pred    = self.likelihood(self.model(z_query))
                 lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
 
