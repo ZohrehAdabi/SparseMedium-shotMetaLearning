@@ -148,10 +148,10 @@ class DKT_count_regression(nn.Module):
                 mse_list.append(mse)
                 mae = self.mae(predictions.mean, labels).item()
                 mae_list.append(mae)
-                print(Fore.YELLOW, f'epoch {epoch}, itr {itr+1}, Train  MAE:{mae:.2f}, MSE: {mse:.4f}', Fore.RESET)
+                print(Fore.YELLOW, f'epoch {epoch+1}, itr {itr+1}, Train  MAE:{mae:.2f}, MSE: {mse:.4f}', Fore.RESET)
 
         if validation:
-            print(Fore.CYAN,"-"*30, f'\n epoch {epoch} => Avg. Val. on Train    MAE: {np.mean(mae_list):.2f}, RMSE: {np.sqrt(np.mean(mse_list)):.2f}'
+            print(Fore.CYAN,"-"*30, f'\n epoch {epoch+1} => Avg. Val. on Train    MAE: {np.mean(mae_list):.2f}, RMSE: {np.sqrt(np.mean(mse_list)):.2f}'
                                     f', MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
 
         return np.mean(mll_list)
