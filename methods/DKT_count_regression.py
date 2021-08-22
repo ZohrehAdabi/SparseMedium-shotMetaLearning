@@ -89,7 +89,7 @@ class DKT_count_regression(nn.Module):
                         print(i, z[i].shape)
 
                         orig_count_i = gt_density[i].sum().detach().item()
-                        gt_density[i] = F.interpolate(gt_density[i], size=(z[i].shape[2], z[i].shape[3]), mode='bilinear',  align_corners=True)
+                        gt_density[i] = F.interpolate(gt_density[i].unsqueeze(0), size=(z[i].shape[2], z[i].shape[3]), mode='bilinear',  align_corners=True)
                         new_count_i = gt_density[i].sum().detach().item()
                         if new_count_i > 0: 
                             gt_density[i] = gt_density[i] * (orig_count_i / new_count_i)
