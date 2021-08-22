@@ -408,7 +408,7 @@ class DKT_count_regression(nn.Module):
         if self.show_plots_features:
             #features
         
-            plots.ax_feature.scatter(embedded_z[:, 0], embedded_z[:, 1], label=f'{t}')
+            plots.ax_feature.scatter(embedded_z[:, 0], embedded_z[:, 1])
             # plots.ax_feature.legend()
 
 
