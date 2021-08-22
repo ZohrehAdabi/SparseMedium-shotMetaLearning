@@ -74,7 +74,8 @@ class MediumShotCountingDataset(Dataset):
         
         for key in samples.keys():
             # print(f'key {key}, {len(samples[key])}')
-            samples[key] = torch.stack(samples[key])
+            if key != 'boxes':
+                samples[key] = torch.stack(samples[key])
             # print(f'after, key {key}, {samples[key].shape}')
       
         return samples  #image, boxes, gt_density

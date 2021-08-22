@@ -336,7 +336,7 @@ class DKT_count_regression(nn.Module):
             #features
             plots.ax_feature.scatter(embedded_z[:, 0], embedded_z[:, 1])
 
-            plots.ax_feature.legend()
+            # plots.ax_feature.legend()
             plots.ax_feature.set_title(f'epoch {epoch}, train feature')
 
     def update_plots_test(self, plots, train_x, train_y, train_z, test_z, embedded_z,   
@@ -394,7 +394,7 @@ class DKT_count_regression(nn.Module):
             #features
         
             plots.ax_feature.scatter(embedded_z[:, 0], embedded_z[:, 1], label=f'{t}')
-            plots.ax_feature.legend()
+            # plots.ax_feature.legend()
 
 
 
