@@ -61,6 +61,20 @@ class DKT_count_regression(nn.Module):
     def set_forward_loss(self, x):
         pass
 
+    def resize_gt_density(self, z, gt_density, labels):
+        gt_density_resized = torch.empty([gt_density.shape[0],1, 1, z.shape[2], z.shape[3]])
+        for i in range(z.shape[0]):
+            if z[i].shape[1] != gt_density[i].shape[2] or z[i].shape[2] != gt_density[i].shape[3]:
+                # print(i, z[i].shape)
+
+                orig_count_i = gt_density[i].sum().detach().item()
+                gt_density_resized[i] = F.interpolate(gt_density[i], size=(z[i].shape[1], z[i].shape[2]), mode='bilinear',  align_corners=True)
+                new_count_i = gt_density_resized[i].sum().detach().item()
+                if new_count_i > 0: 
+                    gt_density_resized[i] = gt_density_resized[i] * (orig_count_i / new_count_i)
+                    labels[i] = torch.round(gt_density_resized[i].sum())
+        return gt_density_resized, labels
+
     def train_loop(self, epoch, n_support, n_samples, optimizer):
 
         # print(f'{epoch}: {batch_labels[0]}')
@@ -84,17 +98,7 @@ class DKT_count_regression(nn.Module):
             z = self.regressor(feature)
             #if image size isn't divisible by 8, gt size is slightly different from output size
             with torch.no_grad():
-                gt_density_resized = torch.empty([gt_density.shape[0],1, 1, z.shape[2], z.shape[3]])
-                for i in range(z.shape[0]):
-                    if z[i].shape[1] != gt_density[i].shape[2] or z[i].shape[2] != gt_density[i].shape[3]:
-                        # print(i, z[i].shape)
-
-                        orig_count_i = gt_density[i].sum().detach().item()
-                        gt_density_resized[i] = F.interpolate(gt_density[i], size=(z[i].shape[1], z[i].shape[2]), mode='bilinear',  align_corners=True)
-                        new_count_i = gt_density_resized[i].sum().detach().item()
-                        if new_count_i > 0: 
-                            gt_density_resized[i] = gt_density_resized[i] * (orig_count_i / new_count_i)
-                            labels[i] = torch.round(gt_density_resized[i].sum())
+                gt_density_resized, labels = self.resize_gt_density(z, gt_density, labels)
 
             z = z.reshape(z.shape[0], -1)
             self.model.set_train_data(inputs=z, targets=labels, strict=False)
@@ -148,14 +152,10 @@ class DKT_count_regression(nn.Module):
                 mse_list.append(mse)
                 mae = self.mae(predictions.mean, labels).item()
                 mae_list.append(mae)
-<<<<<<< HEAD
-                print(Fore.YELLOW, f'epoch {epoch}, itr {itr+1},  Val. on Train  MAE:{mae:.2f}, MSE: {mse:.4f}', Fore.RESET)
-=======
-                print(Fore.YELLOW, f'epoch {epoch+1}, itr {itr+1}, Train  MAE:{mae:.2f}, MSE: {mse:.4f}', Fore.RESET)
->>>>>>> 9368d085076e0d01f9d2c485a351506c546aa212
+                print(Fore.YELLOW, f'epoch {epoch+1}, itr {itr+1}, Val. on Train  MAE:{mae:.2f}, MSE: {mse:.4f}', Fore.RESET)
 
         if validation:
-            print(Fore.CYAN,"-"*30, f'\n epoch {epoch+1} => Avg. Val. on Train    MAE: {np.mean(mae_list):.2f}, RMSE: {np.sqrt(np.mean(mse_list)):.2f}'
+            print(Fore.LIGHTMAGENTA_EX,"-"*30, f'\n epoch {epoch+1} => Avg. Val. on Train    MAE: {np.mean(mae_list):.2f}, RMSE: {np.sqrt(np.mean(mse_list)):.2f}'
                                     f', MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
 
         return np.mean(mll_list)
@@ -167,6 +167,7 @@ class DKT_count_regression(nn.Module):
  
             inputs = samples['image']
             targets = samples['gt_count']
+            gt_density = samples['gt_density']
 
             x_all = inputs.cuda()
             y_all = targets.cuda()
@@ -174,11 +175,18 @@ class DKT_count_regression(nn.Module):
             query_ind   = [i for i in range(n_samples) if i not in support_ind]
             x_support = x_all[support_ind,:,:,:]
             y_support = y_all[support_ind]
+            gt_density_s = gt_density[support_ind, :, :, :, :]
             x_query   = x_all[query_ind,:,:,:]
             y_query   = y_all[query_ind]
+            gt_density_q = gt_density[query_ind, :, :, :, :]
+            
+            with torch.no_grad():
+                feature_s = self.feature_extractor(x_support)
+            #predict density map
+            z_support = self.regressor(feature_s).detach()
+            with torch.no_grad():
+                gt_density_s_resized, y_support = self.resize_gt_density(z_support, gt_density_s, y_support)
 
-        
-            z_support = self.feature_extractor(x_support).detach()
             self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
 
             self.model.eval()
@@ -186,7 +194,9 @@ class DKT_count_regression(nn.Module):
             self.likelihood.eval()
 
             with torch.no_grad():
-                z_query = self.feature_extractor(x_query).detach()
+                feature_q = self.feature_extractor(x_query)
+                z_query = self.regressor(feature_q).detach()
+                gt_density_q_resized, y_query = self.resize_gt_density(z_query, gt_density_q, y_query)
                 pred    = self.likelihood(self.model(z_query))
                 lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
 
@@ -198,7 +208,7 @@ class DKT_count_regression(nn.Module):
             y = y_query.detach().cpu().numpy()
             y_pred = pred.mean.detach().cpu().numpy()
             print(Fore.RED,"="*50, Fore.RESET)
-            print(f'itr #{itr}')
+            print(f'itr #{itr+1}')
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
             print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
             print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
@@ -228,7 +238,7 @@ class DKT_count_regression(nn.Module):
                     self.plots.fig_feature.canvas.flush_events()
                     self.mw_feature.grab_frame()
 
-        print(Fore.CYAN,"-"*30, f'\n epoch {epoch} => Avg.   MAE: {np.mean(mae_list):.2f}, RMSE: {np.sqrt(np.mean(mse_list)):.2f}'
+        print(Fore.CYAN,"-"*30, f'\n epoch {epoch+1} => Avg.   MAE: {np.mean(mae_list):.2f}, RMSE: {np.sqrt(np.mean(mse_list)):.2f}'
                                     f', MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
    
         return np.mean(mse_list), np.mean(mae_list), np.sqrt(np.mean(mse_list))
