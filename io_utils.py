@@ -60,7 +60,7 @@ def parse_args_regression(script):
         parser.add_argument('--n_samples', default=72, type=int, help='Number of points on trajectory') #at most 19 
         parser.add_argument('--show_plots_features', action='store_true', help='Show plots') 
         parser.add_argument('--n_centers', default=24, type=int, help='Number of Inducing points/ KMeans centers in Kmeans sparsifying')
-        parser.add_argument('--config', default='0000', type=str, help='config for Fast RVM = {update_sigma|delete_priority|add_priority|align_test}')
+        parser.add_argument('--config', default='0000', type=str, help='config for Fast RVM = {update_sigma|delete_priority|add_priority|align_test} recom = {"0010", "1000", "1010", "1011","1100", "1101"}')
         parser.add_argument('--align_thr', default=1e-3, type=float, help='1e-3, larger value leads to more rejection and sparseness')
         if script == 'train_regression':
             parser.add_argument('--start_epoch' , default=0, type=int, help ='Starting epoch')
@@ -69,7 +69,7 @@ def parse_args_regression(script):
             parser.add_argument('--n_support', default=60, type=int, help='Number of points on trajectory to be given as support points')
         elif script == 'test_regression':
             parser.add_argument('--n_support', default=60, type=int, help='Number of points on trajectory to be given as support points')
-            parser.add_argument('--n_test_epochs', default=1, type=int, help='How many test people?')
+            parser.add_argument('--n_test_epochs', default=1, type=int, help='{QMUL:How many test people? def=5| MSC44:How manytimes test on all test tasks def=1')
             parser.add_argument('--show_plots_pred', action='store_true', help='Show plots')
         return parser.parse_args()
 

@@ -23,9 +23,9 @@ mll_hist = []
 mse_hist = []
 align_thr = 1e-2   #[1e-3, 1e-4]
                             # update_sugma, del, add, alig_test
-              #'0001', '0010', '0011', '0110', '0111', '1000', '1010', '1100', '1101'
-config_frvm = [  1,      2,       3,      6,      7,      8,     10,     12,     13] 
-for i in config_frvm:
+              #'0010', '1000', '1010', '1011','1100', '1101'
+config_frvm = [  2,       8,      10,    11,    12,     13] 
+for idx, i in enumerate(config_frvm):
     
     params = parse_args_regression('train_regression')
     np.random.seed(params.seed)
@@ -106,6 +106,7 @@ for i in config_frvm:
     params.n_support = 60 
     params.n_samples = 72
     params.dataset = 'QMUL'
+    params.n_test_epochs= 5
 
     params.checkpoint_dir = '%scheckpoints/%s/%s_%s' % (configs.save_dir, params.dataset, params.model, params.method)
     bb           = backbone.Conv3().cuda()
@@ -153,12 +154,14 @@ for i in config_frvm:
 
     ax_mll.clear()
     ax_mse.clear()
-    ax_mll.plot(mll_hist, label='Meta-Train MLL')
-    ax_mse.plot(mse_hist, label='Meta-Test MSE')
+    ax_mll.plot(config_frvm[:idx+1], mll_hist, label='Meta-Train MLL')
+    ax_mse.plot(config_frvm[:idx+1], mse_hist, label='Meta-Test MSE')
     ax_mll.legend()
     ax_mse.legend()
     ax_mll.hlines(y=0.1, xmin=0, xmax=len(mll_hist), linestyles='dashed')
+    ax_mll.hlines(y=0.5, xmin=0, xmax=len(mll_hist), linestyles='dashed')
     ax_mse.hlines(y=0.01, xmin=0, xmax=len(mse_hist), linestyles='dashed')
+    ax_mse.hlines(y=0.009, xmin=0, xmax=len(mse_hist), linestyles='dashed')
     ax_mse.set_xlabel("config id")
     ax_mll.set_ylabel("loss")
     ax_mse.set_ylabel("loss")
