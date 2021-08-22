@@ -91,10 +91,10 @@ class DKT_count_regression(nn.Module):
 
                         orig_count_i = gt_density[i].sum().detach().item()
                         gt_density_resized[i] = F.interpolate(gt_density[i], size=(z[i].shape[1], z[i].shape[2]), mode='bilinear',  align_corners=True)
-                        new_count_i = gt_density[i].sum().detach().item()
+                        new_count_i = gt_density_resized[i].sum().detach().item()
                         if new_count_i > 0: 
-                            gt_density[i] = gt_density[i] * (orig_count_i / new_count_i)
-                            labels[i] = torch.round(gt_density[i].sum())
+                            gt_density_resized[i] = gt_density_resized[i] * (orig_count_i / new_count_i)
+                            labels[i] = torch.round(gt_density_resized[i].sum())
 
             z = z.reshape(z.shape[0], -1)
             self.model.set_train_data(inputs=z, targets=labels, strict=False)
