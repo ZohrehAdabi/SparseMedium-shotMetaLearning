@@ -41,7 +41,7 @@ for align_thr in align_threshold:
         params.sparse_method='FRVM'
         params.config = f'{i:04b}'
         params.align_thr = align_thr
-        params.show_plots_features = True
+        params.show_plots_features = False
         params.n_samples = 72
         params.dataset = 'QMUL'
 
@@ -107,7 +107,7 @@ for align_thr in align_threshold:
         params.sparse_method='FRVM'
         params.config = f'{i:04b}'
         params.align_thr = align_thr
-        params.show_plots_features = True
+        params.show_plots_features = False
         params.n_support = 60 
         params.n_samples = 72
         params.dataset = 'QMUL'
