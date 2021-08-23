@@ -150,7 +150,7 @@
             "console": "integratedTerminal",
            "args": ["--method","DKT", "--n_samples", "50", "--n_support", "40",
                 "--dataset", "MSC44", "--model", "ResNet50", "--stop_epoch", "100",
-                "--show_plots_features", "--seed","2"]  
+                 "--seed","2"]  //"--show_plots_features",
       // --method "DKT"   --n_samples 50 --n_support 40 --dataset "MSC44" --model "ResNet50" --stop_epoch 100  --show_plots_features  --seed  2 
         },
         {
@@ -162,7 +162,7 @@
            "args": ["--method","DKT",  "--n_samples", "50", "--n_support", "40",
                         "--dataset", "MSC44", "--model", "ResNet50", "--n_test_epochs", "1", 
                         "--show_plots_pred", "--show_plots_features",
-                        "--seed","2"] 
+                        "--seed","2"] //
 
         //  --method "DKT"  --n_samples 50 --n_support 40 --dataset "MSC44" --model "ResNet50" --n_test_epochs 1 --show_plots_pred  --show_plots_features  --seed  2 
         },
