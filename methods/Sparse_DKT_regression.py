@@ -126,7 +126,7 @@ class Sparse_DKT_regression(nn.Module):
             mse = self.mse(predictions.mean, labels)
 
             if ((epoch%2==0) & (itr%5==0)):
-                print('[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
+                print('[%2d/%2d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
                     itr, epoch, loss.item(), mse.item(),
                     self.model.likelihood.noise.item()
                 ))

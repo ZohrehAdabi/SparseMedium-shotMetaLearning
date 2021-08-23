@@ -24,8 +24,8 @@ mll_hist = []
 mse_hist = []
 align_threshold = [1e-2, 1e-3, 1e-4]
                             # update_sugma, del, add, alig_test
-              #'0010', '1000', '1010', '1011','1100', '1101'
-config_frvm = [  2,       8,      10,    11,    12,     13] 
+              #'0010', '1000', '1010', '1011','1100'
+config_frvm = [  2,       8,      10,    11,    12] 
 for align_thr in align_threshold:
     print(f'\n\t{align_thr}\n')
     best_mse = 10e7
@@ -157,8 +157,8 @@ for align_thr in align_threshold:
 
         mse_hist.append(mse)
 
-        ax_mll.clear()
-        ax_mse.clear()
+        # ax_mll.clear()
+        # ax_mse.clear()
         ax_mll.plot(config_frvm[:idx+1], mll_hist, marker='.', label='Meta-Train MLL')
         ax_mse.plot(config_frvm[:idx+1], mse_hist, marker='.', label='Meta-Test MSE')
         if mse < best_mse:
@@ -180,6 +180,7 @@ for align_thr in align_threshold:
 
     for c in range(len(config_frvm)):
         ax_mll_per_config.plot(mll_list_per_config[c], label=f'c- {config_frvm[c]}')
+    ax_mll_per_config.set_ylim(-1, 1.8)
     ax_mll_per_config.set_xlabel("number of epochs")
     ax_mll_per_config.set_ylabel("loss")
     ax_mll_per_config.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=6, ncol=2)

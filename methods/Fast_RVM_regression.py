@@ -283,7 +283,8 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
 
         if terminate:
             # print(f'sigma2={1/beta:.4f}')
-            print(f'Finished at {itr:3}, m= {active_m.shape[0]:3} sigma2={1/beta:4.4f}')
+            if verbose:
+                print(f'Finished at {itr:3}, m= {active_m.shape[0]:3} sigma2={1/beta:4.4f}')
             return active_m.cpu().numpy(), alpha_m, Gamma, beta 
 
         if ((itr+1)%50==0) and verbose:
