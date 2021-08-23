@@ -23,9 +23,17 @@ from statistics import mean
 from data.msc44_loader import get_batch
 from configs import kernel_type
 
+#Check if tensorboardx is installed
+try:
+    from tensorboardX import SummaryWriter
+    IS_TBX_INSTALLED = True
+except ImportError:
+    IS_TBX_INSTALLED = False
+    print('[WARNING] install tensorboardX to record simulation logs.')
+
 class DKT_count_regression(nn.Module):
     def __init__(self, backbone, regressor, base_file=None, val_file=None,
-        video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
+        video_path=None, show_plots_loss=False, show_plots_pred=False, show_plots_features=False, training=False):
         super(DKT_count_regression, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
@@ -36,6 +44,7 @@ class DKT_count_regression(nn.Module):
         self.device = 'cuda'
         self.video_path = video_path
         self.best_path = video_path
+        self.show_plots_loss = show_plots_loss
         self.show_plots_pred = show_plots_pred
         self.show_plots_features = show_plots_features
         if self.show_plots_pred or self.show_plots_features:
@@ -96,7 +105,7 @@ class DKT_count_regression(nn.Module):
     def train_loop(self, epoch, n_support, n_samples, optimizer):
 
         # print(f'{epoch}: {batch_labels[0]}')
-        validation = False
+        validation = True
         mll_list = []
         mse_list = []
         mae_list = []
@@ -129,8 +138,12 @@ class DKT_count_regression(nn.Module):
             optimizer.step()
             mse = self.mse(predictions.mean, labels_norm)
             mll_list.append(np.around(loss.item(), 4))
-            
-            if ((epoch%1==0) & (itr%5==0)):
+            self.iteration = (epoch*31) + itr
+            if(self.writer is not None): 
+                self.writer.add_scalar('MLL_per_itr', loss.item(), self.iteration)
+   
+
+            if ((epoch%1==0) & (itr%10==0)):
                 print('[%2d/%2d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
                     itr, epoch+1, loss.item(), mse.item(),
                     self.model.likelihood.noise.item()
@@ -150,7 +163,7 @@ class DKT_count_regression(nn.Module):
                     self.mw_feature.grab_frame()
             #*********************************************************
             #validate on train data
-            if validation:
+            if validation and (epoch%50==0):
                 support_ind = np.random.choice(np.arange(n_samples), size=n_support, replace=False)
                 query_ind   = [i for i in range(n_samples) if i not in support_ind]
                 z_support = z[support_ind, :]
@@ -177,9 +190,12 @@ class DKT_count_regression(nn.Module):
                 mae_list.append(mae)
                 print(Fore.YELLOW, f'epoch {epoch+1}, itr {itr+1}, Val. on Train  MAE:{mae:.2f}, MSE: {mse:.4f}', Fore.RESET)
 
-        if validation:
+        if validation and (epoch%50==0):
             print(Fore.LIGHTMAGENTA_EX,"-"*30, f'\n epoch {epoch+1} => Avg. Val. on Train    MAE: {np.mean(mae_list):.2f}, RMSE: {np.sqrt(np.mean(mse_list)):.2f}'
                                     f', MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
+            if(self.writer is not None):
+                self.writer.add_scalar('MSE Val. on Train', mse, epoch*31+itr)
+                self.writer.add_scalar('MAE Val. on Train', mae, epoch*31+itr)
 
         # print(f'epoch {epoch+1} MLL {mll_list}')
         return np.mean(mll_list)
@@ -247,14 +263,14 @@ class DKT_count_regression(nn.Module):
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
             print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
             print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
-            print(Fore.LIGHTRED_EX, f'mse:    {mse:.4f}', Fore.RESET)
+            print(Fore.LIGHTRED_EX, f'mae: {mae}, mse:\t{mse:.4f}', Fore.RESET)
             print(Fore.RED,"-"*50, Fore.RESET)
 
-            K = self.model.covar_module
-            kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
-            max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
-            y_s = y_support.detach().cpu().numpy()
-            print(Fore.LIGHTGREEN_EX, f'target of most similar in support set: {y_s[max_similar_idx_x_s]}', Fore.RESET)
+            # K = self.model.covar_module
+            # kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
+            # max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
+            # y_s = y_support.detach().cpu().numpy()
+            # print(Fore.LIGHTGREEN_EX, f'target of most similar in support set: {y_s[max_similar_idx_x_s]}', Fore.RESET)
             #**************************************************
 
             if (self.show_plots_pred or self.show_plots_features):
@@ -263,7 +279,7 @@ class DKT_count_regression(nn.Module):
                 self.update_plots_test(self.plots, x_support, y_support.detach().cpu().numpy(), 
                                                 z_support.detach(), z_query.detach(), embedded_z_support,
                                                 x_query, y_query.detach().cpu().numpy(), pred, 
-                                                max_similar_idx_x_s, None, mse, itr)
+                                                None, None, mse, itr)
                 if self.show_plots_pred:
                     self.plots.fig.canvas.draw()
                     self.plots.fig.canvas.flush_events()
@@ -278,7 +294,7 @@ class DKT_count_regression(nn.Module):
    
         return np.mean(mse_list), np.mean(mae_list), np.sqrt(np.mean(mse_list))
 
-    def train(self, stop_epoch, n_support, n_samples, optimizer):
+    def train(self, stop_epoch, n_support, n_samples, optimizer, id):
         
         self.feature_extractor.eval()
         best_mae, best_rmse = 10e7, 10e7
@@ -286,17 +302,22 @@ class DKT_count_regression(nn.Module):
         for epoch in range(stop_epoch):
             mll = self.train_loop(epoch, n_support, n_samples, optimizer)
             mll_list.append(np.around(mll, 3))
+            if(self.writer is not None):
+                self.writer.add_scalar('MLL_per_epoch.', mll, epoch)
 
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch+1} => MLL: {mll}\n', "-"*30, Fore.RESET)
             print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
-            if epoch%20==0:
+            if epoch%10==0:
                 val_mse, val_mae, val_rmse = self.test_loop(n_support, n_samples, epoch, optimizer)
                 if best_mae >= val_mae:
                     best_mae = val_mae
                     best_rmse = val_rmse
-                    model_name = self.best_path + f'_best_mae{best_mae:.2f}.pth'
+                    model_name = self.best_path + f'_best_mae{best_mae:.2f}_ep{epoch}_{id}.pth'
                     self.save_checkpoint(model_name)
                     print(Fore.LIGHTRED_EX, f'Best MAE: {best_mae:.2f}, RMSE: {best_rmse}', Fore.RESET)
+            if(self.writer is not None):
+                self.writer.add_scalar('MSE Val.', val_mse, epoch)
+                self.writer.add_scalar('MAE Val.', val_mae, epoch)
             print(Fore.GREEN,"-"*30, Fore.RESET)
 
         mll = np.mean(mll_list)
@@ -336,6 +357,12 @@ class DKT_count_regression(nn.Module):
         self.likelihood.load_state_dict(ckpt['likelihood'])
         self.feature_extractor.load_state_dict(ckpt['net'])
     
+    def init_summary(self, id):
+        if(IS_TBX_INSTALLED):
+            time_now = datetime.now().strftime('%Y-%m-%d--%H-%M')
+            writer_path = self.video_path +f"/{id}/" + time_now
+            self.writer = SummaryWriter(log_dir=writer_path)
+
     def initialize_plot(self, video_path, training):
         
         
@@ -347,7 +374,7 @@ class DKT_count_regression(nn.Module):
         os.makedirs(self.video_path, exist_ok=True)
 
         time_now = datetime.now().strftime('%Y-%m-%d--%H-%M')
-         
+
         self.plots = self.prepare_plots()
         # plt.show(block=False)
         # plt.pause(0.0001)

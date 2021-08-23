@@ -36,7 +36,7 @@ IP = namedtuple("inducing_points", "z_values index count x y")
 class Sparse_DKT_count_regression(nn.Module):
     def __init__(self, backbone, regressor, base_file=None, val_file=None,
                     sparse_mthod='FRVM', config="1010", align_threshold=1e-3, n_inducing_points=12, 
-                    video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
+                    video_path=None, show_plots_loss=False, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_count_regression, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
@@ -50,6 +50,7 @@ class Sparse_DKT_count_regression(nn.Module):
         self.device = 'cuda'
         self.video_path = video_path
         self.best_path = video_path
+        self.show_plots_loss = show_plots_loss
         self.show_plots_pred = show_plots_pred
         self.show_plots_features = show_plots_features
         if self.show_plots_pred or self.show_plots_features:

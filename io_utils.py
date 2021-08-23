@@ -58,6 +58,7 @@ def parse_args_regression(script):
         parser.add_argument('--dataset'     , default='QMUL',    help='QMUL / MSC44')
         parser.add_argument('--spectral', action='store_true', help='Use a spectral covariance kernel function')
         parser.add_argument('--n_samples', default=72, type=int, help='Number of points on trajectory') #at most 19 
+        parser.add_argument('--show_plots_loss', action='store_true', help='Show plots') 
         parser.add_argument('--show_plots_features', action='store_true', help='Show plots') 
         parser.add_argument('--n_centers', default=24, type=int, help='Number of Inducing points/ KMeans centers in Kmeans sparsifying')
         parser.add_argument('--config', default='0000', type=str, help='config for Fast RVM = {update_sigma|delete_priority|add_priority|align_test} recom = {"0010", "1000", "1010", "1011","1100", "1101"}')

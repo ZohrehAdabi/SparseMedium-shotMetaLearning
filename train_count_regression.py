@@ -24,9 +24,9 @@ params.checkpoint_dir = '%scheckpoints/%s/' % (configs.save_dir, params.dataset)
 if not os.path.isdir(params.checkpoint_dir):
     os.makedirs(params.checkpoint_dir)
 params.checkpoint_dir = '%scheckpoints/%s/%s_%s' % (configs.save_dir, params.dataset, params.model, params.method)
-
+feat_map = 'map3'
 if  params.model=='ResNet50':
-    resnet50_conv, regressor = backbone.ResNet_Regrs()
+    resnet50_conv, regressor = backbone.ResNet_Regrs(feat_map)
     base_file = configs.data_dir[params.dataset] + 'base.json'
     val_file =  configs.data_dir[params.dataset] + 'val.json'
 else:
@@ -51,42 +51,43 @@ elif params.method=='Sparse_DKT':
         model = Sparse_DKT_count_regression(resnet50_conv, regressor, base_file, val_file,
                             sparse_method = 'FRVM', config=params.config, align_threshold=params.align_thr, 
                             video_path=params.checkpoint_dir, 
-                            show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
+                            show_plots_loss=params.show_plots_loss, show_plots_pred=False, 
+                            show_plots_features=params.show_plots_features, training=True).cuda()
     
     elif params.sparse_method=='KMeans':
         
         params.checkpoint_dir = params.checkpoint_dir +  f'KMeans_{str(params.n_centers)}'
         
         model = Sparse_DKT_count_regression(resnet50_conv, regressor, base_file, val_file, 
-                            sparse_method = 'KMeans', n_inducing_points=params.n_centers, video_path=params.checkpoint_dir, 
-                            show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
+                        sparse_method = 'KMeans', n_inducing_points=params.n_centers, video_path=params.checkpoint_dir, 
+                        show_plots_loss=params.show_plots_loss, show_plots_pred=False, 
+                        show_plots_features=params.show_plots_features, training=True).cuda()
                             
     elif params.sparse_method=='random':
         
         params.checkpoint_dir = params.checkpoint_dir +  f'random_{str(params.n_centers)}'
         model = Sparse_DKT_count_regression(resnet50_conv, regressor, base_file, val_file,
-                            sparse_method = 'random', n_inducing_points=params.n_centers, video_path=params.checkpoint_dir, 
-                            show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
+                        sparse_method = 'random', n_inducing_points=params.n_centers, video_path=params.checkpoint_dir, 
+                        show_plots_loss=params.show_plots_loss, show_plots_pred=False, 
+                        show_plots_features=params.show_plots_features, training=True).cuda()
     else:
         ValueError('Unrecognised sparse method')
 
 else:
     ValueError('Unrecognised method')
-
-optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr': 0.0001},
-                              {'params': model.regressor.parameters(), 'lr': 0.00001}
+lr_gp = 1e-3
+lr_reg = 1e-5
+id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
+optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr':lr_gp},
+                              {'params': model.regressor.parameters(), 'lr': lr_reg}
                               ])
+model.init_summary(id)
 if params.method=='DKT' or params.method=='Sparse_DKT' :
 
-    mll, mll_list = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer)
+    mll, mll_list = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer, id=id)
     print(f'Avg. MLL hist: {mll_list}')
     print(Fore.GREEN,"-"*40, f'\nend of meta-train => MLL: {mll}\n', "-"*40, Fore.RESET)
 
-else:
-
-    mse = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer)
-
-    print(Fore.GREEN,"="*40, f'\nend of meta-train => MSE: {mse}\n', "="*40, Fore.RESET)
 
 model.save_checkpoint(params.checkpoint_dir)
 
