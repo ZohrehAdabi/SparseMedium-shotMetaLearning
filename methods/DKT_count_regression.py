@@ -82,7 +82,7 @@ class DKT_count_regression(nn.Module):
         if self.minmax:
             return F.normalize(labels, p=2, dim=0)
         else:
-            return  (labels - y_mean) / y_std
+            return  (labels - y_mean) / (y_std+1e-10)
     def denormalize(self, pred,  y_mean, y_std):
 
         if self.minmax:
@@ -114,7 +114,7 @@ class DKT_count_regression(nn.Module):
             #if image size isn't divisible by 8, gt size is slightly different from output size
             with torch.no_grad():
                 gt_density_resized, labels = self.resize_gt_density(z, gt_density, labels)
-                y_mean, y_std = labels.mean(), labels.std
+                y_mean, y_std = labels.mean(), labels.std()
                 labels_norm = self.normalize(labels, y_mean, y_std)
 
             z = z.reshape(z.shape[0], -1)
