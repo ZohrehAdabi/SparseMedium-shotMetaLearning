@@ -33,6 +33,7 @@ for align_thr in align_threshold:
     mse_hist = []
     print(f'\n\t{align_thr}\n')
     best_mse = 10e7
+    best_config_idx = config_frvm[0]
     for idx, i in enumerate(config_frvm):
         print(f'\n\t{i:04b}\n')
         params = parse_args_regression('train_regression')
@@ -161,14 +162,15 @@ for align_thr in align_threshold:
 
         mse_hist.append(mse)
 
-        # ax_mll.clear()
-        # ax_mse.clear()
+        ax_mll.clear()
+        ax_mse.clear()
         ax_mll.plot(config_frvm[:idx+1], mll_hist, marker='.', label='Meta-Train MLL')
         ax_mse.plot(config_frvm[:idx+1], mse_hist, marker='.', label='Meta-Test MSE')
         if mse < best_mse:
             best_mse = mse
+            best_config_idx = config_frvm[idx]
             print(f'Best MSE:{best_mse} at c={params.config}, a {params.align_thr}')
-            ax_mse.scatter(config_frvm[idx], best_mse,  c='r', marker='*', label=f'Best MSE: {best_mse:5f}')
+        ax_mse.scatter(best_config_idx, best_mse,  c='r', marker='*', label=f'Best MSE: {best_mse:5f}')
         ax_mll.legend()
         ax_mse.legend()
         ax_mll.hlines(y=0.1, xmin=config_frvm[0], xmax=config_frvm[0], linestyles='dashed')
@@ -181,13 +183,14 @@ for align_thr in align_threshold:
         ax_mll.set_title("Sparse DKT with FRVM")
         fig_loss.tight_layout()
         fig_loss.savefig(video_path+f'/loss_{align_thr}.png')
-
+        
+    ax_mll_per_config.clear()
     for c in range(len(config_frvm)):
         ax_mll_per_config.plot(mll_list_per_config[c], label=f'c- {config_frvm[c]}')
-    ax_mll_per_config.set_ylim(-1, 1.8)
+    ax_mll_per_config.set_ylim(-1, 4)
     ax_mll_per_config.set_xlabel("number of epochs")
     ax_mll_per_config.set_ylabel("loss")
-    ax_mll_per_config.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=6, ncol=2)
+    ax_mll_per_config.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=6, ncol=1)
     ax_mll_per_config.hlines(y=0.1, xmin=0, xmax=100, linestyles='dashed')
     fig_mll_per_config.tight_layout()
     ax_mll_per_config.set_title(f"Sparse DKT with KMeans (Meta-Train MLL) [config][align_thr={params.align_thr}]")
