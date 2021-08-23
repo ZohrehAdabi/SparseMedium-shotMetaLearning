@@ -89,8 +89,8 @@ optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr': 0.001},
                               ])
 if params.method=='DKT' or params.method=='Sparse_DKT' :
 
-    mll, _ = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer)
-
+    mll, mll_list = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer)
+    print(f'Avg. MLL hist: {mll_list}')
     print(Fore.GREEN,"-"*40, f'\nend of meta-train => MLL: {mll}\n', "-"*40, Fore.RESET)
 
 else:

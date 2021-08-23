@@ -277,7 +277,7 @@ class DKT_count_regression(nn.Module):
         mll_list = []
         for epoch in range(stop_epoch):
             mll = self.train_loop(epoch, n_support, n_samples, optimizer)
-            mll_list.append(mll)
+            mll_list.append(np.around(mll, 3))
 
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch+1} => MLL: {mll}\n', "-"*30, Fore.RESET)
             print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
