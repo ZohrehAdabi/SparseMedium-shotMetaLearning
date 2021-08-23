@@ -198,6 +198,8 @@ for align_thr in align_threshold:
     fig_mll_per_config.savefig(video_path+f'/mll_per_config_{align_thr}.png')
 
 
+
+#******************************************************
              # update_sugma, del, add, alig_test
               #'0010', '0100', '1010', '1100'
 config_frvm = [  2,       4,     10,     12] 
@@ -367,4 +369,4 @@ ax_mll_per_config.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=6,
 ax_mll_per_config.hlines(y=0.1, xmin=0, xmax=100, linestyles='dashed')
 fig_mll_per_config.tight_layout()
 ax_mll_per_config.set_title(f"Sparse DKT with KMeans (Meta-Train MLL) [config]")
-fig_mll_per_config.savefig(video_path+f'/mll_per_config_{config_frvm[c]}.png')
+fig_mll_per_config.savefig(video_path+f'/mll_per_{align_thr}.png')
