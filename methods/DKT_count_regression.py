@@ -77,17 +77,18 @@ class DKT_count_regression(nn.Module):
                     labels[i] = torch.round(gt_density_resized[i].sum())
         return gt_density_resized, labels
 
-    def normalize(self, labels):
+    def normalize(self, labels, y_mean, y_std):
 
         if self.minmax:
             return F.normalize(labels, p=2, dim=0)
         else:
-            return  (labels -labels.mean()) /labels.std()
-    def denormalize(self, pred, labels):
+            return  (labels - y_mean) / y_std
+    def denormalize(self, pred,  y_mean, y_std):
+
         if self.minmax:
             return pred * pred.norm(p=2, dim=0)
         else:
-            return  labels.mean() + pred * labels.std()
+            return  y_mean + pred * y_std
 
     def train_loop(self, epoch, n_support, n_samples, optimizer):
 
@@ -113,7 +114,9 @@ class DKT_count_regression(nn.Module):
             #if image size isn't divisible by 8, gt size is slightly different from output size
             with torch.no_grad():
                 gt_density_resized, labels = self.resize_gt_density(z, gt_density, labels)
-                labels_norm = self.normalize(labels)
+                y_mean, y_std = labels.mean(), labels.std
+                labels_norm = self.normalize(labels, y_mean, y_std)
+
             z = z.reshape(z.shape[0], -1)
             self.model.set_train_data(inputs=z, targets=labels_norm, strict=False)
             predictions = self.model(z)
@@ -150,7 +153,8 @@ class DKT_count_regression(nn.Module):
                 z_support = z[support_ind, :]
                 y_support = labels_norm[support_ind]
                 z_query   = z[query_ind]
-                y_query   = labels_norm[query_ind]
+                y_q_norm   = labels_norm[query_ind]
+                y_query   = labels[query_ind]
 
                 self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
 
@@ -162,9 +166,10 @@ class DKT_count_regression(nn.Module):
                     pred    = self.likelihood(self.model(z_query))
                     lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
 
-                mse = self.mse(pred.mean, y_query).item()
+                mse = self.mse(pred.mean, y_q_norm).item()
                 mse_list.append(mse)
-                mae = self.mae(pred.mean, y_query).item()
+                y_pred = self.denormalize(pred.mean, y_mean, y_std)
+                mae = self.mae(y_pred, y_query).item()
                 mae_list.append(mae)
                 print(Fore.YELLOW, f'epoch {epoch+1}, itr {itr+1}, Val. on Train  MAE:{mae:.2f}, MSE: {mse:.4f}', Fore.RESET)
 
@@ -183,24 +188,33 @@ class DKT_count_regression(nn.Module):
             targets = samples['gt_count']
             gt_density = samples['gt_density']
 
-            x_all = inputs.cuda()
-            y_all = targets.cuda()
+            x_all       = inputs.cuda()
+            y_all       = targets.cuda()
             support_ind = np.random.choice(np.arange(n_samples), size=n_support, replace=False)
             query_ind   = [i for i in range(n_samples) if i not in support_ind]
-            x_support = x_all[support_ind,:,:,:]
-            y_support = y_all[support_ind]
+            x_support    = x_all[support_ind,:,:,:]
             gt_density_s = gt_density[support_ind, :, :, :, :]
-            x_query   = x_all[query_ind,:,:,:]
-            y_query   = y_all[query_ind]
+            x_query     = x_all[query_ind,:,:,:]
             gt_density_q = gt_density[query_ind, :, :, :, :]
             
             with torch.no_grad():
-                feature_s = self.feature_extractor(x_support)
+                feature = self.feature_extractor(x_all)
             #predict density map
-            z_support = self.regressor(feature_s).detach()
+            z = self.regressor(feature).detach()
             with torch.no_grad():
-                gt_density_s_resized, y_support = self.resize_gt_density(z_support, gt_density_s, y_support)
-                y_s_norm = self.normalize(y_support)
+                gt_density_resized, y_all = self.resize_gt_density(z, gt_density, y_all)
+                
+
+            y_support   = y_all[support_ind]
+            z_support   = z[support_ind, :, :, :]
+            y_query     = y_all[query_ind]
+            z_query     = z[query_ind, :, :, :]
+            
+            with torch.no_grad():
+                y_mean, y_std = y_all.mean(), y_all.std()
+                y_s_norm = self.normalize(y_support, y_mean, y_std)
+                y_q_norm = self.normalize(y_query, y_mean, y_std)
+
             z_support = z_support.reshape(z_support.shape[0], -1)
             self.model.set_train_data(inputs=z_support, targets=y_s_norm, strict=False)
 
@@ -209,21 +223,19 @@ class DKT_count_regression(nn.Module):
             self.likelihood.eval()
 
             with torch.no_grad():
-                feature_q = self.feature_extractor(x_query)
-                z_query = self.regressor(feature_q).detach()
-                gt_density_q_resized, y_query = self.resize_gt_density(z_query, gt_density_q, y_query)
-                y_q_norm = self.normalize(y_query)
+                                
                 z_query = z_query.reshape(z_query.shape[0], -1)
                 pred    = self.likelihood(self.model(z_query))
                 lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
 
             mse = self.mse(pred.mean, y_q_norm).item()
             mse_list.append(mse)
-            mae = self.mae(pred.mean, y_q_norm).item()
+            y_pred = self.denormalize(pred.mean.detach(), y_mean, y_std)
+            mae = self.mae(y_pred, y_query).item()
             mae_list.append(mae)
             #***************************************************
             y = y_query.detach().cpu().numpy()
-            y_pred = self.denormalize(pred.mean.detach(), y_query).cpu().numpy()
+            y_pred = y_pred.cpu().numpy()
             print(Fore.RED,"="*50, Fore.RESET)
             print(f'itr #{itr+1}')
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)

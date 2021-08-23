@@ -827,7 +827,7 @@ class Sparse_DKT_regression(nn.Module):
                     cluster = self.kmeans_clustering.predict(z)
                     # cluster = self.kmeans_clustering.predict(z.detach().cpu().numpy())
                     for j in range(0, idx.shape[0]): 
-                        img = transforms.ToPILImage()(x[j]).convert("RGB")
+                        img = transforms.ToPILImage()(x[j].cpu()).convert("RGB")
                         plots = clear_ax(plots, i, j)
                         plots = color_ax(plots, i, j, 'black', lw=2) #cluster_colors[cluster[j]]
                         plots.ax[i, j].imshow(img)
@@ -858,7 +858,7 @@ class Sparse_DKT_regression(nn.Module):
                     i = int(t/10-6)
                     for j in range(idx.shape[0]):
                         
-                        img = transforms.ToPILImage()(x[j]).convert("RGB")
+                        img = transforms.ToPILImage()(x[j].cpu()).convert("RGB")
                         ii = 16
                         plots = clear_ax(plots, i, j+ii)
                         plots.ax[i, j+ii].imshow(img)
