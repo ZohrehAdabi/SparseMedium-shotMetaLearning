@@ -41,46 +41,35 @@ elif params.method=='Sparse_DKT':
     params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s' % (configs.save_dir, params.dataset, params.model, params.method, 
                                                         params.sparse_method)
     video_path = params.checkpoint_dir
-    
-    
-    if params.sparse_method=='KMeans':
-        
-        params.checkpoint_dir += '/'
-        if not os.path.isdir(params.checkpoint_dir):
-            os.makedirs(params.checkpoint_dir)
-        params.checkpoint_dir = params.checkpoint_dir +  f'KMeans_{str(params.n_centers)}'
-        
-        model = Sparse_DKT_count_regression(resnet50_conv, regressor, base_file, val_file, 
-                            f_rvm=False, n_inducing_points=params.n_centers, video_path=params.checkpoint_dir, 
-                            show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
-    
-    
-    elif params.sparse_method=='FRVM':
-        params.checkpoint_dir += '/'
-        if not os.path.isdir(params.checkpoint_dir):
-            os.makedirs(params.checkpoint_dir)
+    params.checkpoint_dir += '/'
+    if not os.path.isdir(params.checkpoint_dir):
+        os.makedirs(params.checkpoint_dir)
+          
+    if params.sparse_method=='FRVM':
         params.checkpoint_dir = params.checkpoint_dir +  f'FRVM_{params.config}_{params.align_thr:.6f}'
 
         model = Sparse_DKT_count_regression(resnet50_conv, regressor, base_file, val_file,
-                            f_rvm=True, config=params.config, align_threshold=params.align_thr, 
+                            sparse_method = 'FRVM', config=params.config, align_threshold=params.align_thr, 
                             video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     
+    elif params.sparse_method=='KMeans':
+        
+        params.checkpoint_dir = params.checkpoint_dir +  f'KMeans_{str(params.n_centers)}'
+        
+        model = Sparse_DKT_count_regression(resnet50_conv, regressor, base_file, val_file, 
+                            sparse_method = 'KMeans', n_inducing_points=params.n_centers, video_path=params.checkpoint_dir, 
+                            show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
+                            
     elif params.sparse_method=='random':
-        params.checkpoint_dir += '/'
-        if not os.path.isdir(params.checkpoint_dir):
-            os.makedirs(params.checkpoint_dir)
+        
         params.checkpoint_dir = params.checkpoint_dir +  f'random_{str(params.n_centers)}'
         model = Sparse_DKT_count_regression(resnet50_conv, regressor, base_file, val_file,
-                            f_rvm=False, random=True,  n_inducing_points=params.n_centers, video_path=params.checkpoint_dir, 
+                            sparse_method = 'random', n_inducing_points=params.n_centers, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     else:
         ValueError('Unrecognised sparse method')
 
-elif params.method=='transfer':
-    model = FeatureTransfer(resnet50_conv, regressor, base_file, val_file,
-                            video_path=params.checkpoint_dir, 
-                            show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
 else:
     ValueError('Unrecognised method')
 

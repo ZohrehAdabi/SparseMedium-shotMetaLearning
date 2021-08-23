@@ -85,6 +85,7 @@ class DKT_count_regression(nn.Module):
             return F.normalize(labels, p=2, dim=0)
         else:
             return  (labels - y_mean) / (y_std+1e-10)
+    
     def denormalize(self, pred,  y_mean, y_std):
 
         if self.minmax:
@@ -102,7 +103,7 @@ class DKT_count_regression(nn.Module):
         for itr, samples in enumerate(get_batch(self.train_file, n_samples)):
             
             self.model.train()
-            self.feature_extractor.train()
+            self.regressor.train()
             self.likelihood.train()
             optimizer.zero_grad()
 
@@ -153,15 +154,16 @@ class DKT_count_regression(nn.Module):
                 support_ind = np.random.choice(np.arange(n_samples), size=n_support, replace=False)
                 query_ind   = [i for i in range(n_samples) if i not in support_ind]
                 z_support = z[support_ind, :]
-                y_support = labels_norm[support_ind]
+                y_s_norm = labels_norm[support_ind]
+                # y_support = labels[support_ind]
                 z_query   = z[query_ind]
                 y_q_norm   = labels_norm[query_ind]
                 y_query   = labels[query_ind]
 
-                self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
+                self.model.set_train_data(inputs=z_support, targets=y_s_norm, strict=False)
 
                 self.model.eval()
-                self.feature_extractor.eval()
+                self.regressor.eval()
                 self.likelihood.eval()
 
                 with torch.no_grad():
@@ -183,8 +185,13 @@ class DKT_count_regression(nn.Module):
         return np.mean(mll_list)
 
     def test_loop(self, n_support, n_samples, epoch, optimizer=None): # no optimizer needed for GP
+        
+        
         mse_list = []    
-        mae_list = []   
+        mae_list = []  
+        self.model.eval()
+        self.regressor.eval()
+        self.likelihood.eval() 
         for itr, samples in enumerate(get_batch(self.val_file, n_samples)):
  
             inputs = samples['image']
@@ -220,10 +227,6 @@ class DKT_count_regression(nn.Module):
 
             z_support = z_support.reshape(z_support.shape[0], -1)
             self.model.set_train_data(inputs=z_support, targets=y_s_norm, strict=False)
-
-            self.model.eval()
-            self.feature_extractor.eval()
-            self.likelihood.eval()
 
             with torch.no_grad():
                                 
@@ -276,6 +279,8 @@ class DKT_count_regression(nn.Module):
         return np.mean(mse_list), np.mean(mae_list), np.sqrt(np.mean(mse_list))
 
     def train(self, stop_epoch, n_support, n_samples, optimizer):
+        
+        self.feature_extractor.eval()
         best_mae, best_rmse = 10e7, 10e7
         mll_list = []
         for epoch in range(stop_epoch):
@@ -302,9 +307,9 @@ class DKT_count_regression(nn.Module):
         return mll, mll_list
 
     def test(self, n_support, n_samples, optimizer=None, n_test_epoch=1):
-
+        
+        self.feature_extractor.eval()
         mse_list = []
-
         for e in range(n_test_epoch):
             print(f'test on all test tasks epoch #{e}')
             
