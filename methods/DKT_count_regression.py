@@ -31,7 +31,7 @@ class DKT_count_regression(nn.Module):
         self.regressor = regressor
         self.train_file = base_file
         self.val_file = val_file
-        self.minmax = False
+        self.minmax = True
         self.device = 'cuda'
         self.video_path = video_path
         self.best_path = video_path
