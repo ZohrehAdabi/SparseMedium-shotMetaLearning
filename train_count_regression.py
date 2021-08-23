@@ -85,7 +85,7 @@ else:
     ValueError('Unrecognised method')
 
 optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr': 0.001},
-                              {'params': model.feature_extractor.parameters(), 'lr': 0.001}
+                              {'params': model.regressor.parameters(), 'lr': 0.001}
                               ])
 if params.method=='DKT' or params.method=='Sparse_DKT' :
 

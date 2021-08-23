@@ -485,10 +485,10 @@ class CountRegressor(nn.Module):
         
 
 
-def ResNet_Regrs():
+def ResNet_Regrs(map):
 
     resnet50_conv = Resnet50FPN()
-    if MAP=='map3':
+    if map=='map3':
         regressor = CountRegressor(512, pool='mean')
     else:
         regressor = CountRegressor(1024, pool='mean')
