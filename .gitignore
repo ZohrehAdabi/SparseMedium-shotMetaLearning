@@ -190,5 +190,5 @@ test_old.ipynb
 
 save/checkpoints/MSC44
 save
-save/checkpoints
-save/checkpoints/QMUL
+save/checkpoints/
+save/checkpoints/QMUL/*.png
