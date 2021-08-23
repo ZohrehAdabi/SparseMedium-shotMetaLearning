@@ -355,7 +355,7 @@ for idx, i in enumerate(config_frvm):
     ax_mse.set_ylabel("loss")
     ax_mll.set_title("Sparse DKT with FRVM")
     fig_loss.tight_layout()
-    fig_loss.savefig(video_path+f'/loss_{align_thr}.png')
+    fig_loss.savefig(video_path+f'/loss_{params.config}.png')
 
 ax_mll_per_config.clear()
 for c in range(len(config_frvm)):
