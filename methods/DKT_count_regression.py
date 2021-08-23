@@ -31,6 +31,7 @@ class DKT_count_regression(nn.Module):
         self.regressor = regressor
         self.train_file = base_file
         self.val_file = val_file
+        self.minmax = False
         self.device = 'cuda'
         self.video_path = video_path
         self.best_path = video_path
@@ -78,10 +79,15 @@ class DKT_count_regression(nn.Module):
 
     def normalize(self, labels):
 
-        return F.normalize(labels, p=2, dim=0)
-    def denormalize(self, pred):
-
-        return pred * pred.norm(p=2, dim=0)
+        if self.minmax:
+            return F.normalize(labels, p=2, dim=0)
+        else:
+            return  (labels -labels.mean()) /labels.std()
+    def denormalize(self, pred, labels):
+        if self.minmax:
+            return pred * pred.norm(p=2, dim=0)
+        else:
+            return  labels.mean() + pred * labels.std()
 
     def train_loop(self, epoch, n_support, n_samples, optimizer):
 
@@ -217,7 +223,7 @@ class DKT_count_regression(nn.Module):
             mae_list.append(mae)
             #***************************************************
             y = y_query.detach().cpu().numpy()
-            y_pred = self.denormalize(pred.mean.detach()).cpu().numpy()
+            y_pred = self.denormalize(pred.mean.detach(), y_query).cpu().numpy()
             print(Fore.RED,"="*50, Fore.RESET)
             print(f'itr #{itr+1}')
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
