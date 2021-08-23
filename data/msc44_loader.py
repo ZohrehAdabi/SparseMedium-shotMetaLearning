@@ -93,7 +93,7 @@ class resizeImageWithGT(object):
     Modified by: Viresh
     """
     
-    def __init__(self, MAX_HW=84):
+    def __init__(self, MAX_HW=184):
         self.max_hw = MAX_HW
         IM_NORM_MEAN = [0.485, 0.456, 0.406]
         IM_NORM_STD = [0.229, 0.224, 0.225]
