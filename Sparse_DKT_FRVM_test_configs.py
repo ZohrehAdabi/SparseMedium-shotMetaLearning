@@ -22,11 +22,15 @@ ax_mll_per_config: plt.Axes = fig_mll_per_config.add_subplot(1, 1, 1)
 mll_list_per_config = []
 mll_hist = []
 mse_hist = []
-align_threshold = [1e-2, 1e-3, 1e-4]
+align_threshold = [1e-1, 1e-3, 1e-4]
                             # update_sugma, del, add, alig_test
               #'0010', '1000', '1010', '1011','1100'
 config_frvm = [  2,       8,      10,    11,    12] 
 for align_thr in align_threshold:
+    
+    mll_list_per_config = []
+    mll_hist = []
+    mse_hist = []
     print(f'\n\t{align_thr}\n')
     best_mse = 10e7
     for idx, i in enumerate(config_frvm):
