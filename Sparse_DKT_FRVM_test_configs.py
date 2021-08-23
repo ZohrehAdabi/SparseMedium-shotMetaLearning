@@ -329,7 +329,7 @@ for idx, i in enumerate(config_frvm):
     
     mse_list = model.test(params.n_support, params.n_samples, optimizer, params.n_test_epochs)
     mse = np.mean(mse_list)
-    print("------------------- ", params.config,' - ', params.align_thr)
+    print("------------------- ", params.config)
     print("Average MSE: " + str(np.mean(mse_list)) + " +- " + str(np.std(mse_list)))
     print("-------------------")
 
