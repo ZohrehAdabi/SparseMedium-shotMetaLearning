@@ -485,7 +485,7 @@ class CountRegressor(nn.Module):
         
 
 
-def ResNet_Regrs(map):
+def ResNet_Regrs(map='map3'):
 
     resnet50_conv = Resnet50FPN()
     if map=='map3':
