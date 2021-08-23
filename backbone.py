@@ -437,9 +437,10 @@ def ResNet101( flatten = True):
 #=============================================
 MAP = 'map3'
 class Resnet50FPN(nn.Module):
-    def __init__(self):
+    def __init__(self, map='map3'):
         super(Resnet50FPN, self).__init__()
         self.resnet = torchvision.models.resnet50(pretrained=True)
+        self.map = map
         children = list(self.resnet.children())
         self.conv1 = nn.Sequential(*children[:4])
         self.conv2 = children[4]
@@ -453,7 +454,7 @@ class Resnet50FPN(nn.Module):
         feat_map4 = self.conv4(feat_map3)
         feat['map3'] = feat_map3
         feat['map4'] = feat_map4
-        if MAP=='map3':
+        if self.map=='map3':
             return feat_map3
         else:
             return feat_map4
@@ -485,9 +486,9 @@ class CountRegressor(nn.Module):
         
 
 
-def ResNet_Regrs(map='map3'):
+def ResNet_Regrs(map='map4'):
 
-    resnet50_conv = Resnet50FPN()
+    resnet50_conv = Resnet50FPN(map)
     if map=='map3':
         regressor = CountRegressor(512, pool='mean')
     else:

@@ -152,7 +152,7 @@ class resizeImageWithGT(object):
 
 def get_batch(data_file, n_samples):
 
-    transform = resizeImageWithGT(84)
+    transform = resizeImageWithGT(184)
 
     dataset = MediumShotCountingDataset(data_file=data_file, n_samples=n_samples, transform=transform)
     task_indices  = np.arange(len(dataset))
