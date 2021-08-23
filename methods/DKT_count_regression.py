@@ -1,4 +1,5 @@
 ## Original packages
+from numpy.core.fromnumeric import around
 import backbone
 import torch
 import torch.nn as nn
@@ -93,7 +94,7 @@ class DKT_count_regression(nn.Module):
     def train_loop(self, epoch, n_support, n_samples, optimizer):
 
         # print(f'{epoch}: {batch_labels[0]}')
-        validation = True
+        validation = False
         mll_list = []
         mse_list = []
         mae_list = []
@@ -125,9 +126,9 @@ class DKT_count_regression(nn.Module):
             loss.backward()
             optimizer.step()
             mse = self.mse(predictions.mean, labels_norm)
-            mll_list.append(loss.item())
+            mll_list.append(np.around(loss.item(), 4))
             
-            if ((epoch%2==0) & (itr%5==0)):
+            if ((epoch%1==0) & (itr%5==0)):
                 print('[%2d/%2d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
                     itr, epoch+1, loss.item(), mse.item(),
                     self.model.likelihood.noise.item()
@@ -177,6 +178,7 @@ class DKT_count_regression(nn.Module):
             print(Fore.LIGHTMAGENTA_EX,"-"*30, f'\n epoch {epoch+1} => Avg. Val. on Train    MAE: {np.mean(mae_list):.2f}, RMSE: {np.sqrt(np.mean(mse_list)):.2f}'
                                     f', MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
 
+        print(f'epoch {epoch+1} MLL {mll_list}')
         return np.mean(mll_list)
 
     def test_loop(self, n_support, n_samples, epoch, optimizer=None): # no optimizer needed for GP
