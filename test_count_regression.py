@@ -85,7 +85,7 @@ if selective:
     mse = True
     id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
     if mse: id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}_mse'
-    model_path = (os.path.join(configs.save_dir, 'checkpoints', params.dataset, id))
+    model_path = params.checkpoint_dir + id
     print(f'\n{model_path}')
     model.load_checkpoint(model_path)
 else:
