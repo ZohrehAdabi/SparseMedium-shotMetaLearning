@@ -24,7 +24,7 @@ params.checkpoint_dir = '%scheckpoints/%s/' % (configs.save_dir, params.dataset)
 if not os.path.isdir(params.checkpoint_dir):
     os.makedirs(params.checkpoint_dir)
 params.checkpoint_dir = '%scheckpoints/%s/%s_%s' % (configs.save_dir, params.dataset, params.model, params.method)
-feat_map = 'map3'
+feat_map = 'map4'
 if  params.model=='ResNet50':
     resnet50_conv, regressor = backbone.ResNet_Regrs(feat_map)
     base_file = configs.data_dir[params.dataset] + 'base.json'
@@ -77,8 +77,8 @@ elif params.method=='Sparse_DKT':
 
 else:
     ValueError('Unrecognised method')
-lr_gp = 1e-3
-lr_reg = 1e-5
+lr_gp = 1e-4
+lr_reg = 1e-4
 id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
 optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr':lr_gp},
                               {'params': model.regressor.parameters(), 'lr': lr_reg}
