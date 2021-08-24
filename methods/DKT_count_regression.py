@@ -87,7 +87,7 @@ class DKT_count_regression(nn.Module):
                 if new_count_i > 0: 
                     gt_density_resized[i] = gt_density_resized[i] * (orig_count_i / new_count_i)
                     labels[i] = torch.round(gt_density_resized[i].sum())
-        return gt_density_resized, labels
+        return gt_density_resized.cuda(), labels
 
     def normalize(self, labels, y_mean, y_std):
 
@@ -129,12 +129,16 @@ class DKT_count_regression(nn.Module):
                 gt_density_resized, labels = self.resize_gt_density(z, gt_density, labels)
                 y_mean, y_std = labels.mean(), labels.std()
                 labels_norm = self.normalize(labels, y_mean, y_std)
+            if self.use_mse:
+                density_mse = self.mse(z, gt_density_resized)
 
             z = z.reshape(z.shape[0], -1)
             self.model.set_train_data(inputs=z, targets=labels_norm, strict=False)
             predictions = self.model(z)
             loss = -self.mll(predictions, self.model.train_targets)
-
+            if self.use_mse:
+                loss = loss + density_mse
+            
             loss.backward()
             optimizer.step()
             mse = self.mse(predictions.mean, labels_norm)
@@ -296,8 +300,9 @@ class DKT_count_regression(nn.Module):
    
         return np.mean(mse_list), np.mean(mae_list), np.sqrt(np.mean(mse_list))
 
-    def train(self, stop_epoch, n_support, n_samples, optimizer, id):
+    def train(self, stop_epoch, n_support, n_samples, optimizer, id, use_mse):
         
+        self.use_mse = use_mse
         self.feature_extractor.eval()
         best_mae, best_rmse = 10e7, 10e7
         mll_list = []

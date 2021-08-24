@@ -77,16 +77,18 @@ elif params.method=='Sparse_DKT':
 
 else:
     ValueError('Unrecognised method')
-lr_gp = 1e-4
-lr_reg = 1e-4
+lr_gp = 1e-3
+lr_reg = 1e-5
+mse = True
 id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
+if mse: id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}_mse'
 optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr':lr_gp},
                               {'params': model.regressor.parameters(), 'lr': lr_reg}
                               ])
 model.init_summary(id)
 if params.method=='DKT' or params.method=='Sparse_DKT' :
 
-    mll, mll_list = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer, id=id)
+    mll, mll_list = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer, id=id, use_mse=mse)
     print(f'Avg. MLL hist: {mll_list}')
     print(Fore.GREEN,"-"*40, f'\nend of meta-train => MLL: {mll}\n', "-"*40, Fore.RESET)
 
