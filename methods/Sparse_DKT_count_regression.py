@@ -26,7 +26,7 @@ import gpytorch
 from methods.Fast_RVM_regression import Fast_RVM_regression
 
 from statistics import mean
-from data.msc44_loader import get_batch
+from data.msc44_loader import get_batch, denormalize
 from configs import kernel_type
 from collections import namedtuple
 

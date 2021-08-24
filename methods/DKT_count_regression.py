@@ -20,7 +20,7 @@ import gpytorch
 from time import gmtime, strftime
 import random
 from statistics import mean
-from data.msc44_loader import get_batch
+from data.msc44_loader import get_batch, denormalize
 from configs import kernel_type
 
 #Check if tensorboardx is installed
@@ -467,7 +467,7 @@ class DKT_count_regression(nn.Module):
             for i in range(r):
                 for j in range(c):
                 
-                    img = transforms.ToPILImage()(x_q[k].cpu()).convert("RGB")
+                    img = transforms.ToPILImage()(denormalize(x_q[k].cpu())).convert("RGB")
                     
                     plots = clear_ax(plots, i, j)
                     plots.ax[i, j].imshow(img)
