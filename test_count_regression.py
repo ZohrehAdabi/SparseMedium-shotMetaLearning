@@ -75,7 +75,7 @@ lr_reg = 1e-5
 mse = True
 id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
 if mse: id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}_mse'
-best_models_list = os.listdir(f'/ave/checkpoints/{params.dataset}')
+best_models_list = os.listdir(f'./save/checkpoints/{params.dataset}')
 if len(best_models_list) > 0:
     best_mae = [best.split('_')[3] for best in best_models_list]
     best_mae_idx = np.argmin(best_mae)
