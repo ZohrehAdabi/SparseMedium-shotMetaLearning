@@ -85,11 +85,15 @@ if selective:
     mse = True
     id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
     if mse: id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}_mse'
-    model.load_checkpoint((os.path.join(configs.save_dir, params.dataset, id)))
+    model_path = (os.path.join(configs.save_dir, 'checkpoints', params.dataset, id))
+    print(f'\n{model_path}')
+    model.load_checkpoint(model_path)
 else:
     if len(best_models_list) > 0:
         
-        model.load_checkpoint(os.path.join(configs.save_dir, params.dataset, best_model))
+        model_path = os.path.join(configs.save_dir, 'checkpoints', params.dataset, best_model)
+        print(f'\n{model_path}')
+        model.load_checkpoint(model_path)
     else:
         model.load_checkpoint(params.checkpoint_dir)
  
