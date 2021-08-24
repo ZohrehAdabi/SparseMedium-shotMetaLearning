@@ -267,7 +267,7 @@ class DKT_count_regression(nn.Module):
             y_pred = y_pred.cpu().numpy()
             print(Fore.RED,"="*50, Fore.RESET)
             print(f'itr #{itr+1}')
-            print(f'mean of support_y {y_support.mean()}')
+            print(f'mean of support_y {y_support.mean():.2f}')
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
             print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
             print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
@@ -425,6 +425,7 @@ class DKT_count_regression(nn.Module):
     def update_plots_train(self,plots, train_y, embedded_z, mll, mse, epoch):
         if self.show_plots_features:
             #features
+            plots.ax_feature.clear()
             plots.ax_feature.scatter(embedded_z[:, 0], embedded_z[:, 1])
 
             # plots.ax_feature.legend()
@@ -482,7 +483,7 @@ class DKT_count_regression(nn.Module):
 
         if self.show_plots_features:
             #features
-        
+            plots.ax_feature.clear()
             plots.ax_feature.scatter(embedded_z[:, 0], embedded_z[:, 1])
             # plots.ax_feature.legend()
 

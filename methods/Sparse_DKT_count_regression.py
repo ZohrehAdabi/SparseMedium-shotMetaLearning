@@ -327,6 +327,7 @@ class Sparse_DKT_count_regression(nn.Module):
             y_pred = y_pred.cpu().numpy() 
             print(Fore.RED,"="*50, Fore.RESET)
             print(f'itr #{itr}')
+            print(f'mean of support_y {y_support.mean():.2f}')
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
             print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
             print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
@@ -363,8 +364,8 @@ class Sparse_DKT_count_regression(nn.Module):
 
                 self.update_plots_test(self.plots, x_support, y_support.detach().cpu().numpy(), 
                                                 z_support.detach(), z_query.detach(), embedded_z_support,
-                                                inducing_points, x_query, y_query.detach().cpu().numpy(), pred, 
-                                                mae, mse, itr+1)
+                                                inducing_points, x_query, y_query.detach().cpu().numpy(), y_pred, pred.variance.detach().cpu().numpy() 
+                                                , mae, mse, itr+1)
                 if self.show_plots_pred:
                     self.plots.fig.canvas.draw()
                     self.plots.fig.canvas.flush_events()
@@ -572,15 +573,14 @@ class Sparse_DKT_count_regression(nn.Module):
     def update_plots_train(self,plots, train_y, embedded_z, mll, mse, epoch):
         if self.show_plots_features:
             #features
-           
+            plots.ax_feature.clear()
             plots.ax_feature.scatter(embedded_z[:, 0], embedded_z[:, 1])
 
            
-            plots.ax_feature.set_title(f'Sparse DKT {self.sparse_method}, epoch {epoch}, MLL: {mll}, MSE:{mse}, train feature Z')
-    
+            plots.ax_feature.set_title(f'Sparse DKT {self.sparse_method}, epoch {epoch}, MLL: {mll}, MSE:{mse}, train feature Z') 
    
     def update_plots_test(self, plots, train_x, train_y, train_z, test_z, embedded_z, inducing_points,   
-                                    test_x, test_y, test_y_pred, mae, mse, itr):
+                                    test_x, test_y, test_y_pred, test_y_var, mae, mse, itr):
         def clear_ax(plots, i, j):
             plots.ax[i, j].clear()
             plots.ax[i, j].set_xticks([])
@@ -611,22 +611,21 @@ class Sparse_DKT_count_regression(nn.Module):
             # test images
             x_q = test_x
             y_q = test_y 
-            y_mean = test_y_pred.mean.detach().cpu().numpy()
-            y_var = test_y_pred.variance.detach().cpu().numpy()
-            y_pred = y_mean
+            y_var = test_y_var
+            y_pred = test_y_pred
 
             k = 0
             r, c = plots.ax.shape
             for i in range(2):
                 for j in range(c):
                 
-                    img = transforms.ToPILImage()(x_q[k].cpu()).convert("RGB")
+                    img = transforms.ToPILImage()(denormalize(x_q[k]).cpu()).convert("RGB")
                     
                     plots = clear_ax(plots, i, j)
                     plots.ax[i, j].imshow(img)
                     plots = color_ax(plots, i, j, color='white')
                     # plots.ax[i, j].set_title(f'prd:{y_pred[k]:.0f}', fontsize=10)
-                    plots.ax[i, j].set_xlabel(f'prd:{y_pred[k]:.0f}|gt: {y_q[k]:.0f}', fontsize=10)
+                    plots.ax[i, j].set_xlabel(f'prd:{y_pred[k]:.1f}|gt: {y_q[k]:.1f}', fontsize=10)
                     
                     k += 1
           
@@ -639,7 +638,7 @@ class Sparse_DKT_count_regression(nn.Module):
             for i in range(2, r):
                 for j in range(c):
                 
-                    img = transforms.ToPILImage()(x_inducing[k].cpu()).convert("RGB")
+                    img = transforms.ToPILImage()(denormalize(x_inducing[k]).cpu()).convert("RGB")
                     
                     plots = clear_ax(plots, i, j)
                     plots.ax[i, j].imshow(img)
@@ -653,7 +652,7 @@ class Sparse_DKT_count_regression(nn.Module):
 
         if self.show_plots_features:
             #features
-                          
+            plots.ax_feature.clear()             
             plots.ax_feature.scatter(embedded_z[:, 0], embedded_z[:, 1])
 
             # plots.ax_feature.legend()
