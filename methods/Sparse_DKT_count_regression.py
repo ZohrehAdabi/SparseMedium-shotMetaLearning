@@ -30,6 +30,15 @@ from data.msc44_loader import get_batch
 from configs import kernel_type
 from collections import namedtuple
 
+#Check if tensorboardx is installed
+try:
+    # tensorboard --logdir=./save/checkpoints/MSC44/ResNet50_DKT_Loss/ --host localhost --port 8088
+    from tensorboardX import SummaryWriter
+    IS_TBX_INSTALLED = True
+except ImportError:
+    IS_TBX_INSTALLED = False
+    print('[WARNING] install tensorboardX to record simulation logs.')
+
 IP = namedtuple("inducing_points", "z_values index count x y")
 
 
@@ -168,7 +177,10 @@ class Sparse_DKT_count_regression(nn.Module):
 
             mll_list.append(np.around(loss.item(), 4))
             mse = self.mse(predictions.mean, labels)
-            mse_list.append(mse)
+            # mse_list.append(mse)
+            self.iteration = (epoch*31) + itr
+            if(self.writer is not None) and self.show_plots_loss: 
+                self.writer.add_scalar(f'MLL_per_itr [Sparse DKT {self.sparse_method}]', loss.item(), self.iteration)
             if ((epoch%2==0) & (itr%5==0)):
                 print('[%2d/%2d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
                     itr+1, epoch+1, loss.item(), mse.item(),
@@ -189,8 +201,8 @@ class Sparse_DKT_count_regression(nn.Module):
                     self.mw_feature.grab_frame()
             #****************************************************
             # validate on train data
-           
-            if validation:
+            val_freq = 20
+            if validation and (epoch%val_freq==0):
                 support_ind = np.random.choice(np.arange(n_samples), size=n_support, replace=False)
                 query_ind   = [i for i in range(n_samples) if i not in support_ind]
                 x_support   = inputs[support_ind,:,:,:]
@@ -228,9 +240,12 @@ class Sparse_DKT_count_regression(nn.Module):
                 mae_list.append(mae)
                 print(Fore.YELLOW, f'epoch {epoch+1}, itr {itr+1}, Train  MAE:{mae:.2f}, MSE: {mse:.4f}', Fore.RESET)
         
-        if validation:
+        if validation and (epoch%val_freq==0):
             print(Fore.CYAN,"-"*30, f'\n epoch {epoch+1} => Avg. Val. on Train    MAE: {np.mean(mae_list):.2f}, RMSE: {np.sqrt(np.mean(mse_list)):.2f}'
                                     f', MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
+            if(self.writer is not None) and self.show_plots_loss:
+                self.writer.add_scalar(f'MSE Val. on Train [Sparse DKT {self.sparse_method}]', mse, epoch)
+                self.writer.add_scalar(f'MAE Val. on Train [Sparse DKT {self.sparse_method}]', mae, epoch)
         return np.mean(mll_list)
 
     def test_loop(self, n_support, n_samples, epoch, optimizer=None): # no optimizer needed for GP
@@ -374,6 +389,8 @@ class Sparse_DKT_count_regression(nn.Module):
             
             
             mll = self.train_loop(epoch, n_support, n_samples, optimizer)
+            if(self.writer is not None) and self.show_plots_loss:
+                self.writer.add_scalar(f'MLL_per_epoch  [Sparse DKT {self.sparse_method}]', mll, epoch)
 
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
 
@@ -389,7 +406,9 @@ class Sparse_DKT_count_regression(nn.Module):
                 model_name = self.best_path + f'_best_mae{best_mae:.2f}.pth'
                 self.save_checkpoint(model_name)
                 print(Fore.LIGHTRED_EX, f'Best MAE: {best_mae:.2f}, RMSE: {best_rmse}', Fore.RESET)
-
+            if(self.writer is not None) and self.show_plots_loss:
+                self.writer.add_scalar('MSE Val. [Sparse DKT {self.sparse_method}]', val_mse, epoch)
+                self.writer.add_scalar('MAE Val. [Sparse DKT {self.sparse_method}]', val_mae, epoch)
             print(Fore.GREEN,"-"*30, Fore.RESET)
             # print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
         

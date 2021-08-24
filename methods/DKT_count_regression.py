@@ -164,7 +164,8 @@ class DKT_count_regression(nn.Module):
                     self.mw_feature.grab_frame()
             #*********************************************************
             #validate on train data
-            if validation and (epoch%20==0):
+            val_freq = 20
+            if validation and (epoch%val_freq==0):
                 support_ind = np.random.choice(np.arange(n_samples), size=n_support, replace=False)
                 query_ind   = [i for i in range(n_samples) if i not in support_ind]
                 z_support = z[support_ind, :]
@@ -191,7 +192,7 @@ class DKT_count_regression(nn.Module):
                 mae_list.append(mae)
                 print(Fore.YELLOW, f'epoch {epoch+1}, itr {itr+1}, Val. on Train  MAE:{mae:.2f}, MSE: {mse:.4f}', Fore.RESET)
 
-        if validation and (epoch%50==0):
+        if validation and (epoch%val_freq==0):
             print(Fore.LIGHTMAGENTA_EX,"-"*30, f'\n epoch {epoch+1} => Avg. Val. on Train    MAE: {np.mean(mae_list):.2f}, RMSE: {np.sqrt(np.mean(mse_list)):.2f}'
                                     f', MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
             if(self.writer is not None) and self.show_plots_loss:
