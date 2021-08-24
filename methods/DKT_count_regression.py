@@ -341,7 +341,7 @@ class DKT_count_regression(nn.Module):
         for e in range(n_test_epoch):
             print(f'test on all test tasks epoch #{e}')
             
-            mse = self.test_loop(n_support, n_samples, e,  optimizer)
+            mse, mae, rmse = self.test_loop(n_support, n_samples, e,  optimizer)
             mse_list.append(float(mse))
 
         if self.show_plots_pred:
@@ -350,6 +350,7 @@ class DKT_count_regression(nn.Module):
             self.mw_feature.finish()
 
         return mse_list
+
 
     def save_checkpoint(self, checkpoint):
         # save state
