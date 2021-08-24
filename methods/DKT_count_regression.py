@@ -467,7 +467,7 @@ class DKT_count_regression(nn.Module):
             for i in range(r):
                 for j in range(c):
                 
-                    img = transforms.ToPILImage()(denormalize(x_q[k].cpu())).convert("RGB")
+                    img = transforms.ToPILImage()(denormalize(x_q[k]).cpu()).convert("RGB")
                     
                     plots = clear_ax(plots, i, j)
                     plots.ax[i, j].imshow(img)
