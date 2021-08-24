@@ -287,7 +287,7 @@ class DKT_count_regression(nn.Module):
                 self.update_plots_test(self.plots, x_support, y_support.detach().cpu().numpy(), 
                                                 z_support.detach(), z_query.detach(), embedded_z_support,
                                                 x_query, y_query.detach().cpu().numpy(), y_pred, pred.variance.detach().cpu().numpy(),
-                                                None, mse, itr)
+                                                mae, mse, y_support.mean(), itr)
                 if self.show_plots_pred:
                     self.plots.fig.canvas.draw()
                     self.plots.fig.canvas.flush_events()
@@ -432,7 +432,7 @@ class DKT_count_regression(nn.Module):
             plots.ax_feature.set_title(f'epoch {epoch}, train feature')
 
     def update_plots_test(self, plots, train_x, train_y, train_z, test_z, embedded_z,   
-                                    test_x, test_y, test_y_pred, test_y_var, mll, mse, itr):
+                                    test_x, test_y, test_y_pred, test_y_var, mae, mse, mean_y_s, itr):
         def clear_ax(plots, i, j):
             plots.ax[i, j].clear()
             plots.ax[i, j].set_xticks([])
@@ -456,7 +456,8 @@ class DKT_count_regression(nn.Module):
 
             cluster_colors = ['aqua', 'coral', 'lime', 'gold', 'purple', 'green']
             #train images
-            plots.fig.suptitle(f'DKT, itr {itr}, MSE: {mse:.4f}')
+            # plots.fig.suptitle(f'DKT, itr {itr}, MSE: {mse:.4f}')
+            plots.fig.suptitle(f"DKT, itr {itr}, MAE: {mae:.1f} MSE: {mse:.4f}, mean support_y: {mean_y_s:.2f}")
 
             # test images
             x_q = test_x
