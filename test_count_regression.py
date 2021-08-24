@@ -19,12 +19,13 @@ torch.backends.cudnn.benchmark = False
 
 params.checkpoint_dir = '%scheckpoints/%s/%s_%s' % (configs.save_dir, params.dataset, params.model, params.method)
 
-selective = True
+selective = False
 feat_map = 'map4'
 best_models_list = os.listdir(f'./save/checkpoints/{params.dataset}')
 if len(best_models_list) > 0 and not selective:
-    best_mae = [best.split('_')[3] for best in best_models_list]
+    best_mae = [best.split('_')[3] for best in best_models_list if 'mae' in best]
     best_mae_idx = np.argmin(best_mae)
+    best_models_list = [best for best in best_models_list if 'mae' in best]
     best_model = best_models_list[best_mae_idx]
     feat_map = best_model.split('_')[-1]
     feat_map = 'map3' if '3' in feat_map else 'map4'
@@ -84,8 +85,9 @@ if selective:
     lr_reg = 1e-5
     mse = False
     #'ResNet50_DKT_best_mae37.65_ep440_g_0.001_r_1e-05_feat_map4.'
-    id = f'_best_mae{37.65}_ep{440}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}.pth'
-    if mse: id = f'_best_mae{37.65}_ep{440}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}_mse.pth'
+    id = f'_best_mae{19.07}_ep{30}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
+    if mse: id = id + '_mse'
+    id = id + '.pth'
     model_path = params.checkpoint_dir + id
     print(f'\n{model_path}')
     model.load_checkpoint(model_path)
