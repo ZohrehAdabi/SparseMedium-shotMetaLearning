@@ -96,7 +96,7 @@ class DKT_count_regression(nn.Module):
         else:
             return  (labels - y_mean) / (y_std+1e-10)
     
-    def denormalize(self, pred,  y_mean, y_std):
+    def denormalize_y(self, pred,  y_mean, y_std):
 
         if self.minmax:
             return pred * pred.norm(p=2, dim=0)
@@ -191,7 +191,7 @@ class DKT_count_regression(nn.Module):
 
                 mse = self.mse(pred.mean, y_q_norm).item()
                 mse_list.append(mse)
-                y_pred = self.denormalize(pred.mean, y_mean, y_std)
+                y_pred = self.denormalize_y(pred.mean, y_mean, y_std)
                 mae = self.mae(y_pred, y_query).item()
                 mae_list.append(mae)
                 print(Fore.YELLOW, f'epoch {epoch+1}, itr {itr+1}, Val. on Train  MAE:{mae:.2f}, MSE: {mse:.4f}', Fore.RESET)
@@ -225,9 +225,8 @@ class DKT_count_regression(nn.Module):
             support_ind = np.random.choice(np.arange(n_samples), size=n_support, replace=False)
             query_ind   = [i for i in range(n_samples) if i not in support_ind]
             x_support    = x_all[support_ind,:,:,:]
-            gt_density_s = gt_density[support_ind, :, :, :, :]
             x_query     = x_all[query_ind,:,:,:]
-            gt_density_q = gt_density[query_ind, :, :, :, :]
+            
             
             with torch.no_grad():
                 feature = self.feature_extractor(x_all)
@@ -238,8 +237,10 @@ class DKT_count_regression(nn.Module):
                 
 
             y_support   = y_all[support_ind]
+            gt_density_s = gt_density_resized[support_ind, :, :, :, :]
             z_support   = z[support_ind, :, :, :]
             y_query     = y_all[query_ind]
+            gt_density_q = gt_density_resized[query_ind, :, :, :, :]
             z_query     = z[query_ind, :, :, :]
             
             with torch.no_grad():
@@ -258,7 +259,7 @@ class DKT_count_regression(nn.Module):
 
             mse = self.mse(pred.mean, y_q_norm).item()
             mse_list.append(mse)
-            y_pred = self.denormalize(pred.mean.detach(), y_mean, y_std)
+            y_pred = self.denormalize_y(pred.mean.detach(), y_mean, y_std)
             mae = self.mae(y_pred, y_query).item()
             mae_list.append(mae)
             #***************************************************
@@ -266,6 +267,7 @@ class DKT_count_regression(nn.Module):
             y_pred = y_pred.cpu().numpy()
             print(Fore.RED,"="*50, Fore.RESET)
             print(f'itr #{itr+1}')
+            print(f'mean of support_y {y_support.mean()}')
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
             print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
             print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
@@ -284,8 +286,8 @@ class DKT_count_regression(nn.Module):
 
                 self.update_plots_test(self.plots, x_support, y_support.detach().cpu().numpy(), 
                                                 z_support.detach(), z_query.detach(), embedded_z_support,
-                                                x_query, y_query.detach().cpu().numpy(), pred, 
-                                                None, None, mse, itr)
+                                                x_query, y_query.detach().cpu().numpy(), y_pred, pred.variance.detatch().cpu().numpy(),
+                                                None, mse, itr)
                 if self.show_plots_pred:
                     self.plots.fig.canvas.draw()
                     self.plots.fig.canvas.flush_events()
@@ -429,7 +431,7 @@ class DKT_count_regression(nn.Module):
             plots.ax_feature.set_title(f'epoch {epoch}, train feature')
 
     def update_plots_test(self, plots, train_x, train_y, train_z, test_z, embedded_z,   
-                                    test_x, test_y, test_y_pred, similar_idx_x_s, mll, mse, itr):
+                                    test_x, test_y, test_y_pred, test_y_var, mll, mse, itr):
         def clear_ax(plots, i, j):
             plots.ax[i, j].clear()
             plots.ax[i, j].set_xticks([])
@@ -458,9 +460,8 @@ class DKT_count_regression(nn.Module):
             # test images
             x_q = test_x
             y_q = test_y 
-            y_mean = test_y_pred.mean.detach().cpu().numpy()
-            y_var = test_y_pred.variance.detach().cpu().numpy()
-            y_pred = y_mean
+            y_var = test_y_var
+            y_pred = test_y_pred
 
             k = 0
             r, c = plots.ax.shape
@@ -473,7 +474,7 @@ class DKT_count_regression(nn.Module):
                     plots.ax[i, j].imshow(img)
                     plots = color_ax(plots, i, j, color='white')
                     # plots.ax[i, j].set_title(f'prd:{y_pred[k]:.0f}', fontsize=10)
-                    plots.ax[i, j].set_xlabel(f'prd:{y_pred[k]:.0f}|gt: {y_q[k]:.0f}', fontsize=10)
+                    plots.ax[i, j].set_xlabel(f'prd:{y_pred[k]:.1f}|gt: {y_q[k]:.1f}', fontsize=10)
                     
                     k += 1
 
