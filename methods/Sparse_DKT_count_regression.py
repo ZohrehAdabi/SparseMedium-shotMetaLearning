@@ -498,6 +498,13 @@ class Sparse_DKT_count_regression(nn.Module):
         self.likelihood.load_state_dict(ckpt['likelihood'])
         self.feature_extractor.load_state_dict(ckpt['net'])
 
+    def init_summary(self, id):
+        if(IS_TBX_INSTALLED):
+            time_now = datetime.now().strftime('%Y-%m-%d--%H-%M')
+            writer_path = self.video_path +f"/{id}/" + time_now
+            self.writer = SummaryWriter(log_dir=writer_path)
+ 
+
     def initialize_plot(self, video_path, training):
         
         

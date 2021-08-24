@@ -139,7 +139,7 @@ class DKT_count_regression(nn.Module):
             mse = self.mse(predictions.mean, labels_norm)
             mll_list.append(np.around(loss.item(), 4))
             self.iteration = (epoch*31) + itr
-            if(self.writer is not None): 
+            if(self.writer is not None) and self.show_plots_loss: 
                 self.writer.add_scalar('MLL_per_itr', loss.item(), self.iteration)
    
 
@@ -163,7 +163,7 @@ class DKT_count_regression(nn.Module):
                     self.mw_feature.grab_frame()
             #*********************************************************
             #validate on train data
-            if validation and (epoch%50==0):
+            if validation and (epoch%20==0):
                 support_ind = np.random.choice(np.arange(n_samples), size=n_support, replace=False)
                 query_ind   = [i for i in range(n_samples) if i not in support_ind]
                 z_support = z[support_ind, :]
@@ -193,9 +193,9 @@ class DKT_count_regression(nn.Module):
         if validation and (epoch%50==0):
             print(Fore.LIGHTMAGENTA_EX,"-"*30, f'\n epoch {epoch+1} => Avg. Val. on Train    MAE: {np.mean(mae_list):.2f}, RMSE: {np.sqrt(np.mean(mse_list)):.2f}'
                                     f', MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
-            if(self.writer is not None):
-                self.writer.add_scalar('MSE Val. on Train', mse, epoch*31+itr)
-                self.writer.add_scalar('MAE Val. on Train', mae, epoch*31+itr)
+            if(self.writer is not None) and self.show_plots_loss:
+                self.writer.add_scalar('MSE Val. on Train', mse, epoch)
+                self.writer.add_scalar('MAE Val. on Train', mae, epoch)
 
         # print(f'epoch {epoch+1} MLL {mll_list}')
         return np.mean(mll_list)
@@ -302,7 +302,7 @@ class DKT_count_regression(nn.Module):
         for epoch in range(stop_epoch):
             mll = self.train_loop(epoch, n_support, n_samples, optimizer)
             mll_list.append(np.around(mll, 3))
-            if(self.writer is not None):
+            if(self.writer is not None) and self.show_plots_loss:
                 self.writer.add_scalar('MLL_per_epoch.', mll, epoch)
 
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch+1} => MLL: {mll}\n', "-"*30, Fore.RESET)
@@ -315,7 +315,7 @@ class DKT_count_regression(nn.Module):
                     model_name = self.best_path + f'_best_mae{best_mae:.2f}_ep{epoch}_{id}.pth'
                     self.save_checkpoint(model_name)
                     print(Fore.LIGHTRED_EX, f'Best MAE: {best_mae:.2f}, RMSE: {best_rmse}', Fore.RESET)
-            if(self.writer is not None):
+            if(self.writer is not None) and self.show_plots_loss:
                 self.writer.add_scalar('MSE Val.', val_mse, epoch)
                 self.writer.add_scalar('MAE Val.', val_mae, epoch)
             print(Fore.GREEN,"-"*30, Fore.RESET)
