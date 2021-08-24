@@ -31,7 +31,7 @@ if len(best_models_list) > 0 and not selective:
 
 if  params.model=='ResNet50':
     resnet50_conv, regressor = backbone.ResNet_Regrs(feat_map)
-    novel_file = configs.data_dir[params.dataset] + 'test.json'
+    novel_file = configs.data_dir[params.dataset] + 'novel.json'
 else:
     ValueError('Unknown model')
 if params.method=='DKT':
