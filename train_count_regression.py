@@ -35,6 +35,7 @@ else:
 if params.method=='DKT':
     model = DKT_count_regression(resnet50_conv, regressor, base_file, val_file,
                             video_path=params.checkpoint_dir, 
+                            show_plots_loss=params.show_plots_loss,
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
 
 elif params.method=='Sparse_DKT':
