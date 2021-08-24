@@ -46,6 +46,7 @@ elif params.method=='Sparse_DKT':
         os.makedirs(params.checkpoint_dir)
           
     if params.sparse_method=='FRVM':
+        print(f'params.show_plots_loss {params.show_plots_loss}')
         params.checkpoint_dir = params.checkpoint_dir +  f'FRVM_{params.config}_{params.align_thr:.6f}'
 
         model = Sparse_DKT_count_regression(resnet50_conv, regressor, base_file, val_file,
