@@ -25,6 +25,7 @@ from configs import kernel_type
 
 #Check if tensorboardx is installed
 try:
+    # tensorboard --logdir=./save/checkpoints/MSC44/ResNet50_DKT_Loss/ --host localhost --port 8088
     from tensorboardX import SummaryWriter
     IS_TBX_INSTALLED = True
 except ImportError:
@@ -360,7 +361,9 @@ class DKT_count_regression(nn.Module):
     def init_summary(self, id):
         if(IS_TBX_INSTALLED):
             time_now = datetime.now().strftime('%Y-%m-%d--%H-%M')
-            writer_path = self.video_path +f"/{id}/" + time_now
+            writer_path = self.video_path+'_Loss' +f"/{id}"
+            # os.makedirs(self.video_path, exist_ok=True)
+            os.makedirs(writer_path, exist_ok=True)
             self.writer = SummaryWriter(log_dir=writer_path)
 
     def initialize_plot(self, video_path, training):
