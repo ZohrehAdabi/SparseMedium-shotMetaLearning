@@ -19,7 +19,16 @@ torch.backends.cudnn.benchmark = False
 
 params.checkpoint_dir = '%scheckpoints/%s/%s_%s' % (configs.save_dir, params.dataset, params.model, params.method)
 
+selective = True
 feat_map = 'map4'
+best_models_list = os.listdir(f'./save/checkpoints/{params.dataset}')
+if len(best_models_list) > 0 and not selective:
+    best_mae = [best.split('_')[3] for best in best_models_list]
+    best_mae_idx = np.argmin(best_mae)
+    best_model = best_models_list[best_mae_idx]
+    feat_map = best_model.split('_')[-1]
+    feat_map = 'map3' if '3' in feat_map else 'map4'
+
 if  params.model=='ResNet50':
     resnet50_conv, regressor = backbone.ResNet_Regrs(feat_map)
     novel_file = configs.data_dir[params.dataset] + 'test.json'
@@ -70,19 +79,19 @@ elif params.method=='Sparse_DKT':
 else:
     ValueError('Unrecognised method')
 
-lr_gp = 1e-3
-lr_reg = 1e-5
-mse = True
-id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
-if mse: id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}_mse'
-best_models_list = os.listdir(f'./save/checkpoints/{params.dataset}')
-if len(best_models_list) > 0:
-    best_mae = [best.split('_')[3] for best in best_models_list]
-    best_mae_idx = np.argmin(best_mae)
-    best_model = best_models_list[best_mae_idx]
-    model.load_checkpoint(os.path.join(configs.save_dir, params.dataset, best_model))
+if selective:
+    lr_gp = 1e-3
+    lr_reg = 1e-5
+    mse = True
+    id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
+    if mse: id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}_mse'
+    model.load_checkpoint((os.path.join(configs.save_dir, params.dataset, id)))
 else:
-    model.load_checkpoint(params.checkpoint_dir)
+    if len(best_models_list) > 0:
+        
+        model.load_checkpoint(os.path.join(configs.save_dir, params.dataset, best_model))
+    else:
+        model.load_checkpoint(params.checkpoint_dir)
  
 mse_list = model.test(params.n_support, params.n_samples, optimizer, params.n_test_epochs)
 
