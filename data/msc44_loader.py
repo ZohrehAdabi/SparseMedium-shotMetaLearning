@@ -46,6 +46,7 @@ class MediumShotCountingDataset(Dataset):
             assert class_name in images_path[im_id]
             assert class_name in gt_densities_path[im_id]
             im_name = os.path.basename(images_path[im_id])
+            assert im_name in gt_densities_path[im_id]
             # print(im_name)
             anno = annotations[im_name]
             bboxes = anno['box_examples_coordinates']
