@@ -38,12 +38,13 @@ for dataset in dataset_list:
         filelists[class_name] = []
         fnames = listdir( join(data_path, 'images', datasetmap[dataset], class_name) )
         fnames = list(join(data_path, "images", datasetmap[dataset], class_name, fname) for fname in fnames)   
-        
-        filelists[class_name] = fnames.sort()
+        fnames.sort()
+        filelists[class_name] = fnames
      
         gt_densities = listdir( join(data_path, 'gt_density', datasetmap[dataset], class_name) )
         gt_densities = list(join( data_path, 'gt_density', datasetmap[dataset],  class_name, gt_density) for gt_density in gt_densities)     
-        density_lists[class_name] = gt_densities.sort()
+        gt_densities.sort()
+        density_lists[class_name] = gt_densities
 
     annotations = listdir( join(data_path, 'annotations', datasetmap[dataset]) )   
     annotations.sort()
