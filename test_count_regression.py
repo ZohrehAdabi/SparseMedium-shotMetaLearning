@@ -83,8 +83,9 @@ if selective:
     lr_gp = 1e-3
     lr_reg = 1e-5
     mse = True
+    #'ResNet50_DKT_best_mae37.65_ep440_g_0.001_r_1e-05_feat_map4.'
     id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
-    if mse: id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}_mse'
+    if mse: id = f'_best_mae{37.65}_ep{440}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}_mse'
     model_path = params.checkpoint_dir + id
     print(f'\n{model_path}')
     model.load_checkpoint(model_path)
