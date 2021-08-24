@@ -286,7 +286,7 @@ class DKT_count_regression(nn.Module):
 
                 self.update_plots_test(self.plots, x_support, y_support.detach().cpu().numpy(), 
                                                 z_support.detach(), z_query.detach(), embedded_z_support,
-                                                x_query, y_query.detach().cpu().numpy(), y_pred, pred.variance.detatch().cpu().numpy(),
+                                                x_query, y_query.detach().cpu().numpy(), y_pred, pred.variance.detach().cpu().numpy(),
                                                 None, mse, itr)
                 if self.show_plots_pred:
                     self.plots.fig.canvas.draw()
