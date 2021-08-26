@@ -19,7 +19,7 @@ torch.backends.cudnn.benchmark = False
 
 params.checkpoint_dir = '%scheckpoints/%s/%s_%s' % (configs.save_dir, params.dataset, params.model, params.method)
 
-selective = False
+selective = True
 feat_map = 'map4'
 best_models_list = os.listdir(f'./save/checkpoints/{params.dataset}')
 if len(best_models_list) > 0 and not selective:
@@ -82,10 +82,12 @@ else:
 
 if selective:
     lr_gp = 1e-3
-    lr_reg = 1e-5
+    lr_reg = 1e-4
     mse = False
     #'ResNet50_DKT_best_mae37.65_ep440_g_0.001_r_1e-05_feat_map4.'
-    id = f'_best_mae{19.07}_ep{30}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
+    id = f'_best_mae{19.85}_ep{240}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
+    # id = f'_best_mae{22.23}_ep{10}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
+    # id = f'_best_mae{26.19}_ep{10}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
     if mse: id = id + '_mse'
     id = id + '.pth'
     model_path = params.checkpoint_dir + id
