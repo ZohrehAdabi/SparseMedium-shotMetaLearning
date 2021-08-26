@@ -151,7 +151,7 @@
            "args": ["--method","DKT", "--n_samples", "50", "--n_support", "40",
                 "--dataset", "MSC44", "--model", "ResNet50", "--stop_epoch", "100",
                  "--seed","2"]  //"--show_plots_features",  "--show_plots_loss"
-      // --method "DKT"   --n_samples 50 --n_support 40 --dataset "MSC44" --model "ResNet50" --stop_epoch 100  --show_plots_features  --seed  2 
+      // --method "DKT"   --n_samples 50 --n_support 40 --dataset "MSC44" --model "ResNet50" --stop_epoch 100  --show_plots_loss  --seed  2 
         },
         {
             "name": "DKT [MSC44]: test_count_regression",
