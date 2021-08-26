@@ -136,6 +136,7 @@ class Sparse_DKT_count_regression(nn.Module):
             with torch.no_grad():
                 feature = self.feature_extractor(inputs)
             #predict density map
+            feature.requires_grad = True
             z = self.regressor(feature)
 
             with torch.no_grad():
