@@ -72,7 +72,7 @@ class Sparse_DKT_count_regression(nn.Module):
         if(train_y is None): train_y=torch.ones(self.num_induce_points).cuda()
 
         likelihood = gpytorch.likelihoods.GaussianLikelihood()
-        likelihood.noise = 0.1
+        likelihood.initialize(noise=0.1)  
         model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel=kernel_type, induce_point=train_x)
 
         self.model      = model.cuda()

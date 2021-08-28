@@ -54,11 +54,12 @@ class DKT_count_regression(nn.Module):
         self.get_model_likelihood_mll() #Init model, likelihood, and mll
 
     def get_model_likelihood_mll(self, train_x=None, train_y=None):
-        if(train_x is None): train_x=torch.ones(19, 2916).cuda()
-        if(train_y is None): train_y=torch.ones(19).cuda()
+        if(train_x is None): train_x=torch.ones(50, 2304).cuda()
+        if(train_y is None): train_y=torch.ones(50).cuda()
 
         likelihood = gpytorch.likelihoods.GaussianLikelihood()
-        likelihood.noise = 0.1
+        # likelihood.noise = 0.1
+        likelihood.initialize(noise=0.1)  
         model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel=kernel_type)
 
         self.model      = model.cuda()
@@ -501,7 +502,7 @@ class ExactGPLayer(gpytorch.models.ExactGP):
             self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
         ## Spectral kernel
         elif(kernel=='spectral'):
-            self.covar_module = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=4) #, ard_num_dims=2916
+            self.covar_module = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=4, ard_num_dims=2304) #
         else:
             raise ValueError("[ERROR] the kernel '" + str(kernel) + "' is not supported for regression, use 'rbf' or 'spectral'.")
 
