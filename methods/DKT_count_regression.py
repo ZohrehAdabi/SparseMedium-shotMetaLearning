@@ -134,7 +134,7 @@ class DKT_count_regression(nn.Module):
             if self.use_mse:
                 density_mse = self.mse(z, gt_density_resized)
 
-            z = z.reshape(z.shape[0], -1)
+            z = z.reshape(z.shape[0], -1)#.to(torch.float64)
             self.model.set_train_data(inputs=z, targets=labels_norm, strict=False)
             predictions = self.model(z)
             loss = -self.mll(predictions, self.model.train_targets)
