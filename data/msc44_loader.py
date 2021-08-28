@@ -40,7 +40,7 @@ class MediumShotCountingDataset(Dataset):
             annotations = json.load(f)
         # print(f'anno {annotations}')
         sample_indices = np.random.choice(np.arange(len(images_path)), size=self.n_samples, replace=False)
-        samples = {'image': [], 'boxes': [], 'gt_density': [], 'gt_count': []}
+        samples = {'class_name': [], 'image': [], 'boxes': [], 'gt_density': [], 'gt_count': []}
         for im_id in sample_indices:
 
             assert class_name in images_path[im_id]
@@ -67,6 +67,7 @@ class MediumShotCountingDataset(Dataset):
             image, boxes, gt_density, gt_count = sample['image'].cuda(), sample['boxes'].cuda(),\
                                                             sample['gt_density'].cuda(), sample['gt_count'].cuda()
                                                             
+            samples['class_name'].append(class_name)
             samples['image'].append(image)
             samples['gt_density'].append(gt_density)
             samples['boxes'].append(boxes)
@@ -75,7 +76,7 @@ class MediumShotCountingDataset(Dataset):
         
         for key in samples.keys():
             # print(f'key {key}, {len(samples[key])}')
-            if key != 'boxes':
+            if (key != 'boxes') and (key != 'class_name'):
                 samples[key] = torch.stack(samples[key])
             # print(f'after, key {key}, {samples[key].shape}')
       

@@ -217,7 +217,9 @@ class DKT_count_regression(nn.Module):
         self.regressor.eval()
         self.likelihood.eval() 
         for itr, samples in enumerate(get_batch(self.val_file, n_samples)):
- 
+            
+            class_name = samples['class_name']
+            print(f'\nclass_name = {class_name}')
             inputs = samples['image']
             targets = samples['gt_count']
             gt_density = samples['gt_density']
