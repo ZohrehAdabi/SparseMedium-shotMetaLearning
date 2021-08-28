@@ -496,7 +496,7 @@ class ExactGPLayer(gpytorch.models.ExactGP):
     def __init__(self, train_x, train_y, likelihood, kernel='linear'):
         super(ExactGPLayer, self).__init__(train_x, train_y, likelihood)
         self.mean_module  = gpytorch.means.ConstantMean()
-
+        self.mean_module.register_constraint("constant", gpytorch.constraints.Positive())
         ## RBF kernel
         if(kernel=='rbf' or kernel=='RBF'):
             self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
