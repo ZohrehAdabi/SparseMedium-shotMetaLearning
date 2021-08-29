@@ -91,17 +91,18 @@ class DKT_count_regression(nn.Module):
                     labels[i] = torch.round(gt_density_resized[i].sum())
         return gt_density_resized.cuda(), labels
 
-    def normalize(self, labels, y_mean, y_std):
+    def normalize(self, labels, min, max, y_mean, y_std):
 
         if self.minmax:
-            return F.normalize(labels, p=2, dim=0)
+            return (labels - min)/ (max - min) + 0.5
         else:
             return  (labels - y_mean) / (y_std+1e-10)
     
-    def denormalize_y(self, pred, labels,  y_mean, y_std):
+    def denormalize_y(self, pred, min, max, y_mean, y_std):
 
         if self.minmax:
-            return pred * labels.norm(p=2, dim=0)
+            return ((pred - 0.5) * (max - min) ) + min
+            
         else:
             return  y_mean + pred * y_std
 
@@ -132,7 +133,9 @@ class DKT_count_regression(nn.Module):
                 gt_density_resized, labels = self.resize_gt_density(z, gt_density, labels)
                 if self.do_normalize:
                     y_mean, y_std = labels.mean(), labels.std()
-                    labels_norm = self.normalize(labels, y_mean, y_std)
+                    y_min, y_max = labels.min(), labels.max()
+                    labels_norm = self.normalize(labels, y_min, y_max, y_mean, y_std)
+
             if self.use_mse:
                 density_mse = self.mse(z, gt_density_resized.squeeze(1))
 
@@ -148,7 +151,11 @@ class DKT_count_regression(nn.Module):
             
             loss.backward()
             optimizer.step()
-            # mse = self.mse(predictions.mean, labels_norm)
+            if self.do_normalize:
+                mse = self.mse(predictions.mean, labels_norm)
+            else:
+                mse = self.mse(predictions.mean, labels)
+
             mll_list.append(np.around(loss.item(), 4))
             self.iteration = (epoch*31) + itr
             if(self.writer is not None) and self.show_plots_loss: 
@@ -180,11 +187,13 @@ class DKT_count_regression(nn.Module):
                 support_ind = np.random.choice(np.arange(n_samples), size=n_support, replace=False)
                 query_ind   = [i for i in range(n_samples) if i not in support_ind]
                 z_support = z[support_ind, :]
-                y_s_norm = labels_norm[support_ind]
                 y_support = labels[support_ind]
                 z_query   = z[query_ind]
-                y_q_norm   = labels_norm[query_ind]
                 y_query   = labels[query_ind]
+
+                if self.do_normalize:
+                    y_s_norm = labels_norm[support_ind]
+                    y_q_norm   = labels_norm[query_ind]
                 
                 if self.do_normalize:
                     self.model.set_train_data(inputs=z_support, targets=y_s_norm, strict=False)
@@ -198,11 +207,14 @@ class DKT_count_regression(nn.Module):
                 with torch.no_grad():
                     pred    = self.likelihood(self.model(z_query))
                     lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
+                if self.do_normalize:
+                    mse = self.mse(pred.mean, y_q_norm).item()
+                else: 
+                    mse = self.mse(pred.mean, y_query).item()
 
-                mse = self.mse(pred.mean, y_q_norm).item()
                 mse_list.append(mse)
                 if self.do_normalize:
-                    y_pred = self.denormalize_y(pred.mean, labels, y_mean, y_std)
+                    y_pred = self.denormalize_y(pred.mean, y_min, y_max, y_mean, y_std)
                 else:
                     y_pred = pred.mean
                 mae = self.mae(y_pred, y_query).item()
@@ -262,8 +274,9 @@ class DKT_count_regression(nn.Module):
             with torch.no_grad():
                 if self.do_normalize:
                     y_mean, y_std = y_all.mean(), y_all.std()
-                    y_s_norm = self.normalize(y_support, y_mean, y_std)
-                    y_q_norm = self.normalize(y_query, y_mean, y_std)
+                    y_min, y_max = y_all.min(), y_all.max()
+                    y_s_norm = self.normalize(y_support, y_min, y_max, y_mean, y_std)
+                    y_q_norm = self.normalize(y_query, y_min, y_max, y_mean, y_std)
 
             z_support = z_support.reshape(z_support.shape[0], -1)
             if self.do_normalize:
@@ -277,10 +290,14 @@ class DKT_count_regression(nn.Module):
                 pred    = self.likelihood(self.model(z_query))
                 lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
 
-            mse = self.mse(pred.mean, y_q_norm).item()
+            if self.do_normalize:
+                mse = self.mse(pred.mean, y_q_norm).item()
+            else:
+                mse = self.mse(pred.mean, y_query).item()
+
             mse_list.append(mse)
             if self.do_normalize:
-                    y_pred = self.denormalize_y(pred.mean.detach(), y_query, y_mean, y_std)
+                y_pred = self.denormalize_y(pred.mean.detach(), y_min, y_max, y_mean, y_std)
             else:
                 y_pred = pred.mean
             
