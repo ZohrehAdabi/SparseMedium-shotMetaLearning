@@ -67,7 +67,7 @@ class MediumShotCountingDataset(Dataset):
             image, boxes, gt_density, gt_count = sample['image'].cuda(), sample['boxes'].cuda(),\
                                                             sample['gt_density'].cuda(), sample['gt_count'].cuda()
                                                             
-            samples['class_name'].append(class_name)
+            
             samples['image'].append(image)
             samples['gt_density'].append(gt_density)
             samples['boxes'].append(boxes)
