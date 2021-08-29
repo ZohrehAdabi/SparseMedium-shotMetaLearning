@@ -40,7 +40,7 @@ class MediumShotCountingDataset(Dataset):
             annotations = json.load(f)
         # print(f'anno {annotations}')
         sample_indices = np.random.choice(np.arange(len(images_path)), size=self.n_samples, replace=False)
-        samples = {'class_name': [], 'image': [], 'boxes': [], 'gt_density': [], 'gt_count': []}
+        samples = {'image': [], 'boxes': [], 'gt_density': [], 'gt_count': []}
         for im_id in sample_indices:
 
             assert class_name in images_path[im_id]
