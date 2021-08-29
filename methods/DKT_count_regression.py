@@ -97,10 +97,10 @@ class DKT_count_regression(nn.Module):
         else:
             return  (labels - y_mean) / (y_std+1e-10)
     
-    def denormalize_y(self, pred,  y_mean, y_std):
+    def denormalize_y(self, pred, labels,  y_mean, y_std):
 
         if self.minmax:
-            return pred * pred.norm(p=2, dim=0)
+            return pred * labels.norm(p=2, dim=0)
         else:
             return  y_mean + pred * y_std
 
@@ -193,7 +193,7 @@ class DKT_count_regression(nn.Module):
 
                 mse = self.mse(pred.mean, y_q_norm).item()
                 mse_list.append(mse)
-                y_pred = self.denormalize_y(pred.mean, y_mean, y_std)
+                y_pred = self.denormalize_y(pred.mean, labels, y_mean, y_std)
                 mae = self.mae(y_pred, y_query).item()
                 mae_list.append(mae)
                 print(Fore.YELLOW, f'epoch {epoch+1}, itr {itr+1}, Val. on Train  MAE:{mae:.2f}, MSE: {mse:.4f}', Fore.RESET)
@@ -213,6 +213,7 @@ class DKT_count_regression(nn.Module):
         
         mse_list = []    
         mae_list = []  
+        base_line_mae_list = []
         self.model.eval()
         self.regressor.eval()
         self.likelihood.eval() 
@@ -263,15 +264,18 @@ class DKT_count_regression(nn.Module):
 
             mse = self.mse(pred.mean, y_q_norm).item()
             mse_list.append(mse)
-            y_pred = self.denormalize_y(pred.mean.detach(), y_mean, y_std)
+            y_pred = self.denormalize_y(pred.mean.detach(), y_query, y_mean, y_std)
             mae = self.mae(y_pred, y_query).item()
             mae_list.append(mae)
             #***************************************************
             y = y_query.detach().cpu().numpy()
             y_pred = y_pred.cpu().numpy()
+            mean_support_y = y_support.mean()
+            base_line_mae = self.mae(y_pred, y_query).item()
+            base_line_mae_list.append
             print(Fore.RED,"="*50, Fore.RESET)
             print(f'itr #{itr+1}')
-            print(f'mean of support_y {y_support.mean():.2f}')
+            print(f'mean of support_y {:.2f}')
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
             print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
             print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
