@@ -148,7 +148,7 @@ class DKT_count_regression(nn.Module):
             
             loss.backward()
             optimizer.step()
-            mse = self.mse(predictions.mean, labels_norm)
+            # mse = self.mse(predictions.mean, labels_norm)
             mll_list.append(np.around(loss.item(), 4))
             self.iteration = (epoch*31) + itr
             if(self.writer is not None) and self.show_plots_loss: 
