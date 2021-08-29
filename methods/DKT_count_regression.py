@@ -369,14 +369,14 @@ class DKT_count_regression(nn.Module):
         # save state
         gp_state_dict         = self.model.state_dict()
         likelihood_state_dict = self.likelihood.state_dict()
-        nn_state_dict         = self.feature_extractor.state_dict()
+        nn_state_dict         = self.regressor.state_dict()
         torch.save({'gp': gp_state_dict, 'likelihood': likelihood_state_dict, 'net':nn_state_dict}, checkpoint)
 
     def load_checkpoint(self, checkpoint):
         ckpt = torch.load(checkpoint)
         self.model.load_state_dict(ckpt['gp'])
         self.likelihood.load_state_dict(ckpt['likelihood'])
-        self.feature_extractor.load_state_dict(ckpt['net'])
+        self.regressor.load_state_dict(ckpt['net'])
     
     def init_summary(self, id):
         if(IS_TBX_INSTALLED):
