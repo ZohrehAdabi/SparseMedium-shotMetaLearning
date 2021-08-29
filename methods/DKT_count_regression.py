@@ -41,6 +41,7 @@ class DKT_count_regression(nn.Module):
         self.regressor = regressor
         self.train_file = base_file
         self.val_file = val_file
+        self.do_normalize = False
         self.minmax = False
         self.device = 'cuda'
         self.video_path = video_path
@@ -129,13 +130,17 @@ class DKT_count_regression(nn.Module):
             #if image size isn't divisible by 8, gt size is slightly different from output size
             with torch.no_grad():
                 gt_density_resized, labels = self.resize_gt_density(z, gt_density, labels)
-                y_mean, y_std = labels.mean(), labels.std()
-                labels_norm = self.normalize(labels, y_mean, y_std)
+                if self.do_normalize:
+                    y_mean, y_std = labels.mean(), labels.std()
+                    labels_norm = self.normalize(labels, y_mean, y_std)
             if self.use_mse:
                 density_mse = self.mse(z, gt_density_resized.squeeze(1))
 
             z = z.reshape(z.shape[0], -1)#.to(torch.float64)
-            self.model.set_train_data(inputs=z, targets=labels_norm, strict=False)
+            if self.do_normalize:
+                self.model.set_train_data(inputs=z, targets=labels_norm, strict=False)
+            else:
+                self.model.set_train_data(inputs=z, targets=labels, strict=False)
             predictions = self.model(z)
             loss = -self.mll(predictions, self.model.train_targets)
             if self.use_mse:
@@ -176,12 +181,15 @@ class DKT_count_regression(nn.Module):
                 query_ind   = [i for i in range(n_samples) if i not in support_ind]
                 z_support = z[support_ind, :]
                 y_s_norm = labels_norm[support_ind]
-                # y_support = labels[support_ind]
+                y_support = labels[support_ind]
                 z_query   = z[query_ind]
                 y_q_norm   = labels_norm[query_ind]
                 y_query   = labels[query_ind]
-
-                self.model.set_train_data(inputs=z_support, targets=y_s_norm, strict=False)
+                
+                if self.do_normalize:
+                    self.model.set_train_data(inputs=z_support, targets=y_s_norm, strict=False)
+                else:
+                    self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
 
                 self.model.eval()
                 self.regressor.eval()
@@ -193,7 +201,10 @@ class DKT_count_regression(nn.Module):
 
                 mse = self.mse(pred.mean, y_q_norm).item()
                 mse_list.append(mse)
-                y_pred = self.denormalize_y(pred.mean, labels, y_mean, y_std)
+                if self.do_normalize:
+                    y_pred = self.denormalize_y(pred.mean, labels, y_mean, y_std)
+                else:
+                    y_pred = pred.mean
                 mae = self.mae(y_pred, y_query).item()
                 mae_list.append(mae)
                 print(Fore.YELLOW, f'epoch {epoch+1}, itr {itr+1}, Val. on Train  MAE:{mae:.2f}, MSE: {mse:.4f}', Fore.RESET)
@@ -249,12 +260,16 @@ class DKT_count_regression(nn.Module):
             z_query     = z[query_ind, :, :, :]
             
             with torch.no_grad():
-                y_mean, y_std = y_all.mean(), y_all.std()
-                y_s_norm = self.normalize(y_support, y_mean, y_std)
-                y_q_norm = self.normalize(y_query, y_mean, y_std)
+                if self.do_normalize:
+                    y_mean, y_std = y_all.mean(), y_all.std()
+                    y_s_norm = self.normalize(y_support, y_mean, y_std)
+                    y_q_norm = self.normalize(y_query, y_mean, y_std)
 
             z_support = z_support.reshape(z_support.shape[0], -1)
-            self.model.set_train_data(inputs=z_support, targets=y_s_norm, strict=False)
+            if self.do_normalize:
+                self.model.set_train_data(inputs=z_support, targets=y_s_norm, strict=False)
+            else:
+                self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
 
             with torch.no_grad():
                                 
@@ -264,7 +279,11 @@ class DKT_count_regression(nn.Module):
 
             mse = self.mse(pred.mean, y_q_norm).item()
             mse_list.append(mse)
-            y_pred = self.denormalize_y(pred.mean.detach(), y_query, y_mean, y_std)
+            if self.do_normalize:
+                    y_pred = self.denormalize_y(pred.mean.detach(), y_query, y_mean, y_std)
+            else:
+                y_pred = pred.mean
+            
             mae = self.mae(y_pred, y_query).item()
             mae_list.append(mae)
             #***************************************************

@@ -81,15 +81,15 @@ else:
     ValueError('Unrecognised method')
 
 if selective:
-    lr_gp  = 1e-3
-    lr_reg = 1e-5
+    lr_gp  = 1e-4
+    lr_reg = 1e-4
     mse = False
     # mse = True
     #'ResNet50_DKT_best_mae37.65_ep440_g_0.001_r_1e-05_feat_map4.'
     id = f'_best_mae{19.85}_ep{240}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
     id = f'_best_mae{18.56}_ep{42}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
     # id = f'_best_mae{26.19}_ep{10}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
-    id = f'_best_mae{18.11}_ep{50}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
+    id = f'_best_mae{17.15:.2f}_ep{38}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
     if mse: id = id + '_mse'
     id = id + '.pth'
     model_path = params.checkpoint_dir + id

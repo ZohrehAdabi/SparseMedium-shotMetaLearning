@@ -77,9 +77,10 @@ elif params.method=='Sparse_DKT':
 
 else:
     ValueError('Unrecognised method')
-lr_gp = 1e-3
-lr_reg = 1e-4
-mse = True
+lr_gp  = 1e-3
+lr_reg = 1e-5
+mse = False
+# mse = True
 id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
 if mse: id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}_mse'
 optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr':lr_gp},
