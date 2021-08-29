@@ -77,8 +77,8 @@ elif params.method=='Sparse_DKT':
 
 else:
     ValueError('Unrecognised method')
-lr_gp  = 1e-3
-lr_reg = 1e-5
+lr_gp  = 1e-4
+lr_reg = 1e-4
 mse = False
 # mse = True
 id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
