@@ -170,7 +170,7 @@ class DKT_count_regression(nn.Module):
                     self.mw_feature.grab_frame()
             #*********************************************************
             #validate on train data
-            val_freq = 20
+            val_freq = 10
             if validation and (epoch%val_freq==0):
                 support_ind = np.random.choice(np.arange(n_samples), size=n_support, replace=False)
                 query_ind   = [i for i in range(n_samples) if i not in support_ind]
