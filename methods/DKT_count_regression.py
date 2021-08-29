@@ -271,7 +271,7 @@ class DKT_count_regression(nn.Module):
             y = y_query.detach().cpu().numpy()
             y_pred = y_pred.cpu().numpy()
             mean_support_y = y_support.mean()
-            base_line_mae = self.mae(mean_support_y, y_query).item()
+            base_line_mae = self.mae(mean_support_y.repeat(y_query.shape[0]), y_query).item()
             base_line_mae_list.append(base_line_mae)
 
             print(Fore.RED,"="*50, Fore.RESET)
