@@ -41,7 +41,7 @@ class DKT_count_regression(nn.Module):
         self.regressor = regressor
         self.train_file = base_file
         self.val_file = val_file
-        self.minmax = False
+        self.minmax = True
         self.device = 'cuda'
         self.video_path = video_path
         self.best_path = video_path
@@ -132,14 +132,14 @@ class DKT_count_regression(nn.Module):
                 y_mean, y_std = labels.mean(), labels.std()
                 labels_norm = self.normalize(labels, y_mean, y_std)
             if self.use_mse:
-                density_mse = self.mse(z, gt_density_resized)
+                density_mse = self.mse(z, gt_density_resized.squeeze(1))
 
             z = z.reshape(z.shape[0], -1)#.to(torch.float64)
             self.model.set_train_data(inputs=z, targets=labels_norm, strict=False)
             predictions = self.model(z)
             loss = -self.mll(predictions, self.model.train_targets)
             if self.use_mse:
-                loss = loss + 0.5 * density_mse
+                loss = loss + 2 * density_mse
             
             loss.backward()
             optimizer.step()
