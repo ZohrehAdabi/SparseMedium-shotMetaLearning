@@ -139,7 +139,7 @@ class DKT_count_regression(nn.Module):
             predictions = self.model(z)
             loss = -self.mll(predictions, self.model.train_targets)
             if self.use_mse:
-                loss = loss + 2 * density_mse
+                loss = loss + 10 * density_mse
             
             loss.backward()
             optimizer.step()
