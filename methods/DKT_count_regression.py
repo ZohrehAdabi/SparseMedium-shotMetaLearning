@@ -271,11 +271,13 @@ class DKT_count_regression(nn.Module):
             y = y_query.detach().cpu().numpy()
             y_pred = y_pred.cpu().numpy()
             mean_support_y = y_support.mean()
-            base_line_mae = self.mae(y_pred, y_query).item()
-            base_line_mae_list.append
+            base_line_mae = self.mae(mean_support_y, y_query).item()
+            base_line_mae_list.append(base_line_mae)
+
             print(Fore.RED,"="*50, Fore.RESET)
             print(f'itr #{itr+1}')
-            print(f'mean of support_y {:.2f}')
+            print(f'mean of support_y {base_line_mae:.2f}')
+            print(f'base line MAE: {mean_support_y:.2f}')
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
             print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
             print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
@@ -307,6 +309,7 @@ class DKT_count_regression(nn.Module):
 
         print(Fore.CYAN,"-"*30, f'\n epoch {epoch+1} => Avg.   MAE: {np.mean(mae_list):.2f}, RMSE: {np.sqrt(np.mean(mse_list)):.2f}'
                                     f', MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
+        print(f'Avg. base line MAE: {np.mean(base_line_mae_list):.2f}')
    
         return np.mean(mse_list), np.mean(mae_list), np.sqrt(np.mean(mse_list))
 
