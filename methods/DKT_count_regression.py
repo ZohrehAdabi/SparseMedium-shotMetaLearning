@@ -182,7 +182,7 @@ class DKT_count_regression(nn.Module):
                     self.mw_feature.grab_frame()
             #*********************************************************
             #validate on train data
-            val_freq = 10
+            val_freq = 2
             if validation and (epoch%val_freq==0):
                 support_ind = np.random.choice(np.arange(n_samples), size=n_support, replace=False)
                 query_ind   = [i for i in range(n_samples) if i not in support_ind]
@@ -363,7 +363,7 @@ class DKT_count_regression(nn.Module):
 
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch+1} => MLL: {mll}\n', "-"*30, Fore.RESET)
             print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
-            if epoch%2==0:
+            if epoch%1==0:
                 val_mse, val_mae, val_rmse = self.test_loop(n_support, n_samples, epoch, optimizer)
                 if best_mae >= val_mae:
                     best_mae = val_mae
