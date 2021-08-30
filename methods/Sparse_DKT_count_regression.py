@@ -56,6 +56,8 @@ class Sparse_DKT_count_regression(nn.Module):
         self.num_induce_points = n_inducing_points
         self.config = config
         self.align_threshold = align_threshold
+        self.do_normalize = True
+        self.minmax = True
         self.device = 'cuda'
         self.video_path = video_path
         self.best_path = video_path
@@ -103,20 +105,21 @@ class Sparse_DKT_count_regression(nn.Module):
                     labels[i] = torch.round(gt_density_resized[i].sum())
         return gt_density_resized, labels
 
-    def normalize(self, labels, y_mean, y_std):
+    def normalize(self, labels, min, max, y_mean, y_std):
 
         if self.minmax:
-            return F.normalize(labels, p=2, dim=0)
+            return (labels - min)/ (max - min) + 0.5
         else:
             return  (labels - y_mean) / (y_std+1e-10)
     
-    def denormalize(self, pred,  y_mean, y_std):
+    def denormalize_y(self, pred, min, max, y_mean, y_std):
 
         if self.minmax:
-            return pred * pred.norm(p=2, dim=0)
+            return ((pred - 0.5) * (max - min) ) + min
+            
         else:
             return  y_mean + pred * y_std
-
+    
     def train_loop(self, epoch, n_support, n_samples, optimizer):
 
         mll_list = []
@@ -141,9 +144,14 @@ class Sparse_DKT_count_regression(nn.Module):
 
             with torch.no_grad():
                 gt_density_resized, labels = self.resize_gt_density(z, gt_density, labels)
-                y_mean, y_std = labels.mean(), labels.std()
-                labels_norm = self.normalize(labels, y_mean, y_std)
+                if self.do_normalize:
+                    y_mean, y_std = labels.mean(), labels.std()
+                    y_min, y_max = labels.min(), labels.max()
+                    labels_norm = self.normalize(labels, y_min, y_max, y_mean, y_std)
             
+            if self.use_mse:
+                density_mse = self.mse(z, gt_density_resized.squeeze(1))
+
             z = z.reshape(z.shape[0], -1)
             with torch.no_grad():
                 inducing_points = self.get_inducing_points(z, labels_norm, n_samples, verbose=False)
@@ -168,7 +176,10 @@ class Sparse_DKT_count_regression(nn.Module):
             # NOTE set inducing points 
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
             self.model.train()
-            self.model.set_train_data(inputs=z, targets=labels_norm, strict=False)
+            if self.do_normalize:
+                self.model.set_train_data(inputs=z, targets=labels_norm, strict=False)
+            else:
+                self.model.set_train_data(inputs=z, targets=labels, strict=False)
 
             predictions = self.model(z)
             loss = -self.mll(predictions, self.model.train_targets)
@@ -177,7 +188,10 @@ class Sparse_DKT_count_regression(nn.Module):
             optimizer.step()
 
             mll_list.append(np.around(loss.item(), 4))
-            mse = self.mse(predictions.mean, labels)
+            if self.do_normalize:
+                mse = self.mse(predictions.mean, labels_norm)
+            else:
+                mse = self.mse(predictions.mean, labels)
             # mse_list.append(mse)
             self.iteration = (epoch*31) + itr
             if(self.writer is not None) and self.show_plots_loss: 
@@ -202,18 +216,22 @@ class Sparse_DKT_count_regression(nn.Module):
                     self.mw_feature.grab_frame()
             #****************************************************
             # validate on train data
-            val_freq = 20
+            val_freq = 2
             if validation and (epoch%val_freq==0):
                 support_ind = np.random.choice(np.arange(n_samples), size=n_support, replace=False)
                 query_ind   = [i for i in range(n_samples) if i not in support_ind]
                 x_support   = inputs[support_ind,:,:,:]
                 z_support   = z[support_ind, :]
-                y_s_norm    = labels_norm[support_ind]
                 y_support = labels[support_ind]
                 # x_query   = inputs[query_ind,:,:,:]
                 z_query   = z[query_ind]
-                y_q_norm  = labels_norm[query_ind]
                 y_query   = labels[query_ind]
+
+                if self.do_normalize:
+                    y_s_norm = labels_norm[support_ind]
+                    y_q_norm   = labels_norm[query_ind]
+                
+
 
                 with torch.no_grad():
                     inducing_points = self.get_inducing_points(z_support, y_s_norm, n_support, verbose=False)
@@ -224,7 +242,10 @@ class Sparse_DKT_count_regression(nn.Module):
                 ip_values = inducing_points.z_values.cuda()
                 self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
                 self.model.covar_module._clear_cache()
-                self.model.set_train_data(inputs=z_support, targets=y_s_norm, strict=False)
+                if self.do_normalize:
+                    self.model.set_train_data(inputs=z_support, targets=y_s_norm, strict=False)
+                else:
+                    self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
 
                 self.model.eval()
                 # self.regressor.eval()
@@ -234,9 +255,16 @@ class Sparse_DKT_count_regression(nn.Module):
                     pred    = self.likelihood(self.model(z_query.detach()))
                     lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
 
-                mse = self.mse(pred.mean, y_q_norm).item()
+                if self.do_normalize:
+                    mse = self.mse(pred.mean, y_q_norm).item()
+                else: 
+                    mse = self.mse(pred.mean, y_query).item()
+
                 mse_list.append(mse)
-                y_pred = self.denormalize(pred.mean.detach(), y_mean, y_std)
+                if self.do_normalize:
+                    y_pred = self.denormalize_y(pred.mean, y_min, y_max, y_mean, y_std)
+                else:
+                    y_pred = pred.mean
                 mae = self.mae(y_pred, y_query).item()
                 mae_list.append(mae)
                 print(Fore.YELLOW, f'epoch {epoch+1}, itr {itr+1}, Train  MAE:{mae:.2f}, MSE: {mse:.4f}', Fore.RESET)
@@ -253,6 +281,7 @@ class Sparse_DKT_count_regression(nn.Module):
 
         mse_list = []
         mae_list = []
+        base_line_mae_list = []
         self.model.eval()
         self.regressor.eval()
         self.likelihood.eval()
@@ -285,9 +314,11 @@ class Sparse_DKT_count_regression(nn.Module):
             z_query     = z[query_ind, :, :, :]
             
             with torch.no_grad():
-                y_mean, y_std = y_all.mean(), y_all.std()
-                y_s_norm = self.normalize(y_support, y_mean, y_std)
-                y_q_norm = self.normalize(y_query, y_mean, y_std)
+               if self.do_normalize:
+                    y_mean, y_std = y_all.mean(), y_all.std()
+                    y_min, y_max = y_all.min(), y_all.max()
+                    y_s_norm = self.normalize(y_support, y_min, y_max, y_mean, y_std)
+                    y_q_norm = self.normalize(y_query, y_min, y_max, y_mean, y_std)
 
             z_support = z_support.reshape(z_support.shape[0], -1)
             with torch.no_grad():
@@ -311,24 +342,37 @@ class Sparse_DKT_count_regression(nn.Module):
             # inducing_points = inducing_max_similar_in_support_x(x_support, z_support.detach(), inducing_points, y_support)
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
 
-            self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
+            if self.do_normalize:
+                self.model.set_train_data(inputs=z_support, targets=y_s_norm, strict=False)
+            else:
+                self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
 
             with torch.no_grad():
                 z_query = z_query.reshape(z_query.shape[0], -1)
                 pred    = self.likelihood(self.model(z_query))
                 lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
 
-            mse = self.mse(pred.mean, y_q_norm).item()
+            if self.do_normalize:
+                mse = self.mse(pred.mean, y_q_norm).item()
+            else:
+                mse = self.mse(pred.mean, y_query).item()
             mse_list.append(mse)
-            y_pred = self.denormalize(pred.mean.detach(), y_mean, y_std)
+            if self.do_normalize:
+                y_pred = self.denormalize_y(pred.mean.detach(), y_min, y_max, y_mean, y_std)
+            else:
+                y_pred = pred.mean
             mae = self.mae(y_pred, y_query).item()
             mae_list.append(mae)
             #**************************************************************
             y = y_query.detach().cpu().numpy() 
             y_pred = y_pred.cpu().numpy() 
+            mean_support_y = y_support.mean()
+            base_line_mae = self.mae(mean_support_y.repeat(y_query.shape[0]), y_query).item()
+            base_line_mae_list.append(base_line_mae)
             print(Fore.RED,"="*50, Fore.RESET)
             print(f'itr #{itr}')
-            print(f'mean of support_y {y_support.mean():.2f}')
+            print(f'mean of support_y {mean_support_y:.2f}')
+            print(f'base line MAE: {base_line_mae:.2f}')
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
             print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
             print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
@@ -379,6 +423,8 @@ class Sparse_DKT_count_regression(nn.Module):
         print(Fore.CYAN,"-"*30, f'\n epoch {epoch+1} => Avg.   MAE: {np.mean(mae_list):.2f}, RMSE: {np.sqrt(np.mean(mse_list)):.2f}'
                                     f', MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
    
+        print(f'Avg. base line MAE: {np.mean(base_line_mae_list):.2f}')
+
         return np.mean(mse_list), np.mean(mae_list), np.sqrt(np.mean(mse_list))
 
     
@@ -506,7 +552,7 @@ class Sparse_DKT_count_regression(nn.Module):
         # save state
         gp_state_dict         = self.model.state_dict()
         likelihood_state_dict = self.likelihood.state_dict()
-        nn_state_dict         = self.feature_extractor.state_dict()
+        nn_state_dict         = self.regressor.state_dict()
         torch.save({'gp': gp_state_dict, 'likelihood': likelihood_state_dict, 'net':nn_state_dict}, checkpoint)
 
     def load_checkpoint(self, checkpoint):
@@ -517,7 +563,7 @@ class Sparse_DKT_count_regression(nn.Module):
         ckpt['gp']['covar_module.inducing_points'] = IP
         self.model.load_state_dict(ckpt['gp'])
         self.likelihood.load_state_dict(ckpt['likelihood'])
-        self.feature_extractor.load_state_dict(ckpt['net'])
+        self.regressor.load_state_dict(ckpt['net'])
 
     def init_summary(self, id):
         if(IS_TBX_INSTALLED):

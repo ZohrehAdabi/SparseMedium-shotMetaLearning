@@ -312,8 +312,8 @@ class DKT_count_regression(nn.Module):
 
             print(Fore.RED,"="*50, Fore.RESET)
             print(f'itr #{itr+1}')
-            print(f'mean of support_y {base_line_mae:.2f}')
-            print(f'base line MAE: {mean_support_y:.2f}')
+            print(f'mean of support_y {mean_support_y:.2f}')
+            print(f'base line MAE: {base_line_mae:.2f}')
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
             print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
             print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
@@ -333,7 +333,7 @@ class DKT_count_regression(nn.Module):
                 self.update_plots_test(self.plots, x_support, y_support.detach().cpu().numpy(), 
                                                 z_support.detach(), z_query.detach(), embedded_z_support,
                                                 x_query, y_query.detach().cpu().numpy(), y_pred, pred.variance.detach().cpu().numpy(),
-                                                mae, mse, y_support.mean(), itr)
+                                                mae, mse, mean_support_y, itr)
                 if self.show_plots_pred:
                     self.plots.fig.canvas.draw()
                     self.plots.fig.canvas.flush_events()
