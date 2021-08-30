@@ -544,7 +544,7 @@ class ExactGPLayer(gpytorch.models.ExactGP):
         self.mean_module.register_constraint("constant", gpytorch.constraints.Positive())
         ## RBF kernel
         if(kernel=='rbf' or kernel=='RBF'):
-            self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel()) + gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
+            self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel()) #+ gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
         ## Spectral kernel
         elif(kernel=='spectral'):
             self.covar_module = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=4, ard_num_dims=2304) #
