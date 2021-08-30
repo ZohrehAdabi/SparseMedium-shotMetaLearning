@@ -465,10 +465,10 @@ class CountRegressor(nn.Module):
         super(CountRegressor, self).__init__()
         self.pool = pool
         self.regressor = nn.Sequential(
-            # nn.Conv2d(input_channels, 128, 7, padding=3),
-            # nn.ReLU(),
-            # nn.UpsamplingBilinear2d(scale_factor=2),
-            nn.Conv2d(input_channels, 128, 5, padding=2),
+            nn.Conv2d(input_channels, 196, 7, padding=3),
+            nn.ReLU(),
+            nn.UpsamplingBilinear2d(scale_factor=2),
+            nn.Conv2d(196, 128, 5, padding=2),
             nn.ReLU(),
             nn.UpsamplingBilinear2d(scale_factor=2),
             nn.Conv2d(128, 64, 3, padding=1),
