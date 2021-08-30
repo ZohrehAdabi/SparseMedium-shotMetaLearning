@@ -377,7 +377,8 @@ class DKT_count_regression(nn.Module):
                 self.writer.add_scalar('MSE Val.', val_mse, epoch)
                 self.writer.add_scalar('MAE Val.', val_mae, epoch)
             print(Fore.GREEN,"-"*30, Fore.RESET)
-
+        model_name = self.best_path + f'_final_mae{np.mean(mae_list):.2f}_ep{epoch}_{id}.pth'
+        self.save_checkpoint(model_name)
         print(f'Avg. Val. MAE: {np.mean(mae_list)}')
         mll = np.mean(mll_list)
         if self.show_plots_pred:
