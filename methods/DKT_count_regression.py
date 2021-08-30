@@ -355,6 +355,7 @@ class DKT_count_regression(nn.Module):
         self.feature_extractor.eval()
         best_mae, best_rmse = 10e7, 10e7
         mll_list = []
+        mae_list = []
         for epoch in range(stop_epoch):
             mll = self.train_loop(epoch, n_support, n_samples, optimizer)
             mll_list.append(np.around(mll, 3))
@@ -365,6 +366,7 @@ class DKT_count_regression(nn.Module):
             print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
             if epoch%1==0:
                 val_mse, val_mae, val_rmse = self.test_loop(n_support, n_samples, epoch, optimizer)
+                mae_list.append(val_mae)
                 if best_mae >= val_mae:
                     best_mae = val_mae
                     best_rmse = val_rmse
@@ -376,6 +378,7 @@ class DKT_count_regression(nn.Module):
                 self.writer.add_scalar('MAE Val.', val_mae, epoch)
             print(Fore.GREEN,"-"*30, Fore.RESET)
 
+        print(f'Avg. Val. MAE: {np.mean(mae_list)}')
         mll = np.mean(mll_list)
         if self.show_plots_pred:
             self.mw.finish()
@@ -387,11 +390,15 @@ class DKT_count_regression(nn.Module):
         
         self.feature_extractor.eval()
         mse_list = []
+        mae_list = []
         for e in range(n_test_epoch):
             print(f'test on all test tasks epoch #{e}')
             
             mse, mae, rmse = self.test_loop(n_support, n_samples, e,  optimizer)
+            mae_list.append(mae)
             mse_list.append(float(mse))
+        
+        print(f'Avg. Test. MAE: {np.mean(mae_list)}')
 
         if self.show_plots_pred:
             self.mw.finish()
