@@ -81,7 +81,7 @@ else:
     ValueError('Unrecognised method')
 
 if selective:
-    lr_gp  = 1e-3
+    lr_gp  = 1e-4
     lr_reg = 1e-5
     mse = False
     # mse = True
@@ -89,7 +89,7 @@ if selective:
     id = f'_best_mae{19.85}_ep{240}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
     id = f'_best_mae{18.56}_ep{42}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
     id = f'_best_mae{19.62}_ep{43}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
-    # id = f'_best_mae{21.35:.2f}_ep{31}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
+    id = f'_best_mae{25.23:.2f}_ep{35}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
     if mse: id = id + '_mse'
     id = id + '.pth'
     model_path = params.checkpoint_dir + id
