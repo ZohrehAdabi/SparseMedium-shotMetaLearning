@@ -333,7 +333,7 @@ class DKT_count_regression(nn.Module):
                 embedded_z_support = TSNE(n_components=2).fit_transform(z_support.detach().cpu().numpy())
 
                 self.update_plots_test(self.plots, x_support, y_support.detach().cpu().numpy(), 
-                                                z_support.detach(), z_query.detach(), embedded_z_support, gt_density_q.squeeze(),
+                                                z_support.detach(), z_query.detach(), embedded_z_support, gt_density_q.squeeze(1),
                                                 x_query, y_query.detach().cpu().numpy(), y_pred, pred.variance.detach().cpu().numpy(),
                                                 mae, mse, mean_support_y, itr)
                 if self.show_plots_pred:
@@ -542,6 +542,38 @@ class DKT_count_regression(nn.Module):
 
             return plots
 
+        def format_for_plotting(tensor):
+            """Formats the shape of tensor for plotting.
+            Tensors typically have a shape of :math:`(N, C, H, W)` or :math:`(C, H, W)`
+            which is not suitable for plotting as images. This function formats an
+            input tensor :math:`(H, W, C)` for RGB and :math:`(H, W)` for mono-channel
+            data.
+            Args:
+                tensor (torch.Tensor, torch.float32): Image tensor
+            Shape:
+                Input: :math:`(N, C, H, W)` or :math:`(C, H, W)`
+                Output: :math:`(H, W, C)` or :math:`(H, W)`, respectively
+            Return:
+                torch.Tensor (torch.float32): Formatted image tensor (detached)
+            Note:
+                Symbols used to describe dimensions:
+                    - N: number of images in a batch
+                    - C: number of channels
+                    - H: height of the image
+                    - W: width of the image
+            """
+
+            has_batch_dimension = len(tensor.shape) == 4
+            formatted = tensor.clone()
+
+            if has_batch_dimension:
+                formatted = tensor.squeeze(0)
+
+            if formatted.shape[0] == 1:
+                return formatted.squeeze(0).detach()
+            else:
+                return formatted.permute(1, 2, 0).detach()
+
         if self.show_plots_pred:
 
             cluster_colors = ['aqua', 'coral', 'lime', 'gold', 'purple', 'green']
@@ -561,10 +593,11 @@ class DKT_count_regression(nn.Module):
                 for j in range(c):
                 
                     img = transforms.ToPILImage()(denormalize(x_q[k]).cpu()).convert("RGB")
-                    img_gt_density_q = transforms.ToPILImage()(gt_density_q[i].cpu()).convert("RGB")
+                    img1 = format_for_plotting(denormalize(x_q[k].cpu()))
+                    img_gt_density_q = format_for_plotting(gt_density_q[k].cpu())
                     plots = clear_ax(plots, i, j)
-                    plots.ax[i, j].imshow(img)
-                    img2 = 0.2989*img[:,:,0] + 0.5870*img[:,:,1] + 0.1140*img[:,:,2]
+                    # plots.ax[i, j].imshow(img)
+                    img2 = 0.2989*img1[:,:,0] + 0.5870*img1[:,:,1] + 0.1140*img1[:,:,2]
                     plots.ax[i, j].imshow(img2, cmap='gray')
                     plots.ax[i, j].imshow(img_gt_density_q, cmap=plt.cm.viridis, alpha=0.3)
                     plots = color_ax(plots, i, j, color='white')
