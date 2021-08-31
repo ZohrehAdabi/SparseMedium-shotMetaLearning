@@ -136,7 +136,7 @@ class DKT_count_regression(nn.Module):
                     y_mean, y_std = labels.mean(), labels.std()
                     y_min, y_max = labels.min(), labels.max()
                     labels_norm = self.normalize(labels, y_min, y_max, y_mean, y_std)
-            self.visualize(inputs[5], gt_density_resized[5], gt_density[5])
+            self.visualize(inputs[5].cpu(), gt_density_resized[5].cpu(), gt_density[5].cpu())
             if self.use_mse:
                 density_mse = self.mse(z, gt_density_resized.squeeze(1))
 
