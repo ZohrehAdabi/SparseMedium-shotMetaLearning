@@ -428,8 +428,9 @@ class Sparse_DKT_count_regression(nn.Module):
         return np.mean(mse_list), np.mean(mae_list), np.sqrt(np.mean(mse_list))
 
     
-    def train(self, stop_epoch, n_support, n_samples, optimizer):
+    def train(self, stop_epoch, n_support, n_samples, optimizer,  id, use_mse):
 
+        self.use_mse = use_mse
         self.feature_extractor.eval()
         mll_list = []
         best_mae, best_rmse = 10e7, 10e7
@@ -451,12 +452,12 @@ class Sparse_DKT_count_regression(nn.Module):
             if best_mae >= val_mae:
                 best_mae = val_mae
                 best_rmse = val_rmse
-                model_name = self.best_path + f'_best_mae{best_mae:.2f}.pth'
+                model_name = self.best_path + f'_best_mae{best_mae:.2f}_ep{epoch}_{id}.pth'
                 self.save_checkpoint(model_name)
                 print(Fore.LIGHTRED_EX, f'Best MAE: {best_mae:.2f}, RMSE: {best_rmse}', Fore.RESET)
             if(self.writer is not None) and self.show_plots_loss:
-                self.writer.add_scalar('MSE Val. [Sparse DKT {self.sparse_method}]', val_mse, epoch)
-                self.writer.add_scalar('MAE Val. [Sparse DKT {self.sparse_method}]', val_mae, epoch)
+                self.writer.add_scalar(f'MSE Val. [Sparse DKT {self.sparse_method}]', val_mse, epoch)
+                self.writer.add_scalar(f'MAE Val. [Sparse DKT {self.sparse_method}]', val_mae, epoch)
             print(Fore.GREEN,"-"*30, Fore.RESET)
             # print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
         
@@ -466,6 +467,7 @@ class Sparse_DKT_count_regression(nn.Module):
             self.mw.finish()
         if self.show_plots_features:
             self.mw_feature.finish()
+
         return mll, mll_list
     
     def test(self, n_support, n_samples, optimizer=None, n_test_epoch=None): # no optimizer needed for GP
