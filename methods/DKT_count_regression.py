@@ -412,9 +412,9 @@ class DKT_count_regression(nn.Module):
 
     def visualize(self, image, gt_density, pred_density, figsize=(8, 8)):
 
-        img1=    format_for_plotting(image)
-        gt = format_for_plotting(gt_density)
-        pred = format_for_plotting(pred_density)
+        img1 = self.format_for_plotting(image)
+        gt = self.format_for_plotting(gt_density)
+        pred = self.format_for_plotting(pred_density)
 
         fig = plt.figure(figsize=figsize)
 
@@ -542,38 +542,6 @@ class DKT_count_regression(nn.Module):
 
             return plots
 
-        def format_for_plotting(tensor):
-            """Formats the shape of tensor for plotting.
-            Tensors typically have a shape of :math:`(N, C, H, W)` or :math:`(C, H, W)`
-            which is not suitable for plotting as images. This function formats an
-            input tensor :math:`(H, W, C)` for RGB and :math:`(H, W)` for mono-channel
-            data.
-            Args:
-                tensor (torch.Tensor, torch.float32): Image tensor
-            Shape:
-                Input: :math:`(N, C, H, W)` or :math:`(C, H, W)`
-                Output: :math:`(H, W, C)` or :math:`(H, W)`, respectively
-            Return:
-                torch.Tensor (torch.float32): Formatted image tensor (detached)
-            Note:
-                Symbols used to describe dimensions:
-                    - N: number of images in a batch
-                    - C: number of channels
-                    - H: height of the image
-                    - W: width of the image
-            """
-
-            has_batch_dimension = len(tensor.shape) == 4
-            formatted = tensor.clone()
-
-            if has_batch_dimension:
-                formatted = tensor.squeeze(0)
-
-            if formatted.shape[0] == 1:
-                return formatted.squeeze(0).detach()
-            else:
-                return formatted.permute(1, 2, 0).detach()
-
         if self.show_plots_pred:
 
             cluster_colors = ['aqua', 'coral', 'lime', 'gold', 'purple', 'green']
@@ -593,8 +561,8 @@ class DKT_count_regression(nn.Module):
                 for j in range(c):
                 
                     img = transforms.ToPILImage()(denormalize(x_q[k]).cpu()).convert("RGB")
-                    img1 = format_for_plotting(denormalize(x_q[k].cpu()))
-                    img_gt_density_q = format_for_plotting(gt_density_q[k].cpu())
+                    img1 = self.format_for_plotting(denormalize(x_q[k].cpu()))
+                    img_gt_density_q = self.format_for_plotting(gt_density_q[k].cpu())
                     plots = clear_ax(plots, i, j)
                     # plots.ax[i, j].imshow(img)
                     img2 = 0.2989*img1[:,:,0] + 0.5870*img1[:,:,1] + 0.1140*img1[:,:,2]
@@ -614,6 +582,37 @@ class DKT_count_regression(nn.Module):
             plots.ax_feature.scatter(embedded_z[:, 0], embedded_z[:, 1])
             # plots.ax_feature.legend()
 
+    def format_for_plotting(self, tensor):
+        """Formats the shape of tensor for plotting.
+        Tensors typically have a shape of :math:`(N, C, H, W)` or :math:`(C, H, W)`
+        which is not suitable for plotting as images. This function formats an
+        input tensor :math:`(H, W, C)` for RGB and :math:`(H, W)` for mono-channel
+        data.
+        Args:
+            tensor (torch.Tensor, torch.float32): Image tensor
+        Shape:
+            Input: :math:`(N, C, H, W)` or :math:`(C, H, W)`
+            Output: :math:`(H, W, C)` or :math:`(H, W)`, respectively
+        Return:
+            torch.Tensor (torch.float32): Formatted image tensor (detached)
+        Note:
+            Symbols used to describe dimensions:
+                - N: number of images in a batch
+                - C: number of channels
+                - H: height of the image
+                - W: width of the image
+        """
+
+        has_batch_dimension = len(tensor.shape) == 4
+        formatted = tensor.clone()
+
+        if has_batch_dimension:
+            formatted = tensor.squeeze(0)
+
+        if formatted.shape[0] == 1:
+            return formatted.squeeze(0).detach()
+        else:
+            return formatted.permute(1, 2, 0).detach()
 
 
 class ExactGPLayer(gpytorch.models.ExactGP):
