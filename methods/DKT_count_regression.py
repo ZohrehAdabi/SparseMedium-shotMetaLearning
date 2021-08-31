@@ -410,6 +410,39 @@ class DKT_count_regression(nn.Module):
 
         return mse_list
 
+    def visualize(self, image, gt_density, pred_density, figsize=(8, 8)):
+
+        img1=    format_for_plotting(image)
+        gt = format_for_plotting(gt_density)
+        pred = format_for_plotting(pred_density)
+
+        fig = plt.figure(figsize=figsize)
+
+        ax = fig.add_subplot(2, 2, 1)
+        ax.set_axis_off()
+        ax.imshow(img1)
+        ax.set_title("Input image")
+
+        ax = fig.add_subplot(2, 2, 2)
+        ax.set_axis_off()
+        pred_cnt = pred.sum()
+        ax.set_title("Overlaid result, predicted count: {:.2f}".format(pred_cnt))
+
+        img2 = 0.2989*img1[:,:,0] + 0.5870*img1[:,:,1] + 0.1140*img1[:,:,2]
+        ax.imshow(img2, cmap='gray')
+        ax.imshow(pred, cmap=plt.cm.viridis, alpha=0.5)
+
+        ax = fig.add_subplot(2, 2, 3)
+        ax.set_axis_off()
+        gt_cnt = gt.sum()
+        ax.set_title("Density map, ground truth count: {:.2f}".format(gt_cnt))
+        ax.imshow(gt)
+
+        ax = fig.add_subplot(2, 2, 3)
+        ax.set_axis_off()
+        ax.set_title("Density map, predicted count: {:.2f}".format(pred_cnt))
+        ax.imshow(pred)
+        
 
     def save_checkpoint(self, checkpoint):
         # save state
@@ -448,7 +481,7 @@ class DKT_count_regression(nn.Module):
         # plt.show(block=False)
         # plt.pause(0.0001)
         if self.show_plots_pred:
-           
+        
             metadata = dict(title='DKT', artist='Matplotlib')
             FFMpegWriter = animation.writers['ffmpeg']
             self.mw = FFMpegWriter(fps=5, metadata=metadata)   
@@ -470,7 +503,7 @@ class DKT_count_regression(nn.Module):
         plt.subplots_adjust(wspace=0.03,  
                     hspace=0.05) 
         # ax = fig.subplots(7, 19, sharex=True, sharey=True)
-          
+        
         # fig.subplots_adjust(hspace=0.4, wspace=0.1)
         fig_feature: plt.Figure = plt.figure(2, figsize=(6, 6), tight_layout=True, dpi=125)
         ax_feature: plt.Axes = fig_feature.add_subplot(1, 1, 1)
