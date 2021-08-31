@@ -106,6 +106,7 @@ class DKT_count_regression(nn.Module):
         else:
             return  (y_mean + pred * y_std) 
 
+
     def train_loop(self, epoch, n_support, n_samples, optimizer):
 
         # print(f'{epoch}: {batch_labels[0]}')
@@ -135,7 +136,7 @@ class DKT_count_regression(nn.Module):
                     y_mean, y_std = labels.mean(), labels.std()
                     y_min, y_max = labels.min(), labels.max()
                     labels_norm = self.normalize(labels, y_min, y_max, y_mean, y_std)
-
+            self.visualize(inputs[5], gt_density_resized[5], gt_density[5])
             if self.use_mse:
                 density_mse = self.mse(z, gt_density_resized.squeeze(1))
 
@@ -442,6 +443,9 @@ class DKT_count_regression(nn.Module):
         ax.set_axis_off()
         ax.set_title("Density map, predicted count: {:.2f}".format(pred_cnt))
         ax.imshow(pred)
+
+        fig.tight_layout()
+        plt.tight_layout()
         
 
     def save_checkpoint(self, checkpoint):
