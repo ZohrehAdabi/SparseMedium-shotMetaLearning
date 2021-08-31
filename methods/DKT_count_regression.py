@@ -129,6 +129,7 @@ class DKT_count_regression(nn.Module):
             #predict density map
             feature.requires_grad = True
             z = self.regressor(feature)
+            
             #if image size isn't divisible by 8, gt size is slightly different from output size
             with torch.no_grad():
                 gt_density_resized, labels = self.resize_gt_density(z, gt_density, labels)
@@ -136,7 +137,8 @@ class DKT_count_regression(nn.Module):
                     y_mean, y_std = labels.mean(), labels.std()
                     y_min, y_max = labels.min(), labels.max()
                     labels_norm = self.normalize(labels, y_min, y_max, y_mean, y_std)
-            self.visualize(inputs[5].cpu(), gt_density_resized[5].cpu(), gt_density[5].cpu())
+            # self.visualize(inputs[5].cpu(), gt_density_resized[5].squeeze(0).cpu(), z[5].cpu())
+            # self.visualize(inputs[5].cpu(), gt_density_resized[5].squeeze(0).cpu(), gt_density[5].squeeze(0).cpu())
             if self.use_mse:
                 density_mse = self.mse(z, gt_density_resized.squeeze(1))
 
