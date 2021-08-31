@@ -88,7 +88,7 @@ if selective:
     #'ResNet50_DKT_best_mae37.65_ep440_g_0.001_r_1e-05_feat_map4.'
     id = f'_best_mae{19.85}_ep{240}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
     id = f'_final_mae{28.53}_ep{99}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
-    id = f'_final_mae{26.27:.2f}_ep{99}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
+    id = f'_final_mae{26.63:.2f}_ep{99}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
     # id = f'_final_mae{27.87:.2f}_ep{49}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
     if mse: id = id + '_mse'
     id = id + '.pth'

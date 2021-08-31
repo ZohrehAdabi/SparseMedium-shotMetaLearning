@@ -275,7 +275,9 @@ class DKT_count_regression(nn.Module):
             y_query     = y_all[query_ind]
             gt_density_q = gt_density_resized[query_ind, :, :, :, :]
             z_query     = z[query_ind, :, :, :]
-            self.visualize(inputs[5].cpu(), gt_density_s[5].squeeze(0).cpu(), z_support[5].cpu())
+            
+            # self.visualize(x_support[5].cpu(), gt_density_s[5].squeeze(0).cpu(), z_support[5].cpu())
+            
             with torch.no_grad():
                 if self.do_normalize:
                     y_mean, y_std = y_all.mean(), y_all.std()
@@ -375,8 +377,8 @@ class DKT_count_regression(nn.Module):
                 if best_mae >= val_mae:
                     best_mae = val_mae
                     best_rmse = val_rmse
-                    # model_name = self.best_path + f'_best_mae{best_mae:.2f}_ep{epoch}_{id}.pth'
-                    # self.save_checkpoint(model_name)
+                    model_name = self.best_path + f'_best_mae{best_mae:.2f}_ep{epoch}_{id}.pth'
+                    self.save_checkpoint(model_name)
                     print(Fore.LIGHTRED_EX, f'Best MAE: {best_mae:.2f}, RMSE: {best_rmse}', Fore.RESET)
             if(self.writer is not None) and self.show_plots_loss:
                 self.writer.add_scalar('MSE Val.', val_mse, epoch)
@@ -567,13 +569,13 @@ class DKT_count_regression(nn.Module):
                 for j in range(c):
                 
                     img = transforms.ToPILImage()(denormalize(x_q[k]).cpu()).convert("RGB")
-                    img1 = self.format_for_plotting(denormalize(x_q[k].cpu()))
-                    img_gt_density_q = self.format_for_plotting(gt_density_q[k].cpu())
+                    # img1 = self.format_for_plotting(denormalize(x_q[k].cpu()))
+                    # img_gt_density_q = self.format_for_plotting(gt_density_q[k].cpu())
                     plots = clear_ax(plots, i, j)
-                    # plots.ax[i, j].imshow(img)
-                    img2 = 0.2989*img1[:,:,0] + 0.5870*img1[:,:,1] + 0.1140*img1[:,:,2]
-                    plots.ax[i, j].imshow(img2, cmap='gray')
-                    plots.ax[i, j].imshow(img_gt_density_q, cmap=plt.cm.viridis, alpha=0.3)
+                    plots.ax[i, j].imshow(img)
+                    # img2 = 0.2989*img1[:,:,0] + 0.5870*img1[:,:,1] + 0.1140*img1[:,:,2]
+                    # plots.ax[i, j].imshow(img2, cmap='gray')
+                    # plots.ax[i, j].imshow(img_gt_density_q, cmap=plt.cm.viridis, alpha=0.3)
                     plots = color_ax(plots, i, j, color='white')
                     # plots.ax[i, j].set_title(f'prd:{y_pred[k]:.0f}', fontsize=10)
                     plots.ax[i, j].set_xlabel(f'prd:{y_pred[k]:.1f}|gt: {y_q[k]:.1f}', fontsize=10)

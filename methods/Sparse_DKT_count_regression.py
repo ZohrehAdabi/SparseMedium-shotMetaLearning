@@ -44,7 +44,7 @@ IP = namedtuple("inducing_points", "z_values index count x y")
 
 class Sparse_DKT_count_regression(nn.Module):
     def __init__(self, backbone, regressor, base_file=None, val_file=None,
-                    sparse_mthod='FRVM', config="1010", align_threshold=1e-3, n_inducing_points=12, 
+                    sparse_method='FRVM', config="1010", align_threshold=1e-3, n_inducing_points=12, 
                     video_path=None, show_plots_loss=False, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_count_regression, self).__init__()
         ## GP parameters
@@ -52,7 +52,7 @@ class Sparse_DKT_count_regression(nn.Module):
         self.regressor = regressor
         self.train_file = base_file
         self.val_file = val_file
-        self.sparse_method = sparse_mthod
+        self.sparse_method = sparse_method
         self.num_induce_points = n_inducing_points
         self.config = config
         self.align_threshold = align_threshold

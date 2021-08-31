@@ -68,7 +68,7 @@ class MediumShotCountingDataset(Dataset):
             image, boxes, gt_density, gt_count = sample['image'].cuda(), sample['boxes'].cuda(),\
                                                             sample['gt_density'].cuda(), sample['gt_count'].cuda()
                                                             
-            self.visualize(image.cpu(), gt_density.squeeze(0).cpu(), gt_density.squeeze(0).cpu())
+            # self.visualize(image.cpu(), gt_density.squeeze(0).cpu(), gt_density.squeeze(0).cpu())
             samples['image'].append(image)
             samples['gt_density'].append(gt_density)
             samples['boxes'].append(boxes)
@@ -82,6 +82,7 @@ class MediumShotCountingDataset(Dataset):
             # print(f'after, key {key}, {samples[key].shape}')
         samples['class_name'] = class_name
         return samples  #image, boxes, gt_density
+    
     def visualize(self, image, gt_density, pred_density, figsize=(8, 8)):
 
         img1 = self.format_for_plotting(denormalize(image))
