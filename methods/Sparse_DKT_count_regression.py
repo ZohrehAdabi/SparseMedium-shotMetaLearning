@@ -445,7 +445,7 @@ class Sparse_DKT_count_regression(nn.Module):
 
             print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
 
-            val_mse, val_mae, val_rmse = self.test_loop_fast_rvm(n_support, n_samples, epoch, optimizer)
+            val_mse, val_mae, val_rmse = self.test_loop(n_support, n_samples, epoch, optimizer)
             
             mll_list.append(np.around(mll, 4))
 
