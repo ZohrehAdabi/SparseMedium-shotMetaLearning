@@ -57,7 +57,7 @@ class Sparse_DKT_count_regression(nn.Module):
         self.config = config
         self.align_threshold = align_threshold
         self.do_normalize = True
-        self.minmax = True
+        self.minmax = False
         self.device = 'cuda'
         self.video_path = video_path
         self.best_path = video_path
