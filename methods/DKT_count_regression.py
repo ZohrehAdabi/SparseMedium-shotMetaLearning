@@ -333,7 +333,7 @@ class DKT_count_regression(nn.Module):
                 embedded_z_support = TSNE(n_components=2).fit_transform(z_support.detach().cpu().numpy())
 
                 self.update_plots_test(self.plots, x_support, y_support.detach().cpu().numpy(), 
-                                                z_support.detach(), z_query.detach(), embedded_z_support, gt_density_q,
+                                                z_support.detach(), z_query.detach(), embedded_z_support, gt_density_q.squeeze(),
                                                 x_query, y_query.detach().cpu().numpy(), y_pred, pred.variance.detach().cpu().numpy(),
                                                 mae, mse, mean_support_y, itr)
                 if self.show_plots_pred:
@@ -528,9 +528,12 @@ class DKT_count_regression(nn.Module):
                 for j in range(c):
                 
                     img = transforms.ToPILImage()(denormalize(x_q[k]).cpu()).convert("RGB")
-                    
+                    img_gt_density_q = transforms.ToPILImage()(gt_density_q[i].cpu()).convert("RGB")
                     plots = clear_ax(plots, i, j)
                     plots.ax[i, j].imshow(img)
+                    img2 = 0.2989*img[:,:,0] + 0.5870*img[:,:,1] + 0.1140*img[:,:,2]
+                    plots.ax[i, j].imshow(img2, cmap='gray')
+                    plots.ax[i, j].imshow(img_gt_density_q, cmap=plt.cm.viridis, alpha=0.3)
                     plots = color_ax(plots, i, j, color='white')
                     # plots.ax[i, j].set_title(f'prd:{y_pred[k]:.0f}', fontsize=10)
                     plots.ax[i, j].set_xlabel(f'prd:{y_pred[k]:.1f}|gt: {y_q[k]:.1f}', fontsize=10)
