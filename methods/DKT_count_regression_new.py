@@ -203,7 +203,6 @@ class DKT_count_regression_new(nn.Module):
                     self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
 
                 self.model.eval()
-                self.regressor.eval()
                 self.likelihood.eval()
 
                 with torch.no_grad():
@@ -259,7 +258,7 @@ class DKT_count_regression_new(nn.Module):
             
 
             #predict density map
-            z = self.regressor(x_all).detach()
+            z = self.feature_extractor(x_all).detach()
             with torch.no_grad():
                 gt_density_resized, y_all = self.resize_gt_density(z, gt_density, y_all)
                 

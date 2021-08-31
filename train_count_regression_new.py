@@ -78,7 +78,7 @@ elif params.method=='Sparse_DKT':
 else:
     ValueError('Unrecognised method')
 lr_gp  = 1e-3
-lr_net = 1e-5
+lr_net = 1e-4
 mse = False
 # mse = True
 id = f'g_{lr_gp}_r_{lr_net}'

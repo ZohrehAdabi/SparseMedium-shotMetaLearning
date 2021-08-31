@@ -176,6 +176,7 @@
             "console": "integratedTerminal",
            "args": ["--method","DKT", "--n_samples", "50", "--n_support", "40",
                 "--dataset", "MSC44", "--model", "Conv6", "--stop_epoch", "100",
+                "--show_plots_loss",
                  "--seed","2"]  //"--show_plots_features",  "--show_plots_loss"
       // --method "DKT"   --n_samples 50 --n_support 40 --dataset "MSC44" --model "Conv6" --stop_epoch 50  --show_plots_loss  --seed  2 
         },
