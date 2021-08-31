@@ -59,7 +59,7 @@ class MediumShotCountingDataset(Dataset):
                 x2 = bbox[2][0]
                 y2 = bbox[2][1]
                 rects.append([y1, x1, y2, x2])
-            image = Image.open('{}'.format(images_path[im_id]))#.convert('RGB')
+            image = Image.open('{}'.format(images_path[im_id])).convert('RGB')
             image.load()
             # density_path = gt_dir + '/' + im_id.split(".jpg")[0] + ".npy"
             density = np.load(gt_densities_path[im_id]).astype('float32')    
@@ -84,7 +84,7 @@ class MediumShotCountingDataset(Dataset):
         return samples  #image, boxes, gt_density
     def visualize(self, image, gt_density, pred_density, figsize=(8, 8)):
 
-        img1 = self.format_for_plotting(image)
+        img1 = self.format_for_plotting(denormalize(image))
         gt = self.format_for_plotting(gt_density)
         pred = self.format_for_plotting(pred_density)
 

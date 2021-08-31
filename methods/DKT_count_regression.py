@@ -415,7 +415,7 @@ class DKT_count_regression(nn.Module):
 
     def visualize(self, image, gt_density, pred_density, figsize=(8, 8)):
 
-        img1 = self.format_for_plotting(image)
+        img1 = self.format_for_plotting(denormalize(image))
         gt = self.format_for_plotting(gt_density)
         pred = self.format_for_plotting(pred_density)
 
