@@ -8,6 +8,7 @@ from PIL import Image
 from torch.utils.data import Dataset, dataset
 import os, json
 import cv2
+import matplotlib.pyplot as plt
 
 class MediumShotCountingDataset(Dataset):
     def __init__(self, data_file, transform, n_samples, n_support=None):
@@ -58,7 +59,7 @@ class MediumShotCountingDataset(Dataset):
                 x2 = bbox[2][0]
                 y2 = bbox[2][1]
                 rects.append([y1, x1, y2, x2])
-            image = Image.open('{}'.format(images_path[im_id])).convert('RGB')
+            image = Image.open('{}'.format(images_path[im_id]))#.convert('RGB')
             image.load()
             # density_path = gt_dir + '/' + im_id.split(".jpg")[0] + ".npy"
             density = np.load(gt_densities_path[im_id]).astype('float32')    
@@ -67,7 +68,7 @@ class MediumShotCountingDataset(Dataset):
             image, boxes, gt_density, gt_count = sample['image'].cuda(), sample['boxes'].cuda(),\
                                                             sample['gt_density'].cuda(), sample['gt_count'].cuda()
                                                             
-            
+            self.visualize(image.cpu(), gt_density.squeeze(0).cpu(), gt_density.squeeze(0).cpu())
             samples['image'].append(image)
             samples['gt_density'].append(gt_density)
             samples['boxes'].append(boxes)
@@ -81,6 +82,74 @@ class MediumShotCountingDataset(Dataset):
             # print(f'after, key {key}, {samples[key].shape}')
         samples['class_name'] = class_name
         return samples  #image, boxes, gt_density
+    def visualize(self, image, gt_density, pred_density, figsize=(8, 8)):
+
+        img1 = self.format_for_plotting(image)
+        gt = self.format_for_plotting(gt_density)
+        pred = self.format_for_plotting(pred_density)
+
+        fig = plt.figure(figsize=figsize)
+
+        ax = fig.add_subplot(2, 2, 1)
+        ax.set_axis_off()
+        ax.imshow(img1)
+        ax.set_title("Input image")
+
+        ax = fig.add_subplot(2, 2, 2)
+        ax.set_axis_off()
+        pred_cnt = pred.sum()
+        ax.set_title("Overlaid result, predicted count: {:.2f}".format(pred_cnt))
+
+        img2 = 0.2989*img1[:,:,0] + 0.5870*img1[:,:,1] + 0.1140*img1[:,:,2]
+        ax.imshow(img2, cmap='gray')
+        ax.imshow(pred, cmap=plt.cm.viridis, alpha=0.5)
+
+        ax = fig.add_subplot(2, 2, 3)
+        ax.set_axis_off()
+        gt_cnt = gt.sum()
+        ax.set_title("Density map, ground truth count: {:.2f}".format(gt_cnt))
+        ax.imshow(gt)
+
+        ax = fig.add_subplot(2, 2, 4)
+        ax.set_axis_off()
+        ax.set_title("Density map, predicted count: {:.2f}".format(pred_cnt))
+        ax.imshow(pred)
+
+        fig.tight_layout()
+        plt.tight_layout()
+
+    def format_for_plotting(self, tensor):
+        """Formats the shape of tensor for plotting.
+        Tensors typically have a shape of :math:`(N, C, H, W)` or :math:`(C, H, W)`
+        which is not suitable for plotting as images. This function formats an
+        input tensor :math:`(H, W, C)` for RGB and :math:`(H, W)` for mono-channel
+        data.
+        Args:
+            tensor (torch.Tensor, torch.float32): Image tensor
+        Shape:
+            Input: :math:`(N, C, H, W)` or :math:`(C, H, W)`
+            Output: :math:`(H, W, C)` or :math:`(H, W)`, respectively
+        Return:
+            torch.Tensor (torch.float32): Formatted image tensor (detached)
+        Note:
+            Symbols used to describe dimensions:
+                - N: number of images in a batch
+                - C: number of channels
+                - H: height of the image
+                - W: width of the image
+        """
+
+        has_batch_dimension = len(tensor.shape) == 4
+        formatted = tensor.clone()
+
+        if has_batch_dimension:
+            formatted = tensor.squeeze(0)
+
+        if formatted.shape[0] == 1:
+            return formatted.squeeze(0).detach()
+        else:
+            return formatted.permute(1, 2, 0).detach()
+   
 
 
 class resizeImageWithGT(object):
@@ -154,7 +223,7 @@ class resizeImageWithGT(object):
 
 def get_batch(data_file, n_samples):
 
-    transform = resizeImageWithGT(84)
+    transform = resizeImageWithGT(128)
 
     dataset = MediumShotCountingDataset(data_file=data_file, n_samples=n_samples, transform=transform)
     task_indices  = np.arange(len(dataset))
