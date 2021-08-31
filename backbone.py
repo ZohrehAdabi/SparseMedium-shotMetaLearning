@@ -404,8 +404,8 @@ class Conv3(nn.Module):
 def Conv4():
     return ConvNet(4)
 
-def Conv6():
-    return ConvNet(6)
+def Conv6(flatten):
+    return ConvNet(6, flatten)
 
 def Conv4NP():
     return ConvNetNopool(4)
