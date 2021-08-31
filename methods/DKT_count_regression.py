@@ -439,7 +439,7 @@ class DKT_count_regression(nn.Module):
         ax.set_title("Density map, ground truth count: {:.2f}".format(gt_cnt))
         ax.imshow(gt)
 
-        ax = fig.add_subplot(2, 2, 3)
+        ax = fig.add_subplot(2, 2, 4)
         ax.set_axis_off()
         ax.set_title("Density map, predicted count: {:.2f}".format(pred_cnt))
         ax.imshow(pred)
