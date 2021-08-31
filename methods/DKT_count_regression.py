@@ -94,17 +94,17 @@ class DKT_count_regression(nn.Module):
     def normalize(self, labels, min, max, y_mean, y_std):
 
         if self.minmax:
-            return (labels - min)/ (max - min) + 0.5
+            return (labels - min)/ (max - min) 
         else:
-            return  (labels - y_mean) / (y_std+1e-10)
+            return  ((labels - y_mean) ) / (y_std+1e-10)
     
     def denormalize_y(self, pred, min, max, y_mean, y_std):
 
         if self.minmax:
-            return ((pred - 0.5) * (max - min) ) + min
+            return ((pred) * (max - min) ) + min
             
         else:
-            return  y_mean + pred * y_std
+            return  (y_mean + pred * y_std) 
 
     def train_loop(self, epoch, n_support, n_samples, optimizer):
 
@@ -372,8 +372,8 @@ class DKT_count_regression(nn.Module):
                 if best_mae >= val_mae:
                     best_mae = val_mae
                     best_rmse = val_rmse
-                    model_name = self.best_path + f'_best_mae{best_mae:.2f}_ep{epoch}_{id}.pth'
-                    self.save_checkpoint(model_name)
+                    # model_name = self.best_path + f'_best_mae{best_mae:.2f}_ep{epoch}_{id}.pth'
+                    # self.save_checkpoint(model_name)
                     print(Fore.LIGHTRED_EX, f'Best MAE: {best_mae:.2f}, RMSE: {best_rmse}', Fore.RESET)
             if(self.writer is not None) and self.show_plots_loss:
                 self.writer.add_scalar('MSE Val.', val_mse, epoch)
