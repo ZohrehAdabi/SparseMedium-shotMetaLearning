@@ -275,7 +275,7 @@ class DKT_count_regression(nn.Module):
             y_query     = y_all[query_ind]
             gt_density_q = gt_density_resized[query_ind, :, :, :, :]
             z_query     = z[query_ind, :, :, :]
-            
+            self.visualize(inputs[5].cpu(), gt_density_s[5].squeeze(0).cpu(), z_support[5].cpu())
             with torch.no_grad():
                 if self.do_normalize:
                     y_mean, y_std = y_all.mean(), y_all.std()
