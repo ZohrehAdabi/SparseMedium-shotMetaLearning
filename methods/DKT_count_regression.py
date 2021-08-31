@@ -147,7 +147,7 @@ class DKT_count_regression(nn.Module):
             predictions = self.model(z)
             loss = -self.mll(predictions, self.model.train_targets)
             if self.use_mse:
-                loss = loss + 10 * density_mse
+                loss = loss + density_mse
             
             loss.backward()
             optimizer.step()
@@ -167,6 +167,8 @@ class DKT_count_regression(nn.Module):
                     itr, epoch+1, loss.item(), mse.item(),
                     self.model.likelihood.noise.item()
                 ))
+                if self.use_mse:
+                    print(f'Density MSE: {density_mse:.2f}')
 
             if (self.show_plots_pred or self.show_plots_features):
                 embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
@@ -331,7 +333,7 @@ class DKT_count_regression(nn.Module):
                 embedded_z_support = TSNE(n_components=2).fit_transform(z_support.detach().cpu().numpy())
 
                 self.update_plots_test(self.plots, x_support, y_support.detach().cpu().numpy(), 
-                                                z_support.detach(), z_query.detach(), embedded_z_support,
+                                                z_support.detach(), z_query.detach(), embedded_z_support, gt_density_q,
                                                 x_query, y_query.detach().cpu().numpy(), y_pred, pred.variance.detach().cpu().numpy(),
                                                 mae, mse, mean_support_y, itr)
                 if self.show_plots_pred:
@@ -486,7 +488,7 @@ class DKT_count_regression(nn.Module):
             # plots.ax_feature.legend()
             plots.ax_feature.set_title(f'epoch {epoch}, train feature')
 
-    def update_plots_test(self, plots, train_x, train_y, train_z, test_z, embedded_z,   
+    def update_plots_test(self, plots, train_x, train_y, train_z, test_z, embedded_z, gt_density_q,   
                                     test_x, test_y, test_y_pred, test_y_var, mae, mse, mean_y_s, itr):
         def clear_ax(plots, i, j):
             plots.ax[i, j].clear()

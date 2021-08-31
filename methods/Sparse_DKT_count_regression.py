@@ -296,9 +296,7 @@ class Sparse_DKT_count_regression(nn.Module):
             support_ind = np.random.choice(np.arange(n_samples), size=n_support, replace=False)
             query_ind   = [i for i in range(n_samples) if i not in support_ind]
             x_support    = x_all[support_ind,:,:,:]
-            gt_density_s = gt_density[support_ind, :, :, :, :]
             x_query     = x_all[query_ind,:,:,:]
-            gt_density_q = gt_density[query_ind, :, :, :, :]
 
             with torch.no_grad():
                 feature = self.feature_extractor(x_all)
@@ -310,8 +308,10 @@ class Sparse_DKT_count_regression(nn.Module):
 
             y_support   = y_all[support_ind]
             z_support   = z[support_ind, :, :, :]
+            gt_density_s = gt_density_resized[support_ind, :, :, :, :]
             y_query     = y_all[query_ind]
             z_query     = z[query_ind, :, :, :]
+            gt_density_q = gt_density_resized[query_ind, :, :, :, :]
             
             with torch.no_grad():
                if self.do_normalize:
