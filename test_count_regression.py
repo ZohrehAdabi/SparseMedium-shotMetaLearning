@@ -83,13 +83,13 @@ else:
 if selective:
     lr_gp  = params.lr_gp
     lr_reg = params.lr_net
-    mse = False
+    mse = params.use_mse
     # mse = True
     #'ResNet50_DKT_best_mae37.65_ep440_g_0.001_r_1e-05_feat_map4.'
     id = f'_best_mae{19.85}_ep{240}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
-    id = f'_final_mae{28.53}_ep{99}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
-    id = f'_final_mae{28.18:.2f}_ep{999}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
-    # id = f'_final_mae{27.87:.2f}_ep{49}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
+    id = f'_final_mae{29.42}_ep{199}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
+    # id = f'_final_mae{29.65:.2f}_ep{99}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
+    # id = f'_final_mae{27.87:.2f}_ep{499}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
     if mse: id = id + '_mse'
     id = id + '.pth'
     model_path = params.checkpoint_dir + id
