@@ -324,11 +324,12 @@ class Density_regression(nn.Module):
             mean_support_y = y_support.mean()
             base_line_mae = self.mae(mean_support_y.repeat(y_query.shape[0]), y_query).item()
             base_line_mae_list.append(base_line_mae)
-
+            pred_count_z_q = torch.sum(z_query, axis=1)
             print(Fore.RED,"="*50, Fore.RESET)
             print(f'itr #{itr+1}')
             print(f'mean of support_y {mean_support_y:.2f}')
             print(f'base line MAE: {base_line_mae:.2f}')
+            print(f'predicted count (z)[MAE:{self.mae(pred_count_z_q, y_query).item():.2f}]: {pred_count_z_q}')
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
             print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
             print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
@@ -388,6 +389,9 @@ class Density_regression(nn.Module):
                     model_name = self.best_path + f'_best_mae{best_mae:.2f}_ep{epoch}_{id}.pth'
                     # self.save_checkpoint(model_name)
                     # print(Fore.LIGHTRED_EX, f'Best MAE: {best_mae:.2f}, RMSE: {best_rmse}', Fore.RESET)
+            if epoch%500==0:
+                model_name = self.best_path + f'_ep{epoch}_{id}.pth'
+                self.save_checkpoint(model_name)
             if(self.writer is not None) and self.show_plots_loss:
                 self.writer.add_scalar('MSE Val.', val_mse, epoch)
                 self.writer.add_scalar('MAE Val.', val_mae, epoch)
