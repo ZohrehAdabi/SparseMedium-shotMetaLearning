@@ -377,8 +377,9 @@ class ResNet(nn.Module):
 
 # Backbone for QMUL regression
 class Conv3(nn.Module):
-    def __init__(self):
+    def __init__(self, flatten=True):
         super(Conv3, self).__init__()
+        self.flatten = flatten
         self.layer1 = nn.Conv2d(3, 36, 3,stride=2,dilation=2)
         self.layer2 = nn.Conv2d(36,36, 3,stride=2,dilation=2)
         self.layer3 = nn.Conv2d(36,36, 3,stride=2,dilation=2)
@@ -398,8 +399,12 @@ class Conv3(nn.Module):
         out = F.relu(self.layer1(x))
         out = F.relu(self.layer2(out))
         out = F.relu(self.layer3(out))
-        out = out.view(out.size(0), -1)
+        if self.flatten:
+            out = out.view(out.size(0), -1)
         return out
+
+def Conv3R(flatten):
+    return Conv3(flatten)
 
 def Conv4(flatten):
     return ConvNet(4, flatten)
