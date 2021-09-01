@@ -169,7 +169,7 @@
         },
 
         {
-            "name": "DKT [MSC44][Conv6]: train_count_regression_new",
+            "name": "DKT [MSC44][new]: train_count_regression_new",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/train_count_regression_new.py",
@@ -181,7 +181,7 @@
       // --method "DKT"   --n_samples 50 --n_support 40 --dataset "MSC44" --model "Conv6" --stop_epoch 50  --show_plots_loss  --seed  2 
         },
         {
-            "name": "DKT [MSC44][Conv6]: test_count_regression_new",
+            "name": "DKT [MSC44][new]: test_count_regression_new",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/test_count_regression_new.py",
