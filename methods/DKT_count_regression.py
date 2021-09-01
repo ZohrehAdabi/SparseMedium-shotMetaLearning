@@ -630,10 +630,10 @@ class ExactGPLayer(gpytorch.models.ExactGP):
         self.mean_module.register_constraint("constant", gpytorch.constraints.Positive())
         ## RBF kernel
         if(kernel=='rbf' or kernel=='RBF'):
-            self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel()) #+ gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
+            self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel()) + gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
         ## Spectral kernel
         elif(kernel=='spectral'):
-            self.covar_module = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=4, ard_num_dims=9216) #
+            self.covar_module = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=1, ard_num_dims=4096) #
         else:
             raise ValueError("[ERROR] the kernel '" + str(kernel) + "' is not supported for regression, use 'rbf' or 'spectral'.")
 
