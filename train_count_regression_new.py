@@ -27,14 +27,15 @@ params.checkpoint_dir = '%scheckpoints/%s/%s_%s' % (configs.save_dir, params.dat
 
 if  params.model=='Conv6':
     bb = backbone.Conv6(flatten=False)
-    base_file = configs.data_dir[params.dataset] + 'base.json'
-    val_file =  configs.data_dir[params.dataset] + 'val.json'
 elif  params.model=='Conv4':
     bb = backbone.Conv4(flatten=False)
-    base_file = configs.data_dir[params.dataset] + 'base.json'
-    val_file =  configs.data_dir[params.dataset] + 'val.json'
+elif  params.model=='Conv3':
+    bb = backbone.Conv3R(flatten=False)  
 else:
     ValueError('Unknown model')
+
+base_file = configs.data_dir[params.dataset] + 'base.json'
+val_file =  configs.data_dir[params.dataset] + 'val.json'
 
 if params.method=='DKT':
     model = DKT_count_regression_new(bb, base_file, val_file,
