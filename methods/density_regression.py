@@ -32,10 +32,10 @@ except ImportError:
     IS_TBX_INSTALLED = False
     print('[WARNING] install tensorboardX to record simulation logs.')
 
-class DKT_count_regression(nn.Module):
+class Density_regression(nn.Module):
     def __init__(self, backbone, regressor, base_file=None, val_file=None,
         video_path=None, show_plots_loss=False, show_plots_pred=False, show_plots_features=False, training=False):
-        super(DKT_count_regression, self).__init__()
+        super(Density_regression, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
         self.regressor = regressor
@@ -151,9 +151,9 @@ class DKT_count_regression(nn.Module):
             predictions = self.model(z)
             
             mll = -self.mll(predictions, self.model.train_targets)
-            loss = mll
+            
             if self.use_mse:
-                loss = 0.1 * loss + 100 * density_mse
+                loss = 100 * density_mse
             loss_list.append(loss.item())
 
             loss.backward()
@@ -166,7 +166,8 @@ class DKT_count_regression(nn.Module):
             mll_list.append(np.around(loss.item(), 4))
             self.iteration = (epoch*31) + itr
             if(self.writer is not None) and self.show_plots_loss: 
-                self.writer.add_scalar('MLL_per_itr', loss.item(), self.iteration)
+                self.writer.add_scalar('MLL_per_itr', mll.item(), self.iteration)
+                self.writer.add_scalar('Loss_per_itr', density_mse.item(), self.iteration)
    
 
             if ((epoch%1==0) & (itr%10==0)):
