@@ -201,10 +201,22 @@
             "program": "${workspaceFolder}/train_density_regression.py",
             "console": "integratedTerminal",
            "args": ["--n_samples", "50", "--n_support", "40",
-                "--dataset", "MSC44", "--model", "ResNet50", "--stop_epoch", "100",
+                "--dataset", "MSC44", "--model", "ResNet50", "--stop_epoch", "1",
                 "--show_plots_loss",
                  "--seed","2", "--lr_net", "1e-4"]  //"--show_plots_features",  
-      // --n_samples 50 --n_support 40 --dataset "MSC44" --model "ResNet50" --stop_epoch 100  --show_plots_loss  --seed  2  --lr_net 1e-3 
+      // --n_samples 50 --n_support 40 --dataset "MSC44" --model "ResNet50" --stop_epoch 100  --show_plots_loss   --seed  2  --lr_net 1e-3 
+        },
+        {
+            "name": "Density [MSC44]: test_density_regression",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/test_density_regression.py",
+            "console": "integratedTerminal",
+           "args": ["--n_samples", "50", "--n_support", "40",
+                "--dataset", "MSC44", "--model", "ResNet50", "--n_test_epochs", "1",
+                "--show_plots_pred", "--show_plots_loss",
+                 "--seed","2", "--lr_net", "1e-4"]  //"--show_plots_features",  
+      // --n_samples 50 --n_support 40 --dataset "MSC44" --model "ResNet50"  --n_test_epochs 1  --show_plots_pred --show_plots_loss  --seed  2  --lr_net 1e-3 
         },
 
         //*****************************************************************
