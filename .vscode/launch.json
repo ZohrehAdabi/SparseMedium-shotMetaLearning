@@ -203,8 +203,8 @@
            "args": ["--n_samples", "50", "--n_support", "40",
                 "--dataset", "MSC44", "--model", "ResNet50", "--stop_epoch", "100",
                 "--show_plots_loss",
-                 "--seed","2",  "--use_mse", "--lr_gp", "1e-3", "--lr_net", "1e-4"]  //"--show_plots_features",  
-      // --n_samples 50 --n_support 40 --dataset "MSC44" --model "ResNet50" --stop_epoch 100  --show_plots_loss  --seed  2 --lr_gp  1e-3  --lr_net 1e-3 
+                 "--seed","2", "--lr_net", "1e-4"]  //"--show_plots_features",  
+      // --n_samples 50 --n_support 40 --dataset "MSC44" --model "ResNet50" --stop_epoch 100  --show_plots_loss  --seed  2  --lr_net 1e-3 
         },
 
         //*****************************************************************
