@@ -114,6 +114,7 @@ class DKT_count_regression(nn.Module):
         mll_list = []
         mse_list = []
         mae_list = []
+        loss_list = []
         for itr, samples in enumerate(get_batch(self.train_file, n_samples)):
             
             self.model.train()
@@ -153,7 +154,8 @@ class DKT_count_regression(nn.Module):
             loss = mll
             if self.use_mse:
                 loss = 0.1 * loss + 100 * density_mse
-            
+            loss_list.append(loss.item())
+
             loss.backward()
             optimizer.step()
             if self.do_normalize:
@@ -176,7 +178,10 @@ class DKT_count_regression(nn.Module):
                     print(f' Density MSE: {density_mse:.4f}')
 
             if (self.show_plots_pred or self.show_plots_features):
-                embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
+                embedded_z = None
+                if self.show_plots_features:
+                    embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
+
                 self.update_plots_train(self.plots, labels.cpu().numpy(), embedded_z, None, mse, epoch)
 
                 if self.show_plots_pred:
@@ -212,7 +217,7 @@ class DKT_count_regression(nn.Module):
                 self.likelihood.eval()
 
                 with torch.no_grad():
-                    pred    = self.likelihood(self.model(z_query))
+                    pred = self.likelihood(self.model(z_query))
                     lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
                 if self.do_normalize:
                     mse = self.mse(pred.mean, y_q_norm).item()
@@ -236,7 +241,7 @@ class DKT_count_regression(nn.Module):
                 self.writer.add_scalar('MAE Val. on Train', mae, epoch)
 
         # print(f'epoch {epoch+1} MLL {mll_list}')
-        return np.mean(mll_list)
+        return np.mean(loss_list)
 
     def test_loop(self, n_support, n_samples, epoch, optimizer=None): # no optimizer needed for GP
         
