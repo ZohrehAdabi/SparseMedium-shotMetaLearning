@@ -7,4 +7,4 @@ data_dir['emnist']          = './filelists/emnist/'
 data_dir['QMUL']          = './filelists/QMUL/'
 data_dir['FSC147']          = './filelists/FSC147/'
 data_dir['MSC44']          = './filelists/MSC44/'
-kernel_type                 = 'rbf' #linear, rbf, spectral (regression only), matern, poli1, poli2, cossim, bncossim 
+kernel_type                 = 'rbf' #linear, rbf, 2rbf, spectral (regression only), matern, poli1, poli2, cossim, bncossim 
