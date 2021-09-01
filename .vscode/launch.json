@@ -164,7 +164,7 @@
            "args": ["--method","DKT",  "--n_samples", "50", "--n_support", "40",
                         "--dataset", "MSC44", "--model", "ResNet50", "--n_test_epochs", "1", 
                         "--show_plots_pred", "--show_plots_features",
-                        "--seed","2", "--use_mse", "--lr_gp", "1e-4", "--lr_net", "1e-4"] //
+                        "--seed","2", "--use_mse", "--lr_gp", "1e-3", "--lr_net", "1e-5"] //
 
         //  --method "DKT"  --n_samples 50 --n_support 40 --dataset "MSC44" --model "ResNet50" --n_test_epochs 1 --show_plots_pred  --show_plots_features  --seed  2 --lr_gp  1e-3  --lr_net 1e-3 
         },

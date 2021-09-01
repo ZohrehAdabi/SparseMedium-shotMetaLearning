@@ -82,7 +82,7 @@ lr_reg = params.lr_net
 mse = params.use_mse
 # mse = True
 id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
-if mse: id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}_mse'
+if mse: id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}_mse_{params.stop_epoch}'
 optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr':lr_gp},
                               {'params': model.regressor.parameters(), 'lr': lr_reg}
                               ])
