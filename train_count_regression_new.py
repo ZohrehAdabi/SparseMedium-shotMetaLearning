@@ -29,6 +29,10 @@ if  params.model=='Conv6':
     Conv6 = backbone.Conv6(flatten=False)
     base_file = configs.data_dir[params.dataset] + 'base.json'
     val_file =  configs.data_dir[params.dataset] + 'val.json'
+elif  params.model=='Conv3':
+    Conv6 = backbone.Conv3(flatten=False)
+    base_file = configs.data_dir[params.dataset] + 'base.json'
+    val_file =  configs.data_dir[params.dataset] + 'val.json'
 else:
     ValueError('Unknown model')
 
@@ -78,7 +82,7 @@ elif params.method=='Sparse_DKT':
 else:
     ValueError('Unrecognised method')
 lr_gp  = 1e-3
-lr_net = 1e-4
+lr_net = 1e-3
 mse = False
 # mse = True
 id = f'g_{lr_gp}_r_{lr_net}'

@@ -77,7 +77,7 @@ elif params.method=='Sparse_DKT':
 
 else:
     ValueError('Unrecognised method')
-lr_gp  = 1e-3
+lr_gp  = 1e-4
 lr_reg = 1e-5
 mse = False
 # mse = True
