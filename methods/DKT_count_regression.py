@@ -250,6 +250,7 @@ class DKT_count_regression(nn.Module):
         mse_list = []    
         mae_list = []  
         base_line_mae_list = []
+        z_q_mae_list = []
         self.model.eval()
         self.regressor.eval()
         self.likelihood.eval() 
@@ -324,13 +325,16 @@ class DKT_count_regression(nn.Module):
             mean_support_y = y_support.mean()
             base_line_mae = self.mae(mean_support_y.repeat(y_query.shape[0]), y_query).item()
             base_line_mae_list.append(base_line_mae)
-
+            pred_count_z_q = torch.sum(z_query, axis=1)
+            z_q_mae = self.mae(pred_count_z_q, y_query).item()
+            z_q_mae_list.append(z_q_mae)
             print(Fore.RED,"="*50, Fore.RESET)
             print(f'itr #{itr+1}')
             print(f'mean of support_y {mean_support_y:.2f}')
             print(f'base line MAE: {base_line_mae:.2f}')
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
             print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
+            print(f'predicted count (z)[MAE:{Fore.RED}{z_q_mae:.2f}{Fore.RESET}]: \n{pred_count_z_q.detach().cpu().numpy()}')
             print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
             print(Fore.LIGHTRED_EX, f'mae: {mae}, mse:\t{mse:.4f}', Fore.RESET)
             print(Fore.RED,"-"*50, Fore.RESET)
@@ -361,6 +365,7 @@ class DKT_count_regression(nn.Module):
         print(Fore.CYAN,"-"*30, f'\n epoch {epoch+1} => Avg.   MAE: {np.mean(mae_list):.2f}, RMSE: {np.sqrt(np.mean(mse_list)):.2f}'
                                     f', MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
         print(f'Avg. base line MAE: {np.mean(base_line_mae_list):.2f}')
+        print(f'Avg. z predicted MAE: {np.mean(z_q_mae_list):.2f}')
    
         return np.mean(mse_list), np.mean(mae_list), np.sqrt(np.mean(mse_list))
 
