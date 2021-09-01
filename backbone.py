@@ -401,8 +401,8 @@ class Conv3(nn.Module):
         out = out.view(out.size(0), -1)
         return out
 
-def Conv4():
-    return ConvNet(4)
+def Conv4(flatten):
+    return ConvNet(4, flatten)
 
 def Conv6(flatten):
     return ConvNet(6, flatten)

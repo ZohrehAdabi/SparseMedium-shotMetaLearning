@@ -26,18 +26,18 @@ if not os.path.isdir(params.checkpoint_dir):
 params.checkpoint_dir = '%scheckpoints/%s/%s_%s' % (configs.save_dir, params.dataset, params.model, params.method)
 
 if  params.model=='Conv6':
-    Conv6 = backbone.Conv6(flatten=False)
+    bb = backbone.Conv6(flatten=False)
     base_file = configs.data_dir[params.dataset] + 'base.json'
     val_file =  configs.data_dir[params.dataset] + 'val.json'
-elif  params.model=='Conv3':
-    Conv6 = backbone.Conv3(flatten=False)
+elif  params.model=='Conv4':
+    bb = backbone.Conv4(flatten=False)
     base_file = configs.data_dir[params.dataset] + 'base.json'
     val_file =  configs.data_dir[params.dataset] + 'val.json'
 else:
     ValueError('Unknown model')
 
 if params.method=='DKT':
-    model = DKT_count_regression_new(Conv6, base_file, val_file,
+    model = DKT_count_regression_new(bb, base_file, val_file,
                             video_path=params.checkpoint_dir, 
                             show_plots_loss=params.show_plots_loss,
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
@@ -54,7 +54,7 @@ elif params.method=='Sparse_DKT':
         
         params.checkpoint_dir = params.checkpoint_dir +  f'FRVM_{params.config}_{params.align_thr:.6f}'
 
-        model = Sparse_DKT_count_regression(Conv6, base_file, val_file,
+        model = Sparse_DKT_count_regression(bb, base_file, val_file,
                             sparse_method = 'FRVM', config=params.config, align_threshold=params.align_thr, 
                             video_path=params.checkpoint_dir, 
                             show_plots_loss=params.show_plots_loss, show_plots_pred=False, 
@@ -64,7 +64,7 @@ elif params.method=='Sparse_DKT':
         
         params.checkpoint_dir = params.checkpoint_dir +  f'KMeans_{str(params.n_centers)}'
         
-        model = Sparse_DKT_count_regression(Conv6, base_file, val_file, 
+        model = Sparse_DKT_count_regression(bb, base_file, val_file, 
                         sparse_method = 'KMeans', n_inducing_points=params.n_centers, video_path=params.checkpoint_dir, 
                         show_plots_loss=params.show_plots_loss, show_plots_pred=False, 
                         show_plots_features=params.show_plots_features, training=True).cuda()
@@ -72,7 +72,7 @@ elif params.method=='Sparse_DKT':
     elif params.sparse_method=='random':
         
         params.checkpoint_dir = params.checkpoint_dir +  f'random_{str(params.n_centers)}'
-        model = Sparse_DKT_count_regression(Conv6, base_file, val_file,
+        model = Sparse_DKT_count_regression(bb, base_file, val_file,
                         sparse_method = 'random', n_inducing_points=params.n_centers, video_path=params.checkpoint_dir, 
                         show_plots_loss=params.show_plots_loss, show_plots_pred=False, 
                         show_plots_features=params.show_plots_features, training=True).cuda()
