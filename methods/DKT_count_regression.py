@@ -148,9 +148,11 @@ class DKT_count_regression(nn.Module):
             else:
                 self.model.set_train_data(inputs=z, targets=labels, strict=False)
             predictions = self.model(z)
-            loss = -self.mll(predictions, self.model.train_targets)
+            
+            mll = -self.mll(predictions, self.model.train_targets)
+            loss = mll
             if self.use_mse:
-                loss = loss + density_mse
+                loss = 0.1 * loss + 100 * density_mse
             
             loss.backward()
             optimizer.step()
@@ -166,12 +168,12 @@ class DKT_count_regression(nn.Module):
    
 
             if ((epoch%1==0) & (itr%10==0)):
-                print('[%2d/%2d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
-                    itr, epoch+1, loss.item(), mse.item(),
+                print('[%2d/%2d] - Loss: %.3f  MLL: %.3f MSE: %.3f noise: %.3f' % (
+                    itr, epoch+1, loss.item(), mll.item(), mse.item(),
                     self.model.likelihood.noise.item()
                 ))
                 if self.use_mse:
-                    print(f'Density MSE: {density_mse:.2f}')
+                    print(f' Density MSE: {density_mse:.4f}')
 
             if (self.show_plots_pred or self.show_plots_features):
                 embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())

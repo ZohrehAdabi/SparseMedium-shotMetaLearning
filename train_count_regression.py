@@ -79,7 +79,7 @@ else:
     ValueError('Unrecognised method')
 lr_gp  = params.lr_gp
 lr_reg = params.lr_net
-mse = False
+mse = params.use_mse
 # mse = True
 id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
 if mse: id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}_mse'
