@@ -63,6 +63,8 @@ def parse_args_regression(script):
         parser.add_argument('--n_centers', default=24, type=int, help='Number of Inducing points/ KMeans centers in Kmeans sparsifying')
         parser.add_argument('--config', default='0000', type=str, help='config for Fast RVM = {update_sigma|delete_priority|add_priority|align_test} recom = {"0010", "1000", "1010", "1011","1100", "1101"}')
         parser.add_argument('--align_thr', default=1e-3, type=float, help='1e-3, larger value leads to more rejection and sparseness')
+        parser.add_argument('--lr_gp', default=1e-3, type=int, help='Learning rate for GP and Neural Network')
+        parser.add_argument('--lr_net', default=1e-3, type=int, help='Learning rate for Neural Network')
         if script == 'train_regression':
             parser.add_argument('--start_epoch' , default=0, type=int, help ='Starting epoch')
             parser.add_argument('--stop_epoch'  , default=100, type=int, help ='Stopping epoch') #for meta-learning methods, each epoch contains 100 episodes. The default epoch number is dataset dependent. See train.py

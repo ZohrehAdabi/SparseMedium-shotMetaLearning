@@ -81,8 +81,8 @@ else:
     ValueError('Unrecognised method')
 
 if selective:
-    lr_gp  = 1e-4
-    lr_reg = 1e-5
+    lr_gp  = params.lr_gp
+    lr_reg = params.lr_net
     mse = False
     # mse = True
     #'ResNet50_DKT_best_mae37.65_ep440_g_0.001_r_1e-05_feat_map4.'

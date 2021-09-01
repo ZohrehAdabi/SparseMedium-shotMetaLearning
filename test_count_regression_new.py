@@ -29,12 +29,16 @@ if len(best_models_list) > 0 and not selective:
 
 
 if  params.model=='Conv6':
-    Conv6 = backbone.Conv6(flatten=False)
-    novel_file = configs.data_dir[params.dataset] + 'novel.json'
+    bb = backbone.Conv6(flatten=False)
+elif  params.model=='Conv4':
+    bb = backbone.Conv4(flatten=False)
+elif  params.model=='Conv3':
+    bb = backbone.Conv3R(flatten=False)    
 else:
     ValueError('Unknown model')
+novel_file = configs.data_dir[params.dataset] + 'novel.json'
 if params.method=='DKT':
-    model = DKT_count_regression_new(Conv6, val_file=novel_file, 
+    model = DKT_count_regression_new(bb, val_file=novel_file, 
                             video_path=params.checkpoint_dir, 
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features).cuda()
     optimizer = None
@@ -52,7 +56,7 @@ elif params.method=='Sparse_DKT':
 
         params.checkpoint_dir = params.checkpoint_dir +  f'FRVM_{params.config}_{params.align_thr:.6f}'
 
-        model = Sparse_DKT_count_regression(Conv6, val_file=novel_file, 
+        model = Sparse_DKT_count_regression(bb, val_file=novel_file, 
                             sparse_method = 'FRVM', config=params.config, align_threshold=params.align_thr, 
                             video_path=params.checkpoint_dir, 
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
@@ -61,14 +65,14 @@ elif params.method=='Sparse_DKT':
 
         params.checkpoint_dir = params.checkpoint_dir +  f'KMeans_{str(params.n_centers)}'
         # print(params.checkpoint_dir)
-        model = Sparse_DKT_count_regression(Conv6, val_file=novel_file, 
+        model = Sparse_DKT_count_regression(bb, val_file=novel_file, 
                             sparse_method = 'KMeans', n_inducing_points=params.n_centers, video_path=video_path, 
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
 
     elif params.sparse_method=='random':
 
         params.checkpoint_dir = params.checkpoint_dir +  f'random_{str(params.n_centers)}'
-        model = Sparse_DKT_count_regression(Conv6, val_file=novel_file, 
+        model = Sparse_DKT_count_regression(bb, val_file=novel_file, 
                             sparse_method = 'random',  n_inducing_points=params.n_centers, video_path=video_path, 
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
     else:
@@ -79,15 +83,15 @@ else:
     ValueError('Unrecognised method')
 
 if selective:
-    lr_gp  = 1e-3
-    lr_reg = 1e-5
+    lr_gp  = params.lr_gp
+    lr_reg = params.lr_net
     mse = False
     # mse = True
     #'ResNet50_DKT_best_mae37.65_ep440_g_0.001_r_1e-05_feat_map4.'
-    id = f'_best_mae{19.85}_ep{240}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
-    id = f'_final_mae{28.53}_ep{99}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
-    id = f'_final_mae{26.63:.2f}_ep{99}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
-    # id = f'_final_mae{27.87:.2f}_ep{49}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
+    id = f'_best_mae{19.85}_ep{240}_g_{lr_gp}_r_{lr_reg}'
+    id = f'_final_mae{28.53}_ep{99}_g_{lr_gp}_r_{lr_reg}'
+    id = f'_final_mae{26.63:.2f}_ep{99}_g_{lr_gp}_r_{lr_reg}'
+    # id = f'_final_mae{27.87:.2f}_ep{49}_g_{lr_gp}_r_{lr_reg}'
     if mse: id = id + '_mse'
     id = id + '.pth'
     model_path = params.checkpoint_dir + id
