@@ -89,7 +89,7 @@ if selective:
     id = f'_best_mae{19.85}_ep{240}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
     id = f'_final_mae{28.80:.2f}_ep{199}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
     # id = f'_final_mae{29.65:.2f}_ep{99}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
-    id = f'_final_mae{27.56:.2f}_ep{499}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
+    id = f'_final_mae{26.88:.2f}_ep{999}_g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
     if mse: id = id + '_mse'
     id = id + '.pth'
     model_path = params.checkpoint_dir + id

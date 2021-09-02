@@ -34,10 +34,10 @@ if  params.model=='ResNet50':
 else:
     ValueError('Unknown model')
 
-    model = Density_regression(resnet50_conv, regressor, val_file=novel_file, 
-                            video_path=params.checkpoint_dir, 
-                            show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features).cuda()
-    optimizer = None
+model = Density_regression(resnet50_conv, regressor, val_file=novel_file, 
+                        video_path=params.checkpoint_dir, 
+                        show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features).cuda()
+optimizer = None
 
 if selective:
     lr_reg = params.lr_net
@@ -46,7 +46,7 @@ if selective:
     id = f'_best_mae{19.85}_ep{240}_r_{lr_reg}_feat_{feat_map}'
     id = f'_final_mae{28.80:.2f}_ep{199}_r_{lr_reg}_feat_{feat_map}'
     # id = f'_final_mae{29.65:.2f}_ep{99}_r_{lr_reg}_feat_{feat_map}'
-    id = f'_final_mae{27.56:.2f}_ep{499}_r_{lr_reg}_feat_{feat_map}'
+    id = f'_final_mae{51.31:.2f}_ep{1499}_r_{lr_reg}_feat_{feat_map}'
     id = id + '_mse'
     id = id + '.pth'
     model_path = params.checkpoint_dir + id
