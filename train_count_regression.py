@@ -82,14 +82,14 @@ lr_reg = params.lr_net
 mse = params.use_mse
 # mse = True
 id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}'
-if mse: id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}_mse_{params.stop_epoch}'
+if mse: id = f'g_{lr_gp}_r_{lr_reg}_feat_{feat_map}_mse_alpha_{params.alpha}'
 optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr':lr_gp},
                               {'params': model.regressor.parameters(), 'lr': lr_reg}
                               ])
 model.init_summary(id)
 if params.method=='DKT' or params.method=='Sparse_DKT' :
 
-    mll, mll_list = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer, id=id, use_mse=mse)
+    mll, mll_list = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer, params.alpha, id=id, use_mse=mse)
     print(f'Avg. MLL hist: {mll_list}')
     print(Fore.GREEN,"-"*40, f'\nend of meta-train => MLL: {mll}\n', "-"*40, Fore.RESET)
 

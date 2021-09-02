@@ -66,6 +66,7 @@ def parse_args_regression(script):
         parser.add_argument('--lr_gp', default=1e-3, type=float, help='Learning rate for GP and Neural Network')
         parser.add_argument('--lr_net', default=1e-3, type=float, help='Learning rate for Neural Network')
         parser.add_argument('--use_mse', action='store_true', help='Use MSE loss') 
+        parser.add_argument('--alpha', default=1e3, type=float, help='coefficient for mse loss')
         if script == 'train_regression':
             parser.add_argument('--start_epoch' , default=0, type=int, help ='Starting epoch')
             parser.add_argument('--stop_epoch'  , default=100, type=int, help ='Stopping epoch') #for meta-learning methods, each epoch contains 100 episodes. The default epoch number is dataset dependent. See train.py

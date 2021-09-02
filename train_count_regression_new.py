@@ -31,6 +31,8 @@ elif  params.model=='Conv4':
     bb = backbone.Conv4(flatten=False)
 elif  params.model=='Conv3':
     bb = backbone.Conv3R(flatten=False)  
+elif  params.model=='Conv3':
+    bb = backbone.ResNet10(flatten=False)  
 else:
     ValueError('Unknown model')
 

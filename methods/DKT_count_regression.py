@@ -153,7 +153,7 @@ class DKT_count_regression(nn.Module):
             mll = -self.mll(predictions, self.model.train_targets)
             loss = mll
             if self.use_mse:
-                loss = 0.1 * loss + 1000 * density_mse
+                loss = 0.1 * loss + self.alpha * density_mse
             loss_list.append(loss.item())
 
             loss.backward()
@@ -238,8 +238,8 @@ class DKT_count_regression(nn.Module):
             print(Fore.LIGHTMAGENTA_EX,"-"*30, f'\n epoch {epoch+1} => Avg. Val. on Train    MAE: {np.mean(mae_list):.2f}, RMSE: {np.sqrt(np.mean(mse_list)):.2f}'
                                     f', MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
             if(self.writer is not None) and self.show_plots_loss:
-                self.writer.add_scalar('MSE Val. on Train', mse, epoch)
-                self.writer.add_scalar('MAE Val. on Train', mae, epoch)
+                self.writer.add_scalar('Avg. MSE Val. on Train', np.mean(mse_list), epoch)
+                self.writer.add_scalar('Avg. MAE Val. on Train', np.mean(mae_list), epoch)
 
         # print(f'epoch {epoch+1} MLL {mll_list}')
         return np.mean(mll_list)
@@ -331,10 +331,10 @@ class DKT_count_regression(nn.Module):
             print(Fore.RED,"="*50, Fore.RESET)
             print(f'itr #{itr+1}')
             print(f'mean of support_y {mean_support_y:.2f}')
-            print(f'base line MAE: {base_line_mae:.2f}')
+            print(Fore.LIGHTGREEN_EX, f'base line MAE: {base_line_mae:.2f}', Fore.RESET)
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
             print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
-            print(f'predicted count (z)[MAE:{Fore.RED}{z_q_mae:.2f}{Fore.RESET}]: \n{pred_count_z_q.detach().cpu().numpy()}')
+            print(f'predicted count (z)[MAE:{Fore.LIGHTMAGENTA_EX}{z_q_mae:.2f}{Fore.RESET}]: \n{pred_count_z_q.detach().cpu().numpy()}')
             print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
             print(Fore.LIGHTRED_EX, f'mae: {mae}, mse:\t{mse:.4f}', Fore.RESET)
             print(Fore.RED,"-"*50, Fore.RESET)
@@ -366,12 +366,16 @@ class DKT_count_regression(nn.Module):
                                     f', MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
         print(f'Avg. base line MAE: {np.mean(base_line_mae_list):.2f}')
         print(f'Avg. z predicted MAE: {np.mean(z_q_mae_list):.2f}')
-   
+        if(self.writer is not None) and self.show_plots_loss:
+                self.writer.add_scalar('Avg. base line MAE', np.mean(base_line_mae_list), epoch)
+                self.writer.add_scalar('Avg. Z predicted MAE', np.mean(z_q_mae_list), epoch)
+
         return np.mean(mse_list), np.mean(mae_list), np.sqrt(np.mean(mse_list))
 
-    def train(self, stop_epoch, n_support, n_samples, optimizer, id, use_mse):
+    def train(self, stop_epoch, n_support, n_samples, optimizer, alpha, id, use_mse):
         
         self.use_mse = use_mse
+        self.alpha = alpha
         self.feature_extractor.eval()
         best_mae, best_rmse = 10e7, 10e7
         mll_list = []

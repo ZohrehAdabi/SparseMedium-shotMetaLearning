@@ -152,8 +152,8 @@
            "args": ["--method","DKT", "--n_samples", "50", "--n_support", "40",
                 "--dataset", "MSC44", "--model", "ResNet50", "--stop_epoch", "100",
                 "--show_plots_loss",
-                 "--seed","2",  "--use_mse", "--lr_gp", "1e-3", "--lr_net", "1e-4"]  //"--show_plots_features",  
-      // --method "DKT"   --n_samples 50 --n_support 40 --dataset "MSC44" --model "ResNet50" --stop_epoch 50  --show_plots_loss  --seed  2 --lr_gp  1e-3  --lr_net 1e-3 
+                 "--seed","2",  "--use_mse", "--lr_gp", "1e-3", "--lr_net", "1e-4", "--alpha", "1000"]  //"--show_plots_features",  
+      // --method "DKT"   --n_samples 50 --n_support 40 --dataset "MSC44" --model "ResNet50" --stop_epoch 50  --show_plots_loss  --seed  2 --lr_gp  1e-3  --lr_net 1e-3 --alpha 1000
         },
         {
             "name": "DKT [MSC44]: test_count_regression",
@@ -164,11 +164,13 @@
            "args": ["--method","DKT",  "--n_samples", "50", "--n_support", "40",
                         "--dataset", "MSC44", "--model", "ResNet50", "--n_test_epochs", "1", 
                         "--show_plots_pred", "--show_plots_features",
-                        "--seed","2", "--use_mse", "--lr_gp", "1e-3", "--lr_net", "1e-5"] //
+                        "--seed","2", "--use_mse", "--lr_gp", "1e-3", "--lr_net", "1e-5", "--alpha", "1000"] //
 
-        //  --method "DKT"  --n_samples 50 --n_support 40 --dataset "MSC44" --model "ResNet50" --n_test_epochs 1 --show_plots_pred  --show_plots_features  --seed  2 --lr_gp  1e-3  --lr_net 1e-3 
+        //  --method "DKT"  --n_samples 50 --n_support 40 --dataset "MSC44" --model "ResNet50" --n_test_epochs 1 --show_plots_pred  --show_plots_features  --seed  2 --lr_gp  1e-3  --lr_net 1e-3 --alpha 1000
         },
-
+        //***********************************
+        // Learn features from scratch
+        //***********************************
         {
             "name": "DKT [MSC44][new]: train_count_regression_new",
             "type": "python",
@@ -194,6 +196,9 @@
 
         //  --method "DKT"  --n_samples 50 --n_support 40 --dataset "MSC44" --model "Conv6" --n_test_epochs 1 --show_plots_pred  --show_plots_features  --seed  2  --lr_gp  1e-3  --lr_net 1e-3 
         },
+        //***************************
+        //  Train density regressor with MSE alonely
+        //***************************
         {
             "name": "Density [MSC44]: train_density_regression",
             "type": "python",
@@ -203,8 +208,8 @@
            "args": ["--n_samples", "50", "--n_support", "40",
                 "--dataset", "MSC44", "--model", "ResNet50", "--stop_epoch", "1",
                 "--show_plots_loss",
-                 "--seed","2", "--lr_net", "1e-4"]  //"--show_plots_features",  
-      // --n_samples 50 --n_support 40 --dataset "MSC44" --model "ResNet50" --stop_epoch 100  --show_plots_loss   --seed  2  --lr_net 1e-3 
+                 "--seed","2", "--lr_net", "1e-4", "--alpha", "1000"]  //"--show_plots_features",  
+      // --n_samples 50 --n_support 40 --dataset "MSC44" --model "ResNet50" --stop_epoch 100  --show_plots_loss   --seed  2  --lr_net 1e-3  --alpha 1000
         },
         {
             "name": "Density [MSC44]: test_density_regression",
@@ -215,8 +220,8 @@
            "args": ["--n_samples", "50", "--n_support", "40",
                 "--dataset", "MSC44", "--model", "ResNet50", "--n_test_epochs", "1",
                 "--show_plots_pred", "--show_plots_loss",
-                 "--seed","2", "--lr_net", "1e-4"]  //"--show_plots_features",  
-      // --n_samples 50 --n_support 40 --dataset "MSC44" --model "ResNet50"  --n_test_epochs 1  --show_plots_pred --show_plots_loss  --seed  2  --lr_net 1e-3 
+                 "--seed","2", "--lr_net", "1e-4", "--alpha", "1000"]  //"--show_plots_features",  
+      // --n_samples 50 --n_support 40 --dataset "MSC44" --model "ResNet50"  --n_test_epochs 1  --show_plots_pred --show_plots_loss  --seed  2  --lr_net 1e-3  --alpha 1000
         },
 
         //*****************************************************************

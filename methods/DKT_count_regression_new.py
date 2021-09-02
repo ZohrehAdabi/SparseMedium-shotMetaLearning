@@ -226,8 +226,8 @@ class DKT_count_regression_new(nn.Module):
             print(Fore.LIGHTMAGENTA_EX,"-"*30, f'\n epoch {epoch+1} => Avg. Val. on Train    MAE: {np.mean(mae_list):.2f}, RMSE: {np.sqrt(np.mean(mse_list)):.2f}'
                                     f', MSE: {np.mean(mse_list):.4f} +- {np.std(mse_list):.4f}\n', "-"*30, Fore.RESET)
             if(self.writer is not None) and self.show_plots_loss:
-                self.writer.add_scalar('MSE Val. on Train', mse, epoch)
-                self.writer.add_scalar('MAE Val. on Train', mae, epoch)
+                self.writer.add_scalar('MSE Val. on Train', np.mean(mse_list), epoch)
+                self.writer.add_scalar('MAE Val. on Train', np.mean(mae_list), epoch)
 
         # print(f'epoch {epoch+1} MLL {mll_list}')
         return np.mean(mll_list)
@@ -371,8 +371,8 @@ class DKT_count_regression_new(nn.Module):
                     best_mae = val_mae
                     best_rmse = val_rmse
                     model_name = self.best_path + f'_best_mae{best_mae:.2f}_ep{epoch}_{id}.pth'
-                    self.save_checkpoint(model_name)
-                    print(Fore.LIGHTRED_EX, f'Best MAE: {best_mae:.2f}, RMSE: {best_rmse}', Fore.RESET)
+                    # self.save_checkpoint(model_name)
+                    # print(Fore.LIGHTRED_EX, f'Best MAE: {best_mae:.2f}, RMSE: {best_rmse}', Fore.RESET)
             if(self.writer is not None) and self.show_plots_loss:
                 self.writer.add_scalar('MSE Val.', val_mse, epoch)
                 self.writer.add_scalar('MAE Val.', val_mae, epoch)

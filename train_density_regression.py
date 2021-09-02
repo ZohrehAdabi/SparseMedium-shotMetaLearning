@@ -40,12 +40,12 @@ model = Density_regression(resnet50_conv, regressor, base_file, val_file,
 
 
 lr_reg = params.lr_net
-id = f'r_{lr_reg}_feat_{feat_map}_mse'
+id = f'r_{lr_reg}_feat_{feat_map}_mse_alpha_{params.alpha}'
 optimizer = torch.optim.Adam([{'params': model.regressor.parameters(), 'lr': lr_reg}
                               ])
 model.init_summary(id)
 
-mll, mll_list = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer, id=id, use_mse=True)
+mll, mll_list = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer, params.alpha, id=id, use_mse=True)
 print(f'Avg. MLL hist: {mll_list}')
 print(Fore.GREEN,"-"*40, f'\nend of meta-train => MLL: {mll}\n', "-"*40, Fore.RESET)
 
