@@ -17,7 +17,7 @@ from methods.Fast_RVM import Fast_RVM
 #Check if tensorboardx is installed
 try:
     from tensorboardX import SummaryWriter
-    IS_TBX_INSTALLED = False
+    IS_TBX_INSTALLED = True
 except ImportError:
     IS_TBX_INSTALLED = False
     print('[WARNING] install tensorboardX to record simulation logs.')
@@ -32,7 +32,7 @@ except ImportError:
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=5 --train_aug
 IP = namedtuple("inducing_points", "z_values index count x y i_idx j_idx")
 class Sparse_DKT(MetaTemplate):
-    def __init__(self, model_func, n_way, n_support, config="000", align_threshold=1e-3):
+    def __init__(self, model_func, n_way, n_support, config="010", align_threshold=1e-3):
         super(Sparse_DKT, self).__init__(model_func, n_way, n_support)
         self.num_inducing_points = 10
         self.fast_rvm = True
@@ -57,10 +57,10 @@ class Sparse_DKT(MetaTemplate):
         else:
             self.normalize=False
 
-    def init_summary(self):
+    def init_summary(self, id):
         if(IS_TBX_INSTALLED):
-            time_string = strftime("%d%m%Y_%H%M%S", gmtime())
-            writer_path = "./log/" + time_string
+            time_string = strftime("%d%m%Y_%H%M", gmtime())
+            writer_path = "./log/" + id #+'_'+ time_string
             self.writer = SummaryWriter(log_dir=writer_path)
 
     def get_model_likelihood_mll(self, train_x_list=None, train_y_list=None):

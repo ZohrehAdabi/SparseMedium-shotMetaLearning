@@ -15,7 +15,7 @@ from configs import kernel_type
 #Check if tensorboardx is installed
 try:
     from tensorboardX import SummaryWriter
-    IS_TBX_INSTALLED = False
+    IS_TBX_INSTALLED = True
 except ImportError:
     IS_TBX_INSTALLED = False
     print('[WARNING] install tensorboardX to record simulation logs.')
@@ -49,10 +49,10 @@ class DKT(MetaTemplate):
         else:
             self.normalize=False
 
-    def init_summary(self):
+    def init_summary(self, id):
         if(IS_TBX_INSTALLED):
-            time_string = strftime("%d%m%Y_%H%M%S", gmtime())
-            writer_path = "./log/" + time_string
+            time_string = strftime("%d%m%Y_%H%M", gmtime())
+            writer_path = "./log/" + id #+'_'+ time_string 
             self.writer = SummaryWriter(log_dir=writer_path)
 
     def get_model_likelihood_mll(self, train_x_list=None, train_y_list=None):

@@ -147,10 +147,10 @@ if __name__ == '__main__':
         if(params.method == 'Sparse_DKT'):
             model = Sparse_DKT(model_dict[params.model], **train_few_shot_params, 
                                     config=params.config, align_threshold=params.align_thr)
-            model.init_summary()
+            model.init_summary(id=f'SparseDKT_{params.sparse_method}_{params.model}_{params.dataset}_{params.config}_{params.align_thr}')
         elif(params.method == 'DKT'):
             model = DKT(model_dict[params.model], **train_few_shot_params)
-            model.init_summary()
+            model.init_summary(id=f'DKT_{params.model}_{params.dataset}')
         elif params.method == 'protonet':
             model = ProtoNet(model_dict[params.model], **train_few_shot_params)
         elif params.method == 'matchingnet':
