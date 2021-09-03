@@ -63,7 +63,7 @@
             "console": "integratedTerminal",
             "args": ["--method","Sparse_DKT", "--sparse_method", "FRVM", "--dataset", "CUB", 
             "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "50", "--n_query", "5",
-                "--seed","1", "--config", "010", "--align_thr", "1e-3" , " --train_aug"]  //--train_aug
+                "--seed","1", "--config", "010", "--align_thr", "1e-3" , "--train_aug"]  //--train_aug
     // python train.py --method "Sparse_DKT"  --sparse_method "FRVM" --dataset "CUB"  --train_n_way 5 --test_n_way 5  --n_shot 50 --n_query 10 --seed 1 --config "010" --align_thr 1e-3 --train_aug
         },
          
