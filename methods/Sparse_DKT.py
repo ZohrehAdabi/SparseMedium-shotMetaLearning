@@ -249,8 +249,12 @@ class Sparse_DKT(MetaTemplate):
 
             if i % print_freq==0:
                 if(self.writer is not None): self.writer.add_histogram('z_support', z_support, self.iteration)
-                print('Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} | Noise {:f} | Loss {:f} | Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
-                 outputscale, lenghtscale, noise, loss.item(), accuracy_support, accuracy_query))
+                if self.dirichlet:
+                    print('Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} || Loss {:f} | Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
+                        outputscale, lenghtscale,  loss.item(), accuracy_support, accuracy_query))
+                else:
+                    print('Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} | Noise {:f} | Loss {:f} | Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
+                        outputscale, lenghtscale, noise, loss.item(), accuracy_support, accuracy_query))
 
     def get_inducing_points(self, base_covar_module, inputs, targets, verbose=True):
 
