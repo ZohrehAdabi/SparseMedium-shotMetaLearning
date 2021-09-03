@@ -69,8 +69,8 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
         delta_alpha         = (1/alpha_prim - 1/alpha_m[idx])
         # d_alpha =  ((alpha_m[idx] - alpha_prim)/(alpha_prim * alpha_m[idx]))
         d_alpha_S           = delta_alpha * S[recompute] + 1 
-        # deltaML[recompute] = ((delta_alpha * Q[recompute]**2) / (S[recompute] + 1/delta_alpha) - torch.log(d_alpha_S)) /2
-        deltaML[recompute]  = ((delta_alpha * Q[recompute]**2) / (delta_alpha + eps) - torch.log(d_alpha_S)) /2
+        deltaML[recompute] = ((delta_alpha * Q[recompute]**2) / (S[recompute] + 1/delta_alpha) - torch.log(d_alpha_S)) /2
+        # deltaML[recompute]  = ((delta_alpha * Q[recompute]**2) / (delta_alpha + eps) - torch.log(d_alpha_S)) /2
         
         # DELETION: if NEGATIVE factor and IN model
         idx = ~idx #active_factor <= 1e-12
@@ -170,7 +170,8 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
                     aligned_in = aligned_in[torch.arange(aligned_in.size(0)).to(device)!=aligned_idx]
                     aligned_out = aligned_out[torch.arange(aligned_out.size(0)).to(device)!=aligned_idx]
                 
-
+        if verbose:
+            print(f'selected_action {selected_action}')
         update_required = False
         if selected_action==0:   #recompute
 
