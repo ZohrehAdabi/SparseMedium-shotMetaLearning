@@ -310,7 +310,10 @@ def Statistics(K_m, KK_m, KK_mm, Kt, K_mt, alpha_m, active_m, beta, targets, N):
         ED = e.T @ e
         dataLikely	= (N * torch.log(beta) - beta * ED)/2
         logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
-        logML			= dataLikely - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
+        if torch.isinf(dataLikely):
+            logML			=  - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
+        else:
+            logML			= dataLikely - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
         DiagC	= torch.sum(U_inv**2, axis=1)
         Gamma	= 1 - alpha_m * DiagC
         # COMPUTE THE Q & S VALUES

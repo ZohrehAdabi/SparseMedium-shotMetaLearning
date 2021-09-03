@@ -33,7 +33,7 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
     #  Heuristic initialisation based on log-odds
     LogOut	= (targets_pseudo_linear * 0.9 + 1) / 2
     mu_m	=  K_m.pinverse() @ (torch.log(LogOut / (1 - LogOut))) #torch.linalg.lstsq(K_m, (torch.log(LogOut / (1 - LogOut)))).solution
-    mu_m = mu_m.to(device)
+    mu_m = mu_m.squeeze(1).to(device)
     alpha_init = 1 / (mu_m + 1e-1).pow(2)
     alpha_m = torch.tensor([alpha_init], dtype=torch.float64).to(device)
     if alpha_m < 1e-3:
@@ -46,7 +46,7 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
     # Sigma_m = torch.inverse(A_m + beta * KK_mm)
     
 
-    Sigma_m, mu_m, S, Q, s, q, beta, beta_KK_m, logML, Gamma = Statistics(K, K_m, mu_m, alpha_m, active_m, targets, N, device)
+    Sigma_m, mu_m, S, Q, s, q, beta, beta_KK_m, logML, Gamma = Statistics(K, K_m, mu_m, alpha_m, active_m, targets.squeeze(), N, device)
 
     delete_priority = config[0]=="1"
     add_priority    = config[1]=="1"
@@ -247,27 +247,28 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
             
         # UPDATE STATISTICS
         if update_required:
-            s = S.clone()
-            q = Q.clone()
-            tmp = alpha_m / (alpha_m -S[active_m])
-            s[active_m] = tmp * S[active_m] 
-            q[active_m] = tmp * Q[active_m]
-            Sigma_m = Sigma_new
-            #quantity Gamma_i measures how well the corresponding parameter mu_i is determined by the data
-            Gamma = 1 - alpha_m * torch.diag(Sigma_m)
+            # s = S.clone()
+            # q = Q.clone()
+            # tmp = alpha_m / (alpha_m -S[active_m])
+            # s[active_m] = tmp * S[active_m] 
+            # q[active_m] = tmp * Q[active_m]
+            # Sigma_m = Sigma_new
+            # #quantity Gamma_i measures how well the corresponding parameter mu_i is determined by the data
+            # Gamma = 1 - alpha_m * torch.diag(Sigma_m)
+            # beta_KK_m = K @ (K_m * (beta * torch.ones(1,active_m.shape[0]).to(device)))
+            Sigma_m, mu_m, S, Q, s, q, beta, beta_KK_m, new_logML, Gamma = Statistics(K, K_m, mu_m, alpha_m, active_m, targets.squeeze(), N, device)
+            deltaLogMarginal	= new_logML - logML
+            
             logML = logML + deltaLogMarginal
             logMarginalLog.append(logML.item())
-
-            beta_KK_m = K @ (K_m * (beta * torch.ones(1,active_m.shape[0]).to(device)))
-
 
         if terminate:
             # print(f'sigma2={1/beta:.4f}')
             print(f'Finished at {itr:3}, m= {active_m.shape[0]:3}')
             return active_m.cpu().numpy(), alpha_m, Gamma, beta 
 
-        if ((itr+1)%50==0) and verbose:
-            print(f'#{itr+1:3},     m={active_m.shape[0]}, selected_action= {selected_action.item():.0f}, logML= {logML.item()/N:.5f}, sigma2={1/beta:.4f}')
+        if ((itr+1)%10==0) and verbose:
+            print(f'#{itr+1:3},     m={active_m.shape[0]}, selected_action= {selected_action.item():.0f}, logML= {logML.item()/N:.5f}')
 
 
     print(f'logML= {logML/N}\n{logMarginalLog}')
@@ -286,18 +287,21 @@ def Statistics(K, K_m, mu_m, alpha_m, active_m, targets, N, device):
         U_inv	= torch.inverse(U)
         Sigma_m	= U_inv @ U_inv.T
         #  Compute posterior-mean-based outputs and errors
-        K_mu_m = (K_m @ mu_m).unsqueeze(1)
+        K_mu_m = (K_m @ mu_m).squeeze()
         y	= torch.sigmoid(K_mu_m)
         e	= (targets-y)
         logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
-        logML			= dataLikely - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
+        if torch.isinf(dataLikely):
+            logML			=  - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
+        else:
+            logML			= dataLikely - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
         #  Well-determinedness factors
         DiagC	= torch.sum(U_inv**2, axis=1)
         Gamma	= 1 - alpha_m * DiagC
         # COMPUTE THE Q & S VALUES
         # KK_Sigma_m = KK_m @ Sigma_m
         M = active_m.shape[0]
-        beta_KK_m = K.T @ (K_m * (beta * torch.ones(1,M).to(device)))
+        beta_KK_m = K.T @  (K_m * (beta.repeat([1, M]))) #(K_m * (beta * torch.ones(1,M).to(device)))
         # Q: "quality" factor - related to how well the basis function contributes
         # to reducing the error
         # 
@@ -331,14 +335,14 @@ def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
         if (y0[targets>0]).any() or (y1[targets<1]).any():
             #  Error infinite when model gives zero probability in
             #  contradiction to data
-            data_error	= np.inf
+            data_error	= torch.tensor(np.inf)
         else:
             # Any y=0 or y=1 cases must now be accompanied by appropriate
             # output=0 or output=1 values, so can be excluded.
             data_error	= -(targets[~y0].T @ torch.log(y[~y0])) + ((1-targets[~y1]).T @ torch.log(1-y[~y1]))
         return y, data_error
     
-    y, data_error = compute_data_error(K_mu_m, targets)
+    y, data_error = compute_data_error(K_mu_m.squeeze(), targets)
     #  Add on the weight penalty
     regulariser		= (alpha_m @ (mu_m.pow(2)))/2
     new_total_error	= data_error + regulariser
@@ -357,8 +361,9 @@ def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
         #  Compute the likelihood-dependent analogue of the noise precision.
         #  NB: Beta now a vector.
         beta	= y * (1-y)
+        beta = beta.unsqueeze(1)
         #   Compute the Hessian
-        beta_K_m	= K_m * (beta @ torch.ones(1, K_m.shape[1], dtype=torch.float64).to(device))
+        beta_K_m	= K_m * (beta.repeat([1, alpha_m.shape[0]]))
         H			= (beta_K_m.T @ K_m + torch.diag(alpha_m))
         #  Invert Hessian via Cholesky, watching out for ill-conditioning
         try:
@@ -380,7 +385,7 @@ def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
             mu_new		= mu_m + step * delta_mu
             K_mu_m	= K_m @ mu_new
             #  Compute outputs and error at new point
-            y, data_error = compute_data_error(K_mu_m, targets)
+            y, data_error = compute_data_error(K_mu_m.squeeze(), targets)
 
             regulariser		= (alpha_m @ (mu_m.pow(2)))/2
             new_total_error	= data_error + regulariser
@@ -397,230 +402,8 @@ def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
     #  Simple computation of return value of log likelihood at mode
     dataLikely	= -data_error
 
-    return mu_m.squeeze(1), U, beta, dataLikely, bad_Hess 
+    return mu_m, U, beta, dataLikely, bad_Hess 
 
-def Fast_RVM_Full_out(K, targets, bias, beta, N, update_sigma, eps, tol, max_itr=3000, device='cpu', verbose=True):
-    
-    if bias:
-        K = torch.cat((torch.ones(N, 1), K), dim=1)
-    M = K.shape[1]
-
-    logMarginalLog = []
-    active = []
-    alpha = []
-    if bias:
-        active.append(0)
-        alpha.append(eps)
-
-    KK = K.T @ K  # all K_j @ K_i
-    Kt = K.T @ targets
-    KK_diag = torch.diag(KK) # all K_j @ K_j
-
-    # kt_k = Kt**2 / KK_diag
-    start_k = torch.argmax(Kt) #torch.argmax(kt_k)
-    p = beta * KK_diag[start_k]
-    q = beta * Kt[start_k]
-    alpha_start_k = p.pow(2) / (q.pow(2) - p)
-
-    alpha.append(alpha_start_k)
-    active.append(start_k)
-
-    alpha_m = torch.tensor(alpha, dtype=torch.float64).to(device)
-    active_m = torch.tensor(active).to(device)
-
-    # Sigma_m = torch.inverse(A_m + beta * KK_mm)
-    
-    K_m = K[:, active_m]
-    KK_m = KK[:, active_m]
-    KK_mm = KK[active_m, :][:, active_m]
-    K_mt = Kt[active_m] 
-    beta_KK_m = beta * KK_m
-    Sigma_m, mu_m, S, Q, s, q, logML, Gamma = Statistics(K_m, KK_m, KK_mm, Kt, K_mt, alpha_m, active_m, beta, targets, N)
-
-    for itr in range(max_itr):
-
-        # 'Relevance Factor' (q^2-s) values for basis functions in model
-        Factor = q*q - s 
-        #compute delta in marginal log likelihood for new action selection
-        deltaML = torch.zeros(M, dtype=torch.float64).to(device)  
-        action = torch.zeros(M)
-        active_factor = Factor[active_m]
-
-        # RECOMPUTE: must be a POSITIVE 'factor' and already IN the model
-        idx = active_factor > 1e-12
-        recompute = active_m[idx]
-        alpha_prim =  s[recompute]**2 / (Factor[recompute])
-        delta_alpha    = (1./alpha_prim - 1./alpha_m[idx])
-        # d_alpha =  ((alpha_m[idx] - alpha_prim)/(alpha_prim * alpha_m[idx]))
-        d_alpha_S = delta_alpha * S[recompute] + 1 
-        # deltaML[recompute] = ((delta_alpha * Q[recompute]**2) / (S[recompute] + 1/delta_alpha) - torch.log(d_alpha_S)) /2
-        deltaML[recompute] = ((delta_alpha * Q[recompute]**2) / (delta_alpha + eps) - torch.log(d_alpha_S)) /2
-        
-        # DELETION: if NEGATIVE factor and IN model
-        idx = ~idx #active_factor <= 1e-12
-        delete = active_m[idx]
-        anyToDelete = len(delete) > 0
-        if anyToDelete:
-            deltaML[delete] = -(q[delete]**2 / (s[delete] + alpha_m[idx]) - torch.log(1 + s[delete] / alpha_m[idx])) /2
-            # deltaML[delete] = -(Q[delete]**2 / (S[delete] + alpha_m[idx]) - torch.log(1 + S[delete] / alpha_m[idx])) /2
-            action[delete] = -1
-
-        # ADDITION: must be a POSITIVE factor and OUT of the model
-        good_factor = Factor > 0
-        good_factor[active_m] = False
-        add = torch.where(good_factor)[0]
-        anyToAdd = len(add) > 0
-        if anyToAdd:
-            Q_S = Q[add]**2 / S[add]
-            deltaML[add] = (Q_S - 1 - torch.log(Q_S)) /2
-            action[add] = 1
-
-        # Priority of Deletion
-        delete_priority = True
-        if anyToDelete and delete_priority:
-
-            deltaML[recompute] = 0
-            deltaML[add] = 0
-
-        #  choose the action that results in the greatest change in likelihood 
-        max_idx = torch.argmax(deltaML)[None]
-        deltaLogMarginal = deltaML[max_idx]
-        selected_action		= action[max_idx]
-        anyWorthwhileAction	= deltaLogMarginal > 0 
-        # already in the model
-        if selected_action != 1:
-            j = torch.where(active_m==max_idx)[0]
-
-        alpha_new = s[max_idx]**2 / (Factor[max_idx])
-        terminate = False
-        if ~anyWorthwhileAction:
-            print(f'No positive action, m={active_m.shape[0]}')
-            terminate = True
-        if selected_action==0 and ~anyToDelete:
-            no_change_in_alpha = torch.abs(torch.log(alpha_new) - torch.log(alpha_m[j])) < tol
-            no_change_in_alpha = len(no_change_in_alpha) == 1
-            if no_change_in_alpha:
-                print(selected_action)
-                print(f'Finish, nochange in alpha, m={active_m.shape[0]}')
-                terminate = True
-        if terminate:
-            print(f'before terminate try beta update')
-            beta_old = beta
-            y_      = K_m @ mu_m  
-            e       = (targets.squeeze() - y_)
-            beta	= (N - torch.sum(Gamma))/(e.T @ e)
-            delta_beta	= torch.log(beta)-torch.log(beta_old)
-            beta_KK_m       = beta * KK_m
-            if torch.abs(delta_beta) > 1e-6:
-                print(f'update statistics after beta update')
-                Sigma_m, mu_m, S, Q, s, q, logML, Gamma = Statistics(K_m, KK_m, KK_mm, Kt, K_mt, alpha_m, active_m, beta, targets, N)
-                logMarginalLog.append(logML.item())
-            else:
-                print(f'no change in beta update')
-                return active_m, alpha_m, K_m, Sigma_m, mu_m, Gamma, beta 
-
-        if selected_action==0:   #recompute
-
-            alpha_j_old     = alpha_m[j]
-            alpha_m[j]      = alpha_new
-            s_j             = Sigma_m[:, j]
-            delta_inv       = 1 / (alpha_new - alpha_j_old)
-            kappa           = 1 / (Sigma_m[j, j] + delta_inv)
-            tmp             = kappa * s_j
-            Sigma_new       = Sigma_m - tmp @ s_j.T
-            delta_mu        = -mu_m[j] * tmp
-            mu_m            = mu_m + delta_mu.squeeze()
-          
-            S	= S + kappa * (beta_KK_m @ s_j).squeeze()**2
-            Q	= Q - (beta_KK_m @ delta_mu).squeeze()
-
-        elif selected_action==-1:  #delete
-
-            active_m        = active_m[active_m!=active_m[j]]
-            alpha_m         = alpha_m[alpha_m!=alpha_m[j]]
-
-            s_jj			= Sigma_m[j, j]
-            s_j				= Sigma_m[:, j]
-            tmp				= s_j/s_jj
-            Sigma_		    = Sigma_m - tmp @ s_j.T
-            Sigma_          = Sigma_[torch.arange(Sigma_.size(0))!=j]
-            Sigma_new       = Sigma_[:, torch.arange(Sigma_.size(1))!=j]
-            delta_mu		= -mu_m[j] * tmp
-            mu_j			= mu_m[j]
-            mu_m			= mu_m + delta_mu.squeeze()
-            mu_m			= mu_m[torch.arange(mu_m.size(0))!=j]
-            
-            jPm	            = (beta_KK_m @ s_j).squeeze()
-            S	            = S + jPm.pow(2) / s_jj
-            Q	            = Q + jPm * mu_j / s_jj
-
-            K_m             = K[:, active_m]
-            KK_m            = KK[:, active_m]
-            KK_mm           = KK[active_m, :][:, active_m]
-            K_mt            = Kt[active_m]
-            beta_KK_m       = beta * KK_m
-
-        else:  #add
-
-            active_m = torch.cat([active_m, max_idx])
-            alpha_m = torch.cat([alpha_m, alpha_new])
-
-            k_new           = K[:, max_idx]
-            K_k_new         = K.T @ k_new
-            beta_k_new      = beta * k_new
-
-            tmp		        = ((beta_k_new.T @ K_m) @ Sigma_m).T
-            s_ii		    = 1/ (alpha_new +S[max_idx])
-            s_i			    = -tmp @ s_ii
-            tau			    = -tmp @ s_i.unsqueeze(0)
-            Sigma_          = torch.cat([Sigma_m + tau, s_i.unsqueeze(-1)], axis=1)
-            Sigma_new       = torch.cat([Sigma_, torch.cat([s_i.T, s_ii]).unsqueeze(0)], axis=0)
-            mu_i		    = (s_ii @ Q[max_idx]).unsqueeze(0)
-            delta_mu        = torch.cat([-tmp @ mu_i , mu_i], axis=0)
-            mu_m			= torch.cat([mu_m, torch.tensor([0.0])], axis=0) + delta_mu
-        
-            mCi	            = beta * K_k_new - beta_KK_m @ tmp
-            S   	        = S - mCi.pow(2) @ s_ii
-            Q   	        = Q - mCi @ mu_i
-
-            K_m             = K[:, active_m]
-            KK_m            = KK[:, active_m]
-            KK_mm           = KK[active_m, :][:, active_m]
-            K_mt            = Kt[active_m]
-            beta_KK_m       = beta * KK_m
-
-        # UPDATE STATISTICS
-        s = S.clone()
-        q = Q.clone()
-        tmp = alpha_m / (alpha_m -S[active_m])
-        s[active_m] = tmp * S[active_m] 
-        q[active_m] = tmp * Q[active_m]
-        Sigma_m = Sigma_new
-        Gamma = 1 - alpha_m * torch.diag(Sigma_m)
-        logML = logML + deltaLogMarginal
-        logMarginalLog.append(logML.item())
-
-
-        #compute mu and beta
-        if update_sigma and ((itr%5==0) or (itr <=10)):
-            
-            beta_old = beta
-            y_      = K_m @ mu_m  
-            e       = (targets.squeeze() - y_)
-            beta	= (N - torch.sum(Gamma))/(e.T @ e)
-            delta_beta	= torch.log(beta)-torch.log(beta_old)
-            beta_KK_m       = beta * KK_m
-            if torch.abs(delta_beta) > 1e-6:
-                print(f'update statistics after beta update')
-                Sigma_m, mu_m, S, Q, s, q, logML, Gamma = Statistics(K_m, KK_m, KK_mm, Kt, K_mt, alpha_m, active_m, beta, targets, N)
-                logMarginalLog.append(logML.item())
-     
-        if ((itr+1)%1==0) and verbose:
-            print(f'#{itr+1:03},     m={active_m.shape[0]}, selected_action= {selected_action.item():.0f}, sigma={1/beta:.4f}')
-
-
-    print(f'logML= {logML}\n{logMarginalLog}')
-    return active_m, alpha_m, K_m, Sigma_m, mu_m, Gamma, beta 
 
 
 def generate_data():
@@ -654,7 +437,7 @@ if __name__=='__main__':
     inputs = torch.tensor(X[:, None])
     targets = torch.tensor(y[:, None])
     N   = inputs.shape[0]
-    tol = 1e-3
+    tol = 1e-6
     eps = torch.finfo(torch.float32).eps
     # sigma = model.likelihood.raw_noise.detach().clone()
     
@@ -689,8 +472,8 @@ if __name__=='__main__':
         kernel_matrix = kernel_matrix / Scales
 
     K = kernel_matrix
-    config = "010"
-    align_thr = 1e-3
+    config = "011"
+    align_thr = 1e-2
     # scale = torch.sqrt(torch.sum(K) / N ** 2)
     # K = K / scale                                 K, targets, N, config, align_thr
     active_m, alpha_m, gamma_m, beta = Fast_RVM(K, targets, N, config, align_thr, eps, tol)
