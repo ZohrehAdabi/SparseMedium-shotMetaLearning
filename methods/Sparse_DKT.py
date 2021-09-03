@@ -32,13 +32,13 @@ except ImportError:
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=5 --train_aug
 IP = namedtuple("inducing_points", "z_values index count x y i_idx j_idx")
 class Sparse_DKT(MetaTemplate):
-    def __init__(self, model_func, n_way, n_support, config="010", align_threshold=1e-3):
+    def __init__(self, model_func, n_way, n_support, config="010", align_threshold=1e-3, dirichlet=False):
         super(Sparse_DKT, self).__init__(model_func, n_way, n_support)
         self.num_inducing_points = 10
         self.fast_rvm = True
         self.config = config
         self.align_threshold = align_threshold
-        self.dirichlet = False
+        self.dirichlet = dirichlet
         self.device ='cuda'
         ## GP parameters
         self.leghtscale_list = None
