@@ -113,7 +113,15 @@ def single_test(params):
     if params.train_aug:
         checkpoint_dir += '_aug'
     if not params.method in ['baseline', 'baseline++'] :
-        checkpoint_dir += '_%dway_%dshot' %( params.train_n_way, params.n_shot)
+        # checkpoint_dir += '_%dway_%dshot' %( params.train_n_way, params.n_shot)
+        if params.method=='Sparse_DKT':
+            if params.dirichlet:
+                id = f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}'
+            else:
+                id = f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}'           
+            params.checkpoint_dir += id
+        else:
+            params.checkpoint_dir += '_%dway_%dshot' % (params.train_n_way, params.n_shot)
 
     #modelfile   = get_resume_file(checkpoint_dir)
 
