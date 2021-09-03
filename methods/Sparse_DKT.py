@@ -193,7 +193,7 @@ class Sparse_DKT(MetaTemplate):
             optimizer.zero_grad()
             output = self.model(*self.model.train_inputs)
             if self.dirichlet:
-                transformed_targets = [model.likelihood.transformed_targets for model in model.models]
+                transformed_targets = [model.likelihood.transformed_targets for model in self.model.models]
                 loss = -self.mll(output, transformed_targets)
             else:
                 loss = -self.mll(output, self.model.train_targets)
