@@ -688,9 +688,11 @@ if __name__=='__main__':
         kernel_matrix = kernel_matrix / Scales
 
     K = kernel_matrix
+    config = "010"
+    align_thr = 1e-3
     # scale = torch.sqrt(torch.sum(K) / N ** 2)
-    # K = K / scale
-    active_m, alpha_m, gamma_m, beta = Fast_RVM(K, targets, beta, N, update_sigma, eps, tol)
+    # K = K / scale                                 K, targets, N, config, align_thr
+    active_m, alpha_m, gamma_m, beta = Fast_RVM(K, targets, N, config, align_thr, eps, tol)
 
 
 

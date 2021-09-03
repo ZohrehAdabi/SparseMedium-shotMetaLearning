@@ -71,7 +71,7 @@ class Sparse_DKT(MetaTemplate):
         for train_x, train_y in zip(train_x_list, train_y_list):
             
             if self.dirichlet:
-                likelihood = gpytorch.likelihoods.DirichletClassificationLikelihood(targets=train_y, learn_additional_noise=False)
+                likelihood = gpytorch.likelihoods.DirichletClassificationLikelihood(targets=train_y.long(), learn_additional_noise=False)
             else:
                 likelihood = gpytorch.likelihoods.GaussianLikelihood()
 
