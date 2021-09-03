@@ -147,10 +147,16 @@ if __name__ == '__main__':
         if(params.method == 'Sparse_DKT'):
             model = Sparse_DKT(model_dict[params.model], **train_few_shot_params, 
                                     config=params.config, align_threshold=params.align_thr, dirichlet=params.dirichlet)
-            model.init_summary(id=f'SparseDKT_{params.sparse_method}_{params.model}_{params.dataset}_{params.dirichlet}_{params.config}_{params.align_thr}')
+            if params.dirichlet:
+                id = f'SparseDKT_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}'
+            else:
+                id = f'SparseDKT_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}'           
+            model.init_summary(id=)
+        
         elif(params.method == 'DKT'):
             model = DKT(model_dict[params.model], **train_few_shot_params)
-            model.init_summary(id=f'DKT_{params.model}_{params.dataset}')
+            model.init_summary(id=f'DKT_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}')
+        
         elif params.method == 'protonet':
             model = ProtoNet(model_dict[params.model], **train_few_shot_params)
         elif params.method == 'matchingnet':
