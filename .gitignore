@@ -193,3 +193,5 @@ save
 save/checkpoints/
 save/checkpoints/QMUL/*.png
 log
+log/14082021_064233/events.out.tfevents.1628923353.ADABI-PC
+
