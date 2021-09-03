@@ -221,10 +221,11 @@ class Sparse_DKT(MetaTemplate):
                 if self.dirichlet:
                     for dirichlet in predictions:
 
-                        predictions_list.append(torch.max(dirichlet.mean).cpu().detach().numpy())
+                        predictions_list.append(torch.max(dirichlet.mean, axis=0)[0].cpu().detach().numpy())
                 else:
                     for gaussian in predictions:
                         predictions_list.append(torch.sigmoid(gaussian.mean).cpu().detach().numpy())
+
                 y_pred = np.vstack(predictions_list).argmax(axis=0) #[model, classes]
                 accuracy_support = (np.sum(y_pred==y_support) / float(len(y_support))) * 100.0
                 if(self.writer is not None): self.writer.add_scalar('GP_support_accuracy', accuracy_support, self.iteration)
@@ -238,7 +239,7 @@ class Sparse_DKT(MetaTemplate):
                 predictions_list = list()
                 if self.dirichlet:
                     for dirichlet in predictions:
-                        predictions_list.append(torch.max(dirichlet.mean).cpu().detach().numpy())
+                        predictions_list.append(torch.max(dirichlet.mean, axis=0)[0].cpu().detach().numpy())
                 else:
                     for gaussian in predictions:
                         predictions_list.append(torch.sigmoid(gaussian.mean).cpu().detach().numpy())
@@ -385,7 +386,7 @@ class Sparse_DKT(MetaTemplate):
             predictions_list = list()
             if self.dirichlet:
                     for dirichlet in predictions:
-                        predictions_list.append(torch.max(dirichlet.mean).cpu().detach().numpy())
+                        predictions_list.append(torch.max(dirichlet.mean, axis=0)[0].cpu().detach().numpy())
             else:
                 for gaussian in predictions:
                     predictions_list.append(torch.sigmoid(gaussian.mean).cpu().detach().numpy())
