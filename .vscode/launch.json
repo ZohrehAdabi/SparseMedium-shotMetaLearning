@@ -90,7 +90,7 @@
     // python test.py --method "Sparse_DKT"  --sparse_method "FRVM" --dataset="CUB"  --train_n_way=5 --test_n_way=5 --n_shot=1 --seed=1 --config "000", --align_thr 1e-3  --train_aug
         },
         {
-            "name": "DKT: train",
+            "name": "DKT: train [CUB]",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/train.py",
@@ -103,7 +103,7 @@
   
 
         {
-            "name": "DKT: test",
+            "name": "DKT [CUB]: test",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/test.py",
@@ -112,6 +112,30 @@
             "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "1",
              "--seed","1"]
             // python test.py --method "DKT"  --dataset="CUB"  --train_n_way=5 --test_n_way=5 --n_shot=1 --seed=1 
+        },
+        {
+            "name": "DKT [omniglot]: train ",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/train.py",
+            "console": "integratedTerminal",
+           "args": ["--method","DKT", "--dataset", "omniglot", 
+            "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "1",
+            "--seed","1"]  //, "--train_aug"
+         // python train.py --method "DKT"  --dataset="omniglot"  --train_n_way=5 --test_n_way=5 --n_shot=1 --seed=1 --train_aug
+        },
+  
+
+        {
+            "name": "DKT [omniglot]: test",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/test.py",
+            "console": "integratedTerminal",
+        "args": ["--method","DKT", "--dataset", "omniglot", 
+            "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "1",
+             "--seed","1"]
+            // python test.py --method "DKT"  --dataset="omniglot"  --train_n_way=5 --test_n_way=5 --n_shot=1 --seed=1 
         },
      
 
