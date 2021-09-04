@@ -267,7 +267,10 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
             print(f'#{itr+1:3},     m={active_m.shape[0]}, selected_action= {selected_action.item():.0f}, logML= {logML.item()/N:.5f}')
 
 
-    print(f'logML= {logML/N}\n{logMarginalLog}')
+    # print(f'logML= {logML/N}\n{logMarginalLog}')
+    print(f'End, m= {active_m.shape[0]:3}')
+    print(f'add: {add_count:3d} ({add_count/count:.1%}), delete: {del_count:3d} ({del_count/count:.1%}), recompute: {recomp_count:3d} ({recomp_count/count:.1%})')
+
 
     return active_m.cpu().numpy(), alpha_m, Gamma, beta 
 
