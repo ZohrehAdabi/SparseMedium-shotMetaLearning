@@ -260,7 +260,8 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
             # print(f'sigma2={1/beta:.4f}')
             # if verbose:
             print(f'Finished at {itr:3}, m= {active_m.shape[0]:3}')
-            print(f'add: {add_count:3d} ({add_count/count:.1%}), delete: {del_count:3d} ({del_count/count:.1%}), recompute: {recomp_count:3d} ({recomp_count/count:.1%})')
+            if count > 0:
+                print(f'add: {add_count:3d} ({add_count/count:.1%}), delete: {del_count:3d} ({del_count/count:.1%}), recompute: {recomp_count:3d} ({recomp_count/count:.1%})')
             return active_m.cpu().numpy(), alpha_m, Gamma, beta 
 
         if ((itr+1)%1==0) and verbose:
@@ -269,7 +270,8 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
 
     # print(f'logML= {logML/N}\n{logMarginalLog}')
     print(f'End, m= {active_m.shape[0]:3}')
-    print(f'add: {add_count:3d} ({add_count/count:.1%}), delete: {del_count:3d} ({del_count/count:.1%}), recompute: {recomp_count:3d} ({recomp_count/count:.1%})')
+    if count > 0:
+        print(f'add: {add_count:3d} ({add_count/count:.1%}), delete: {del_count:3d} ({del_count/count:.1%}), recompute: {recomp_count:3d} ({recomp_count/count:.1%})')
 
 
     return active_m.cpu().numpy(), alpha_m, Gamma, beta 
