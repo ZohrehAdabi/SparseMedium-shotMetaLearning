@@ -34,7 +34,7 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
     LogOut	= (targets_pseudo_linear * 0.9 + 1) / 2
     mu_m	=  K_m.pinverse() @ (torch.log(LogOut / (1 - LogOut))) #torch.linalg.lstsq(K_m, (torch.log(LogOut / (1 - LogOut)))).solution
     mu_m = mu_m.squeeze(1).to(device)
-    alpha_init = 1 / (mu_m + 1e-1).pow(2)
+    alpha_init = 1 / (mu_m + 1e-8).pow(2)
     alpha_m = torch.tensor([alpha_init], dtype=torch.float64).to(device)
     if alpha_m < 1e-3:
         alpha_m = torch.tensor([1e-3], dtype=torch.float64).to(device)
@@ -52,7 +52,10 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
     add_priority    = config[1]=="1"
     alignment_test  = config[2]=="1"
     align_zero      = align_thr
-    
+    add_count = 0
+    del_count = 0
+    recomp_count = 0
+    count = 0
     for itr in range(max_itr):
 
         # 'Relevance Factor' (q^2-s) values for basis functions in model
@@ -70,7 +73,7 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
         # d_alpha =  ((alpha_m[idx] - alpha_prim)/(alpha_prim * alpha_m[idx]))
         d_alpha_S           = delta_alpha * S[recompute] + 1 
         # deltaML[recompute] = ((delta_alpha * Q[recompute]**2) / (S[recompute] + 1/delta_alpha) - torch.log(d_alpha_S)) /2
-        deltaML[recompute]  = ((delta_alpha * Q[recompute]**2) / (delta_alpha + eps) - torch.log(d_alpha_S)) /2
+        deltaML[recompute]  = ((delta_alpha * Q[recompute]**2) / (d_alpha_S) - torch.log(d_alpha_S)) /2
         
         # DELETION: if NEGATIVE factor and IN model
         idx = ~idx #active_factor <= 1e-12
@@ -125,7 +128,7 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
 
         if selected_action==0 and ~anyToDelete:
             no_change_in_alpha = torch.abs(torch.log(alpha_new) - torch.log(alpha_m[j])) < tol
-            no_change_in_alpha = len(no_change_in_alpha) == 1
+           
             if no_change_in_alpha:
                 # print(selected_action)
                 print(f'{itr:3}, No change in alpha, m={active_m.shape[0]:3}')
@@ -170,26 +173,26 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
                     aligned_in = aligned_in[torch.arange(aligned_in.size(0)).to(device)!=aligned_idx]
                     aligned_out = aligned_out[torch.arange(aligned_out.size(0)).to(device)!=aligned_idx]
                 
-        if verbose:
-            print(f'selected_action {selected_action}')
+
         update_required = False
         if selected_action==0:   #recompute
-
+            recomp_count += 1
             alpha_j_old     = alpha_m[j]
             alpha_m[j]      = alpha_new
             s_j             = Sigma_m[:, j]
             delta_inv       = 1 / (alpha_new - alpha_j_old)
             kappa           = 1 / (Sigma_m[j, j] + delta_inv)
             tmp             = kappa * s_j
-            Sigma_new       = Sigma_m - tmp @ s_j.T
+            # Sigma_new       = Sigma_m - tmp @ s_j.T
             delta_mu        = -mu_m[j] * tmp
             mu_m            = mu_m + delta_mu.squeeze()
           
-            S	= S + kappa * (beta_KK_m @ s_j).squeeze()**2
-            Q	= Q - (beta_KK_m @ delta_mu).squeeze()
+            # S	= S + kappa * (beta_KK_m @ s_j).squeeze()**2
+            # Q	= Q - (beta_KK_m @ delta_mu).squeeze()
             update_required = True
         
         if selected_action==-1:  #delete
+            del_count += 1
             # print(f'itr= {itr}, selected_action={selected_action.item()}')
             active_m        = active_m[active_m!=active_m[j]]
             alpha_m         = alpha_m[alpha_m!=alpha_m[j]]
@@ -197,65 +200,56 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
             s_jj			= Sigma_m[j, j]
             s_j				= Sigma_m[:, j]
             tmp				= s_j/s_jj
-            Sigma_		    = Sigma_m - tmp @ s_j.T
-            Sigma_          = Sigma_[torch.arange(Sigma_.size(0)).to(device)!=j]
-            Sigma_new       = Sigma_[:, torch.arange(Sigma_.size(1)).to(device)!=j]
+            # Sigma_		    = Sigma_m - tmp @ s_j.T
+            # Sigma_          = Sigma_[torch.arange(Sigma_.size(0)).to(device)!=j]
+            # Sigma_new       = Sigma_[:, torch.arange(Sigma_.size(1)).to(device)!=j]
             delta_mu		= -mu_m[j] * tmp
             mu_j			= mu_m[j]
             mu_m			= mu_m + delta_mu.squeeze()
             mu_m			= mu_m[torch.arange(mu_m.size(0)).to(device)!=j]
             
-            jPm	            = (beta_KK_m @ s_j).squeeze()
-            S	            = S + jPm.pow(2) / s_jj
-            Q	            = Q + jPm * mu_j / s_jj
+            # jPm	            = (beta_KK_m @ s_j).squeeze()
+            # S	            = S + jPm.pow(2) / s_jj
+            # Q	            = Q + jPm * mu_j / s_jj
 
             K_m             = K[:, active_m]
-            KK_m            = KK[:, active_m]
-            beta_KK_m       = beta * KK_m
+            # KK_m            = KK[:, active_m]
+            # beta_KK_m       = beta * KK_m
             update_required = True
         
         if selected_action==1:  #add
-
+            add_count += 1
             active_m = torch.cat([active_m, max_idx])
             alpha_m = torch.cat([alpha_m, alpha_new])
 
             k_new           = K[:, max_idx]
             # K_k_new         = K.T @ k_new
-            beta_k_new      = beta * k_new
+            beta_k_new      = beta * k_new.squeeze()
             beta_K_k_new  	= K.T @ beta_k_new
 
             tmp		        = ((beta_k_new.T @ K_m) @ Sigma_m).T
-            s_ii		    = 1/ (alpha_new +S[max_idx])
-            s_i			    = -tmp @ s_ii
-            tau			    = -tmp @ s_i.unsqueeze(0)
-            Sigma_          = torch.cat([Sigma_m + tau, s_i.unsqueeze(-1)], axis=1)
-            Sigma_new       = torch.cat([Sigma_, torch.cat([s_i.T, s_ii]).unsqueeze(0)], axis=0)
-            mu_i		    = (s_ii @ Q[max_idx]).unsqueeze(0)
-            delta_mu        = torch.cat([-tmp @ mu_i , mu_i], axis=0)
+            s_ii		    = 1/ (alpha_new + S[max_idx])
+            # s_i			    = -s_ii * tmp
+            # tau			    = -s_i @ tmp.T
+            # Sigma_          = torch.cat([Sigma_m + tau, s_i.unsqueeze(-1)], axis=1)
+            # Sigma_new       = torch.cat([Sigma_, torch.cat([s_i.T, s_ii]).unsqueeze(0)], axis=0)
+            mu_i		    = (s_ii * Q[max_idx])
+            delta_mu        = torch.cat([-(mu_i * tmp) , mu_i], axis=0)
             mu_m			= torch.cat([mu_m, torch.tensor([0.0]).to(device)], axis=0) + delta_mu
         
-            mCi	            = beta_K_k_new - beta_KK_m @ tmp
-            S   	        = S - mCi.pow(2) @ s_ii
-            Q   	        = Q - mCi @ mu_i
+            # mCi	            = beta_K_k_new - beta_KK_m @ tmp
+            # S   	        = S - mCi.pow(2) * s_ii
+            # Q   	        = Q - mCi * mu_i
 
             K_m             = K[:, active_m]
-            KK_m            = KK[:, active_m]
-
-            beta_KK_m       = beta * KK_m
+            # KK_m            = KK[:, active_m]
+            # beta_KK_m       = beta * KK_m
             update_required = True
         
             
         # UPDATE STATISTICS
         if update_required:
-            # s = S.clone()
-            # q = Q.clone()
-            # tmp = alpha_m / (alpha_m -S[active_m])
-            # s[active_m] = tmp * S[active_m] 
-            # q[active_m] = tmp * Q[active_m]
-            # Sigma_m = Sigma_new
-            # #quantity Gamma_i measures how well the corresponding parameter mu_i is determined by the data
-            # Gamma = 1 - alpha_m * torch.diag(Sigma_m)
-            # beta_KK_m = K @ (K_m * (beta * torch.ones(1,active_m.shape[0]).to(device)))
+            count += 1
             Sigma_m, mu_m, S, Q, s, q, beta, beta_KK_m, new_logML, Gamma = Statistics(K, K_m, mu_m, alpha_m, active_m, targets.squeeze(), N, device)
             deltaLogMarginal	= new_logML - logML
             
@@ -264,10 +258,12 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
 
         if terminate:
             # print(f'sigma2={1/beta:.4f}')
+            # if verbose:
             print(f'Finished at {itr:3}, m= {active_m.shape[0]:3}')
+            print(f'add: {add_count:3d} ({add_count/count:.1%}), delete: {del_count:3d} ({del_count/count:.1%}), recompute: {recomp_count:3d} ({recomp_count/count:.1%})')
             return active_m.cpu().numpy(), alpha_m, Gamma, beta 
 
-        if ((itr+1)%10==0) and verbose:
+        if ((itr+1)%1==0) and verbose:
             print(f'#{itr+1:3},     m={active_m.shape[0]}, selected_action= {selected_action.item():.0f}, logML= {logML.item()/N:.5f}')
 
 
@@ -279,12 +275,12 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
 def Statistics(K, K_m, mu_m, alpha_m, active_m, targets, N, device):
         
         
-        mu_m, U, beta, dataLikely, bad_Hess = posterior_mode(K_m, targets, alpha_m, mu_m, max_itr=25, device=device)
+        mu_m, U, beta, dataLikely, bad_Hess = posterior_mode(K_m, targets, alpha_m, mu_m, max_itr=50, device=device)
         
-        if bad_Hess: ValueError('bad Hessian')
+        if bad_Hess: raise ValueError('bad Hessian')
 
         #  Compute covariance approximation
-        U_inv	= torch.inverse(U)
+        U_inv	= torch.linalg.inv(U)
         Sigma_m	= U_inv @ U_inv.T
         #  Compute posterior-mean-based outputs and errors
         K_mu_m = (K_m @ mu_m).squeeze()
@@ -301,7 +297,7 @@ def Statistics(K, K_m, mu_m, alpha_m, active_m, targets, N, device):
         # COMPUTE THE Q & S VALUES
         # KK_Sigma_m = KK_m @ Sigma_m
         M = active_m.shape[0]
-        beta_KK_m = K.T @  (K_m * (beta.repeat([1, M]))) #(K_m * (beta * torch.ones(1,M).to(device)))
+        beta_KK_m = K.T @  (torch.diag(beta) @ K_m) #(K_m * (beta.repeat([1, M])))
         # Q: "quality" factor - related to how well the basis function contributes
         # to reducing the error
         # 
@@ -339,7 +335,7 @@ def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
         else:
             # Any y=0 or y=1 cases must now be accompanied by appropriate
             # output=0 or output=1 values, so can be excluded.
-            data_error	= -(targets[~y0].T @ torch.log(y[~y0])) + ((1-targets[~y1]).T @ torch.log(1-y[~y1]))
+            data_error	= -(targets[~y0].T @ torch.log(y[~y0]) + ((1-targets[~y1]).T @ torch.log(1-y[~y1])))
         return y, data_error
     
     y, data_error = compute_data_error(K_mu_m.squeeze(), targets)
@@ -361,20 +357,21 @@ def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
         #  Compute the likelihood-dependent analogue of the noise precision.
         #  NB: Beta now a vector.
         beta	= y * (1-y)
-        beta = beta.unsqueeze(1)
+        # beta = beta.unsqueeze(1)
         #   Compute the Hessian
-        beta_K_m	= K_m * (beta.repeat([1, alpha_m.shape[0]]))
-        H			= (beta_K_m.T @ K_m + torch.diag(alpha_m))
+        beta_K_m	= (torch.diag(beta) @ K_m)  #K_m * (beta.repeat([1, alpha_m.shape[0]]))
+        H			= (K_m.T @ beta_K_m + torch.diag(alpha_m))
         #  Invert Hessian via Cholesky, watching out for ill-conditioning
         try:
             U	=  torch.linalg.cholesky((H).transpose(-2, -1).conj()).transpose(-2, -1).conj()
             #  Make sure its positive definite
         except:
             print('pd_err of Hessian')
-            return None, None, None, None, True
+            return None, H, None, None, True
         
         #  Before progressing, check for termination based on the gradient norm
-        if all(abs(g)< grad_min): break
+        if all(abs(g)< grad_min): 
+            break
 
         #  If all OK, compute full Newton step: H^{-1} * g
         U_g = U.T.pinverse() @ g  #torch.linalg.lstsq(U.T, g).solution
@@ -387,7 +384,7 @@ def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
             #  Compute outputs and error at new point
             y, data_error = compute_data_error(K_mu_m.squeeze(), targets)
 
-            regulariser		= (alpha_m @ (mu_m.pow(2)))/2
+            regulariser		= (alpha_m @ (mu_new.pow(2)))/2
             new_total_error	= data_error + regulariser
             #  Test that we haven't made things worse
             if new_total_error>=error_log[itr]:
@@ -437,7 +434,7 @@ if __name__=='__main__':
     inputs = torch.tensor(X[:, None])
     targets = torch.tensor(y[:, None])
     N   = inputs.shape[0]
-    tol = 1e-6
+    tol = 1e-4
     eps = torch.finfo(torch.float32).eps
     # sigma = model.likelihood.raw_noise.detach().clone()
     
@@ -450,12 +447,12 @@ if __name__=='__main__':
     covar_module.outputscale = 1
     kernel_matrix = covar_module(inputs).evaluate()
     N = inputs.shape[0]
-    # import scipy.io
-    # kernel_matrix = scipy.io.loadmat('./K.mat')['BASIS']
-    # kernel_matrix = torch.from_numpy(kernel_matrix).to(dtype=torch.float64)
-    # targets = scipy.io.loadmat('./targets.mat')['Targets']
-    # targets = torch.from_numpy(targets).to(dtype=torch.float64)
-
+    import scipy.io
+    kernel_matrix = scipy.io.loadmat('./methods/K.mat')['BASIS']
+    kernel_matrix = torch.from_numpy(kernel_matrix).to(dtype=torch.float64)
+    targets = scipy.io.loadmat('./methods/targets.mat')['Targets']
+    targets = torch.from_numpy(targets).to(dtype=torch.float64)
+    N = targets.shape[0]
     sigma = torch.var(targets)  #sigma^2
     # sigma = torch.tensor([0.01])
     update_sigma = True
@@ -473,10 +470,12 @@ if __name__=='__main__':
 
     K = kernel_matrix
     config = "011"
-    align_thr = 1e-2
+    align_thr = 1e-3
     # scale = torch.sqrt(torch.sum(K) / N ** 2)
     # K = K / scale                                 K, targets, N, config, align_thr
     active_m, alpha_m, gamma_m, beta = Fast_RVM(K, targets, N, config, align_thr, eps, tol)
+    print(f'relevant index \n {active_m}')
+    print(f'relevant alpha \n {alpha_m}')
 
 
 

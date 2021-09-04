@@ -277,7 +277,7 @@ class Sparse_DKT(MetaTemplate):
         else:
             # with sigma and updating sigma converges to more sparse solution
             N   = inputs.shape[0]
-            tol = 1e-12
+            tol = 1e-4
             eps = torch.finfo(torch.float32).eps
             max_itr = 1000
             

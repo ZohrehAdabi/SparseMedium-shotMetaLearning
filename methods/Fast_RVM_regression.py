@@ -46,6 +46,10 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
     add_priority    = config[2]=="1"
     alignment_test  = config[3]=="1"
     align_zero      = align_thr
+    add_count = 0
+    del_count = 0
+    recomp_count = 0
+    count = 0
     for itr in range(max_itr):
 
         # 'Relevance Factor' (q^2-s) values for basis functions in model
@@ -63,7 +67,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
         # d_alpha =  ((alpha_m[idx] - alpha_prim)/(alpha_prim * alpha_m[idx]))
         d_alpha_S           = delta_alpha * S[recompute] + 1 
         # deltaML[recompute] = ((delta_alpha * Q[recompute]**2) / (S[recompute] + 1/delta_alpha) - torch.log(d_alpha_S)) /2
-        deltaML[recompute]  = ((delta_alpha * Q[recompute]**2) / (delta_alpha + eps) - torch.log(d_alpha_S)) /2
+        deltaML[recompute]  = ((delta_alpha * Q[recompute]**2) / (d_alpha_S) - torch.log(d_alpha_S)) /2
         
         # DELETION: if NEGATIVE factor and IN model
         idx = ~idx #active_factor <= 1e-12
@@ -123,7 +127,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
 
         if selected_action==0 and ~anyToDelete:
             no_change_in_alpha = torch.abs(torch.log(alpha_new) - torch.log(alpha_m[j])) < tol
-            no_change_in_alpha = len(no_change_in_alpha) == 1
+            
             if no_change_in_alpha:
                 # print(selected_action)
                 if verbose:
@@ -174,7 +178,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
 
         update_required = False
         if selected_action==0:   #recompute
-
+            recomp_count += 1
             alpha_j_old     = alpha_m[j]
             alpha_m[j]      = alpha_new
             s_j             = Sigma_m[:, j]
@@ -190,7 +194,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             update_required = True
         
         if selected_action==-1:  #delete
-            # print(f'itr= {itr}, selected_action={selected_action.item()}')
+            del_count += 1
             active_m        = active_m[active_m!=active_m[j]]
             alpha_m         = alpha_m[alpha_m!=alpha_m[j]]
 
@@ -217,7 +221,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             update_required = True
         
         if selected_action==1:  #add
-
+            add_count += 1
             active_m = torch.cat([active_m, max_idx])
             alpha_m = torch.cat([alpha_m, alpha_new])
 
@@ -249,6 +253,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             
         # UPDATE STATISTICS
         if update_required:
+            count += 1
             s = S.clone()
             q = Q.clone()
             tmp = alpha_m / (alpha_m -S[active_m])
@@ -276,6 +281,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
                 if verbose:
                     print(f'{itr:3}, update statistics after beta update')
                 Sigma_m, mu_m, S, Q, s, q, logML, Gamma = Statistics(K_m, KK_m, KK_mm, Kt, K_mt, alpha_m, active_m, beta, targets, N)
+                count = count + 1
                 logMarginalLog.append(logML.item())
                 terminate = False
             # else: 
@@ -283,12 +289,13 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
 
         if terminate:
             # print(f'sigma2={1/beta:.4f}')
-            if verbose:
-                print(f'Finished at {itr:3}, m= {active_m.shape[0]:3} sigma2={1/beta:4.4f}')
+            # if verbose:
+            print(f'Finished at {itr:3}, m= {active_m.shape[0]:3} sigma2= {1/beta:4.4f}')
+            print(f'add: {add_count:3d} ({add_count/count:.1%}), delete: {del_count:3d} ({del_count/count:.1%}), recompute: {recomp_count:3d} ({recomp_count/count:.1%})')
             return active_m.cpu().numpy(), alpha_m, Gamma, beta 
 
         if ((itr+1)%50==0) and verbose:
-            print(f'#{itr+1:3},     m={active_m.shape[0]}, selected_action= {selected_action.item():.0f}, logML= {logML.item()/N:.5f}, sigma2={1/beta:.4f}')
+            print(f'#{itr+1:3},     m={active_m.shape[0]}, selected_action= {selected_action.item():.0f}, logML= {logML.item()/N:.5f}, sigma2= {1/beta:.4f}')
 
 
     print(f'logML= {logML/N}\n{logMarginalLog}')
@@ -589,7 +596,7 @@ if __name__=='__main__':
     inputs = torch.tensor(X[:, None])
     targets = torch.tensor(y[:, None])
     N   = inputs.shape[0]
-    tol = 1e-3
+    tol = 1e-4
     eps = torch.finfo(torch.float32).eps
     # sigma = model.likelihood.raw_noise.detach().clone()
     
@@ -602,14 +609,14 @@ if __name__=='__main__':
     covar_module.outputscale = 1
     kernel_matrix = covar_module(inputs).evaluate()
     N = inputs.shape[0]
-    # import scipy.io
-    # kernel_matrix = scipy.io.loadmat('./K.mat')['BASIS']
-    # kernel_matrix = torch.from_numpy(kernel_matrix).to(dtype=torch.float64)
-    # targets = scipy.io.loadmat('./targets.mat')['Targets']
-    # targets = torch.from_numpy(targets).to(dtype=torch.float64)
-
+    import scipy.io
+    kernel_matrix = scipy.io.loadmat('./methods/K2.mat')['BASIS']
+    kernel_matrix = torch.from_numpy(kernel_matrix).to(dtype=torch.float64)
+    targets = scipy.io.loadmat('./methods/targets2.mat')['Targets']
+    targets = torch.from_numpy(targets).to(dtype=torch.float64)
+    N = targets.shape[0]
     sigma = torch.var(targets)  #sigma^2
-    # sigma = torch.tensor([0.01])
+    sigma = torch.tensor([0.01])
     update_sigma = True
     beta = 1 /sigma
     #centering in feature space
@@ -626,8 +633,11 @@ if __name__=='__main__':
     K = kernel_matrix
     # scale = torch.sqrt(torch.sum(K) / N ** 2)
     # K = K / scale
-    active_m, alpha_m, gamma_m, beta = Fast_RVM(K, targets, beta, N, update_sigma, eps, tol)
-
+    config = "1011"
+    align_thr = 1e-3
+    active_m, alpha_m, gamma_m, beta = Fast_RVM_regression(K, targets, beta, N,  config, align_thr, eps, tol)
+    print(f'relevant index \n {active_m}')
+    print(f'relevant alpha \n {alpha_m}')
 
 
 
