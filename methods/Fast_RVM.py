@@ -126,7 +126,7 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
             selected_action = torch.tensor(10)
             terminate = True
 
-        if selected_action==0 and ~anyToDelete:
+        elif selected_action==0 and ~anyToDelete:
             no_change_in_alpha = torch.abs(torch.log(alpha_new) - torch.log(alpha_m[j])) < tol
            
             if no_change_in_alpha:

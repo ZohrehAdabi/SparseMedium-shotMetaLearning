@@ -125,7 +125,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             selected_action = torch.tensor(10)
             terminate = True
 
-        if selected_action==0 and ~anyToDelete:
+        elif selected_action==0 and ~anyToDelete:
             no_change_in_alpha = torch.abs(torch.log(alpha_new) - torch.log(alpha_m[j])) < tol
             
             if no_change_in_alpha:
