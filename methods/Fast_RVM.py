@@ -21,7 +21,7 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
     targets[targets == -1] = 0
     targets = targets.to(device)
     K = K.to(device)
-    targets_pseudo_linear	= 2 * targets - 1
+    targets_pseudo_linear	= targets #2 * targets - 1
     KK = K.T @ K  # all K_j @ K_i
     Kt = K.T @ targets_pseudo_linear
     start_k = torch.argmax(abs(Kt)) #torch.argmax(kt_k)
@@ -131,7 +131,7 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
            
             if no_change_in_alpha:
                 # print(selected_action)
-                # print(f'{itr:3}, No change in alpha, m={active_m.shape[0]:3}')
+                print(f'{itr:3}, No change in alpha, m={active_m.shape[0]:3}')
                 selected_action = torch.tensor(11)
                 terminate = True
         
@@ -261,11 +261,11 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
             # if verbose:
             if active_m.shape[0] < 3:
                 print(f'Finished at {itr:3}, m= {active_m.shape[0]:3}')
-            # if count > 0:
-            #     print(f'add: {add_count:3d} ({add_count/count:.1%}), delete: {del_count:3d} ({del_count/count:.1%}), recompute: {recomp_count:3d} ({recomp_count/count:.1%})')
+            if count > 0:
+                print(f'add: {add_count:3d} ({add_count/count:.1%}), delete: {del_count:3d} ({del_count/count:.1%}), recompute: {recomp_count:3d} ({recomp_count/count:.1%})')
             return active_m.cpu().numpy(), alpha_m, Gamma, beta 
 
-        if ((itr+1)%1==0) and verbose:
+        if ((itr+1)%50==0) and verbose:
             print(f'#{itr+1:3},     m={active_m.shape[0]}, selected_action= {selected_action.item():.0f}, logML= {logML.item()/N:.5f}')
 
 
@@ -457,7 +457,10 @@ if __name__=='__main__':
     kernel_matrix = scipy.io.loadmat('./methods/K.mat')['BASIS']
     kernel_matrix = torch.from_numpy(kernel_matrix).to(dtype=torch.float64)
     targets = scipy.io.loadmat('./methods/targets.mat')['Targets']
+    targets = targets.astype(np.float64)
+    # targets = 2 * targets -1
     targets = torch.from_numpy(targets).to(dtype=torch.float64)
+
     N = targets.shape[0]
     sigma = torch.var(targets)  #sigma^2
     # sigma = torch.tensor([0.01])
