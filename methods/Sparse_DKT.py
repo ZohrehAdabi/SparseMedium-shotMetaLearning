@@ -128,12 +128,12 @@ class Sparse_DKT(MetaTemplate):
         
         max_pred, idx = torch.max(mean, axis=0)
         index = ~idx.to(bool)
-        max_pred[index] = 0
+        max_pred[index] = -np.inf
         return max_pred
 
     def train_loop(self, epoch, train_loader, optimizer, print_freq=10):
         if self.dirichlet:
-            optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-3},
+            optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
                                       {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
         else:
             optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-3},
