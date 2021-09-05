@@ -131,7 +131,7 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
            
             if no_change_in_alpha:
                 # print(selected_action)
-                print(f'{itr:3}, No change in alpha, m={active_m.shape[0]:3}')
+                # print(f'{itr:3}, No change in alpha, m={active_m.shape[0]:3}')
                 selected_action = torch.tensor(11)
                 terminate = True
         
