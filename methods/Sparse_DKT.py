@@ -491,7 +491,13 @@ class ExactGPLayer(gpytorch.models.ExactGP):
 
         ## Linear kernel
         if(kernel=='linear'):
-            self.base_covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.LinearKernel())
+            if dirichlet:
+                self.base_covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.LinearKernel(
+                    batch_shape=torch.Size((2,))
+                ), batch_shape=torch.Size((2,))
+                )
+            else:
+                self.base_covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.LinearKernel())
         ## RBF kernel
         elif(kernel=='rbf' or kernel=='RBF'):
             self.base_covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
