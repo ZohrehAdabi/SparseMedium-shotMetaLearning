@@ -133,8 +133,8 @@ class Sparse_DKT(MetaTemplate):
 
     def train_loop(self, epoch, train_loader, optimizer, print_freq=10):
         if self.dirichlet:
-            optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
-                                      {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
+            optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-3},
+                                      {'params': self.feature_extractor.parameters(), 'lr': 1e-4}])
         else:
             optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-3},
                                       {'params': self.feature_extractor.parameters(), 'lr': 1e-4}])
