@@ -124,6 +124,13 @@ class Sparse_DKT(MetaTemplate):
                 single_model.likelihood.noise=self.noise_list[idx].clone().detach()
                 single_model.base_covar_module.outputscale=self.outputscale_list[idx].clone().detach()
 
+    def pred_result(self, mean):
+        
+        max_pred, idx = torch.max(mean, axis=0)
+        index = ~idx.to(bool)
+        max_pred[index] = 0
+        return max_pred
+
     def train_loop(self, epoch, train_loader, optimizer, print_freq=10):
         optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
                                       {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
@@ -210,25 +217,26 @@ class Sparse_DKT(MetaTemplate):
                 self.feature_extractor.eval()
                 z_support = self.feature_extractor.forward(x_support).detach()
                 if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1)
-                z_support_list = [z_support]*len(y_support)
+                # z_support_list = [z_support]*len(y_support)
 
-                if self.dirichlet:
-                    predictions = self.likelihood(*self.model(*z_support_list)) #return 2 * 20 MultiGaussian Distributions
-                else:
-                    predictions = self.likelihood(*self.model(*z_support_list)) #return 20 MultiGaussian Distributions
-                predictions_list = list()
+                # if self.dirichlet:
+                #     predictions = self.likelihood(*self.model(*z_support_list)) #return 2 * 20 MultiGaussian Distributions
+                # else:
+                #     predictions = self.likelihood(*self.model(*z_support_list)) #return 20 MultiGaussian Distributions
+                # predictions_list = list()
                 
-                if self.dirichlet:
-                    for dirichlet in predictions:
+                # if self.dirichlet:
+                #     for dirichlet in predictions:
 
-                        predictions_list.append(torch.max(dirichlet.mean, axis=0)[0].cpu().detach().numpy())
-                else:
-                    for gaussian in predictions:
-                        predictions_list.append(torch.sigmoid(gaussian.mean).cpu().detach().numpy())
+                #         max_pred = self.pred_result(dirichlet.mean)
+                #         predictions_list.append(max_pred.cpu().detach().numpy())
+                # else:
+                #     for gaussian in predictions:
+                #         predictions_list.append(torch.sigmoid(gaussian.mean).cpu().detach().numpy())
 
-                y_pred = np.vstack(predictions_list).argmax(axis=0) #[model, classes]
-                accuracy_support = (np.sum(y_pred==y_support) / float(len(y_support))) * 100.0
-                if(self.writer is not None): self.writer.add_scalar('GP_support_accuracy', accuracy_support, self.iteration)
+                # y_pred = np.vstack(predictions_list).argmax(axis=0) #[model, classes]
+                # accuracy_support = (np.sum(y_pred==y_support) / float(len(y_support))) * 100.0
+                # if(self.writer is not None): self.writer.add_scalar('GP_support_accuracy', accuracy_support, self.iteration)
                 z_query = self.feature_extractor.forward(x_query).detach()
                 if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
                 z_query_list = [z_query]*len(y_query)
@@ -239,7 +247,9 @@ class Sparse_DKT(MetaTemplate):
                 predictions_list = list()
                 if self.dirichlet:
                     for dirichlet in predictions:
-                        predictions_list.append(torch.max(dirichlet.mean, axis=0)[0].cpu().detach().numpy())
+          
+                        max_pred = self.pred_result(dirichlet.mean)
+                        predictions_list.append(max_pred.cpu().detach().numpy())
                 else:
                     for gaussian in predictions:
                         predictions_list.append(torch.sigmoid(gaussian.mean).cpu().detach().numpy())
@@ -252,10 +262,10 @@ class Sparse_DKT(MetaTemplate):
                 if(self.writer is not None): self.writer.add_histogram('z_support', z_support, self.iteration)
                 if self.dirichlet:
                     print('Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} || Loss {:f} | Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
-                        outputscale, lenghtscale,  loss.item(), accuracy_support, accuracy_query))
+                        outputscale, lenghtscale,  loss.item(), 0, accuracy_query)) #accuracy_support
                 else:
                     print('Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} | Noise {:f} | Loss {:f} | Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
-                        outputscale, lenghtscale, noise, loss.item(), accuracy_support, accuracy_query))
+                        outputscale, lenghtscale, noise, loss.item(), 0, accuracy_query))
 
     def get_inducing_points(self, base_covar_module, inputs, targets, verbose=True):
 
@@ -386,7 +396,8 @@ class Sparse_DKT(MetaTemplate):
             predictions_list = list()
             if self.dirichlet:
                     for dirichlet in predictions:
-                        predictions_list.append(torch.max(dirichlet.mean, axis=0)[0].cpu().detach().numpy())
+                        max_pred = self.pred_result(dirichlet.mean)
+                        predictions_list.append(max_pred.cpu().detach().numpy())
             else:
                 for gaussian in predictions:
                     predictions_list.append(torch.sigmoid(gaussian.mean).cpu().detach().numpy())
