@@ -494,7 +494,7 @@ class ExactGPLayer(gpytorch.models.ExactGP):
             if dirichlet:
                 self.base_covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.LinearKernel(
                     batch_shape=torch.Size((2,))
-                ), batch_shape=torch.Size((2,))
+                ), batch_shape=torch.Size((2,)),
                 )
             else:
                 self.base_covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.LinearKernel())
