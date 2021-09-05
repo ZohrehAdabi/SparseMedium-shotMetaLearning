@@ -150,7 +150,7 @@ class Sparse_DKT(MetaTemplate):
             target_list = list()
             samples_per_model = int(len(y_train) / self.n_way) #25 / 5 = 5
             for way in range(self.n_way):
-                target = torch.ones(len(y_train), dtype=torch.float32) * -1.0
+                target = torch.zeros(len(y_train), dtype=torch.float32) 
                 start_index = way * samples_per_model
                 stop_index = start_index+samples_per_model
                 target[start_index:stop_index] = 1.0
@@ -170,7 +170,7 @@ class Sparse_DKT(MetaTemplate):
 
                 if self.dirichlet:
                     single_model.likelihood.targets = target_list[idx]
-                    sigma2_labels, transformed_targets, _ = single_model.likelihood._prepare_targets(single_model.likelihood.targets, 
+                    sigma2_labels, transformed_targets, num_classes = single_model.likelihood._prepare_targets(single_model.likelihood.targets, 
                                             alpha_epsilon=single_model.likelihood.alpha_epsilon, dtype=torch.float)
                     single_model.likelihood.transformed_targets = transformed_targets.transpose(-2, -1)
                     single_model.likelihood.noise.data = sigma2_labels
@@ -491,13 +491,14 @@ class ExactGPLayer(gpytorch.models.ExactGP):
 
         ## Linear kernel
         if(kernel=='linear'):
-            if dirichlet:
-                self.base_covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.LinearKernel(
-                    batch_shape=torch.Size((2,))
-                ), batch_shape=torch.Size((2,)),
-                )
-            else:
-                self.base_covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.LinearKernel())
+            # if dirichlet:
+            #     self.base_covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.LinearKernel(
+            #         batch_shape=torch.Size((2,))
+            #     ), batch_shape=torch.Size((2,)),
+            #     )
+            # else:
+            self.base_covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.LinearKernel())
+            
         ## RBF kernel
         elif(kernel=='rbf' or kernel=='RBF'):
             self.base_covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
@@ -517,6 +518,7 @@ class ExactGPLayer(gpytorch.models.ExactGP):
             self.base_covar_module.base_kernel.raw_variance.requires_grad = False
         else:
             raise ValueError("[ERROR] the kernel '" + str(kernel) + "' is not supported!")
+
 
         self.covar_module = gpytorch.kernels.InducingPointKernel(self.base_covar_module,
                                          inducing_points=inducing_points, likelihood=likelihood)
