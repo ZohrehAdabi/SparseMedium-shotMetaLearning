@@ -71,7 +71,7 @@ class Sparse_DKT(MetaTemplate):
         for train_x, train_y in zip(train_x_list, train_y_list):
             
             if self.dirichlet:
-                likelihood = gpytorch.likelihoods.DirichletClassificationLikelihood(targets=train_y.long(), learn_additional_noise=False)
+                likelihood = gpytorch.likelihoods.DirichletClassificationLikelihood(targets=train_y.long(), learn_additional_noise=True)
             else:
                 likelihood = gpytorch.likelihoods.GaussianLikelihood()
 
@@ -132,9 +132,12 @@ class Sparse_DKT(MetaTemplate):
         return max_pred
 
     def train_loop(self, epoch, train_loader, optimizer, print_freq=10):
-        optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
+        if self.dirichlet:
+            optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-3},
                                       {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
-
+        else:
+            optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-3},
+                                      {'params': self.feature_extractor.parameters(), 'lr': 1e-4}])
         for i, (x,_) in enumerate(train_loader):
             self.n_query = x.size(1) - self.n_support
             if self.change_way: self.n_way  = x.size(0)
@@ -179,7 +182,7 @@ class Sparse_DKT(MetaTemplate):
                     single_model.set_train_data(inputs=z_train, targets=target_list[idx], strict=False)
 
                 with torch.no_grad():
-                    inducing_points = self.get_inducing_points(single_model.base_covar_module,
+                    inducing_points = self.get_inducing_points(single_model.base_covar_module, #.base_kernel,
                                                             z_train, target_list[idx], verbose=False)
             
                 ip_values = inducing_points.z_values.cuda()
@@ -188,7 +191,7 @@ class Sparse_DKT(MetaTemplate):
 
                 if(single_model.covar_module.base_kernel.lengthscale is not None):
                     lenghtscale+=single_model.base_covar_module.base_kernel.lengthscale.mean().cpu().detach().numpy().squeeze()
-                noise+=single_model.likelihood.noise.cpu().detach().numpy().squeeze()
+                noise+=single_model.likelihood.noise.cpu().detach().numpy().squeeze().mean()
                 if(single_model.base_covar_module.outputscale is not None):
                     outputscale+=single_model.base_covar_module.outputscale.cpu().detach().numpy().squeeze()
             
