@@ -223,8 +223,9 @@ class Sparse_DKT_binary(MetaTemplate):
                 #    max_pred = (prediction.mean[0] < prediction.mean[1]).to(int)
                 #    y_pred = max_pred.cpu().detach().numpy()
                 # else: 
-                #    pred = torch.sigmoid(prediction.mean).cpu().detach().numpy()
+                #    pred = torch.sigmoid(prediction.mean)
                 #    y_pred = (pred > 0.5).to(int)
+                #    y_pred = y_pred.cpu().detach().numpy()
 
                 # accuracy_support = (np.sum(y_pred==y_support) / float(len(y_support))) * 100.0
                 # if(self.writer is not None): self.writer.add_scalar('GP_support_accuracy', accuracy_support, self.iteration)
@@ -241,8 +242,9 @@ class Sparse_DKT_binary(MetaTemplate):
                    max_pred = (prediction.mean[0] < prediction.mean[1]).to(int)
                    y_pred = max_pred.cpu().detach().numpy()
                 else: 
-                   pred = torch.sigmoid(prediction.mean).cpu().detach().numpy()
+                   pred = torch.sigmoid(prediction.mean)
                    y_pred = (pred > 0.5).to(int)
+                   y_pred = y_pred.cpu().detach().numpy()
 
                 accuracy_query = (np.sum(y_pred==y_query) / float(len(y_query))) * 100.0
                 if(self.writer is not None): self.writer.add_scalar('GP_query_accuracy', accuracy_query, self.iteration)
@@ -390,8 +392,10 @@ class Sparse_DKT_binary(MetaTemplate):
                    max_pred = (prediction.mean[0] < prediction.mean[1]).to(int)
                    y_pred = max_pred.cpu().detach().numpy()
             else: 
-                pred = torch.sigmoid(prediction.mean).cpu().detach().numpy()
+                pred = torch.sigmoid(prediction.mean)
                 y_pred = (pred > 0.5).to(int)
+                y_pred = y_pred.cpu().detach().numpy()
+
             top1_correct = np.sum(y_pred == y_query)
             count_this = len(y_query)
         return float(top1_correct), count_this, avg_loss/float(N+1e-10)
