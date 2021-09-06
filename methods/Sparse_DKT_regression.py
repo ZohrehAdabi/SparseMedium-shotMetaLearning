@@ -356,7 +356,7 @@ class Sparse_DKT_regression(nn.Module):
             scale = True
             covar_module = self.model.base_covar_module
             X = inputs.clone()
-            X = (X- X.mean())
+            X = (X- X.mean(axis=0)) / X.std(axis=0)
             kernel_matrix = covar_module(X).evaluate()
             # normalize kernel
             if scale:
