@@ -289,7 +289,8 @@ class Sparse_DKT_binary(MetaTemplate):
             scale = True
             X = inputs.clone()
             m = X.mean(axis=0)
-            X = (X- m)
+            s = X.std(axis=0)
+            X = (X- m) / s = X.std(axis=0)
             kernel_matrix = base_covar_module(X).evaluate()
             # normalize kernel
             if scale:

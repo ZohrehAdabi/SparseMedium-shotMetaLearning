@@ -18,6 +18,7 @@ import torchvision.transforms as transforms
 from sklearn.cluster import KMeans
 from fast_pytorch_kmeans import KMeans as Fast_KMeans
 from time import gmtime, strftime
+import torch.nn.functional as F
 import random
 ## Our packages
 import gpytorch
@@ -358,8 +359,9 @@ class Sparse_DKT_regression(nn.Module):
             scale = True
             covar_module = self.model.base_covar_module
             X = inputs.clone()
-            m = X.mean(axis=0)
-            X = (X- m)
+            # m = X.mean(axis=0)
+            # X = (X- m) 
+            X = F.normalize(X, p=2, dim=1)
             kernel_matrix = covar_module(X).evaluate()
             # normalize kernel
             if scale:
