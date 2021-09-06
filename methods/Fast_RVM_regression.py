@@ -666,28 +666,20 @@ def Fast_RVM_regression_fullout(K, targets, beta, N, config, align_thr, eps, tol
                 mu_j			= mu_m[j]
                 mu_m			= mu_m + delta_mu.squeeze()
                 mu_m			= mu_m[torch.arange(mu_m.size(0)).to(device)!=j]
-                jPm	            = (beta_KK_m @ s_j).squeeze()
-                S	            = S + jPm.pow(2) / s_jj
-                Q	            = Q + jPm * mu_j / s_jj
-
+                
+                # jPm	            = (beta_KK_m @ s_j).squeeze()
+                # S	            = S + jPm.pow(2) / s_jj
+                # Q	            = Q + jPm * mu_j / s_jj
+                Sigma_m = Sigma_new
                 K_m             = K[:, active_m]
                 KK_m            = KK[:, active_m]
                 KK_mm           = KK[active_m, :][:, active_m]
                 K_mt            = Kt[active_m]
                 # beta_KK_m       = beta * KK_m
                 # update_required = True
-            count += 1
-            # s = S.clone()
-            # q = Q.clone()
-            # tmp = alpha_m / (alpha_m -S[active_m])
-            # s[active_m] = tmp * S[active_m] 
-            # q[active_m] = tmp * Q[active_m]
-            Sigma_m = Sigma_new
-            #quantity Gamma_i measures how well the corresponding parameter mu_i is determined by the data
+                count += 1
+                #quantity Gamma_i measures how well the corresponding parameter mu_i is determined by the data
             Gamma = 1 - alpha_m * torch.diag(Sigma_m)
-            logML = logML + deltaLogMarginal
-            logMarginalLog.append(logML.item())
-            beta_KK_m = beta * KK_m
             
             terminate = True
 
