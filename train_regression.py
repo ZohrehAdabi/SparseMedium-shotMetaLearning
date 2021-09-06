@@ -42,18 +42,7 @@ elif params.method=='Sparse_DKT':
     video_path = params.checkpoint_dir
     
     
-    if params.sparse_method=='KMeans':
-        
-        params.checkpoint_dir += '/'
-        if not os.path.isdir(params.checkpoint_dir):
-            os.makedirs(params.checkpoint_dir)
-        params.checkpoint_dir = params.checkpoint_dir +  f'KMeans_{str(params.n_centers)}'
-        
-        model = Sparse_DKT_regression(bb, f_rvm=False, n_inducing_points=params.n_centers, video_path=video_path, 
-                            show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
-    
-    
-    elif params.sparse_method=='FRVM':
+    if params.sparse_method=='FRVM':
         params.checkpoint_dir += '/'
         if not os.path.isdir(params.checkpoint_dir):
             os.makedirs(params.checkpoint_dir)
@@ -61,6 +50,18 @@ elif params.method=='Sparse_DKT':
 
         model = Sparse_DKT_regression(bb, f_rvm=True, config=params.config, align_threshold=params.align_thr, 
                             video_path=params.checkpoint_dir, 
+                            show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
+        model.init_summary(id=id)
+
+        
+    elif params.sparse_method=='KMeans':
+        
+        params.checkpoint_dir += '/'
+        if not os.path.isdir(params.checkpoint_dir):
+            os.makedirs(params.checkpoint_dir)
+        params.checkpoint_dir = params.checkpoint_dir +  f'KMeans_{str(params.n_centers)}'
+        
+        model = Sparse_DKT_regression(bb, f_rvm=False, n_inducing_points=params.n_centers, video_path=video_path, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     
     elif params.sparse_method=='random':

@@ -98,6 +98,9 @@ class Sparse_DKT_regression(nn.Module):
             mll_list.append(loss.item())
             mse = self.mse(predictions.mean, labels)
 
+            self.iteration = itr+(epoch*len(batch_labels))
+            if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)
+
             if ((epoch%2==0) & (itr%5==0)):
                 print('[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
                     itr, epoch, loss.item(), mse.item(),
@@ -444,129 +447,7 @@ class Sparse_DKT_regression(nn.Module):
                 plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
 
             plots.ax_feature.legend()
-            plots.ax_feature.set_title(f'epoch {epoch}')
-    
-    def update_plots_test_kmeans(self, plots, train_x, train_y, train_z, test_z, embedded_z, inducing_points,   
-                                    test_x, test_y, test_y_pred, similar_idx_x_s, similar_idx_x_ip, mll, mse, person):
-        def clear_ax(plots, i, j):
-            plots.ax[i, j].clear()
-            plots.ax[i, j].set_xticks([])
-            plots.ax[i, j].set_xticklabels([])
-            plots.ax[i, j].set_yticks([])
-            plots.ax[i, j].set_yticklabels([])
-            plots.ax[i, j].set_aspect('equal')
-            return plots
-        
-        def color_ax(plots, i, j, color, lw=0):
-            if lw > 0:
-                for axis in ['top','bottom','left','right']:
-                    plots.ax[i, j].spines[axis].set_linewidth(lw)
-            #magenta, orange
-            for axis in ['top','bottom','left','right']:
-                plots.ax[i, j].spines[axis].set_color(color)
-
-            return plots
-
-        if self.show_plots_pred:
-            
-            plots.fig.suptitle(f"Sparse DKT ({self.sparse_method}), person {person}, MSE: {mse:.4f}, num IP: {inducing_points.count}")
-
-            cluster_colors = ['aqua', 'coral', 'lime', 'gold', 'purple', 'green', 'tomato', 
-                                'fuchsia', 'chocolate', 'chartreuse', 'orange', 'teal']
-
-
-            #train images
-            y = ((train_y + 1) * 60 / 2) + 60
-            tilt = [60, 70, 80, 90, 100, 110, 120]
-            num = 1
-            for t in tilt:
-                idx = np.where(y==(t))[0]
-                if idx.shape[0]==0:
-                    i = int(t/10-6)
-                    for j in range(0, 19):
-                        plots = clear_ax(plots, i, j)
-                        plots = color_ax(plots, i, j, 'black', lw=0.5)
-                else:    
-                    x = train_x[idx]
-                    i = int(t/10-6)
-                    z = train_z[idx]
-                    cluster = self.kmeans_clustering.predict(z)
-                    # cluster = self.kmeans_clustering.predict(z.detach().cpu().numpy())
-                    for j in range(0, idx.shape[0]): 
-                        img = transforms.ToPILImage()(x[j].cpu()).convert("RGB")
-                        plots = clear_ax(plots, i, j)
-                        plots = color_ax(plots, i, j, 'black', lw=2) #cluster_colors[cluster[j]]
-                        plots.ax[i, j].imshow(img)
-                        plots.ax[i, j].set_title(f'{num}', fontsize=8)
-                        num += 1
-                    plots.ax[i, 0].set_ylabel(f'{t}',  fontsize=10)
-                
-
-            # test images
-            y = ((test_y + 1) * 60 / 2) + 60
-            y_mean = test_y_pred.mean.detach().cpu().numpy()
-            y_var = test_y_pred.variance.detach().cpu().numpy()
-            y_pred = ((y_mean + 1) * 60 / 2) + 60
-            y_s = ((train_y + 1) * 60 / 2) + 60
-            for t in tilt:
-                idx = np.where(y==(t))[0]
-                if idx.shape[0]==0:
-                    continue
-                else:
-                    x = test_x[idx]
-                    z = test_z[idx]
-                    sim_x_s_idx = similar_idx_x_s[idx]
-                    sim_y_s = y_s[sim_x_s_idx] 
-                    sim_x_ip = similar_idx_x_ip[idx]
-                    cluster = self.kmeans_clustering.predict(z)
-                    y_p = y_pred[idx]
-                    y_v = y_var[idx]
-                    i = int(t/10-6)
-                    for j in range(idx.shape[0]):
-                        
-                        img = transforms.ToPILImage()(x[j].cpu()).convert("RGB")
-                        ii = 16
-                        plots = clear_ax(plots, i, j+ii)
-                        plots.ax[i, j+ii].imshow(img)
-                        plots = color_ax(plots, i, j+ii, color='magenta', lw=2) #cluster_colors[cluster[j]]
-                        plots.ax[i, j+ii].set_title(f'{y_p[j]:.1f}', fontsize=8)
-                        id_sim_x_s = int(plots.ax[int(sim_y_s[j]/10-6),0].get_title()) +  sim_x_s_idx[j]%15
-                        plots.ax[i, j+ii].set_xlabel(f'{id_sim_x_s}|{sim_x_ip[j] + 1}', fontsize=10)
- 
-                    # plots.ax[i, j+16].legend()
-            for i in range(7):
-                plots = clear_ax(plots, i, 15)
-                plots = color_ax(plots, i, 15, 'white', lw=0.5)
-
-            # highlight inducing points
-            y = ((train_y + 1) * 60 / 2) + 60
-            
-            if inducing_points.x is not None:
-                
-                cluster = self.kmeans_clustering.predict(inducing_points.z_values)
-                # cluster = self.kmeans_clustering.predict(z_inducing.detach().cpu().numpy())                
-                for r in range(inducing_points.index.shape[0]):
-                    
-                    # t = inducing_points.y[r]
-                    # i = int(t/10-6)
-                    plots = color_ax(plots, inducing_points.i_idx[r], inducing_points.j_idx[r], 'black', lw=3) #cluster_colors[cluster[r]]
-                    plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].spines['bottom'].set_color('red')   
-                    plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].set_xlabel(r+1, fontsize=10)          
-
-            plots.fig.savefig(f'{self.video_path}/test_person_{person}.png')    
-
-        if self.show_plots_features:
-            #features
-            y = ((train_y + 1) * 60 / 2) + 60
-            tilt = np.unique(y)
-            plots.ax_feature.clear()
-            for t in tilt:
-                idx = np.where(y==(t))[0]
-                z_t = embedded_z[idx]
-                
-                plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
-
-            plots.ax_feature.legend()
+            plots.ax_feature.set_title(f'epoch {epoch}')  
 
     def update_plots_test_fast_rvm(self, plots, train_x, train_y, train_z, test_z, embedded_z, inducing_points,   
                                     test_x, test_y, test_y_pred, similar_idx_x_s, similar_idx_x_ip, mll, mse, person):
@@ -683,6 +564,7 @@ class Sparse_DKT_regression(nn.Module):
                 plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
 
             plots.ax_feature.legend()
+
 
 
     def train_loop_kmeans(self, epoch, n_support, n_samples, optimizer):
@@ -1037,6 +919,128 @@ class Sparse_DKT_regression(nn.Module):
                 self.mw_feature.grab_frame()
 
         return mse
+
+    def update_plots_test_kmeans(self, plots, train_x, train_y, train_z, test_z, embedded_z, inducing_points,   
+                                    test_x, test_y, test_y_pred, similar_idx_x_s, similar_idx_x_ip, mll, mse, person):
+        def clear_ax(plots, i, j):
+            plots.ax[i, j].clear()
+            plots.ax[i, j].set_xticks([])
+            plots.ax[i, j].set_xticklabels([])
+            plots.ax[i, j].set_yticks([])
+            plots.ax[i, j].set_yticklabels([])
+            plots.ax[i, j].set_aspect('equal')
+            return plots
+        
+        def color_ax(plots, i, j, color, lw=0):
+            if lw > 0:
+                for axis in ['top','bottom','left','right']:
+                    plots.ax[i, j].spines[axis].set_linewidth(lw)
+            #magenta, orange
+            for axis in ['top','bottom','left','right']:
+                plots.ax[i, j].spines[axis].set_color(color)
+
+            return plots
+
+        if self.show_plots_pred:
+            
+            plots.fig.suptitle(f"Sparse DKT ({self.sparse_method}), person {person}, MSE: {mse:.4f}, num IP: {inducing_points.count}")
+
+            cluster_colors = ['aqua', 'coral', 'lime', 'gold', 'purple', 'green', 'tomato', 
+                                'fuchsia', 'chocolate', 'chartreuse', 'orange', 'teal']
+
+
+            #train images
+            y = ((train_y + 1) * 60 / 2) + 60
+            tilt = [60, 70, 80, 90, 100, 110, 120]
+            num = 1
+            for t in tilt:
+                idx = np.where(y==(t))[0]
+                if idx.shape[0]==0:
+                    i = int(t/10-6)
+                    for j in range(0, 19):
+                        plots = clear_ax(plots, i, j)
+                        plots = color_ax(plots, i, j, 'black', lw=0.5)
+                else:    
+                    x = train_x[idx]
+                    i = int(t/10-6)
+                    z = train_z[idx]
+                    cluster = self.kmeans_clustering.predict(z)
+                    # cluster = self.kmeans_clustering.predict(z.detach().cpu().numpy())
+                    for j in range(0, idx.shape[0]): 
+                        img = transforms.ToPILImage()(x[j].cpu()).convert("RGB")
+                        plots = clear_ax(plots, i, j)
+                        plots = color_ax(plots, i, j, 'black', lw=2) #cluster_colors[cluster[j]]
+                        plots.ax[i, j].imshow(img)
+                        plots.ax[i, j].set_title(f'{num}', fontsize=8)
+                        num += 1
+                    plots.ax[i, 0].set_ylabel(f'{t}',  fontsize=10)
+                
+
+            # test images
+            y = ((test_y + 1) * 60 / 2) + 60
+            y_mean = test_y_pred.mean.detach().cpu().numpy()
+            y_var = test_y_pred.variance.detach().cpu().numpy()
+            y_pred = ((y_mean + 1) * 60 / 2) + 60
+            y_s = ((train_y + 1) * 60 / 2) + 60
+            for t in tilt:
+                idx = np.where(y==(t))[0]
+                if idx.shape[0]==0:
+                    continue
+                else:
+                    x = test_x[idx]
+                    z = test_z[idx]
+                    sim_x_s_idx = similar_idx_x_s[idx]
+                    sim_y_s = y_s[sim_x_s_idx] 
+                    sim_x_ip = similar_idx_x_ip[idx]
+                    cluster = self.kmeans_clustering.predict(z)
+                    y_p = y_pred[idx]
+                    y_v = y_var[idx]
+                    i = int(t/10-6)
+                    for j in range(idx.shape[0]):
+                        
+                        img = transforms.ToPILImage()(x[j].cpu()).convert("RGB")
+                        ii = 16
+                        plots = clear_ax(plots, i, j+ii)
+                        plots.ax[i, j+ii].imshow(img)
+                        plots = color_ax(plots, i, j+ii, color='magenta', lw=2) #cluster_colors[cluster[j]]
+                        plots.ax[i, j+ii].set_title(f'{y_p[j]:.1f}', fontsize=8)
+                        id_sim_x_s = int(plots.ax[int(sim_y_s[j]/10-6),0].get_title()) +  sim_x_s_idx[j]%15
+                        plots.ax[i, j+ii].set_xlabel(f'{id_sim_x_s}|{sim_x_ip[j] + 1}', fontsize=10)
+ 
+                    # plots.ax[i, j+16].legend()
+            for i in range(7):
+                plots = clear_ax(plots, i, 15)
+                plots = color_ax(plots, i, 15, 'white', lw=0.5)
+
+            # highlight inducing points
+            y = ((train_y + 1) * 60 / 2) + 60
+            
+            if inducing_points.x is not None:
+                
+                cluster = self.kmeans_clustering.predict(inducing_points.z_values)
+                # cluster = self.kmeans_clustering.predict(z_inducing.detach().cpu().numpy())                
+                for r in range(inducing_points.index.shape[0]):
+                    
+                    # t = inducing_points.y[r]
+                    # i = int(t/10-6)
+                    plots = color_ax(plots, inducing_points.i_idx[r], inducing_points.j_idx[r], 'black', lw=3) #cluster_colors[cluster[r]]
+                    plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].spines['bottom'].set_color('red')   
+                    plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].set_xlabel(r+1, fontsize=10)          
+
+            plots.fig.savefig(f'{self.video_path}/test_person_{person}.png')    
+
+        if self.show_plots_features:
+            #features
+            y = ((train_y + 1) * 60 / 2) + 60
+            tilt = np.unique(y)
+            plots.ax_feature.clear()
+            for t in tilt:
+                idx = np.where(y==(t))[0]
+                z_t = embedded_z[idx]
+                
+                plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
+
+            plots.ax_feature.legend()
 
   
 class ExactGPLayer(gpytorch.models.ExactGP):

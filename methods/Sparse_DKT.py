@@ -320,6 +320,7 @@ class Sparse_DKT(MetaTemplate):
                 K = base_covar_module(X, X[active]).evaluate()
                 mu_m = mu_m[index] / ss
                 y_pred = K @ mu_m
+                mu_m = mu_m.to(torch.float)
                 y_pred = torch.sigmoid(y_pred)
                 y_pred = (y_pred > 0.5).to(int)
                 acc = torch.sum(y_pred==targets)
