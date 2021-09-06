@@ -275,7 +275,7 @@ class Sparse_DKT_regression(nn.Module):
                         # model_name = self.best_path + f'_best_mae{best_mse:.2f}_ep{epoch}_{id}.pth'
                         # self.save_checkpoint(model_name)
                         print(Fore.LIGHTRED_EX, f'Best MSE: {best_mse:.2f}', Fore.RESET)
-                if(self.writer is not None) and self.show_plots_loss:
+                if(self.writer is not None):
                     self.writer.add_scalar('MSE Val.', mse, epoch)
                 print(Fore.GREEN,"-"*30, Fore.RESET)
             elif self.random:
