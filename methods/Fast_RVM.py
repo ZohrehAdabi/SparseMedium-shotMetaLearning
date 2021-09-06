@@ -227,7 +227,7 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
             k_new           = K[:, max_idx]
             # K_k_new         = K.T @ k_new
             beta_k_new      = beta * k_new.squeeze()
-            beta_K_k_new  	= K.T @ beta_k_new
+            # beta_K_k_new  	= K.T @ beta_k_new
 
             tmp		        = ((beta_k_new.T @ K_m) @ Sigma_m).T
             s_ii		    = 1/ (alpha_new + S[max_idx])
@@ -283,7 +283,7 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
 def Statistics(K, K_m, mu_m, alpha_m, active_m, targets, N, device):
         
         
-        mu_m, U, beta, dataLikely, bad_Hess = posterior_mode(K_m, targets, alpha_m, mu_m, max_itr=50, device=device)
+        mu_m, U, beta, dataLikely, bad_Hess = posterior_mode(K_m, targets, alpha_m, mu_m, max_itr=25, device=device)
         
         if bad_Hess: raise ValueError('bad Hessian')
 
