@@ -296,14 +296,22 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             KK_m            = KK[:, active_m]
             KK_mm           = KK[active_m, :][:, active_m]
             K_mt            = Kt[active_m]
-            # beta_KK_m       = beta * KK_m
-            # update_required = True
+            aligned_idx = torch.where(aligned_in==j)[0]
+            # findAligned	= find(Aligned_in==max_idx);
+            num_aligned	= len(aligned_idx)
+            if num_aligned > 0:
+                # reinstated					= aligned_out[aligned_idx]
+                aligned_in = aligned_in[torch.arange(aligned_in.size(0)).to(device)!=aligned_idx]
+                aligned_out = aligned_out[torch.arange(aligned_out.size(0)).to(device)!=aligned_idx]
             count += 1
+            terminate = True
+            if active_m.shape[0]==1:
+                break
             #quantity Gamma_i measures how well the corresponding parameter mu_i is determined by the data
             Gamma = 1 - alpha_m * torch.diag(Sigma_m)
             min_index = torch.where(Gamma < 0.5)[0]
             
-            terminate = True
+            
 
         #compute mu and beta
         if update_sigma and ((itr%5==0) or (itr <=10) or terminate):
