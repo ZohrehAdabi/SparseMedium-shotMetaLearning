@@ -46,8 +46,7 @@ elif params.method=='Sparse_DKT':
         params.checkpoint_dir += '/'
         if not os.path.isdir(params.checkpoint_dir):
             os.makedirs(params.checkpoint_dir)
-        if not os.path.isdir(params.checkpoint_dir+'/Loss'):
-            os.makedirs(params.checkpoint_dir+'/Loss')
+        
         id =  f'FRVM_{params.config}_{params.align_thr:.6f}'
         params.checkpoint_dir = params.checkpoint_dir + id
 

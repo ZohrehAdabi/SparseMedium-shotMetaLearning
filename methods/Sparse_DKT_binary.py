@@ -10,6 +10,7 @@ from fast_pytorch_kmeans import KMeans as Fast_KMeans
 from collections import namedtuple
 ## Our packages
 import gpytorch
+import os
 from time import gmtime, strftime
 import random
 from configs import kernel_type
@@ -60,7 +61,9 @@ class Sparse_DKT_binary(MetaTemplate):
     def init_summary(self, id):
         if(IS_TBX_INSTALLED):
             time_string = strftime("%d%m%Y_%H%M", gmtime())
-            writer_path = "./log/" + id #+'_'+ time_string
+            if not os.path.isdir('./Sparse_DKT_binary_log'):
+                os.makedirs('./Sparse_DKT_binary_log')
+            writer_path = "./Sparse_DKT_binary_log/" + id #+'_'+ time_string
             self.writer = SummaryWriter(log_dir=writer_path)
 
     def get_model_likelihood_mll(self, train_x=None, train_y=None):

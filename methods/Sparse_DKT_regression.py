@@ -74,7 +74,9 @@ class Sparse_DKT_regression(nn.Module):
     def init_summary(self, id):
         if(IS_TBX_INSTALLED):
             time_string = strftime("%d%m%Y_%H%M", gmtime())
-            writer_path = self.video_path+ "/Loss/" + id #+'_'+ time_string
+            if not os.path.isdir('./QMUL_Loss'):
+                os.makedirs('/QMUL_Loss')
+            writer_path = './QMUL_Loss/' + id #+'_'+ time_string
             self.writer = SummaryWriter(log_dir=writer_path)
 
     def set_forward(self, x, is_feature=False):
