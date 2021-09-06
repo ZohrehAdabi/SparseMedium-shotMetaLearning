@@ -36,7 +36,7 @@ try:
 except ImportError:
     IS_TBX_INSTALLED = False
     print('[WARNING] install tensorboardX to record simulation logs.')
-IP = namedtuple("inducing_points", "z_values index count x y i_idx j_idx")
+IP = namedtuple("inducing_points", "z_values index alpha gamma count x y i_idx j_idx")
 class Sparse_DKT_regression(nn.Module):
     def __init__(self, backbone, f_rvm=True, config="0000", align_threshold=1e-3, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
@@ -211,7 +211,7 @@ class Sparse_DKT_regression(nn.Module):
                 i_idx.append(i)
                 j_idx.append(j)
 
-            return IP(inducing_points.z_values, index, inducing_points.count, 
+            return IP(inducing_points.z_values, index, inducing_points.count, inducing_points.alpha, inducing_points.gamma, 
                                 x_inducing, y_inducing, np.array(i_idx), np.array(j_idx))
         
         inducing_points = inducing_max_similar_in_support_x(x_support, inducing_points, y_support)
@@ -221,6 +221,8 @@ class Sparse_DKT_regression(nn.Module):
         y_pred = ((pred.mean.detach().cpu().numpy() + 1) * 60 / 2) + 60
         print(Fore.RED,"="*50, Fore.RESET)
         print(f'inducing_points count: {inducing_points.count}')
+        print(Fore.LIGHTGREEN_EX, f'inducing_points alpha: {inducing_points.alpha}',Fore.RESET)
+        print(Fore.LIGHTMAGENTA_EX, f'inducing_points gamma: {inducing_points.gamma}',Fore.RESET)
         print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
         print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
         print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
@@ -375,16 +377,19 @@ class Sparse_DKT_regression(nn.Module):
 
             kernel_matrix = kernel_matrix.to(torch.float64)
             targets = targets.to(torch.float64)
-            active, alpha, Gamma, beta, mu_m = Fast_RVM_regression(kernel_matrix, targets, beta, N, self.config, self.align_threshold,
+            active, alpha, gamma, beta, mu_m = Fast_RVM_regression(kernel_matrix, targets, beta, N, self.config, self.align_threshold,
                                                     eps, tol, max_itr, self.device, verbose)
             index = np.argsort(active)
             active = active[index]
+            gamma = gamma[index]
+            ss = scales[index]
+            alpha = alpha[index] / ss
             inducing_points = inputs[active]
             num_IP = active.shape[0]
             IP_index = active
 
             if True:
-                ss = scales[index]
+                
                 K = covar_module(inputs, inducing_points).evaluate()
                 # K = covar_module(X, X[active]).evaluate()
                 mu_m = (mu_m[index] / ss)
@@ -394,7 +399,7 @@ class Sparse_DKT_regression(nn.Module):
                 print(f'FRVM MSE: {mse:0.4f}')
             
 
-        return IP(inducing_points, IP_index, num_IP, None, None, None, None)
+        return IP(inducing_points, IP_index, num_IP, alpha.cpu().numpy(), gamma.cpu().numpy(), None, None, None, None)
   
     def save_checkpoint(self, checkpoint):
         # save state
