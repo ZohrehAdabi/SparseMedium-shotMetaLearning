@@ -98,7 +98,7 @@ class Sparse_DKT_regression(nn.Module):
 
 
             z = self.feature_extractor(inputs)
-            z = F.normalize(z, p=2, dim=1)
+            # z = F.normalize(z, p=2, dim=1)
             with torch.no_grad():
                 inducing_points = self.get_inducing_points(z, labels, verbose=False)
             
@@ -172,7 +172,7 @@ class Sparse_DKT_regression(nn.Module):
         # induce_ind = list(np.random.choice(list(range(n_samples)), replace=False, size=self.num_induce_points))
         # induce_point = self.feature_extractor(x_support[induce_ind, :,:,:])
         z_support = self.feature_extractor(x_support).detach()
-        z_support = F.normalize(z_support, p=2, dim=1)
+        # z_support = F.normalize(z_support, p=2, dim=1)
         with torch.no_grad():
             inducing_points = self.get_inducing_points(z_support, y_support, verbose=False)
         
@@ -187,7 +187,7 @@ class Sparse_DKT_regression(nn.Module):
 
         with torch.no_grad():
             z_query = self.feature_extractor(x_query).detach()
-            z_query = F.normalize(z_query, p=2, dim=1)
+            # z_query = F.normalize(z_query, p=2, dim=1)
             pred    = self.likelihood(self.model(z_query))
             lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
 
