@@ -341,8 +341,10 @@ class Sparse_DKT_regression(nn.Module):
 
             if True:
                 ss = scales[index]
-                K = covar_module(X, X[active]).evaluate()
-                mu_m = mu_m[index] / ss
+                K = covar_module(inputs, inducing_points).evaluate()
+                # K = covar_module(X, X[active]).evaluate()
+                mu_m = (mu_m[index] / ss)
+                mu_m = mu_m.to(torch.float)
                 y_pred = K @ mu_m
                 mse = self.mse(y_pred, targets)
                 print(f'FRVM MSE: {mse:0.4f}')
