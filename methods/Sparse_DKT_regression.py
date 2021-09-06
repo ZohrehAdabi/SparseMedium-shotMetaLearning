@@ -29,7 +29,7 @@ from configs import kernel_type
 from collections import namedtuple
 #Check if tensorboardx is installed
 try:
-    #tensorboard --logdir=./QMUL_Loss/ --host localhost --port 8090
+    #tensorboard --logdir=./QMUL_Loss/ --host localhost --port 8091
     from tensorboardX import SummaryWriter
     IS_TBX_INSTALLED = True
 except ImportError:

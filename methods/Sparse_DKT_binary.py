@@ -17,7 +17,7 @@ from configs import kernel_type
 from methods.Fast_RVM import Fast_RVM
 #Check if tensorboardx is installed
 try:
-    #tensorboard --logdir=./Sparse_DKT_binary_log/ --host localhost --port 8091
+    #tensorboard --logdir=./Sparse_DKT_binary_log/ --host localhost --port 8090
     from tensorboardX import SummaryWriter
     IS_TBX_INSTALLED = True
 except ImportError:
