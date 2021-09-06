@@ -221,8 +221,8 @@ class Sparse_DKT_regression(nn.Module):
         y_pred = ((pred.mean.detach().cpu().numpy() + 1) * 60 / 2) + 60
         print(Fore.RED,"="*50, Fore.RESET)
         print(f'inducing_points count: {inducing_points.count}')
-        print(Fore.LIGHTGREEN_EX, f'inducing_points alpha: {inducing_points.alpha}',Fore.RESET)
-        print(Fore.LIGHTMAGENTA_EX, f'inducing_points gamma: {inducing_points.gamma}',Fore.RESET)
+        print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha}',Fore.RESET)
+        print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma}',Fore.RESET)
         print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
         print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
         print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
