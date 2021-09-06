@@ -465,21 +465,6 @@ class Sparse_DKT_regression(nn.Module):
 
         return Plots(fig, ax, fig_feature, ax_feature)     
 
-    def update_plots_train_kmeans(self,plots, train_y, embedded_z, mll, mse, epoch):
-        if self.show_plots_features:
-            #features
-            y = ((train_y + 1) * 60 / 2) + 60
-            tilt = np.unique(y)
-            plots.ax_feature.clear()
-            for t in tilt:
-                idx = np.where(y==(t))[0]
-                z_t = embedded_z[idx]
-                
-                plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
-
-            plots.ax_feature.legend()
-            plots.ax_feature.set_title(f'epoch {epoch}')
-    
     def update_plots_train_fast_rvm(self,plots, train_y, embedded_z, mll, mse, epoch):
         if self.show_plots_features:
             #features
@@ -608,7 +593,7 @@ class Sparse_DKT_regression(nn.Module):
                 z_t = embedded_z[idx]
                 
                 plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
-
+            plots.fig_feature.suptitle(f"Sparse DKT ({self.sparse_method}), person {person}, MSE: {mse:.4f}, num IP: {inducing_points.count}")
             plots.ax_feature.legend()
 
 
@@ -966,6 +951,21 @@ class Sparse_DKT_regression(nn.Module):
 
         return mse
 
+    def update_plots_train_kmeans(self,plots, train_y, embedded_z, mll, mse, epoch):
+        if self.show_plots_features:
+            #features
+            y = ((train_y + 1) * 60 / 2) + 60
+            tilt = np.unique(y)
+            plots.ax_feature.clear()
+            for t in tilt:
+                idx = np.where(y==(t))[0]
+                z_t = embedded_z[idx]
+                
+                plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
+
+            plots.ax_feature.legend()
+            plots.ax_feature.set_title(f'epoch {epoch}')
+    
     def update_plots_test_kmeans(self, plots, train_x, train_y, train_z, test_z, embedded_z, inducing_points,   
                                     test_x, test_y, test_y_pred, similar_idx_x_s, similar_idx_x_ip, mll, mse, person):
         def clear_ax(plots, i, j):

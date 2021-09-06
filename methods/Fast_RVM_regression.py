@@ -135,6 +135,11 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
                 selected_action = torch.tensor(11)
                 terminate = True
 
+        if selected_action==1:
+            if Gamma[max_idx] < 0.1:
+                print(f'gamma: {Gamma[max_idx]}')
+                selected_action = torch.tensor(13)
+                terminate=False
         
         if alignment_test:
             #
@@ -193,7 +198,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             Q	= Q - (beta_KK_m @ delta_mu).squeeze()
             update_required = True
         
-        if selected_action==-1:  #delete
+        elif selected_action==-1:  #delete
             del_count += 1
             active_m        = active_m[active_m!=active_m[j]]
             alpha_m         = alpha_m[alpha_m!=alpha_m[j]]
@@ -220,7 +225,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             beta_KK_m       = beta * KK_m
             update_required = True
         
-        if selected_action==1:  #add
+        elif selected_action==1:  #add
             add_count += 1
             active_m = torch.cat([active_m, max_idx])
             alpha_m = torch.cat([alpha_m, alpha_new])
@@ -250,6 +255,14 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             beta_KK_m       = beta * KK_m
             update_required = True
         
+        elif selected_action==13:#update_statistics
+            if verbose:
+                    print(f'{itr:3}, update statistics after beta update')
+            Sigma_m, mu_m, S, Q, s, q, logML, Gamma = Statistics(K_m, KK_m, KK_mm, Kt, K_mt, alpha_m, active_m, beta, targets, N)
+            count = count + 1
+            logMarginalLog.append(logML.item())
+
+
             
         # UPDATE STATISTICS
         if update_required:
