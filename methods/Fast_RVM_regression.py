@@ -270,41 +270,38 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             beta_KK_m = beta * KK_m
 
         min_index = torch.where(Gamma < 0.5)[0]
-        if min_index.shape[0] >0:
+        while min_index.shape[0] >0:
             del_from_active = active_m[min_index]
             print(f'remove low Gamma: {Gamma[min_index].detach().cpu().numpy()} correspond to {del_from_active.detach().cpu().numpy()} data index')
-            for j in min_index:
-                del_count += 1
-                active_m        = active_m[active_m!=active_m[j]]
-                alpha_m         = alpha_m[alpha_m!=alpha_m[j]]
+            j = min_index[0]
+            del_count += 1
+            active_m        = active_m[active_m!=active_m[j]]
+            alpha_m         = alpha_m[alpha_m!=alpha_m[j]]
 
-                s_jj			= Sigma_m[j, j]
-                s_j				= Sigma_m[:, j]
-                tmp				= s_j/s_jj
-                Sigma_		    = Sigma_m - tmp @ s_j.T
-                Sigma_          = Sigma_[torch.arange(Sigma_.size(0)).to(device)!=j]
-                Sigma_new       = Sigma_[:, torch.arange(Sigma_.size(1)).to(device)!=j]
-                delta_mu		= -mu_m[j] * tmp
-                mu_j			= mu_m[j]
-                mu_m			= mu_m + delta_mu.squeeze()
-                mu_m			= mu_m[torch.arange(mu_m.size(0)).to(device)!=j]
-                # jPm	            = (beta_KK_m @ s_j).squeeze()
-                # S	            = S + jPm.pow(2) / s_jj
-                # Q	            = Q + jPm * mu_j / s_jj
-                Sigma_m         = Sigma_new
-                K_m             = K[:, active_m]
-                KK_m            = KK[:, active_m]
-                KK_mm           = KK[active_m, :][:, active_m]
-                K_mt            = Kt[active_m]
-                # beta_KK_m       = beta * KK_m
-                # update_required = True
-                count += 1
-
-            
+            s_jj			= Sigma_m[j, j]
+            s_j				= Sigma_m[:, j]
+            tmp				= s_j/s_jj
+            Sigma_		    = Sigma_m - tmp @ s_j.T
+            Sigma_          = Sigma_[torch.arange(Sigma_.size(0)).to(device)!=j]
+            Sigma_new       = Sigma_[:, torch.arange(Sigma_.size(1)).to(device)!=j]
+            delta_mu		= -mu_m[j] * tmp
+            mu_j			= mu_m[j]
+            mu_m			= mu_m + delta_mu.squeeze()
+            mu_m			= mu_m[torch.arange(mu_m.size(0)).to(device)!=j]
+            # jPm	            = (beta_KK_m @ s_j).squeeze()
+            # S	            = S + jPm.pow(2) / s_jj
+            # Q	            = Q + jPm * mu_j / s_jj
+            Sigma_m         = Sigma_new
+            K_m             = K[:, active_m]
+            KK_m            = KK[:, active_m]
+            KK_mm           = KK[active_m, :][:, active_m]
+            K_mt            = Kt[active_m]
+            # beta_KK_m       = beta * KK_m
+            # update_required = True
+            count += 1
             #quantity Gamma_i measures how well the corresponding parameter mu_i is determined by the data
             Gamma = 1 - alpha_m * torch.diag(Sigma_m)
-           
-            beta_KK_m = beta * KK_m
+            min_index = torch.where(Gamma < 0.5)[0]
             
             terminate = True
 
