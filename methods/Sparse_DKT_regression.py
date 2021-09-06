@@ -85,7 +85,7 @@ class Sparse_DKT_regression(nn.Module):
                 inducing_points = self.get_inducing_points(z, labels, verbose=False)
             
             ip_values = inducing_points.z_values.cuda()
-            self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
+            self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
             self.model.train()
             self.model.set_train_data(inputs=z, targets=labels, strict=False)
 
