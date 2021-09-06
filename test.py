@@ -18,6 +18,7 @@ from methods.baselinetrain import BaselineTrain
 from methods.baselinefinetune import BaselineFinetune
 from methods.protonet import ProtoNet
 from methods.Sparse_DKT import Sparse_DKT
+from methods.Sparse_DKT_binary import Sparse_DKT_binary
 from methods.DKT import DKT
 from methods.matchingnet import MatchingNet
 from methods.relationnet import RelationNet
@@ -81,6 +82,8 @@ def single_test(params):
         model           = DKT(model_dict[params.model], **few_shot_params)
     elif params.method == 'Sparse_DKT':
         model           = Sparse_DKT(model_dict[params.model], **few_shot_params)
+    elif params.method == 'Sparse_DKT_binary':
+        model           = Sparse_DKT_binary(model_dict[params.model], **few_shot_params)
     elif params.method == 'matchingnet':
         model           = MatchingNet( model_dict[params.model], **few_shot_params )
     elif params.method in ['relationnet', 'relationnet_softmax']:
@@ -114,7 +117,7 @@ def single_test(params):
         checkpoint_dir += '_aug'
     if not params.method in ['baseline', 'baseline++'] :
         # checkpoint_dir += '_%dway_%dshot' %( params.train_n_way, params.n_shot)
-        if params.method=='Sparse_DKT':
+        if params.method=='Sparse_DKT' or params.method=='Sparse_DKT_binary':
             if params.dirichlet:
                 id = f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}'
             else:
@@ -141,7 +144,7 @@ def single_test(params):
         split_str = split + "_" +str(params.save_iter)
     else:
         split_str = split
-    if params.method in ['maml', 'maml_approx', 'DKT', 'Sparse_DKT']: #maml do not support testing with feature
+    if params.method in ['maml', 'maml_approx', 'DKT', 'Sparse_DKT', 'Sparse_DKT_binary']: #maml do not support testing with feature
         if 'Conv' in params.model:
             if params.dataset in ['omniglot', 'cross_char']:
                 image_size = 28

@@ -16,6 +16,7 @@ from methods.baselinetrain import BaselineTrain
 from methods.baselinefinetune import BaselineFinetune
 from methods.DKT import DKT
 from methods.Sparse_DKT import Sparse_DKT
+from methods.Sparse_DKT_binary import Sparse_DKT_binary
 from methods.protonet import ProtoNet
 from methods.matchingnet import MatchingNet
 from methods.relationnet import RelationNet
@@ -130,7 +131,7 @@ if __name__ == '__main__':
         elif params.method == 'baseline++':
             model = BaselineTrain(model_dict[params.model], params.num_classes, loss_type='dist')
 
-    elif params.method in ['Sparse_DKT', 'DKT', 'protonet', 'matchingnet', 'relationnet', 'relationnet_softmax', 'maml', 'maml_approx']:
+    elif params.method in ['Sparse_DKT', 'Sparse_DKT_binary', 'DKT', 'protonet', 'matchingnet', 'relationnet', 'relationnet_softmax', 'maml', 'maml_approx']:
         # for fewshot setting
         # n_query = max(1, int(
         #     16 * params.test_n_way / params.train_n_way))  # if test_n_way is smaller than train_n_way, reduce n_query to keep batch size small
@@ -148,14 +149,22 @@ if __name__ == '__main__':
             model = Sparse_DKT(model_dict[params.model], **train_few_shot_params, 
                                     config=params.config, align_threshold=params.align_thr, dirichlet=params.dirichlet)
             if params.dirichlet:
-                id = f'SparseDKT_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}'
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}'
             else:
-                id = f'SparseDKT_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}'           
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}'           
             model.init_summary(id=id)
-        
+        elif params.method == 'Sparse_DKT_binary':
+            model = Sparse_DKT_binary(model_dict[params.model], **train_few_shot_params, 
+                                    config=params.config, align_threshold=params.align_thr, dirichlet=params.dirichlet)
+            if params.dirichlet:
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}'
+            else:
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}'           
+            model.init_summary(id=id)
         elif(params.method == 'DKT'):
             model = DKT(model_dict[params.model], **train_few_shot_params)
             model.init_summary(id=f'DKT_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}')
+        
         
         elif params.method == 'protonet':
             model = ProtoNet(model_dict[params.model], **train_few_shot_params)
@@ -193,7 +202,7 @@ if __name__ == '__main__':
         params.checkpoint_dir += '_aug'
     if not params.method in ['baseline', 'baseline++']:
         
-        if params.method=='Sparse_DKT':
+        if params.method=='Sparse_DKT' or params.method=='Sparse_DKT_binary':
             if params.dirichlet:
                 id = f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}'
             else:
