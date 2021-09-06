@@ -278,7 +278,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
         min_index = torch.where(Gamma < 0.1)[0]
         if min_index.shape[0] >0:
             del_from_active = active_m[min_index]
-            print(f'remove low Gamma: {Gamma[min_index]} correspond to {del_from_active} data index')
+            print(f'remove low Gamma: {Gamma[min_index].detach().cpu().numpy()} correspond to {del_from_active.detach().cpu().numpy()} data index')
             for j in min_index:
                 del_count += 1
                 active_m        = active_m[active_m!=active_m[j]]
@@ -650,7 +650,7 @@ def Fast_RVM_regression_fullout(K, targets, beta, N, config, align_thr, eps, tol
         min_index = torch.where(Gamma < 0.1)[0]
         if min_index.shape[0] >0:
             del_from_active = active_m[min_index]
-            print(f'remove low Gamma: {Gamma[min_index]} correspond to {del_from_active} data index')
+            print(f'remove low Gamma: {Gamma[min_index].detach().cpu().numpy()} correspond to {del_from_active.detach().cpu().numpy()} data index')
             for j in min_index:
                 del_count += 1
                 active_m        = active_m[active_m!=active_m[j]]
