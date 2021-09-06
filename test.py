@@ -119,7 +119,7 @@ def single_test(params):
                 id = f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}'
             else:
                 id = f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}'           
-            params.checkpoint_dir += id
+            checkpoint_dir += id
         else:
             params.checkpoint_dir += '_%dway_%dshot' % (params.train_n_way, params.n_shot)
 
