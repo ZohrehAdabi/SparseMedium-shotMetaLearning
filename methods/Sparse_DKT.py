@@ -366,6 +366,14 @@ class Sparse_DKT(MetaTemplate):
                 single_model.set_train_data(inputs=z_train, targets=single_model.likelihood.transformed_targets, strict=False)
             else: 
                 single_model.set_train_data(inputs=z_train, targets=target_list[idx], strict=False)
+            
+            with torch.no_grad():
+                inducing_points = self.get_inducing_points(single_model.base_covar_module, #.base_kernel,
+                                                            z_train, target_list[idx], verbose=False)
+            
+            ip_values = inducing_points.z_values.cuda()
+            single_model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
+            single_model.covar_module._clear_cache()
             # single_model.set_train_data(inputs=z_train, targets=target_list[idx], strict=False)
 
         optimizer = torch.optim.Adam([{'params': self.model.parameters()}], lr=1e-3)
