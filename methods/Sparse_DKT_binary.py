@@ -224,7 +224,7 @@ class Sparse_DKT_binary(MetaTemplate):
                 #    y_pred = max_pred.cpu().detach().numpy()
                 # else: 
                 #    pred = torch.sigmoid(prediction.mean)
-                #    y_pred = (pred > 0.5).to(int)
+                #    y_pred = (pred < 0.5).to(int)
                 #    y_pred = y_pred.cpu().detach().numpy()
 
                 # accuracy_support = (np.sum(y_pred==y_support) / float(len(y_support))) * 100.0
@@ -243,7 +243,7 @@ class Sparse_DKT_binary(MetaTemplate):
                    y_pred = max_pred.cpu().detach().numpy()
                 else: 
                    pred = torch.sigmoid(prediction.mean)
-                   y_pred = (pred > 0.5).to(int)
+                   y_pred = (pred < 0.5).to(int)
                    y_pred = y_pred.cpu().detach().numpy()
 
                 accuracy_query = (np.sum(y_pred==y_query) / float(len(y_query))) * 100.0
@@ -406,7 +406,7 @@ class Sparse_DKT_binary(MetaTemplate):
                    y_pred = max_pred.cpu().detach().numpy()
             else: 
                 pred = torch.sigmoid(prediction.mean)
-                y_pred = (pred > 0.5).to(int)
+                y_pred = (pred < 0.5).to(int)
                 y_pred = y_pred.cpu().detach().numpy()
 
             top1_correct = np.sum(y_pred == y_query)
