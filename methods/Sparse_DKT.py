@@ -323,7 +323,7 @@ class Sparse_DKT(MetaTemplate):
             IP_index = active
             if True:
                 ss = scales[index]
-                K = base_covar_module(inputs, inducing_points)).evaluate()
+                K = base_covar_module(inputs, inducing_points).evaluate()
                 mu_m = mu_m[index] / ss
                 mu_m = mu_m.to(torch.float)
                 y_pred = K @ mu_m
