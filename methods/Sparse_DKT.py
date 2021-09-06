@@ -299,11 +299,11 @@ class Sparse_DKT(MetaTemplate):
             max_itr = 1000
             
             scale = True
-            X = inputs.clone()
-            m = X.mean(axis=0)
-            s = X.std(axis=0)
-            X = (X- m) / s
-            kernel_matrix = base_covar_module(X).evaluate()
+            # X = inputs.clone()
+            # m = X.mean(axis=0)
+            # s = X.std(axis=0)
+            # X = (X- m) / s
+            kernel_matrix = base_covar_module(inputs).evaluate()
             # normalize kernel
             if scale:
                 scales	= torch.sqrt(torch.sum(kernel_matrix**2, axis=0))
@@ -323,7 +323,7 @@ class Sparse_DKT(MetaTemplate):
             IP_index = active
             if True:
                 ss = scales[index]
-                K = base_covar_module(X, X[active]).evaluate()
+                K = base_covar_module(inputs, inducing_points)).evaluate()
                 mu_m = mu_m[index] / ss
                 mu_m = mu_m.to(torch.float)
                 y_pred = K @ mu_m
