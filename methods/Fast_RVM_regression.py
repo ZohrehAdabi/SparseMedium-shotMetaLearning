@@ -275,7 +275,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             logMarginalLog.append(logML.item())
             beta_KK_m = beta * KK_m
 
-        min_index = torch.where(Gamma < 0.1)[0]
+        min_index = torch.where(Gamma < 0.5)[0]
         if min_index.shape[0] >0:
             del_from_active = active_m[min_index]
             print(f'remove low Gamma: {Gamma[min_index].detach().cpu().numpy()} correspond to {del_from_active.detach().cpu().numpy()} data index')
@@ -653,7 +653,7 @@ def Fast_RVM_regression_fullout(K, targets, beta, N, config, align_thr, eps, tol
             logMarginalLog.append(logML.item())
             beta_KK_m = beta * KK_m
 
-        min_index = torch.where(Gamma < 0.1)[0]
+        min_index = torch.where(Gamma < 0.5)[0]
         if min_index.shape[0] >0:
             del_from_active = active_m[min_index]
             print(f'remove low Gamma: {Gamma[min_index].detach().cpu().numpy()} correspond to {del_from_active.detach().cpu().numpy()} data index')
@@ -833,7 +833,7 @@ if __name__=='__main__':
     K = kernel_matrix
     # scale = torch.sqrt(torch.sum(K) / N ** 2)
     # K = K / scale
-    config = "1011"
+    config = "1001"
     align_thr = 1e-3
     device= 'cuda'
     active_m, alpha_m, gamma_m, beta, mu_m, Sigma_m, K_m = Fast_RVM_regression_fullout(K.to(device), targets.to(device), beta.to(device), N,  config, align_thr, eps, tol)
