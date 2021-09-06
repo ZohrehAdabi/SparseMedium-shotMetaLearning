@@ -18,6 +18,9 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
 
     M = K.shape[1]
     logMarginalLog = []
+
+    targets[targets==-1]= 0
+
     targets = targets.to(device)
     K = K.to(device)
     targets_pseudo_linear	= 2 * targets - 1
@@ -496,7 +499,7 @@ if __name__=='__main__':
     # kernel_matrix = torch.from_numpy(kernel_matrix).to(dtype=torch.float64)
     targets = scipy.io.loadmat('./methods/targets.mat')['Targets']
     targets = targets.astype(np.float64)
-    # targets = 2 * targets -1
+    targets = 2 * targets -1
     targets = torch.from_numpy(targets).to(dtype=torch.float64)
     targets = targets.squeeze()
     N = targets.shape[0]
