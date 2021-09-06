@@ -18,10 +18,9 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
 
     M = K.shape[1]
     logMarginalLog = []
-    targets[targets == -1] = 0
     targets = targets.to(device)
     K = K.to(device)
-    targets_pseudo_linear	= targets #2 * targets - 1
+    targets_pseudo_linear	= 2 * targets - 1
     KK = K.T @ K  # all K_j @ K_i
     Kt = K.T @ targets_pseudo_linear
     start_k = torch.argmax(abs(Kt)) #torch.argmax(kt_k)
@@ -33,7 +32,7 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
     #  Heuristic initialisation based on log-odds
     LogOut	= (targets_pseudo_linear * 0.9 + 1) / 2
     mu_m	=  K_m.pinverse() @ (torch.log(LogOut / (1 - LogOut))) #torch.linalg.lstsq(K_m, (torch.log(LogOut / (1 - LogOut)))).solution
-    mu_m = mu_m.squeeze(1).to(device)
+    mu_m = mu_m.to(device)
     alpha_init = 1 / (mu_m + 1e-8).pow(2)
     alpha_m = torch.tensor([alpha_init], dtype=torch.float64).to(device)
     if alpha_m < 1e-3:
@@ -46,7 +45,7 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
     # Sigma_m = torch.inverse(A_m + beta * KK_mm)
     
 
-    Sigma_m, mu_m, S, Q, s, q, beta, beta_KK_m, logML, Gamma = Statistics(K, K_m, mu_m, alpha_m, active_m, targets.squeeze(), N, device)
+    Sigma_m, mu_m, S, Q, s, q, beta, beta_KK_m, logML, Gamma = Statistics(K, K_m, mu_m, alpha_m, active_m, targets, N, device)
 
     delete_priority = config[0]=="1"
     add_priority    = config[1]=="1"
@@ -252,7 +251,7 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
         # UPDATE STATISTICS
         if update_required:
             count += 1
-            Sigma_m, mu_m, S, Q, s, q, beta, beta_KK_m, new_logML, Gamma = Statistics(K, K_m, mu_m, alpha_m, active_m, targets.squeeze(), N, device)
+            Sigma_m, mu_m, S, Q, s, q, beta, beta_KK_m, new_logML, Gamma = Statistics(K, K_m, mu_m, alpha_m, active_m, targets, N, device)
             deltaLogMarginal	= new_logML - logML
             
             logML = logML + deltaLogMarginal
@@ -265,7 +264,7 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
                 print(f'Finished at {itr:3}, m= {active_m.shape[0]:3}')
             # if count > 0:
             #     print(f'add: {add_count:3d} ({add_count/count:.1%}), delete: {del_count:3d} ({del_count/count:.1%}), recompute: {recomp_count:3d} ({recomp_count/count:.1%})')
-            return active_m.cpu().numpy(), alpha_m, Gamma, beta 
+            return active_m.cpu().numpy(), alpha_m, Gamma, beta, mu_m
 
         if ((itr+1)%50==0) and verbose:
             print(f'#{itr+1:3},     m={active_m.shape[0]}, selected_action= {selected_action.item():.0f}, logML= {logML.item()/N:.5f}')
@@ -277,7 +276,7 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
         print(f'add: {add_count:3d} ({add_count/count:.1%}), delete: {del_count:3d} ({del_count/count:.1%}), recompute: {recomp_count:3d} ({recomp_count/count:.1%})')
 
 
-    return active_m.cpu().numpy(), alpha_m, Gamma, beta 
+    return active_m.cpu().numpy(), alpha_m, Gamma, beta, mu_m 
 
 
 def Statistics(K, K_m, mu_m, alpha_m, active_m, targets, N, device):
@@ -415,17 +414,21 @@ def generate_data():
     np.random.seed(8)
     rng = np.random.RandomState(0)
     # Generate sample data
-    X_org = 4 * np.pi * np.random.random(500) - 2 * np.pi
+    n = 100
+    X_org = 4 * np.pi * np.random.random(n) - 2 * np.pi
+    X_org = np.sort(X_org)
     y_org = np.sinc(X_org)
-    y_org += 0.25 * (0.5 - rng.rand(X_org.shape[0])) + 100  # add noise
-    y_org = (np.random.rand(X_org.shape[0]) < (1/(1+np.exp(-X_org))))
+    y_org += 0.25 * (0.5 + 5 * rng.rand(X_org.shape[0]))  # add noise
+    # y_org = (np.random.rand(X_org.shape[0]) < (1/(1+np.exp(-X_org))))
+    y_org = (rng.rand(n) > y_org)
     y_org = y_org.astype(np.float)
-    normalized = False
+    normalized = True
     if normalized:
         X = np.copy(X_org) - np.mean(X_org, axis=0)
         X = X / np.std(X_org)
-        y = np.copy(y_org) - np.mean(y_org)
-        y = y / np.std(y_org)
+        # y = np.copy(y_org) - np.mean(y_org)
+        # y = y / np.std(y_org)
+        y = y_org
     else: 
         X = np.copy(X_org)
         y = np.copy(y_org)
@@ -433,14 +436,47 @@ def generate_data():
     return X, y
     # X, y
 
+
+def plot_result(rv, X_test, y_test, covar_module, N, mu_m, active):
+    
+    # rv = torch.tensor(X_org[active])
+    """Evaluate the RVR model at x."""
+    K = covar_module(X_test, rv).evaluate()
+   
+    y_pred = K @ mu_m
+    y_pred = torch.sigmoid(y_pred)
+    y_pred = (y_pred > 0.5).to(int)
+    # err_var = (1/beta) + K @ Sigma_m @ K.T
+    # y_std = torch.sqrt(torch.diag(err_var))
+    acc = torch.sum(y_pred==targets)
+    print(f'FRVM ACC:{(acc/N):.1%}')
+
+    y_pred_ = y_pred.detach().numpy()
+    # y_std_ = y_std.detach().numpy()
+    lw=2
+    plt.scatter(X_test, y_test, marker=".", c="k", label="data")
+    # plt.plot(X_plot, np.sinc(X_plot), color="navy", lw=lw, label="True")
+
+    plt.plot(X_test, y_pred_, color="darkorange", lw=lw, label="RVR")
+    # plt.fill_between(X_test, y_pred_ - y_std_, y_pred_ + y_std_, color="darkorange", alpha=0.4)
+    plt.scatter(X_test[active], y_test[active], s=80, facecolors="none", edgecolors="r", lw=2,
+                label="relevance vectors")
+
+    plt.xlabel("data")
+    plt.legend(loc="best", scatterpoints=1, prop={"size": 8})
+    plt.show()
+
+
 if __name__=='__main__':
 
 
     X, y = generate_data()
     # X = X[:, None]
     
-    inputs = torch.tensor(X[:, None])
-    targets = torch.tensor(y[:, None])
+    inputs = torch.tensor(X[:])
+    targets = torch.tensor(y[:])
+    # import torch.nn.functional as F
+    # inputs = F.normalize(inputs, p=2, dim=0)
     N   = inputs.shape[0]
     tol = 1e-4
     eps = torch.finfo(torch.float32).eps
@@ -451,18 +487,18 @@ if __name__=='__main__':
     scale = True
     bias = False
     covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
-    covar_module.base_kernel.lengthscale = 0.2  #0.23
-    covar_module.outputscale = 1
+    covar_module.base_kernel.lengthscale = 0.06  #0.23
+    covar_module.outputscale = 0.55
     kernel_matrix = covar_module(inputs).evaluate()
     N = inputs.shape[0]
     import scipy.io
-    kernel_matrix = scipy.io.loadmat('./methods/K.mat')['BASIS']
-    kernel_matrix = torch.from_numpy(kernel_matrix).to(dtype=torch.float64)
+    # kernel_matrix = scipy.io.loadmat('./methods/K.mat')['BASIS']
+    # kernel_matrix = torch.from_numpy(kernel_matrix).to(dtype=torch.float64)
     targets = scipy.io.loadmat('./methods/targets.mat')['Targets']
     targets = targets.astype(np.float64)
     # targets = 2 * targets -1
     targets = torch.from_numpy(targets).to(dtype=torch.float64)
-
+    targets = targets.squeeze()
     N = targets.shape[0]
     sigma = torch.var(targets)  #sigma^2
     # sigma = torch.tensor([0.01])
@@ -484,9 +520,19 @@ if __name__=='__main__':
     align_thr = 1e-3
     # scale = torch.sqrt(torch.sum(K) / N ** 2)
     # K = K / scale                                 K, targets, N, config, align_thr
-    active_m, alpha_m, gamma_m, beta = Fast_RVM(K, targets, N, config, align_thr, eps, tol)
+    active_m, alpha_m, gamma_m, beta, mu_m = Fast_RVM(K, targets, N, config, align_thr, eps, tol, device='cpu')
     print(f'relevant index \n {active_m}')
     print(f'relevant alpha \n {alpha_m}')
+    print(f'relevant Gamma \n {gamma_m}')
+
+    index = np.argsort(active_m)
+    ss = Scales[active_m]
+    ss = ss[index]
+    active_m = active_m[index]
+    alpha_m = alpha_m[index] / ss.pow(2)
+    mu_m = mu_m[index] / ss
+    
+    plot_result(inputs[active_m], inputs, targets, covar_module, N, mu_m, active_m)
 
 
 

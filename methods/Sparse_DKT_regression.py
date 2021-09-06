@@ -319,7 +319,9 @@ class Sparse_DKT_regression(nn.Module):
             beta = 1 /(sigma + eps)
             scale = True
             covar_module = self.model.base_covar_module
-            kernel_matrix = covar_module(inputs).evaluate()
+            X = inputs.clone()
+            X = (X- X.mean()) / X.std()
+            kernel_matrix = covar_module(X).evaluate()
             # normalize kernel
             if scale:
                 scales	= torch.sqrt(torch.sum(kernel_matrix**2, axis=0))
@@ -329,13 +331,22 @@ class Sparse_DKT_regression(nn.Module):
 
             kernel_matrix = kernel_matrix.to(torch.float64)
             targets = targets.to(torch.float64)
-            active, alpha, Gamma, beta = Fast_RVM_regression(kernel_matrix, targets.view(-1, 1), beta, N, self.config, self.align_threshold,
+            active, alpha, Gamma, beta, mu_m = Fast_RVM_regression(kernel_matrix, targets, beta, N, self.config, self.align_threshold,
                                                     eps, tol, max_itr, self.device, verbose)
-
-            active = np.sort(active)
+            index = np.argsort(active)
+            active = active[index]
             inducing_points = inputs[active]
             num_IP = active.shape[0]
             IP_index = active
+
+            if True:
+                ss = scales[index]
+                K = covar_module(X, X[active]).evaluate()
+                mu_m = mu_m[index] / ss
+                y_pred = K @ mu_m
+                mse = self.mse(y_pred, targets)
+                print(f'FRVM MSE: {mse:0.4f}')
+            
 
         return IP(inducing_points, IP_index, num_IP, None, None, None, None)
   

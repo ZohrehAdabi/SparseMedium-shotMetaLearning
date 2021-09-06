@@ -283,7 +283,9 @@ class Sparse_DKT_binary(MetaTemplate):
             max_itr = 1000
             
             scale = True
-            kernel_matrix = base_covar_module(inputs).evaluate()
+            X = inputs.clone()
+            X = (X- X.mean()) / X.std()
+            kernel_matrix = base_covar_module(X).evaluate()
             # normalize kernel
             if scale:
                 scales	= torch.sqrt(torch.sum(kernel_matrix**2, axis=0))
@@ -293,13 +295,24 @@ class Sparse_DKT_binary(MetaTemplate):
 
             kernel_matrix = kernel_matrix.to(torch.float64)
             targets = targets.to(torch.float64)
-            active, alpha, Gamma, beta = Fast_RVM(kernel_matrix, targets.view(-1, 1), N, self.config, self.align_threshold,
+            active, alpha, Gamma, beta, mu_m = Fast_RVM(kernel_matrix, targets, N, self.config, self.align_threshold,
                                                     eps, tol, max_itr, self.device, verbose)
 
-            active = np.sort(active)
+            index = np.argsort(active)
+            active = active[index]
             inducing_points = inputs[active]
             num_IP = active.shape[0]
             IP_index = active
+
+            if True:
+                ss = scales[index]
+                K = base_covar_module(X, X[active]).evaluate()
+                mu_m = mu_m[index] / ss
+                y_pred = K @ mu_m
+                y_pred = torch.sigmoid(y_pred)
+                y_pred = (y_pred > 0.5).to(int)
+                acc = torch.sum(y_pred==targets)
+                print(f'FRVM ACC: {(acc/N):.1%}')
 
         return IP(inducing_points, IP_index, num_IP, None, None, None, None)
   
