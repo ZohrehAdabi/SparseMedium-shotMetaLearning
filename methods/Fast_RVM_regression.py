@@ -251,12 +251,6 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             beta_KK_m       = beta * KK_m
             update_required = True
         
-        elif selected_action==13:#update_statistics
-            if verbose:
-                    print(f'{itr:3}, update statistics')
-            Sigma_m, mu_m, S, Q, s, q, logML, Gamma = Statistics(K_m, KK_m, KK_mm, Kt, K_mt, alpha_m, active_m, beta, targets, N)
-            count = count + 1
-            logMarginalLog.append(logML.item())
 
 
             
