@@ -71,7 +71,7 @@ class Sparse_DKT(MetaTemplate):
         for train_x, train_y in zip(train_x_list, train_y_list):
             
             if self.dirichlet:
-                likelihood = gpytorch.likelihoods.DirichletClassificationLikelihood(targets=train_y.long(), learn_additional_noise=True)
+                likelihood = gpytorch.likelihoods.DirichletClassificationLikelihood(targets=train_y.long(), learn_additional_noise=False)
             else:
                 likelihood = gpytorch.likelihoods.GaussianLikelihood()
 
@@ -133,8 +133,8 @@ class Sparse_DKT(MetaTemplate):
 
     def train_loop(self, epoch, train_loader, optimizer, print_freq=10):
         if self.dirichlet:
-            optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-3},
-                                      {'params': self.feature_extractor.parameters(), 'lr': 1e-4}])
+            optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
+                                      {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
         else:
             optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-3},
                                       {'params': self.feature_extractor.parameters(), 'lr': 1e-4}])
