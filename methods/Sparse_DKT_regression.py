@@ -27,7 +27,13 @@ from statistics import mean
 from data.qmul_loader import get_batch, train_people, test_people
 from configs import kernel_type
 from collections import namedtuple
-
+#Check if tensorboardx is installed
+try:
+    from tensorboardX import SummaryWriter
+    IS_TBX_INSTALLED = True
+except ImportError:
+    IS_TBX_INSTALLED = False
+    print('[WARNING] install tensorboardX to record simulation logs.')
 IP = namedtuple("inducing_points", "z_values index count x y i_idx j_idx")
 class Sparse_DKT_regression(nn.Module):
     def __init__(self, backbone, f_rvm=True, config="0000", align_threshold=1e-3, n_inducing_points=12, random=False, 
@@ -42,6 +48,7 @@ class Sparse_DKT_regression(nn.Module):
         self.random = random
         self.device = 'cuda'
         self.video_path = video_path
+        self.best_path = video_path
         self.show_plots_pred = show_plots_pred
         self.show_plots_features = show_plots_features
         if self.show_plots_pred or self.show_plots_features:
@@ -63,6 +70,12 @@ class Sparse_DKT_regression(nn.Module):
         self.mse        = nn.MSELoss()
 
         return self.model, self.likelihood, self.mll
+    
+    def init_summary(self, id):
+        if(IS_TBX_INSTALLED):
+            time_string = strftime("%d%m%Y_%H%M", gmtime())
+            writer_path = "./log/" + id #+'_'+ time_string
+            self.writer = SummaryWriter(log_dir=writer_path)
 
     def set_forward(self, x, is_feature=False):
         pass
@@ -242,10 +255,27 @@ class Sparse_DKT_regression(nn.Module):
     def train(self, stop_epoch, n_support, n_samples, optimizer):
 
         mll_list = []
+        best_mse = 10e5
         for epoch in range(stop_epoch):
             
             if  self.f_rvm:
                 mll = self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
+
+                
+                if epoch%10==0:
+                    print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
+                    mse_list = []
+                    for t in range(len(test_people)):
+                        mse = self.test_loop_fast_rvm(n_support, n_samples, t,  optimizer)
+                    mse_list.append(mse)
+                    if best_mse >= mse:
+                        best_mse = mse
+                        # model_name = self.best_path + f'_best_mae{best_mse:.2f}_ep{epoch}_{id}.pth'
+                        # self.save_checkpoint(model_name)
+                        print(Fore.LIGHTRED_EX, f'Best MSE: {best_mae:.2f}', Fore.RESET)
+                if(self.writer is not None) and self.show_plots_loss:
+                    self.writer.add_scalar('MSE Val.', mse, epoch)
+                print(Fore.GREEN,"-"*30, Fore.RESET)
             elif self.random:
                 mll = self.train_loop_random(epoch, n_support, n_samples, optimizer)
             elif  not self.f_rvm:
@@ -253,8 +283,9 @@ class Sparse_DKT_regression(nn.Module):
             else:
                 ValueError("Error")
             mll_list.append(mll)
-
+            if(self.writer is not None): self.writer.add_scalar('MLL per epoch', mll, epoch)
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
+
         
         mll = np.mean(mll_list)
 
