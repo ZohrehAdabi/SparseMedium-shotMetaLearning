@@ -216,7 +216,7 @@
             "console": "integratedTerminal",
            "args": ["--method","Sparse_DKT", "--sparse_method", "FRVM", "--n_samples", "72", "--stop_epoch", "100",
              //"--show_plots_features", 
-             "--seed","2", "--config", "1011", "--align_thr", "1e-3"]  
+             "--seed","2", "--config", "1001", "--align_thr", "1e-3"]  
       // --method "Sparse_DKT" --sparse_method "FRVM"  --n_samples 72 --stop_epoch 100  --show_plots_features  --seed  2 --config "0000" --align_thr 1e-3
         },
         {
