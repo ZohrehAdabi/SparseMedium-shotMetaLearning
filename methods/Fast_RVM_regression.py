@@ -135,11 +135,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
                 selected_action = torch.tensor(11)
                 terminate = True
 
-        if selected_action==1:
-            if Gamma[max_idx] < 0.1:
-                print(f'gamma: {Gamma[max_idx]}')
-                selected_action = torch.tensor(13)
-                terminate=False
+
         
         if alignment_test:
             #
@@ -279,6 +275,43 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             logMarginalLog.append(logML.item())
             beta_KK_m = beta * KK_m
 
+        min_value, min_index = torch.where(Gamma < 0.1)
+        if min_index.shape[0] >0:
+            del_from_active = active_m[min_index]
+            print(f'remove low Gamma: {min_value} correspond to {del_from_active} data index')
+            for j in min_index:
+                del_count += 1
+                active_m        = active_m[active_m!=active_m[j]]
+                alpha_m         = alpha_m[alpha_m!=alpha_m[j]]
+
+                s_jj			= Sigma_m[j, j]
+                s_j				= Sigma_m[:, j]
+                tmp				= s_j/s_jj
+                Sigma_		    = Sigma_m - tmp @ s_j.T
+                Sigma_          = Sigma_[torch.arange(Sigma_.size(0)).to(device)!=j]
+                Sigma_new       = Sigma_[:, torch.arange(Sigma_.size(1)).to(device)!=j]
+                delta_mu		= -mu_m[j] * tmp
+                mu_j			= mu_m[j]
+                mu_m			= mu_m + delta_mu.squeeze()
+                mu_m			= mu_m[torch.arange(mu_m.size(0)).to(device)!=j]
+                
+                jPm	            = (beta_KK_m @ s_j).squeeze()
+                S	            = S + jPm.pow(2) / s_jj
+                Q	            = Q + jPm * mu_j / s_jj
+
+                K_m             = K[:, active_m]
+                KK_m            = KK[:, active_m]
+                KK_mm           = KK[active_m, :][:, active_m]
+                K_mt            = Kt[active_m]
+                beta_KK_m       = beta * KK_m
+                # update_required = True
+
+            if verbose:
+                    print(f'{itr:3}, update statistics after beta update')
+            Sigma_m, mu_m, S, Q, s, q, logML, Gamma = Statistics(K_m, KK_m, KK_mm, Kt, K_mt, alpha_m, active_m, beta, targets, N)
+            count = count + 1
+            logMarginalLog.append(logML.item())
+            terminate = False
 
         #compute mu and beta
         if update_sigma and ((itr%5==0) or (itr <=10) or terminate):
@@ -299,6 +332,8 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
                 terminate = False
             # else: 
             #     print(f'No change in beta')
+
+
 
         if terminate:
             # print(f'sigma2={1/beta:.4f}')
@@ -481,12 +516,7 @@ def Fast_RVM_regression_fullout(K, targets, beta, N, config, align_thr, eps, tol
                     print(f'{itr:3}, No change in alpha, m={active_m.shape[0]:3}')
                 selected_action = torch.tensor(11)
                 terminate = True
-        if selected_action==1:
-            if Gamma[max_idx] < 0.1:
-                print(f'gamma: {Gamma[max_idx]}')
-                selected_action = torch.tensor(13)
-                terminate=False
-        
+   
         
         if alignment_test:
             #
@@ -601,15 +631,7 @@ def Fast_RVM_regression_fullout(K, targets, beta, N, config, align_thr, eps, tol
             K_mt            = Kt[active_m]
             beta_KK_m       = beta * KK_m
             update_required = True
-        
-        elif selected_action==13:#update_statistics
-            if verbose:
-                    print(f'{itr:3}, update statistics')
-            Sigma_m, mu_m, S, Q, s, q, logML, Gamma = Statistics(K_m, KK_m, KK_mm, Kt, K_mt, alpha_m, active_m, beta, targets, N)
-            count = count + 1
-            logMarginalLog.append(logML.item())
-
-  
+      
         # UPDATE STATISTICS
         if update_required:
             count += 1
@@ -625,6 +647,43 @@ def Fast_RVM_regression_fullout(K, targets, beta, N, config, align_thr, eps, tol
             logMarginalLog.append(logML.item())
             beta_KK_m = beta * KK_m
 
+        min_value, min_index = torch.where(Gamma < 0.1)
+        if min_index.shape[0] >0:
+            del_from_active = active_m[min_index]
+            print(f'remove low Gamma: {min_value} correspond to {del_from_active} data index')
+            for j in min_index:
+                del_count += 1
+                active_m        = active_m[active_m!=active_m[j]]
+                alpha_m         = alpha_m[alpha_m!=alpha_m[j]]
+
+                s_jj			= Sigma_m[j, j]
+                s_j				= Sigma_m[:, j]
+                tmp				= s_j/s_jj
+                Sigma_		    = Sigma_m - tmp @ s_j.T
+                Sigma_          = Sigma_[torch.arange(Sigma_.size(0)).to(device)!=j]
+                Sigma_new       = Sigma_[:, torch.arange(Sigma_.size(1)).to(device)!=j]
+                delta_mu		= -mu_m[j] * tmp
+                mu_j			= mu_m[j]
+                mu_m			= mu_m + delta_mu.squeeze()
+                mu_m			= mu_m[torch.arange(mu_m.size(0)).to(device)!=j]
+                
+                jPm	            = (beta_KK_m @ s_j).squeeze()
+                S	            = S + jPm.pow(2) / s_jj
+                Q	            = Q + jPm * mu_j / s_jj
+
+                K_m             = K[:, active_m]
+                KK_m            = KK[:, active_m]
+                KK_mm           = KK[active_m, :][:, active_m]
+                K_mt            = Kt[active_m]
+                beta_KK_m       = beta * KK_m
+                # update_required = True
+
+            if verbose:
+                    print(f'{itr:3}, update statistics after beta update')
+            Sigma_m, mu_m, S, Q, s, q, logML, Gamma = Statistics(K_m, KK_m, KK_mm, Kt, K_mt, alpha_m, active_m, beta, targets, N)
+            count = count + 1
+            logMarginalLog.append(logML.item())
+            terminate = False
 
         #compute mu and beta
         if update_sigma and ((itr%5==0) or (itr <=10) or terminate):
