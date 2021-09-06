@@ -201,3 +201,6 @@ methods/targets.mat
 
 methods/K2.mat
 methods/targets2.mat
+QMUL_Loss/
+Sparse_DKT_binary_log/
+Sparse_DKT_log/
