@@ -11,7 +11,7 @@ from sklearn.svm import SVR
 from sklearn.metrics import mean_squared_error as mse
 
 
-def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_itr=3000, device='cpu', verbose=True):
+def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_itr=3000, device='cuda', verbose=True):
     
 
     M = K.shape[1]
@@ -345,7 +345,7 @@ def Statistics(K_m, KK_m, KK_mm, Kt, K_mt, alpha_m, active_m, beta, targets, N):
 
         return Sigma_m, mu_m, S, Q, s, q, logML, Gamma  
 
-def Fast_RVM_regression_fullout(K, targets, beta, N, config, align_thr, eps, tol, max_itr=3000, device='cpu', verbose=True):
+def Fast_RVM_regression_fullout(K, targets, beta, N, config, align_thr, eps, tol, max_itr=3000, device='cuda', verbose=True):
     
 
     M = K.shape[1]
@@ -670,7 +670,7 @@ def plot_result(rv, X_test, y_test, covar_module, mu_m, Sigma_m, K_m, active):
    
     y_pred = K @ mu_m
 
-    err_var = (1/beta) + K @ Sigma_m @ K.T
+    err_var = (1/beta.cpu()) + K @ Sigma_m @ K.T
     y_std = torch.sqrt(torch.diag(err_var))
     print(torch.nn.MSELoss()(y_pred, y_test))
 
@@ -739,7 +739,8 @@ if __name__=='__main__':
     # K = K / scale
     config = "1011"
     align_thr = 1e-3
-    active_m, alpha_m, gamma_m, beta, mu_m, Sigma_m, K_m = Fast_RVM_regression_fullout(K, targets, beta, N,  config, align_thr, eps, tol)
+    device= 'cuda'
+    active_m, alpha_m, gamma_m, beta, mu_m, Sigma_m, K_m = Fast_RVM_regression_fullout(K.to(device), targets.to(device), beta.to(device), N,  config, align_thr, eps, tol)
     print(f'relevant index \n {active_m}')
     print(f'relevant alpha \n {alpha_m}')
     print(f'relevant Gamma \n {gamma_m}')
@@ -748,11 +749,11 @@ if __name__=='__main__':
     ss = Scales[active_m]
     ss = ss[index]
     active_m = active_m[index]
-    alpha_m = alpha_m[index] / ss.pow(2)
-    mu_m = mu_m[index] / ss
+    alpha_m = alpha_m[index].cpu() / ss.pow(2)
+    mu_m = mu_m[index].cpu() / ss
     Sigma_m = Sigma_m[:, index]
-    Sigma_m = Sigma_m[index, :]
-    K_m = K_m[index]
+    Sigma_m = Sigma_m[index, :].cpu()
+    K_m = K_m[index].cpu()
 
     
     plot_result(inputs[active_m], inputs, targets, covar_module, mu_m, Sigma_m, K_m, active_m)
