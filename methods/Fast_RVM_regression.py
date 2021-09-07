@@ -291,7 +291,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
         min_index = torch.argmin(Gamma)
         
         if (check_gamma):
-            if terminate and (Gamma[min_index] < gm):
+            if (selected_action==10) and (Gamma[min_index] < gm):
                 if active_m.shape[0]==1:
                     break
                 del_from_active = active_m[min_index]
