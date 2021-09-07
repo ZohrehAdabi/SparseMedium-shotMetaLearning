@@ -271,7 +271,7 @@ class Sparse_DKT_regression(nn.Module):
                 mll = self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
 
                 
-                if epoch%10==0:
+                if epoch%5==0:
                     print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
                     mse_list = []
                     for t in range(len(test_people)):
