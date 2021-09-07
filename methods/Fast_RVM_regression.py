@@ -97,7 +97,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             action[add]     = 1
 
         # Priority of Deletion   
-        if anyToDelete and delete_priority:
+        if anyToDelete and delete_priority and not add_priority:
 
             deltaML[recompute] = 0
             deltaML[add] = 0

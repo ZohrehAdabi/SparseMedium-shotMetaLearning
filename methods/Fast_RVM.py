@@ -102,7 +102,7 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
             action[add]     = 1
 
         # Priority of Deletion   
-        if anyToDelete and delete_priority:
+        if anyToDelete and delete_priority and not add_priority:
             deltaML[recompute] = 0
             deltaML[add] = 0
         # Priority of Addition       
