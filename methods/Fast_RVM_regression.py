@@ -151,19 +151,20 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
                     print(f'{itr:3}, No change in alpha, m= {active_m.shape[0]:3}')
                 selected_action = 11
                 terminate = True
-        else:
-            if check_gamma and (itr%3==0):
+        # else:
+        #     if check_gamma and (itr%3==0):
                 
-                min_index = torch.argmin(Gamma)
-                if (Gamma[min_index] < gm) and active_m.shape[0] > 1:
+        #         min_index = torch.argmin(Gamma)
+        #         if (Gamma[min_index] < gm) and active_m.shape[0] > 1:
                     
-                    j = min_index
-                    del_from_active = active_m[j]
-                    deltaML_j = -(q[active_m[j]]**2 / (s[active_m[j]] + alpha_m[j]) - torch.log(1 + s[active_m[j]] / alpha_m[j])) /2
-                    print(f'itr {itr:3} remove low Gamma: {Gamma[min_index].detach().cpu().numpy()}, deltaML: {deltaML_j.detach().cpu().numpy()}',
-                                    f'correspond to {del_from_active.detach().cpu().numpy()} data index')
-                    if deltaML_j > -0.01:
-                        selected_action = -1
+        #             j = min_index
+        #             del_from_active = active_m[j]
+        #             deltaML_j = -(q[active_m[j]]**2 / (s[active_m[j]] + alpha_m[j]) - torch.log(1 + s[active_m[j]] / alpha_m[j])) /2
+        #             print(f'itr {itr:3} remove low Gamma: {Gamma[min_index].detach().cpu().numpy()}, deltaML: {deltaML_j.detach().cpu().numpy()}',
+        #                             f'correspond to {del_from_active.detach().cpu().numpy()} data index')
+        #             if deltaML_j > -0.01:
+        #                 selected_action = -1
+        #                 max_idx = del_from_active
                         
 
         
