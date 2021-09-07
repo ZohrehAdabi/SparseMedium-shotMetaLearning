@@ -32,6 +32,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
     active_m = torch.tensor([start_k]).to(device)
     aligned_out		= torch.tensor([], dtype=torch.int).to(device)
     aligned_in		= torch.tensor([], dtype=torch.int).to(device)
+    low_gamma       = []
     # Sigma_m = torch.inverse(A_m + beta * KK_mm)
     
     K_m = K[:, active_m]
@@ -111,6 +112,12 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
         deltaLogMarginal = deltaML[max_idx]
         selected_action		= action[max_idx]
         anyWorthwhileAction	= deltaLogMarginal > 0 
+
+        if selected_action==1:
+            if max_idx in low_gamma:
+                anyWorthwhileAction = False
+                print(f'{itr:3}, low gamma selected {max_idx}')
+
         # already in the model
         if selected_action != 1:
             j = torch.where(active_m==max_idx)[0]
@@ -283,6 +290,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
                 print(f'itr {itr:3} remove low Gamma: {Gamma[min_index].detach().cpu().numpy()} correspond to {del_from_active.detach().cpu().numpy()} data index')
                 j = min_index[0]
                 del_count += 1
+                low_gamma.append(active_m[j])
                 active_m        = active_m[active_m!=active_m[j]]
                 alpha_m         = alpha_m[alpha_m!=alpha_m[j]]
 
@@ -313,6 +321,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
                     mask_out[aligned_idx] = False
                     aligned_in = aligned_in[mask_in] #torch.arange(aligned_in.size(0)).to(device)!=aligned_idx
                     aligned_out = aligned_out[mask_out] #torch.arange(aligned_out.size(0)).to(device)!=aligned_idx
+                
                 count += 1
                 terminate = False
                 #quantity Gamma_i measures how well the corresponding parameter mu_i is determined by the data
