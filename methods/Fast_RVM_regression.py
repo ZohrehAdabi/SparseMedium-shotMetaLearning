@@ -104,6 +104,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
         # Priority of Addition       
         if anyToAdd and add_priority:
 
+            save_deltaML_recomp = deltaML[recompute].clone() 
             deltaML[recompute] = 0
             deltaML[delete] = 0
 
@@ -113,10 +114,17 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
         selected_action		= action[max_idx]
         anyWorthwhileAction	= deltaLogMarginal > 0 
 
-        if selected_action==1:
-            if max_idx in low_gamma:
+        if (selected_action==1) and (max_idx in low_gamma):
+            print(f'{itr:3}, low gamma selected {max_idx.cpu().numpy()}')
+            if add_priority:
+                deltaML[recompute] = save_deltaML_recomp
+                deltaML[add] = 0
+                max_idx = torch.argmax(deltaML)[None]
+                deltaLogMarginal = deltaML[max_idx]
+                selected_action		= action[max_idx]
+                anyWorthwhileAction	= deltaLogMarginal > 0 
+            else:
                 anyWorthwhileAction = False
-                print(f'{itr:3}, low gamma selected {max_idx.cpu().numpy()}')
 
         # already in the model
         if selected_action != 1:
