@@ -274,7 +274,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             if active_m.shape[0]==1:
                 break
             del_from_active = active_m[min_index]
-            print(f'remove low Gamma: {Gamma[min_index].detach().cpu().numpy()} correspond to {del_from_active.detach().cpu().numpy()} data index')
+            print(f'itr {itr:3} remove low Gamma: {Gamma[min_index].detach().cpu().numpy()} correspond to {del_from_active.detach().cpu().numpy()} data index')
             j = min_index[0]
             del_count += 1
             active_m        = active_m[active_m!=active_m[j]]
