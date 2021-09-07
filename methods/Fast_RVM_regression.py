@@ -347,7 +347,12 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
                 q[active_m] = tmp * Q[active_m]
                 terminate = False
                 #quantity Gamma_i measures how well the corresponding parameter mu_i is determined by the data
-                Gamma = 1 - alpha_m * torch.diag(Sigma_m)
+                gamma_new = 1 - alpha_m * torch.diag(Sigma_m)
+                if (gamma_new > 1).any():
+                    Gamma = Gamma[Gamma!=Gamma[j]]
+                else:
+                    Gamma = gamma_new
+
 
             
             
