@@ -116,7 +116,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
         if selected_action==1:
             if max_idx in low_gamma:
                 anyWorthwhileAction = False
-                print(f'{itr:3}, low gamma selected {max_idx}')
+                print(f'{itr:3}, low gamma selected {max_idx.cpu().numpy()}')
 
         # already in the model
         if selected_action != 1:
