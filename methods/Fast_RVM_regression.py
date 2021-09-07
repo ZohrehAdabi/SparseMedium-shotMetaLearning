@@ -126,19 +126,19 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
         
         terminate = False
 
-        if ~anyWorthwhileAction:
+        if not anyWorthwhileAction:
             if verbose:
                 print(f'{itr:3}, No positive action, m={active_m.shape[0]:3}')
             selected_action = 10
             terminate = True
 
-        elif selected_action==0 and ~anyToDelete:
+        elif (selected_action==0) and not anyToDelete:
             no_change_in_alpha = torch.abs(torch.log(alpha_new) - torch.log(alpha_m[j])) < tol
             
             if no_change_in_alpha:
                 # print(selected_action)
                 if verbose:
-                    print(f'{itr:3}, No change in alpha, m={active_m.shape[0]:3}')
+                    print(f'{itr:3}, No change in alpha, m= {active_m.shape[0]:3}')
                 selected_action = 11
                 terminate = True
 
@@ -281,7 +281,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
         gm = 0.1
         min_index = torch.argmin(Gamma)
         
-        if selected_action==10 and (Gamma[min_index] < gm):
+        if (terminate) and (Gamma[min_index] < gm):
             if active_m.shape[0]==1:
                 break
             del_from_active = active_m[min_index]
