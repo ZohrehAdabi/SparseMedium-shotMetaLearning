@@ -120,10 +120,10 @@ class Sparse_DKT_regression(nn.Module):
             if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)
 
             if ((epoch%2==0) & (itr%5==0)):
-                print('[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
+                print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
                     itr, epoch, loss.item(), mse.item(),
                     self.model.likelihood.noise.item()
-                ))
+                ),Fore.RESET)
             
             if (self.show_plots_pred or self.show_plots_features) and  self.f_rvm:
                 embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
