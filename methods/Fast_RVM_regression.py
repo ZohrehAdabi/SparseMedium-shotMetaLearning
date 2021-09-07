@@ -358,7 +358,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             
 
         #compute mu and beta
-        if update_sigma and ((itr%5==0) or (itr <=35) or terminate):
+        if update_sigma and ((itr%5==0) or (itr <=20) or terminate):
             
             beta_old = beta
             y_      = K_m @ mu_m  
