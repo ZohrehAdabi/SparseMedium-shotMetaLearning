@@ -173,8 +173,12 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
                 num_aligned	= len(aligned_idx)
                 if num_aligned > 0:
                     reinstated					= aligned_out[aligned_idx]
-                    aligned_in = aligned_in[torch.arange(aligned_in.size(0)).to(device)!=aligned_idx]
-                    aligned_out = aligned_out[torch.arange(aligned_out.size(0)).to(device)!=aligned_idx]
+                    mask_in = torch.ones(aligned_in.numel(), dtype=th.bool)
+                    mask_in[aligned_idx] = False
+                    mask_out = torch.ones(aligned_out.numel(), dtype=th.bool)
+                    mask_out[aligned_idx] = False
+                    aligned_in = aligned_in[mask_in] #torch.arange(aligned_in.size(0)).to(device)!=aligned_idx
+                    aligned_out = aligned_out[mask_out] #torch.arange(aligned_out.size(0)).to(device)!=aligned_idx
                 
 
         update_required = False
