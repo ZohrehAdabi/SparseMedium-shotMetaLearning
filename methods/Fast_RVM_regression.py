@@ -269,7 +269,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             logMarginalLog.append(logML.item())
             beta_KK_m = beta * KK_m
 
-        min_index = torch.where(Gamma < 0.5)[0]
+        min_index = torch.where(Gamma < 0.1)[0]
         while min_index.shape[0] >0:
             if active_m.shape[0]==1:
                 break
