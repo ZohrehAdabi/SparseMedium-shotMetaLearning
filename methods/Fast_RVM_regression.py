@@ -273,7 +273,8 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             logMarginalLog.append(logML.item())
             beta_KK_m = beta * KK_m
 
-        min_index = torch.where(Gamma < 0.1)[0]
+        gm = 0.1
+        min_index = torch.where(Gamma < gm)[0]
         while min_index.shape[0] >0:
             if active_m.shape[0]==1:
                 break
@@ -315,7 +316,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             terminate = True
             #quantity Gamma_i measures how well the corresponding parameter mu_i is determined by the data
             Gamma = 1 - alpha_m * torch.diag(Sigma_m)
-            min_index = torch.where(Gamma < 0.5)[0]
+            min_index = torch.where(Gamma < gm)[0]
             
             
 
@@ -325,7 +326,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             beta_old = beta
             y_      = K_m @ mu_m  
             e       = (targets - y_)
-            beta	= (N - torch.sum(Gamma))/(e.T @ e)
+            beta	= abs(N - torch.sum(Gamma))/(e.T @ e)
             beta	= torch.min(torch.tensor([beta, 1e6/torch.var(targets)]).to(device))
             delta_beta	= torch.log(beta)-torch.log(beta_old)
             beta_KK_m       = beta * KK_m
