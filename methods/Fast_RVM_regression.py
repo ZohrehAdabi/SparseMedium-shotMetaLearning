@@ -281,7 +281,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
         gm = 0.1
         min_index = torch.argmin(Gamma)
         
-        if terminate and (Gamma[min_index] < gm):
+        if selected_action==10 and (Gamma[min_index] < gm):
             if active_m.shape[0]==1:
                 break
             del_from_active = active_m[min_index]
@@ -302,6 +302,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             mu_j			= mu_m[j]
             mu_m			= mu_m + delta_mu.squeeze()
             mu_m			= mu_m[torch.arange(mu_m.size(0)).to(device)!=j]
+
             jPm	            = (beta_KK_m @ s_j).squeeze()
             S	            = S + jPm.pow(2) / s_jj
             Q	            = Q + jPm * mu_j / s_jj
@@ -334,7 +335,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             terminate = False
             #quantity Gamma_i measures how well the corresponding parameter mu_i is determined by the data
             Gamma = 1 - alpha_m * torch.diag(Sigma_m)
-            min_index = torch.where(Gamma < gm)[0]
+
             
             
 
