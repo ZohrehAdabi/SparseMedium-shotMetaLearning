@@ -310,6 +310,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             KK_m            = KK[:, active_m]
             KK_mm           = KK[active_m, :][:, active_m]
             K_mt            = Kt[active_m]
+            beta_KK_m       = beta * KK_m
             Sigma_m         = Sigma_new
             if alignment_test:
                 aligned_idx = torch.where(aligned_in==j)[0]
