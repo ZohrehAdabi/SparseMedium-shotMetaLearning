@@ -67,9 +67,8 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
         delta_alpha         = (1/alpha_prim - 1/alpha_m[idx])
         # d_alpha =  ((alpha_m[idx] - alpha_prim)/(alpha_prim * alpha_m[idx]))
         d_alpha_S           = delta_alpha * S[recompute] + 1 
-        # deltaML[recompute] = ((delta_alpha * Q[recompute]**2) / (S[recompute] + 1/delta_alpha) - torch.log(d_alpha_S)) /2
-        deltaML[recompute]  = ((delta_alpha * Q[recompute]**2) / (d_alpha_S) - torch.log(d_alpha_S)) /2
-        
+        # deltaML[recompute] = ((delta_alpha * Q[recompute]**2) / (S[recompute] * delta_alpha +1) - torch.log(d_alpha_S)) /2
+        deltaML[recompute]  = ((delta_alpha * Q[recompute]**2) / (d_alpha_S) - torch.log(abs(d_alpha_S))) /2
         # DELETION: if NEGATIVE factor and IN model
         idx = ~idx #active_factor <= 1e-12
         delete = active_m[idx]
@@ -114,7 +113,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
         selected_action		= action[max_idx]
         anyWorthwhileAction	= deltaLogMarginal > 0 
 
-        if (selected_action==1) and (max_idx in low_gamma):
+        if False and (selected_action==1) and (max_idx in low_gamma):
             print(f'{itr:3}, low gamma selected {max_idx.cpu().numpy()}')
             if add_priority:
                 deltaML[recompute] = save_deltaML_recomp
@@ -289,7 +288,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
         gm = 0.1
         min_index = torch.argmin(Gamma)
         
-        if (terminate) and (Gamma[min_index] < gm):
+        if (False) and (Gamma[min_index] < gm):
             if active_m.shape[0]==1:
                 break
             del_from_active = active_m[min_index]
