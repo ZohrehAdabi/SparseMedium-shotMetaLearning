@@ -152,7 +152,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
                 selected_action = 11
                 terminate = True
         else:
-            if check_gamma and (itr%3==0):
+            if check_gamma and (itr%10==0):
                 
                 min_index = torch.argmin(Gamma)
                 if (Gamma[min_index] < gm) and active_m.shape[0] > 1:
@@ -162,8 +162,8 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
                     deltaML_j = -(q[active_m[j]]**2 / (s[active_m[j]] + alpha_m[j]) - torch.log(1 + s[active_m[j]] / alpha_m[j])) /2
                     
                     if deltaML_j > -0.01:
-                        print(f'itr {itr:3} remove low Gamma: {Gamma[min_index].detach().cpu().numpy():.4f}, deltaML: {deltaML_j.detach().cpu().numpy():.4f}',
-                                    f'correspond to {del_from_active.detach().cpu().numpy()} data index')
+                        # print(f'itr {itr:3} low Gamma: {Gamma[min_index].detach().cpu().numpy():.4f}, deltaML: {deltaML_j.detach().cpu().numpy():.4f}',
+                        #             f'correspond to {del_from_active.detach().cpu().numpy()} data index')
                         selected_action = -1
                         max_idx = del_from_active
                         deltaLogMarginal = deltaML_j
@@ -234,7 +234,9 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
         elif selected_action==-1:  #delete
             del_count += 1
             active_m        = active_m[active_m!=active_m[j]]
-            alpha_m         = alpha_m[alpha_m!=alpha_m[j]]
+            mask            = torch.ones(alpha_m.numel(), dtype=torch.bool)
+            mask[j] = False           
+            alpha_m         = alpha_m[mask]
 
             s_jj			= Sigma_m[j, j]
             s_j				= Sigma_m[:, j]
@@ -300,8 +302,14 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             Sigma_m = Sigma_new
             #quantity Gamma_i measures how well the corresponding parameter mu_i is determined by the data
             gamma_new = 1 - alpha_m * torch.diag(Sigma_m)
-            if (selected_action==-1) and (gamma_new > 1).any():
-                Gamma = Gamma[Gamma!=Gamma[j]]
+            if (gamma_new > 1).any():
+                if (selected_action==-1):
+                    mask = torch.ones(Gamma.numel(), dtype=torch.bool)
+                    mask[j] = False 
+                    Gamma = Gamma[mask]
+                else: 
+                    gamma_new[gamma_new>1] = 1
+                    Gamma = gamma_new
             else:
                 Gamma = gamma_new
             logML = logML + deltaLogMarginal
@@ -371,7 +379,9 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
                     #quantity Gamma_i measures how well the corresponding parameter mu_i is determined by the data
                     gamma_new = 1 - alpha_m * torch.diag(Sigma_m)
                     if (gamma_new > 1).any():
-                        Gamma = Gamma[Gamma!=Gamma[j]]
+                        mask = torch.ones(Gamma.numel(), dtype=torch.bool)
+                        mask[j] = False 
+                        Gamma = Gamma[mask]
                     else:
                         Gamma = gamma_new
 
