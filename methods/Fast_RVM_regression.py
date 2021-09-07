@@ -167,6 +167,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
                     selected_action = -1
                     max_idx = del_from_active
                     deltaLogMarginal = deltaML_j
+                    low_gamma.append(del_from_active)
                         
 
         
@@ -235,7 +236,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             del_count += 1
             active_m        = active_m[active_m!=active_m[j]]
             mask            = torch.ones(alpha_m.numel(), dtype=torch.bool)
-            mask[j] = False           
+            mask[j]         = False           
             alpha_m         = alpha_m[mask]
 
             s_jj			= Sigma_m[j, j]
@@ -387,7 +388,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
 
 
         #compute mu and beta
-        if update_sigma and ((itr%5==0) or (itr <=20) or terminate):
+        if update_sigma and ((itr%5==0) or (itr <=10) or terminate):
             
             beta_old = beta
             y_      = K_m @ mu_m  
