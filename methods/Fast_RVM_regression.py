@@ -321,7 +321,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
 
        
         
-        if check_gamma and terminate:
+        if False and check_gamma and terminate:
             
             min_index = torch.argmin(Gamma)
             if (Gamma[min_index] < gm) and (active_m.shape[0]>1):
