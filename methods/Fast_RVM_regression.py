@@ -304,9 +304,13 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             # findAligned	= find(Aligned_in==max_idx);
             num_aligned	= len(aligned_idx)
             if num_aligned > 0:
-                # reinstated					= aligned_out[aligned_idx]
-                aligned_in = aligned_in[torch.arange(aligned_in.size(0)).to(device)!=aligned_idx]
-                aligned_out = aligned_out[torch.arange(aligned_out.size(0)).to(device)!=aligned_idx]
+                reinstated					= aligned_out[aligned_idx]
+                mask_in = torch.ones(aligned_in.numel(), dtype=torch.bool)
+                mask_in[aligned_idx] = False
+                mask_out = torch.ones(aligned_out.numel(), dtype=torch.bool)
+                mask_out[aligned_idx] = False
+                aligned_in = aligned_in[mask_in] #torch.arange(aligned_in.size(0)).to(device)!=aligned_idx
+                aligned_out = aligned_out[mask_out] #torch.arange(aligned_out.size(0)).to(device)!=aligned_idx
             count += 1
             terminate = True
             #quantity Gamma_i measures how well the corresponding parameter mu_i is determined by the data
