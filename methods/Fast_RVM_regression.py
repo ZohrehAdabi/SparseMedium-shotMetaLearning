@@ -165,6 +165,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
                     if deltaML_j > -0.01:
                         selected_action = -1
                         max_idx = del_from_active
+                        deltaLogMarginal = deltaML_j
                         
 
         
