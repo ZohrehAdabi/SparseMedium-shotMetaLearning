@@ -13,6 +13,7 @@ from collections import namedtuple
 import gpytorch
 from time import gmtime, strftime
 import random
+from colorama import Fore
 from configs import kernel_type
 from methods.Fast_RVM import Fast_RVM
 #Check if tensorboardx is installed
@@ -268,11 +269,11 @@ class Sparse_DKT(MetaTemplate):
             if i % print_freq==0:
                 if(self.writer is not None): self.writer.add_histogram('z_support', z_support, self.iteration)
                 if self.dirichlet:
-                    print('Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} || Loss {:f} | Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
-                        outputscale, lenghtscale,  loss.item(), 0, accuracy_query)) #accuracy_support
+                    print(Fore.LIGHTRED_EX,'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} || Loss {:f} | Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
+                        outputscale, lenghtscale,  loss.item(), 0, accuracy_query), Fore.RESET) #accuracy_support
                 else:
-                    print('Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} | Noise {:f} | Loss {:f} | Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
-                        outputscale, lenghtscale, noise, loss.item(), 0, accuracy_query))
+                    print(Fore.LIGHTRED_EX,'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} | Noise {:f} | Loss {:f} | Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
+                        outputscale, lenghtscale, noise, loss.item(), 0, accuracy_query), Fore.RESET)
 
     def get_inducing_points(self, base_covar_module, inputs, targets, verbose=True):
 
@@ -456,7 +457,9 @@ class Sparse_DKT(MetaTemplate):
         acc_all  = np.asarray(acc_all)
         acc_mean = np.mean(acc_all)
         acc_std  = np.std(acc_all)
-        print('%d Test Acc = %4.2f%% +- %4.2f%%' %(iter_num,  acc_mean, 1.96* acc_std/np.sqrt(iter_num)))
+        print(Fore.LIGHTRED_EX,"="*30)
+        print(Fore.YELLOW,'\n%d Test Acc = %4.2f%% +- %4.2f%%' %(iter_num,  acc_mean, 1.96* acc_std/np.sqrt(iter_num)), Fore.RESET)
+        print(Fore.LIGHTRED_EX,"="*30)
         if(self.writer is not None): self.writer.add_scalar('test_accuracy', acc_mean, self.iteration)
         if(return_std): return acc_mean, acc_std
         else: return acc_mean
