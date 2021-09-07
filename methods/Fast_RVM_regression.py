@@ -295,10 +295,11 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
                 if active_m.shape[0]==1:
                     break
                 del_from_active = active_m[min_index]
+                j = min_index
                 deltaML_j = -(q[active_m[j]]**2 / (s[active_m[j]] + alpha_m[j]) - torch.log(1 + s[active_m[j]] / alpha_m[j])) /2
                 print(f'itr {itr:3} remove low Gamma: {Gamma[min_index].detach().cpu().numpy()}, deltaML: {deltaML_j.detach().cpu().numpy()}',
                                 f'correspond to {del_from_active.detach().cpu().numpy()} data index')
-                j = min_index
+                
                 del_count += 1
                 low_gamma.append(active_m[j])
                 active_m        = active_m[active_m!=active_m[j]]
