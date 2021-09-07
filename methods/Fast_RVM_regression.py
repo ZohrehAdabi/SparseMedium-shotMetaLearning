@@ -281,53 +281,53 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             beta_KK_m = beta * KK_m
 
         gm = 0.1
-        min_index = torch.where(Gamma < gm)[0]
-        if terminate:
-            while min_index.shape[0] >0:
-                if active_m.shape[0]==1:
-                    break
-                del_from_active = active_m[min_index]
-                print(f'itr {itr:3} remove low Gamma: {Gamma[min_index].detach().cpu().numpy()} correspond to {del_from_active.detach().cpu().numpy()} data index')
-                j = min_index[0]
-                del_count += 1
-                low_gamma.append(active_m[j])
-                active_m        = active_m[active_m!=active_m[j]]
-                alpha_m         = alpha_m[alpha_m!=alpha_m[j]]
+        min_index = torch.argmin(Gamma)
+        
+        if terminate and (Gamma[min_index] < gm):
+            if active_m.shape[0]==1:
+                break
+            del_from_active = active_m[min_index]
+            print(f'itr {itr:3} remove low Gamma: {Gamma[min_index].detach().cpu().numpy()} correspond to {del_from_active.detach().cpu().numpy()} data index')
+            j = min_index
+            del_count += 1
+            low_gamma.append(active_m[j])
+            active_m        = active_m[active_m!=active_m[j]]
+            alpha_m         = alpha_m[alpha_m!=alpha_m[j]]
 
-                s_jj			= Sigma_m[j, j]
-                s_j				= Sigma_m[:, j]
-                tmp				= s_j/s_jj
-                Sigma_		    = Sigma_m - tmp @ s_j.T
-                Sigma_          = Sigma_[torch.arange(Sigma_.size(0)).to(device)!=j]
-                Sigma_new       = Sigma_[:, torch.arange(Sigma_.size(1)).to(device)!=j]
-                delta_mu		= -mu_m[j] * tmp
-                mu_j			= mu_m[j]
-                mu_m			= mu_m + delta_mu.squeeze()
-                mu_m			= mu_m[torch.arange(mu_m.size(0)).to(device)!=j]
+            s_jj			= Sigma_m[j, j]
+            s_j				= Sigma_m[:, j]
+            tmp				= s_j/s_jj
+            Sigma_		    = Sigma_m - tmp @ s_j.T
+            Sigma_          = Sigma_[torch.arange(Sigma_.size(0)).to(device)!=j]
+            Sigma_new       = Sigma_[:, torch.arange(Sigma_.size(1)).to(device)!=j]
+            delta_mu		= -mu_m[j] * tmp
+            mu_j			= mu_m[j]
+            mu_m			= mu_m + delta_mu.squeeze()
+            mu_m			= mu_m[torch.arange(mu_m.size(0)).to(device)!=j]
 
-                Sigma_m         = Sigma_new
-                K_m             = K[:, active_m]
-                KK_m            = KK[:, active_m]
-                KK_mm           = KK[active_m, :][:, active_m]
-                K_mt            = Kt[active_m]
-                aligned_idx = torch.where(aligned_in==j)[0]
-                # findAligned	= find(Aligned_in==max_idx);
-                num_aligned	= len(aligned_idx)
-                if num_aligned > 0:
-                    reinstated					= aligned_out[aligned_idx]
-                    mask_in = torch.ones(aligned_in.numel(), dtype=torch.bool)
-                    mask_in[aligned_idx] = False
-                    mask_out = torch.ones(aligned_out.numel(), dtype=torch.bool)
-                    mask_out[aligned_idx] = False
-                    aligned_in = aligned_in[mask_in] #torch.arange(aligned_in.size(0)).to(device)!=aligned_idx
-                    aligned_out = aligned_out[mask_out] #torch.arange(aligned_out.size(0)).to(device)!=aligned_idx
-                
-                count += 1
-                terminate = False
-                #quantity Gamma_i measures how well the corresponding parameter mu_i is determined by the data
-                Gamma = 1 - alpha_m * torch.diag(Sigma_m)
-                min_index = torch.where(Gamma < gm)[0]
-                
+            Sigma_m         = Sigma_new
+            K_m             = K[:, active_m]
+            KK_m            = KK[:, active_m]
+            KK_mm           = KK[active_m, :][:, active_m]
+            K_mt            = Kt[active_m]
+            aligned_idx = torch.where(aligned_in==j)[0]
+            # findAligned	= find(Aligned_in==max_idx);
+            num_aligned	= len(aligned_idx)
+            if num_aligned > 0:
+                reinstated					= aligned_out[aligned_idx]
+                mask_in = torch.ones(aligned_in.numel(), dtype=torch.bool)
+                mask_in[aligned_idx] = False
+                mask_out = torch.ones(aligned_out.numel(), dtype=torch.bool)
+                mask_out[aligned_idx] = False
+                aligned_in = aligned_in[mask_in] #torch.arange(aligned_in.size(0)).to(device)!=aligned_idx
+                aligned_out = aligned_out[mask_out] #torch.arange(aligned_out.size(0)).to(device)!=aligned_idx
+            
+            count += 1
+            terminate = False
+            #quantity Gamma_i measures how well the corresponding parameter mu_i is determined by the data
+            Gamma = 1 - alpha_m * torch.diag(Sigma_m)
+            min_index = torch.where(Gamma < gm)[0]
+            
             
 
         #compute mu and beta
