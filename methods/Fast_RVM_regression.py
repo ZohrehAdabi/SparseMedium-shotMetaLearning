@@ -118,7 +118,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
 
         if check_gamma:
             if (selected_action==1) and (max_idx in low_gamma):
-                print(f'{itr:3}, low gamma selected {max_idx.cpu().numpy()}')
+                # print(f'{itr:3}, low gamma selected {max_idx.cpu().numpy()}')
                 if add_priority:
                     deltaML[recompute] = save_deltaML_recomp
                     deltaML[delete] = save_deltaML_del
