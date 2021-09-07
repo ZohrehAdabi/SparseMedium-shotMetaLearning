@@ -300,7 +300,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             Sigma_m = Sigma_new
             #quantity Gamma_i measures how well the corresponding parameter mu_i is determined by the data
             gamma_new = 1 - alpha_m * torch.diag(Sigma_m)
-            if (gamma_new > 1).any():
+            if (selected_action==-1) and (gamma_new > 1).any():
                 Gamma = Gamma[Gamma!=Gamma[j]]
             else:
                 Gamma = gamma_new
