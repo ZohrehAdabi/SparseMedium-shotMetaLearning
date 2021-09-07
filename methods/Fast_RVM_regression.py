@@ -47,6 +47,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
     add_priority    = config[2]=="1"
     alignment_test  = config[3]=="1"
     align_zero      = align_thr
+    check_gamma = True
     add_count = 0
     del_count = 0
     recomp_count = 0
@@ -113,17 +114,18 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
         selected_action		= action[max_idx]
         anyWorthwhileAction	= deltaLogMarginal > 0 
 
-        if False and (selected_action==1) and (max_idx in low_gamma):
-            print(f'{itr:3}, low gamma selected {max_idx.cpu().numpy()}')
-            if add_priority:
-                deltaML[recompute] = save_deltaML_recomp
-                deltaML[add] = 0
-                max_idx = torch.argmax(deltaML)[None]
-                deltaLogMarginal = deltaML[max_idx]
-                selected_action		= action[max_idx]
-                anyWorthwhileAction	= deltaLogMarginal > 0 
-            else:
-                anyWorthwhileAction = False
+        if check_gamma:
+            if (selected_action==1) and (max_idx in low_gamma):
+                print(f'{itr:3}, low gamma selected {max_idx.cpu().numpy()}')
+                if add_priority:
+                    deltaML[recompute] = save_deltaML_recomp
+                    deltaML[add] = 0
+                    max_idx = torch.argmax(deltaML)[None]
+                    deltaLogMarginal = deltaML[max_idx]
+                    selected_action		= action[max_idx]
+                    anyWorthwhileAction	= deltaLogMarginal > 0 
+                else:
+                    anyWorthwhileAction = False
 
         # already in the model
         if selected_action != 1:
@@ -288,7 +290,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
         gm = 0.1
         min_index = torch.argmin(Gamma)
         
-        if (False) and (Gamma[min_index] < gm):
+        if (check_gamma) and (Gamma[min_index] < gm):
             if active_m.shape[0]==1:
                 break
             del_from_active = active_m[min_index]
