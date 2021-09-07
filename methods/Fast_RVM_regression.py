@@ -48,6 +48,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
     alignment_test  = config[3]=="1"
     align_zero      = align_thr
     check_gamma = True
+    gm = 0.1
     add_count = 0
     del_count = 0
     recomp_count = 0
@@ -150,7 +151,19 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
                     print(f'{itr:3}, No change in alpha, m= {active_m.shape[0]:3}')
                 selected_action = 11
                 terminate = True
-
+        # else:
+        #     if check_gamma and (itr%3==0):
+                
+        #     min_index = torch.argmin(Gamma)
+        #     if (Gamma[min_index] < gm) and active_m.shape[0] > 1:
+  
+        #         del_from_active = active_m[min_index]
+        #         j = min_index
+        #         deltaML_j = -(q[active_m[j]]**2 / (s[active_m[j]] + alpha_m[j]) - torch.log(1 + s[active_m[j]] / alpha_m[j])) /2
+        #         print(f'itr {itr:3} remove low Gamma: {Gamma[min_index].detach().cpu().numpy()}, deltaML: {deltaML_j.detach().cpu().numpy()}',
+        #                         f'correspond to {del_from_active.detach().cpu().numpy()} data index')
+        #         if deltaML_j < 0.01:
+        #             selected_action = -1
 
         
         if alignment_test:
@@ -287,17 +300,17 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             logMarginalLog.append(logML.item())
             beta_KK_m = beta * KK_m
 
-        gm = 0.1
-        min_index = torch.argmin(Gamma)
+       
         
-        if (check_gamma):
-            if (terminate) and (Gamma[min_index] < gm):
-                if active_m.shape[0]==1:
-                    break
+        if check_gamma and terminate:
+            
+            min_index = torch.argmin(Gamma)
+            if (Gamma[min_index] < gm) and (active_m.shape[0]>1):
+
                 del_from_active = active_m[min_index]
                 j = min_index
                 deltaML_j = -(q[active_m[j]]**2 / (s[active_m[j]] + alpha_m[j]) - torch.log(1 + s[active_m[j]] / alpha_m[j])) /2
-                print(f'itr {itr:3} remove low Gamma: {Gamma[min_index].detach().cpu().numpy():.4f}, deltaML: {deltaML_j.detach().cpu().numpy():0.4f}',
+                print(f'itr {itr:3} remove low Gamma: {Gamma[min_index].detach().cpu().numpy()}, deltaML: {deltaML_j.detach().cpu().numpy()}',
                                 f'correspond to {del_from_active.detach().cpu().numpy()} data index')
                 
                 del_count += 1
@@ -354,11 +367,8 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
                     Gamma = gamma_new
 
 
-            
-            
-
         #compute mu and beta
-        if update_sigma and ((itr%5==0) or (itr <=20) or terminate):
+        if update_sigma and ((itr%5==0) or (itr <=10) or terminate):
             
             beta_old = beta
             y_      = K_m @ mu_m  
