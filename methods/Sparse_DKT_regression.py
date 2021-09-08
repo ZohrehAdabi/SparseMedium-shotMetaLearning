@@ -192,7 +192,7 @@ class Sparse_DKT_regression(nn.Module):
             pred    = self.likelihood(self.model(z_query))
             lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
 
-        mse = self.mse(pred.mean, y_query).item()
+        
 
         def inducing_max_similar_in_support_x(train_x, inducing_points, train_y):
             y = ((train_y.detach().cpu().numpy() + 1) * 60 / 2) + 60
@@ -219,8 +219,11 @@ class Sparse_DKT_regression(nn.Module):
         inducing_points = inducing_max_similar_in_support_x(x_support, inducing_points, y_support)
 
         #**************************************************************
-        y = ((y_query.detach().cpu().numpy() + 1) * 60 / 2) + 60
-        y_pred = ((pred.mean.detach().cpu().numpy() + 1) * 60 / 2) + 60
+        y = ((y_query.detach() + 1) * 60 / 2) + 60
+        y_pred = ((pred.mean.detach() + 1) * 60 / 2) + 60
+        mse = self.mse(y_pred, y).item()
+        y = y.cpu().numpy()
+        y_pred = y_pred.cpu().numpy()
         print(Fore.RED,"="*50, Fore.RESET)
         print(f'inducing_points count: {inducing_points.count}')
         print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha}',Fore.RESET)
