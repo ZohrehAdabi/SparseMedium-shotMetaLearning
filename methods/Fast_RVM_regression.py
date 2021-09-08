@@ -395,7 +395,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             beta_old = beta
             y_      = K_m @ mu_m  
             e       = (targets - y_)
-            beta	= ((N - active_m.shape[0]) - torch.sum(Gamma))/(e.T @ e)
+            beta	= ((N - torch.sum(Gamma))/(e.T @ e)
             beta	= torch.min(torch.tensor([beta, 1e6/torch.var(targets)]).to(device))
             delta_beta	= torch.log(beta)-torch.log(beta_old)
             beta_KK_m       = beta * KK_m
