@@ -100,8 +100,8 @@ class Sparse_DKT_regression(nn.Module):
             z = self.feature_extractor(inputs)
             # z = F.normalize(z, p=2, dim=1)
             # with torch.no_grad():
-            inducing_points = self.get_inducing_points(z, labels, verbose=False)
-            
+            inducing_points, gamma = self.get_inducing_points(z, labels, verbose=False)
+            gamma.requires_grad = True
             ip_values = inducing_points.z_values.cuda()
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
             self.model.train()
@@ -109,7 +109,7 @@ class Sparse_DKT_regression(nn.Module):
 
             # z = self.feature_extractor(x_query)
             predictions = self.model(z)
-            loss = -self.mll(predictions, self.model.train_targets) - torch.sum(inducing_points.gamma)
+            loss = -self.mll(predictions, self.model.train_targets) - torch.sum(gamma)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -402,7 +402,7 @@ class Sparse_DKT_regression(nn.Module):
                     print(f'FRVM MSE: {mse:0.4f}')
             
 
-        return IP(inducing_points, IP_index, num_IP, alpha, gamma, None, None, None, None)
+        return IP(inducing_points, IP_index, num_IP, alpha, gamma, None, None, None, None), gamma
   
     def save_checkpoint(self, checkpoint):
         # save state
