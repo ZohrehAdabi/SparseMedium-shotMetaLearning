@@ -100,8 +100,9 @@ class Sparse_DKT_regression(nn.Module):
             z = self.feature_extractor(inputs)
             # z = F.normalize(z, p=2, dim=1)
             # with torch.no_grad():
-            inducing_points, gamma = self.get_inducing_points(z, labels, verbose=False)
-            gamma.requires_grad = True
+            with torch.autograd.set_detect_anomaly(True):
+                inducing_points, gamma = self.get_inducing_points(z, labels, verbose=False)
+            # gamma.requires_grad = True
             ip_values = inducing_points.z_values.cuda()
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
             self.model.train()
@@ -381,16 +382,17 @@ class Sparse_DKT_regression(nn.Module):
             targets = targets.to(torch.float64)
             active, alpha, gamma, beta, mu_m = Fast_RVM_regression(kernel_matrix, targets, beta, N, self.config, self.align_threshold,
                                                     eps, tol, max_itr, self.device, verbose)
+            
+            index = np.argsort(active)
+            active = active[index]
+            gamma_ = gamma.detach().clone()
+            gamma_ = gamma_[index]
+            ss = scales[index]
+            alpha = alpha[index] / ss
+            inducing_points = inputs[active]
+            num_IP = active.shape[0]
+            IP_index = active
             with torch.no_grad():
-                index = np.argsort(active)
-                active = active[index]
-                gamma = gamma[index]
-                ss = scales[index]
-                alpha = alpha[index] / ss
-                inducing_points = inputs[active]
-                num_IP = active.shape[0]
-                IP_index = active
-
                 if True:
                     
                     K = covar_module(inputs, inducing_points).evaluate()
@@ -402,7 +404,7 @@ class Sparse_DKT_regression(nn.Module):
                     print(f'FRVM MSE: {mse:0.4f}')
             
 
-        return IP(inducing_points, IP_index, num_IP, alpha, gamma, None, None, None, None), gamma
+        return IP(inducing_points, IP_index, num_IP, alpha, gamma_, None, None, None, None), gamma
   
     def save_checkpoint(self, checkpoint):
         # save state
