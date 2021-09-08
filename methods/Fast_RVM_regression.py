@@ -154,7 +154,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
                 selected_action = 11
                 terminate = True
         # else:
-        if check_gamma and ((itr%5==0) or (selected_action==10)):
+        if check_gamma and ((itr%6==0) or (selected_action==10)):
             
             min_index = torch.argmin(Gamma)
             if (Gamma[min_index] < gm) and active_m.shape[0] > 5:
@@ -324,10 +324,6 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
             logML = logML + deltaLogMarginal
             logMarginalLog.append(logML.item())
             beta_KK_m = beta * KK_m
-
-       
-        
-
 
         #compute mu and beta
         if update_sigma and ((itr%5==0) or (itr < 10) or terminate):

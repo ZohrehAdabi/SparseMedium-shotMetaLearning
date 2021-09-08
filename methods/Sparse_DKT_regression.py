@@ -123,7 +123,7 @@ class Sparse_DKT_regression(nn.Module):
             self.iteration = itr+(epoch*len(batch_labels))
             if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)
 
-            if ((epoch%2==0) & (itr%5==0)):
+            if ((epoch%1==0) & (itr%5==0)):
                 print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
                     itr, epoch, loss.item(), mse.item(),
                     self.model.likelihood.noise.item()
