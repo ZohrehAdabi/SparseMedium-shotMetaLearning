@@ -21,6 +21,14 @@ import random
 from statistics import mean
 from data.qmul_loader import get_batch, train_people, test_people
 from configs import kernel_type
+#Check if tensorboardx is installed
+try:
+    #tensorboard --logdir=./QMUL_Loss/ --host localhost --port 8091
+    from tensorboardX import SummaryWriter
+    IS_TBX_INSTALLED = True
+except ImportError:
+    IS_TBX_INSTALLED = False
+    print('[WARNING] install tensorboardX to record simulation logs.')
 
 class DKT_regression(nn.Module):
     def __init__(self, backbone, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
@@ -57,6 +65,14 @@ class DKT_regression(nn.Module):
     def set_forward_loss(self, x):
         pass
 
+    def init_summary(self, id):
+        if(IS_TBX_INSTALLED):
+            time_string = strftime("%d%m%Y_%H%M", gmtime())
+            if not os.path.isdir('./QMUL_Loss'):
+                os.makedirs('./QMUL_Loss')
+            writer_path = './QMUL_Loss/' + id #+'_'+ time_string
+            self.writer = SummaryWriter(log_dir=writer_path)
+
     def train_loop(self, epoch, n_support, n_samples, optimizer):
 
         batch, batch_labels = get_batch(train_people, n_samples)
@@ -80,6 +96,8 @@ class DKT_regression(nn.Module):
                     itr, epoch, loss.item(), mse.item(),
                     self.model.likelihood.noise.item()
                 ))
+            self.iteration = itr+(epoch*len(batch_labels))
+            if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)
 
             if (self.show_plots_pred or self.show_plots_features):
                 embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
@@ -176,7 +194,7 @@ class DKT_regression(nn.Module):
         for epoch in range(stop_epoch):
             mll = self.train_loop(epoch, n_support, n_samples, optimizer)
             mll_list.append(mll)
-
+            if(self.writer is not None): self.writer.add_scalar('MLL per epoch', mll, epoch)
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
         
         mll = np.mean(mll_list)

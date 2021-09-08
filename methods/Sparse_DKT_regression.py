@@ -36,6 +36,8 @@ try:
 except ImportError:
     IS_TBX_INSTALLED = False
     print('[WARNING] install tensorboardX to record simulation logs.')
+
+    
 IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx")
 class Sparse_DKT_regression(nn.Module):
     def __init__(self, backbone, f_rvm=True, config="0000", align_threshold=1e-3, n_inducing_points=12, random=False, 
