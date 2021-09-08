@@ -28,7 +28,7 @@ from statistics import mean
 from data.qmul_loader import get_batch, train_people, test_people
 from configs import kernel_type
 from collections import namedtuple
-import torch.optim.lr_scheduler.StepLR
+import torch.optim
 #Check if tensorboardx is installed
 try:
     #tensorboard --logdir=./QMUL_Loss/ --host localhost --port 8091
@@ -274,7 +274,7 @@ class Sparse_DKT_regression(nn.Module):
 
         mll_list = []
         best_mse = 10e5
-        scheduler = StepLR(optimizer, step_size=stop_epoch//2, gamma=0.1)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=stop_epoch//2, gamma=0.1)
         for epoch in range(stop_epoch):
             
             if  self.f_rvm:
