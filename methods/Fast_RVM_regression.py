@@ -245,12 +245,18 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             s_j				= Sigma_m[:, j]
             tmp				= s_j/s_jj
             Sigma_		    = Sigma_m - tmp @ s_j.T
-            Sigma_          = Sigma_[torch.arange(Sigma_.size(0)).to(device)!=j]
-            Sigma_new       = Sigma_[:, torch.arange(Sigma_.size(1)).to(device)!=j]
+            mask = torch.ones(Sigma_.size(0), dtype=torch.bool)
+            mask[j] = False 
+            Sigma_          = Sigma_[mask]
+            mask = torch.ones(Sigma_.size(1), dtype=torch.bool)
+            mask[j] = False
+            Sigma_new       = Sigma_[:, mask]
             delta_mu		= -mu_m[j] * tmp
             mu_j			= mu_m[j]
             mu_m			= mu_m + delta_mu.squeeze()
-            mu_m			= mu_m[torch.arange(mu_m.size(0)).to(device)!=j]
+            mask = torch.ones(mu_m.size(0), dtype=torch.bool)
+            mask[j] = False
+            mu_m			= mu_m[mask]
             
             jPm	            = (beta_KK_m @ s_j).squeeze()
             S	            = S + jPm.pow(2) / s_jj
