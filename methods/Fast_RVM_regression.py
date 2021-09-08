@@ -154,10 +154,10 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
                 selected_action = 11
                 terminate = True
         # else:
-        if check_gamma and (itr%15==0):
+        if check_gamma and (itr%10==0):
             
             min_index = torch.argmin(Gamma)
-            if (Gamma[min_index] < gm) and active_m.shape[0] > 1:
+            if (Gamma[min_index] < gm) and active_m.shape[0] > 5:
                 
                 j = min_index
                 del_from_active = active_m[j]
@@ -390,7 +390,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
 
 
         #compute mu and beta
-        if update_sigma and ((itr%5==0) or (itr <=10) or terminate):
+        if update_sigma and ((itr%5==0)  or terminate):
             
             beta_old = beta
             y_      = K_m @ mu_m  
