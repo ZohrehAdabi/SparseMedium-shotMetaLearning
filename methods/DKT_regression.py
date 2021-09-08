@@ -132,8 +132,11 @@ class DKT_regression(nn.Module):
 
         mse = self.mse(pred.mean, y_query).item()
         #***************************************************
-        y = ((y_query.detach().cpu().numpy() + 1) * 60 / 2) + 60
-        y_pred = ((pred.mean.detach().cpu().numpy() + 1) * 60 / 2) + 60
+        y = ((y_query.detach() + 1) * 60 / 2) + 60
+        y_pred = ((pred.mean.detach() + 1) * 60 / 2) + 60
+        mse = self.mse(y_pred, y).item()
+        y = y.cpu().numpy()
+        y_pred = y_pred.cpu().numpy()
         print(Fore.RED,"="*50, Fore.RESET)
         print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
         print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
