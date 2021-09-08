@@ -211,7 +211,8 @@ class Sparse_DKT_regression(nn.Module):
                 i_idx.append(i)
                 j_idx.append(j)
 
-            return IP(inducing_points.z_values, index, inducing_points.count, inducing_points.alpha, inducing_points.gamma, 
+            return IP(inducing_points.z_values, index, inducing_points.count, inducing_points.alpha.cpu().numpy(),
+                                 inducing_points.gamma.cpu().numpy(), 
                                 x_inducing, y_inducing, np.array(i_idx), np.array(j_idx))
         
         inducing_points = inducing_max_similar_in_support_x(x_support, inducing_points, y_support)
@@ -380,27 +381,28 @@ class Sparse_DKT_regression(nn.Module):
             targets = targets.to(torch.float64)
             active, alpha, gamma, beta, mu_m = Fast_RVM_regression(kernel_matrix, targets, beta, N, self.config, self.align_threshold,
                                                     eps, tol, max_itr, self.device, verbose)
-            index = np.argsort(active)
-            active = active[index]
-            gamma = gamma[index]
-            ss = scales[index]
-            alpha = alpha[index] / ss
-            inducing_points = inputs[active]
-            num_IP = active.shape[0]
-            IP_index = active
+            with torch.no_grad():
+                index = np.argsort(active)
+                active = active[index]
+                gamma = gamma[index]
+                ss = scales[index]
+                alpha = alpha[index] / ss
+                inducing_points = inputs[active]
+                num_IP = active.shape[0]
+                IP_index = active
 
-            if True:
-                
-                K = covar_module(inputs, inducing_points).evaluate()
-                # K = covar_module(X, X[active]).evaluate()
-                mu_m = (mu_m[index] / ss)
-                mu_m = mu_m.to(torch.float)
-                y_pred = K @ mu_m
-                mse = self.mse(y_pred, targets)
-                print(f'FRVM MSE: {mse:0.4f}')
+                if True:
+                    
+                    K = covar_module(inputs, inducing_points).evaluate()
+                    # K = covar_module(X, X[active]).evaluate()
+                    mu_m = (mu_m[index] / ss)
+                    mu_m = mu_m.to(torch.float)
+                    y_pred = K @ mu_m
+                    mse = self.mse(y_pred, targets)
+                    print(f'FRVM MSE: {mse:0.4f}')
             
 
-        return IP(inducing_points, IP_index, num_IP, alpha.cpu().numpy(), gamma.cpu().numpy(), None, None, None, None)
+        return IP(inducing_points, IP_index, num_IP, alpha, gamma, None, None, None, None)
   
     def save_checkpoint(self, checkpoint):
         # save state
