@@ -99,8 +99,8 @@ class Sparse_DKT_regression(nn.Module):
 
             z = self.feature_extractor(inputs)
             # z = F.normalize(z, p=2, dim=1)
-            with torch.no_grad():
-                inducing_points = self.get_inducing_points(z, labels, verbose=False)
+            # with torch.no_grad():
+            inducing_points = self.get_inducing_points(z, labels, verbose=False)
             
             ip_values = inducing_points.z_values.cuda()
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
