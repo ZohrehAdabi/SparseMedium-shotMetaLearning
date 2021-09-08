@@ -154,7 +154,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
                 selected_action = 11
                 terminate = True
         # else:
-        if check_gamma and (itr%6==0):
+        if check_gamma and ((itr%6==0) or (selected_action==10)):
             
             min_index = torch.argmin(Gamma)
             if (Gamma[min_index] < gm) and active_m.shape[0] > 5:
@@ -327,72 +327,6 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
 
        
         
-        if False and check_gamma and terminate:
-            
-            min_index = torch.argmin(Gamma)
-            if (Gamma[min_index] < gm) and (active_m.shape[0]>1):
-
-                del_from_active = active_m[min_index]
-                j = min_index
-                deltaML_j = -(q[active_m[j]]**2 / (s[active_m[j]] + alpha_m[j]) - torch.log(1 + s[active_m[j]] / alpha_m[j])) /2
-                if deltaML_j > -0.01:    
-                    print(f'itr {itr:3} remove low Gamma: {Gamma[min_index].detach().cpu().numpy():.4f}, deltaML: {deltaML_j.detach().cpu().numpy():.4f}',
-                                    f'correspond to {del_from_active.detach().cpu().numpy()} data index')
-                    
-                    del_count += 1
-                    low_gamma.append(active_m[j])
-                    active_m        = active_m[active_m!=active_m[j]]
-                    alpha_m         = alpha_m[alpha_m!=alpha_m[j]]
-
-                    s_jj			= Sigma_m[j, j]
-                    s_j				= Sigma_m[:, j]
-                    tmp				= s_j/s_jj
-                    Sigma_		    = Sigma_m - tmp @ s_j.T
-                    Sigma_          = Sigma_[torch.arange(Sigma_.size(0)).to(device)!=j]
-                    Sigma_new       = Sigma_[:, torch.arange(Sigma_.size(1)).to(device)!=j]
-                    delta_mu		= -mu_m[j] * tmp
-                    mu_j			= mu_m[j]
-                    mu_m			= mu_m + delta_mu.squeeze()
-                    mu_m			= mu_m[torch.arange(mu_m.size(0)).to(device)!=j]
-
-                    jPm	            = (beta_KK_m @ s_j).squeeze()
-                    S	            = S + jPm.pow(2) / s_jj
-                    Q	            = Q + jPm * mu_j / s_jj
-                    
-                    K_m             = K[:, active_m]
-                    KK_m            = KK[:, active_m]
-                    KK_mm           = KK[active_m, :][:, active_m]
-                    K_mt            = Kt[active_m]
-                    beta_KK_m       = beta * KK_m
-                    Sigma_m         = Sigma_new
-                    if alignment_test:
-                        aligned_idx = torch.where(aligned_in==del_from_active)[0]
-                        # findAligned	= find(Aligned_in==max_idx);
-                        num_aligned	= len(aligned_idx)
-                        if num_aligned > 0:
-                            reinstated					= aligned_out[aligned_idx]
-                            mask_in = torch.ones(aligned_in.numel(), dtype=torch.bool)
-                            mask_in[aligned_idx] = False
-                            mask_out = torch.ones(aligned_out.numel(), dtype=torch.bool)
-                            mask_out[aligned_idx] = False
-                            aligned_in = aligned_in[mask_in] #torch.arange(aligned_in.size(0)).to(device)!=aligned_idx
-                            aligned_out = aligned_out[mask_out] #torch.arange(aligned_out.size(0)).to(device)!=aligned_idx
-                    
-                    count += 1
-                    s = S.clone()
-                    q = Q.clone()
-                    tmp = alpha_m / (alpha_m -S[active_m])
-                    s[active_m] = tmp * S[active_m] 
-                    q[active_m] = tmp * Q[active_m]
-                    terminate = False
-                    #quantity Gamma_i measures how well the corresponding parameter mu_i is determined by the data
-                    gamma_new = 1 - alpha_m * torch.diag(Sigma_m)
-                    if (gamma_new > 1).any():
-                        mask = torch.ones(Gamma.numel(), dtype=torch.bool)
-                        mask[j] = False 
-                        Gamma = Gamma[mask]
-                    else:
-                        Gamma = gamma_new
 
 
         #compute mu and beta
