@@ -139,8 +139,8 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
         terminate = False
 
         if not anyWorthwhileAction:
-            if verbose:
-                print(f'{itr:3}, No positive action, m={active_m.shape[0]:3}')
+            # if verbose:
+            print(f'{itr:3}, No positive action, m={active_m.shape[0]:3}')
             selected_action = 10
             terminate = True
 
@@ -149,8 +149,8 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             
             if no_change_in_alpha:
                 # print(selected_action)
-                if verbose:
-                    print(f'{itr:3}, No change in alpha, m= {active_m.shape[0]:3}')
+                # if verbose:
+                print(f'{itr:3}, No change in alpha, m= {active_m.shape[0]:3}')
                 selected_action = 11
                 terminate = True
         # else:
