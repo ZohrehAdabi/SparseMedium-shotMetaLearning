@@ -124,7 +124,7 @@ class Sparse_DKT_regression(nn.Module):
             self.iteration = itr+(epoch*len(batch_labels))
             if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)
 
-            if ((epoch%1==0) & (itr%5==0)):
+            if ((epoch%1==0) & (itr%2==0)):
                 print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
                     itr, epoch, loss.item(), mse.item(),
                     self.model.likelihood.noise.item()
@@ -223,6 +223,7 @@ class Sparse_DKT_regression(nn.Module):
         inducing_points = inducing_max_similar_in_support_x(x_support, inducing_points, y_support)
 
         #**************************************************************
+        mse_normed = self.mse(pred.mean, y_query).item()
         y = ((y_query.detach() + 1) * 60 / 2) + 60
         y_pred = ((pred.mean.detach() + 1) * 60 / 2) + 60
         mse = self.mse(y_pred, y).item()
@@ -235,7 +236,7 @@ class Sparse_DKT_regression(nn.Module):
         print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
         print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
         print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
-        print(Fore.LIGHTRED_EX, f'mse:    {mse:.4f}', Fore.RESET)
+        print(Fore.LIGHTRED_EX, f'mse:    {mse:.4f}, mse:{mse_normed:.4f}', Fore.RESET)
         print(Fore.RED,"-"*50, Fore.RESET)
 
         K = self.model.base_covar_module
@@ -307,7 +308,7 @@ class Sparse_DKT_regression(nn.Module):
             if(self.writer is not None): self.writer.add_scalar('MLL per epoch', mll, epoch)
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
 
-        scheduler.step()
+        # scheduler.step()
         mll = np.mean(mll_list)
 
         
@@ -1114,6 +1115,7 @@ class ExactGPLayer(gpytorch.models.ExactGP):
         ## Spectral kernel
         elif(kernel=='spectral'):
             self.covar_module = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=4, ard_num_dims=2916)
+            self.covar_module.initialize_from_data_empspect(train_x, train_y)
         else:
             raise ValueError("[ERROR] the kernel '" + str(kernel) + "' is not supported for regression, use 'rbf' or 'spectral'.")
 
