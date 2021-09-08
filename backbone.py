@@ -399,6 +399,9 @@ class Conv3(nn.Module):
         out = F.relu(self.layer1(x))
         out = F.relu(self.layer2(out))
         out = F.relu(self.layer3(out))
+        # out = F.relu(self.layer1(x))
+        # out = F.relu(self.layer2(out))
+        # out = F.relu(self.layer3(out))
         if self.flatten:
             out = out.view(out.size(0), -1)
         return out

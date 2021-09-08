@@ -36,7 +36,7 @@ elif params.method=='Sparse_DKT':
     video_path = params.checkpoint_dir
     
     if params.sparse_method=='FRVM':
-        
+        params.checkpoint_dir += '/'
         id =  f'FRVM_{params.config}_{params.align_thr:.6f}'
         if params.gamma: id += '_gamma'
         params.checkpoint_dir = params.checkpoint_dir + id
