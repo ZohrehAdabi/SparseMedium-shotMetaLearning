@@ -109,7 +109,7 @@ class Sparse_DKT_regression(nn.Module):
 
             # z = self.feature_extractor(x_query)
             predictions = self.model(z)
-            loss = -self.mll(predictions, self.model.train_targets) + torch.sum(inducing_points.alpha)
+            loss = -self.mll(predictions, self.model.train_targets) - torch.sum(inducing_points.gamma)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
