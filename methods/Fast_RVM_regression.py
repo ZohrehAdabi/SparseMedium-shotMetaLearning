@@ -236,9 +236,9 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
         
         elif selected_action==-1:  #delete
             del_count += 1
-            active_m        = active_m[active_m!=active_m[j]]
             mask            = torch.ones(alpha_m.numel(), dtype=torch.bool)
-            mask[j]         = False           
+            mask[j]         = False  
+            active_m        = active_m[mask]         
             alpha_m         = alpha_m[mask]
 
             s_jj			= Sigma_m[j, j]
