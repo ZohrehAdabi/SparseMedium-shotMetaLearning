@@ -154,7 +154,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
                 selected_action = 11
                 terminate = True
         # else:
-        if check_gamma and (itr%10==0):
+        if check_gamma and (itr%15==0):
             
             min_index = torch.argmin(Gamma)
             if (Gamma[min_index] < gm) and active_m.shape[0] > 1:
@@ -395,7 +395,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             beta_old = beta
             y_      = K_m @ mu_m  
             e       = (targets - y_)
-            beta	= (N - torch.sum(Gamma))/(e.T @ e)
+            beta	= ((N - active_m.shape[0]) - torch.sum(Gamma))/(e.T @ e)
             beta	= torch.min(torch.tensor([beta, 1e6/torch.var(targets)]).to(device))
             delta_beta	= torch.log(beta)-torch.log(beta_old)
             beta_KK_m       = beta * KK_m
