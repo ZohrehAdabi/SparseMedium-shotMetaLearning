@@ -305,12 +305,9 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
             count += 1
             s = S.clone()
             q = Q.clone()
-            # tmp = alpha_m / (alpha_m -S[active_m])
-            # s[active_m] = tmp * S[active_m] 
-            # q[active_m] = tmp * Q[active_m]
-            S_active = S[active_m]
-            s[active_m] = alpha_m * S_active / (alpha_m - S_active)
-            q[active_m] = alpha_m * Q[active_m] / (alpha_m - S_active)
+            tmp = alpha_m / (alpha_m -S[active_m])
+            s[active_m] = tmp * S[active_m] 
+            q[active_m] = tmp * Q[active_m]
             Sigma_m = Sigma_new
             #quantity Gamma_i measures how well the corresponding parameter mu_i is determined by the data
             gamma_new = 1 - alpha_m * torch.diag(Sigma_m)
