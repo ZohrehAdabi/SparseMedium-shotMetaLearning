@@ -37,16 +37,17 @@ except ImportError:
     IS_TBX_INSTALLED = False
     print('[WARNING] install tensorboardX to record simulation logs.')
 
-    
+
 IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx")
 class Sparse_DKT_regression(nn.Module):
-    def __init__(self, backbone, f_rvm=True, config="0000", align_threshold=1e-3, n_inducing_points=12, random=False, 
+    def __init__(self, backbone, f_rvm=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_regression, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
         self.num_induce_points = n_inducing_points
         self.config = config
+        self.gamma = gamma
         self.align_threshold = align_threshold
         self.f_rvm = f_rvm
         self.random = random
@@ -386,7 +387,7 @@ class Sparse_DKT_regression(nn.Module):
             kernel_matrix = kernel_matrix.to(torch.float64)
             targets = targets.to(torch.float64)
             active, alpha, gamma, beta, mu_m = Fast_RVM_regression(kernel_matrix, targets, beta, N, self.config, self.align_threshold,
-                                                    eps, tol, max_itr, self.device, verbose)
+                                                    self.gamma, eps, tol, max_itr, self.device, verbose)
             
             index = np.argsort(active)
             active = active[index]

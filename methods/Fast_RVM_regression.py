@@ -11,7 +11,7 @@ from sklearn.svm import SVR
 from sklearn.metrics import mean_squared_error as mse
 
 
-def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_itr=3000, device='cuda', verbose=True):
+def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol, max_itr=3000, device='cuda', verbose=True):
     
 
     M = K.shape[1]
@@ -48,7 +48,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, eps, tol, max_it
     add_priority    = config[2]=="1"
     alignment_test  = config[3]=="1"
     align_zero      = align_thr
-    check_gamma = True
+    check_gamma = gamma
     gm = 0.1
     add_count = 0
     del_count = 0

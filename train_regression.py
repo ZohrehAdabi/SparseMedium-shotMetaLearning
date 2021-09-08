@@ -49,9 +49,10 @@ elif params.method=='Sparse_DKT':
             os.makedirs(params.checkpoint_dir)
         
         id =  f'FRVM_{params.config}_{params.align_thr:.6f}'
+        if params.gamma: id += '_gamma'
         params.checkpoint_dir = params.checkpoint_dir + id
 
-        model = Sparse_DKT_regression(bb, f_rvm=True, config=params.config, align_threshold=params.align_thr, 
+        model = Sparse_DKT_regression(bb, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
                             video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
         model.init_summary(id=id)

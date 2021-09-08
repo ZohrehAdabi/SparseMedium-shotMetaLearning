@@ -66,7 +66,7 @@ def parse_args_regression(script):
         parser.add_argument('--align_thr', default=1e-3, type=float, help='1e-3, larger value leads to more rejection and sparseness')
         parser.add_argument('--lr_gp', default=1e-3, type=float, help='Learning rate for GP and Neural Network')
         parser.add_argument('--lr_net', default=1e-3, type=float, help='Learning rate for Neural Network')
-        # parser.add_argument('--use_mse', action='store_true', help='Use MSE loss') 
+        parser.add_argument('--gamma', action='store_true', help='Delete data with low Gamma in FRVM algorithm') 
         # parser.add_argument('--alpha', default=1e3, type=float, help='coefficient for mse loss')
         if script == 'train_regression':
             parser.add_argument('--start_epoch' , default=0, type=int, help ='Starting epoch')
