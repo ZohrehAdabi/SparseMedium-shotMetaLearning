@@ -84,8 +84,8 @@ elif params.method=='transfer':
 else:
     ValueError('Unrecognised method')
 
-optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr': 0.03},
-                              {'params': model.feature_extractor.parameters(), 'lr': 0.0001}
+optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr': 0.01},
+                              {'params': model.feature_extractor.parameters(), 'lr': 0.003}
                               ])
 if params.method=='DKT' or params.method=='Sparse_DKT' or params.method=='DKT_New_Loss':
 
