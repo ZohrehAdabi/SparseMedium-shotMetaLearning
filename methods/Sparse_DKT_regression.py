@@ -94,51 +94,52 @@ class Sparse_DKT_regression(nn.Module):
         batch, batch_labels = get_batch(train_people, n_samples)
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
         mll_list = []
-        for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
+        with torch.autograd.set_detect_anomaly(True) :
+            for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
 
 
-            z = self.feature_extractor(inputs)
-            # z = F.normalize(z, p=2, dim=1)
-            # with torch.no_grad():
-            with torch.autograd.set_detect_anomaly(True):
+                z = self.feature_extractor(inputs)
+                # z = F.normalize(z, p=2, dim=1)
+                # with torch.no_grad():
+                
                 inducing_points, gamma = self.get_inducing_points(z, labels, verbose=False)
-            # gamma.requires_grad = True
-            ip_values = inducing_points.z_values.cuda()
-            self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
-            self.model.train()
-            self.model.set_train_data(inputs=z, targets=labels, strict=False)
+                # gamma.requires_grad = True
+                ip_values = inducing_points.z_values.cuda()
+                self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
+                self.model.train()
+                self.model.set_train_data(inputs=z, targets=labels, strict=False)
 
-            # z = self.feature_extractor(x_query)
-            predictions = self.model(z)
-            loss = -self.mll(predictions, self.model.train_targets) - torch.sum(gamma)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            mll_list.append(loss.item())
-            mse = self.mse(predictions.mean, labels)
+                # z = self.feature_extractor(x_query)
+                predictions = self.model(z)
+                loss = -self.mll(predictions, self.model.train_targets) - torch.sum(gamma)
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                mll_list.append(loss.item())
+                mse = self.mse(predictions.mean, labels)
 
-            self.iteration = itr+(epoch*len(batch_labels))
-            if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)
+                self.iteration = itr+(epoch*len(batch_labels))
+                if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)
 
-            if ((epoch%2==0) & (itr%5==0)):
-                print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
-                    itr, epoch, loss.item(), mse.item(),
-                    self.model.likelihood.noise.item()
-                ),Fore.RESET)
+                if ((epoch%2==0) & (itr%5==0)):
+                    print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
+                        itr, epoch, loss.item(), mse.item(),
+                        self.model.likelihood.noise.item()
+                    ),Fore.RESET)
+                
+                if (self.show_plots_pred or self.show_plots_features) and  self.f_rvm:
+                    embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
+                    self.update_plots_train_fast_rvm(self.plots, labels.cpu().numpy(), embedded_z, None, mse, epoch)
+
+                    if self.show_plots_pred:
+                        self.plots.fig.canvas.draw()
+                        self.plots.fig.canvas.flush_events()
+                        self.mw.grab_frame()
+                    if self.show_plots_features:
+                        self.plots.fig_feature.canvas.draw()
+                        self.plots.fig_feature.canvas.flush_events()
+                        self.mw_feature.grab_frame()
             
-            if (self.show_plots_pred or self.show_plots_features) and  self.f_rvm:
-                embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
-                self.update_plots_train_fast_rvm(self.plots, labels.cpu().numpy(), embedded_z, None, mse, epoch)
-
-                if self.show_plots_pred:
-                    self.plots.fig.canvas.draw()
-                    self.plots.fig.canvas.flush_events()
-                    self.mw.grab_frame()
-                if self.show_plots_features:
-                    self.plots.fig_feature.canvas.draw()
-                    self.plots.fig_feature.canvas.flush_events()
-                    self.mw_feature.grab_frame()
-        
         return np.mean(mll_list)
 
     def test_loop_fast_rvm(self, n_support, n_samples, test_person, optimizer=None): # no optimizer needed for GP
