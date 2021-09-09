@@ -30,6 +30,7 @@ params.checkpoint_dir = '%scheckpoints/%s/%s_%s' % (configs.save_dir, params.dat
 if params.dataset=='QMUL':
     bb           = backbone.Conv3().cuda()
     if params.method=='MAML':
+      
         bb           = backbone.Conv3_MAML().cuda()
 
 if params.method=='DKT':
