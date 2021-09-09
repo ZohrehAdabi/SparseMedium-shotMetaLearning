@@ -223,10 +223,10 @@ class Sparse_DKT_regression(nn.Module):
         inducing_points = inducing_max_similar_in_support_x(x_support, inducing_points, y_support)
 
         #**************************************************************
-        mse_normed = self.mse(pred.mean, y_query).item()
+        mse = self.mse(pred.mean, y_query).item()
         y = get_unnormalized_label(y_query.detach()) #((y_query.detach() + 1) * 60 / 2) + 60
         y_pred = get_unnormalized_label(pred.mean.detach()) # ((pred.mean.detach() + 1) * 60 / 2) + 60
-        mse = self.mse(y_pred, y).item()
+        mse_ = self.mse(y_pred, y).item()
         y = y.cpu().numpy()
         y_pred = y_pred.cpu().numpy()
         print(Fore.RED,"="*50, Fore.RESET)
@@ -236,7 +236,7 @@ class Sparse_DKT_regression(nn.Module):
         print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
         print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
         print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
-        print(Fore.LIGHTRED_EX, f'mse:    {mse:.4f}, mse:{mse_normed:.4f}', Fore.RESET)
+        print(Fore.LIGHTRED_EX, f'mse:    {mse_:.4f}, mse (normed):{mse:.4f}', Fore.RESET)
         print(Fore.RED,"-"*50, Fore.RESET)
 
         K = self.model.base_covar_module
@@ -268,7 +268,7 @@ class Sparse_DKT_regression(nn.Module):
                 self.plots.fig_feature.canvas.flush_events()
                 self.mw_feature.grab_frame()
 
-        return mse
+        return mse, mse_
 
   
     def train(self, stop_epoch, n_support, n_samples, optimizer):
@@ -286,7 +286,7 @@ class Sparse_DKT_regression(nn.Module):
                     print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
                     mse_list = []
                     for t in range(len(test_people)):
-                        mse = self.test_loop_fast_rvm(n_support, n_samples, t,  optimizer)
+                        mse, mse_ = self.test_loop_fast_rvm(n_support, n_samples, t,  optimizer)
                         mse_list.append(mse)
                     mse = np.mean(mse_list)
                     if best_mse >= mse:
@@ -321,6 +321,7 @@ class Sparse_DKT_regression(nn.Module):
     def test(self, n_support, n_samples, optimizer=None, test_count=None): # no optimizer needed for GP
 
         mse_list = []
+        mse_list_ = []
         # choose a random test person
         rep = True if test_count > len(test_people) else False
 
@@ -328,7 +329,7 @@ class Sparse_DKT_regression(nn.Module):
         for t in range(test_count):
             print(f'test #{t}')
             if self.f_rvm:
-                mse = self.test_loop_fast_rvm(n_support, n_samples, test_person[t],  optimizer)
+                mse, mse_ = self.test_loop_fast_rvm(n_support, n_samples, test_person[t],  optimizer)
             elif self.random:
                 mse = self.test_loop_random(n_support, n_samples, test_person[t],  optimizer)
             elif not self.f_rvm:
@@ -337,12 +338,13 @@ class Sparse_DKT_regression(nn.Module):
                 ValueError()
 
             mse_list.append(float(mse))
+            mse_list_.append(float(mse_))
 
         if self.show_plots_pred:
             self.mw.finish()
         if self.show_plots_features:
             self.mw_feature.finish()
-
+        print(f'MSE (unnormed): {np.mean(mse_list_):.4f}')
         return mse_list
         
     def get_inducing_points(self, inputs, targets, verbose=True):

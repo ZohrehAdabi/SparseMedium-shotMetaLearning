@@ -189,7 +189,7 @@ class DKT_regression(nn.Module):
                 self.mw_feature.grab_frame()
 
 
-        return mse
+        return mse, mse_
 
     def train(self, stop_epoch, n_support, n_samples, optimizer):
 
@@ -210,6 +210,7 @@ class DKT_regression(nn.Module):
     def test(self, n_support, n_samples, optimizer=None, test_count=None):
 
         mse_list = []
+        mse_list_ = []
         # choose a random test person
         rep = True if test_count > len(test_people) else False
 
@@ -217,15 +218,16 @@ class DKT_regression(nn.Module):
         for t in range(test_count):
             print(f'test #{t}')
             
-            mse = self.test_loop(n_support, n_samples, test_person[t],  optimizer)
+            mse, mse_ = self.test_loop(n_support, n_samples, test_person[t],  optimizer)
             
             mse_list.append(float(mse))
+            mse_list_.append(float(mse_))
 
         if self.show_plots_pred:
             self.mw.finish()
         if self.show_plots_features:
             self.mw_feature.finish()
-
+        print(f'MSE (unnormed): {np.mean(mse_list_):.4f}')
         return mse_list
 
     def save_checkpoint(self, checkpoint):
@@ -414,8 +416,10 @@ class ExactGPLayer(gpytorch.models.ExactGP):
             self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
         ## Spectral kernel
         elif(kernel=='spectral'):
-            self.covar_module = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=4, ard_num_dims=2916)
-            self.covar_module.initialize_from_data_empspect(train_x, train_y)
+            self.covar_module = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=16, ard_num_dims=2916)
+            batch, batch_labels = get_batch(train_people, 72)
+            batch, batch_labels = batch.cuda(), batch_labels.cuda()
+            self.covar_module.initialize_from_data_empspect(batch[0], batch_labels[0])
         else:
             raise ValueError("[ERROR] the kernel '" + str(kernel) + "' is not supported for regression, use 'rbf' or 'spectral'.")
 

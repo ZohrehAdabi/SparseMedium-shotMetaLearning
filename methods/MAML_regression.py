@@ -213,8 +213,8 @@ class MAML_regression(nn.Module):
 
 
         #***************************************************
-        y = ((y_query.detach() + 1) * 60 / 2) + 60
-        y_pred = ((output + 1) * 60 / 2) + 60
+        y = get_unnormalized_label(y_query.datach()) #((y_query.detach() + 1) * 60 / 2) + 60
+        y_pred = get_unnormalized_label(output.detach()) #((output + 1) * 60 / 2) + 60
         mse_ = self.mse(y_pred, y).item()
         y = y.cpu().numpy()
         y_pred = y_pred.detach().cpu().numpy()
@@ -245,7 +245,7 @@ class MAML_regression(nn.Module):
                 self.mw_feature.grab_frame()
 
 
-        return mse
+        return mse, mse_
 
     def train(self, stop_epoch, n_support, n_samples, optimizer):
 
@@ -266,6 +266,7 @@ class MAML_regression(nn.Module):
     def test(self, n_support, n_samples, optimizer=None, test_count=None):
 
         mse_list = []
+        mse_list_ = []
         # choose a random test person
         rep = True if test_count > len(test_people) else False
 
@@ -273,15 +274,16 @@ class MAML_regression(nn.Module):
         for t in range(test_count):
             print(f'test #{t}')
             
-            mse = self.test_loop(n_support, n_samples, test_person[t],  optimizer)
+            mse, mse_ = self.test_loop(n_support, n_samples, test_person[t],  optimizer)
             
             mse_list.append(float(mse))
+            mse_list_.append(float(mse_))
 
         if self.show_plots_pred:
             self.mw.finish()
         if self.show_plots_features:
             self.mw_feature.finish()
-
+        print(f'MSE (unnormed): {np.mean(mse_list_):.4f}')
         return mse_list
 
     def save_checkpoint(self, checkpoint):
@@ -342,7 +344,7 @@ class MAML_regression(nn.Module):
     def update_plots_train(self,plots, train_y, embedded_z, mll, mse, epoch):
         if self.show_plots_features:
             #features
-            y = ((train_y + 1) * 60 / 2) + 60
+            y = get_unnormalized_label(train_y) #((train_y + 1) * 60 / 2) + 60
             tilt = np.unique(y)
             plots.ax_feature.clear()
             for t in tilt:
@@ -405,10 +407,10 @@ class MAML_regression(nn.Module):
                 
         
             # test images
-            y = ((test_y + 1) * 60 / 2) + 60
+            y = get_unnormalized_label(test_y) #((test_y + 1) * 60 / 2) + 60
             y_mean = test_y_pred
             # y_var = test_y_pred.variance.detach().cpu().numpy()
-            y_pred = ((y_mean + 1) * 60 / 2) + 60
+            y_pred = get_unnormalized_label(y_mean) #((y_mean + 1) * 60 / 2) + 60
             for t in tilt:
                 idx = np.where(y==(t))[0]
                 if idx.shape[0]==0:
@@ -440,7 +442,7 @@ class MAML_regression(nn.Module):
 
         if self.show_plots_features:
             #features
-            y = ((train_y + 1) * 60 / 2) + 60
+            y = get_unnormalized_label(train_y) #((train_y + 1) * 60 / 2) + 60
             tilt = np.unique(y)
             plots.ax_feature.clear()
             for t in tilt:
@@ -452,21 +454,3 @@ class MAML_regression(nn.Module):
             plots.ax_feature.legend()
 
 
-class ExactGPLayer(gpytorch.models.ExactGP):
-    def __init__(self, train_x, train_y, likelihood, kernel='linear'):
-        super(ExactGPLayer, self).__init__(train_x, train_y, likelihood)
-        self.mean_module  = gpytorch.means.ConstantMean()
-
-        ## RBF kernel
-        if(kernel=='rbf' or kernel=='RBF'):
-            self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
-        ## Spectral kernel
-        elif(kernel=='spectral'):
-            self.covar_module = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=4, ard_num_dims=2916)
-        else:
-            raise ValueError("[ERROR] the kernel '" + str(kernel) + "' is not supported for regression, use 'rbf' or 'spectral'.")
-
-    def forward(self, x):
-        mean_x  = self.mean_module(x)
-        covar_x = self.covar_module(x)
-        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)

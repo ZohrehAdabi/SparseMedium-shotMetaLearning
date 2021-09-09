@@ -43,7 +43,7 @@ def get_person_at_curve(person, curve, prefix='filelists/QMUL/images/'):
     targets = torch.stack(targets).squeeze()
     return faces, targets
 
-def get_batch(train_people=train_people, num_samples=108):
+def get_batch(train_people=train_people, num_samples=72):
     ## generate trajectory
     # amp   = np.random.uniform(-4, 4) #-3, 3
     # phase = np.random.uniform(-5, 5)
