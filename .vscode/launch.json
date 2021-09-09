@@ -289,7 +289,8 @@
             "program": "${workspaceFolder}/test_regression.py",
             "console": "integratedTerminal",
            "args": ["--method","MAML",  "--n_samples", "72", "--n_support", "60", "--n_test_epochs", "5", "--seed","2",
-            "--show_plots_pred", "--show_plots_features"            
+            "--show_plots_pred", 
+            //"--show_plots_features"            
         ]  
             // --method "MAML"  --n_samples 72 --n_support 60 --n_test_epochs 5 --show_plots_pred  --show_plots_features   --seed  2 
         },
