@@ -62,7 +62,7 @@ class MAML_regression(nn.Module):
         if self.show_plots_pred or self.show_plots_features:
             self.initialize_plot(video_path, training)
 
-        self.n_task     = 1
+        self.n_task     = 4
         self.task_update_num = 1
         self.train_lr = 0.001
         self.approx = False
