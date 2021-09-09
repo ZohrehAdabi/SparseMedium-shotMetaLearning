@@ -281,7 +281,7 @@ class FeatureTransfer(nn.Module):
                     i = int(t/10-6)
                     # z = train_z[idx]
                     for j in range(0, idx.shape[0]): 
-                        img = transforms.ToPILImage()(x[j]).convert("RGB")
+                        img = transforms.ToPILImage()(x[j].cpu()).convert("RGB")
                         plots = clear_ax(plots, i, j)
                         plots = color_ax(plots, i, j, 'black', lw=0.5)
                         plots.ax[i, j].imshow(img)
@@ -308,7 +308,7 @@ class FeatureTransfer(nn.Module):
                     i = int(t/10-6)
                     for j in range(idx.shape[0]):
                         
-                        img = transforms.ToPILImage()(x[j]).convert("RGB")
+                        img = transforms.ToPILImage()(x[j].cpu()).convert("RGB")
                         ii = 16
                         plots = clear_ax(plots, i, j+ii)
                         plots.ax[i, j+ii].imshow(img)

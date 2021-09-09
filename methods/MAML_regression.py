@@ -63,8 +63,8 @@ class MAML_regression(nn.Module):
             self.initialize_plot(video_path, training)
 
         self.n_task     = 4
-        self.task_update_num = 1
-        self.train_lr = 0.001
+        self.task_update_num = 5
+        self.train_lr = 0.01
         self.approx = False
         self.mse        = nn.MSELoss()
 
@@ -83,7 +83,7 @@ class MAML_regression(nn.Module):
     def set_forward(self, x, is_feature=False):
         z = self.feature_extractor(x)
         pred = self.model(z)
-        return pred
+        return pred.squeeze()
 
     def set_forward_loss(self, x_support, y_support, x_query):
         
@@ -213,15 +213,15 @@ class MAML_regression(nn.Module):
 
 
         #***************************************************
-        y = ((output.detach() + 1) * 60 / 2) + 60
+        y = ((y_query.detach() + 1) * 60 / 2) + 60
         y_pred = ((output + 1) * 60 / 2) + 60
         mse_ = self.mse(y_pred, y).item()
         y = y.cpu().numpy()
-        y_pred = y_pred.cpu().numpy()
+        y_pred = y_pred.detach().cpu().numpy()
         print(Fore.RED,"="*50, Fore.RESET)
         print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
         print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
-        print(Fore.LIGHTRED_EX, f'mse:    {mse_:.4f}, mse:    {mse:.4f}', Fore.RESET)
+        print(Fore.LIGHTRED_EX, f'mse:    {mse_:.4f}, mse (normed):    {mse:.4f}', Fore.RESET)
         print(Fore.RED,"-"*50, Fore.RESET)
 
         
@@ -395,7 +395,7 @@ class MAML_regression(nn.Module):
                     i = int(t/10-6)
                     # z = train_z[idx]
                     for j in range(0, idx.shape[0]): 
-                        img = transforms.ToPILImage()(x[j]).convert("RGB")
+                        img = transforms.ToPILImage()(x[j].cpu()).convert("RGB")
                         plots = clear_ax(plots, i, j)
                         plots = color_ax(plots, i, j, 'black', lw=0.5)
                         plots.ax[i, j].imshow(img)
@@ -422,7 +422,7 @@ class MAML_regression(nn.Module):
                     i = int(t/10-6)
                     for j in range(idx.shape[0]):
                         
-                        img = transforms.ToPILImage()(x[j]).convert("RGB")
+                        img = transforms.ToPILImage()(x[j].cpu()).convert("RGB")
                         ii = 16
                         plots = clear_ax(plots, i, j+ii)
                         plots.ax[i, j+ii].imshow(img)
