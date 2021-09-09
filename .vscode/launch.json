@@ -280,7 +280,7 @@
             "program": "${workspaceFolder}/train_regression.py",
             "console": "integratedTerminal",
            "args": ["--method","MAML", "--n_samples", "72", "--stop_epoch", "100", "--seed","2"] 
-            // --method "MAML"  --n_samples 108 --stop_epoch 100  --seed  2 
+            // --method "MAML"  --n_samples 72 --stop_epoch 100  --seed  2 
         },
         {
             "name": "MAML: test_regression",
@@ -291,7 +291,7 @@
            "args": ["--method","MAML",  "--n_samples", "72", "--n_support", "60", "--n_test_epochs", "5", "--seed","2",
             "--show_plots_pred", "--show_plots_features"            
         ]  
-            // --method "MAML"  --n_support 90 --n_test_epochs 5   --seed  2 
+            // --method "MAML"  --n_samples 72 --n_support 60 --n_test_epochs 5 --show_plots_pred  --show_plots_features   --seed  2 
         },
 
         {
