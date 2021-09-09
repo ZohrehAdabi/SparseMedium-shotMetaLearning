@@ -123,7 +123,7 @@ class MAML_regression(nn.Module):
         loss_all = []
         optimizer.zero_grad()
         split = np.array([True]*15 + [False]*3)
-        num_task_batch = torch.ceil(len(batch_labels/self.n_task))
+        num_task_batch = np.ceil(len(batch_labels)/self.n_task)
         batch_count = 0
         for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
              
@@ -154,7 +154,7 @@ class MAML_regression(nn.Module):
             if (task_count == self.n_task): #MAML update several tasks at one time
                 loss_q = torch.stack(loss_all).sum(0)
                 loss_q.backward()
-                print(f'{itr} MSE {loss_q:.4f}')
+                # print(f'{itr} MSE {loss_q:.4f}')
                 optimizer.step()
                 task_count = 0
                 batch_count += 1
