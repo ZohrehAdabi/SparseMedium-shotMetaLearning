@@ -380,9 +380,9 @@ class Conv3_MAML(nn.Module): #MAML
     def __init__(self, flatten=True):
         super(Conv3_MAML, self).__init__()
         self.flatten = flatten
-        self.layer1 = nn.Conv2d_fw(3, 36, 3,stride=2,dilation=2)
-        self.layer2 = nn.Conv2d_fw(36,36, 3,stride=2,dilation=2)
-        self.layer3 = nn.Conv2d_fw(36,36, 3,stride=2,dilation=2)
+        self.layer1 = Conv2d_fw(3, 36, 3,stride=2,dilation=2)
+        self.layer2 = Conv2d_fw(36,36, 3,stride=2,dilation=2)
+        self.layer3 = Conv2d_fw(36,36, 3,stride=2,dilation=2)
 
     def return_clones(self):
         layer1_w = self.layer1.weight.data.clone().detach()
