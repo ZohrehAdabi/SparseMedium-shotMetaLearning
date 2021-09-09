@@ -8,6 +8,7 @@ from io_utils import parse_args_regression, get_resume_file
 from methods.DKT_regression import DKT_regression
 from methods.Sparse_DKT_regression import Sparse_DKT_regression
 from methods.DKT_regression_New_Loss import DKT_New_Loss
+from methods.MAML_regression import MAML_regression
 from methods.feature_transfer_regression import FeatureTransfer
 import backbone
 import numpy as np
@@ -21,6 +22,9 @@ torch.backends.cudnn.benchmark = False
 params.checkpoint_dir = '%scheckpoints/%s/%s_%s' % (configs.save_dir, params.dataset, params.model, params.method)
 if params.dataset=='QMUL':
     bb           = backbone.Conv3().cuda()
+    if params.method=='MAML':
+        bb      = backbone.Conv3_MAML().cuda()
+
 if params.method=='DKT':
     model = DKT_regression(bb, video_path=params.checkpoint_dir, 
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features).cuda()
@@ -62,6 +66,13 @@ elif params.method=='Sparse_DKT':
         ValueError('Unrecognised sparse method')
 
     optimizer = None
+
+
+if params.method=='DKT':
+    model = MAML_regression(bb, video_path=params.checkpoint_dir, 
+                            show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features).cuda()
+
+
 elif params.method=='transfer':
     model = FeatureTransfer(bb, video_path=params.checkpoint_dir, 
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features).cuda()
