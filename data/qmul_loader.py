@@ -8,10 +8,10 @@ from PIL import Image
 
 train_people = ['DennisPNoGlassesGrey','JohnGrey','SimonBGrey','SeanGGrey','DanJGrey','AdamBGrey','JackGrey','RichardHGrey',
             'YongminYGrey','TomKGrey','PaulVGrey','DennisPGrey','CarlaBGrey','JamieSGrey','KateSGrey','DerekCGrey',
-            'JeffNGrey', 'JonGrey' 'SarahLGrey','ColinPGrey','SueWGrey','GrahamWGrey','KrystynaNGrey','SeanGNoGlassesGrey','KeithCGrey',
+            'KatherineWGrey','ColinPGrey','SueWGrey','GrahamWGrey','KrystynaNGrey','SeanGNoGlassesGrey','KeithCGrey',
             'HeatherLGrey']
-val_people = []
-test_people  = ['RichardBGrey','TasosHGrey','JonGrey','AndreeaVGrey','YogeshRGrey']
+val_people = ['JeffNGrey', 'JonGrey']
+test_people  = ['RichardBGrey','TasosHGrey','SarahLGrey','AndreeaVGrey','YogeshRGrey']
 #  ['AdamBTestGrey', 'DerekCTestGrey', 'JamieSTestGrey', 'RichardBTestGrey', 'RichardHTestGrey'] #'JeffNGrey', 'JonGrey'
 def num_to_str(num):
     str_ = ''
