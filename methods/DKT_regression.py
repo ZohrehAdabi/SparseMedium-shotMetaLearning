@@ -152,14 +152,14 @@ class DKT_regression(nn.Module):
         #***************************************************
         y = ((y_query.detach() + 1) * 60 / 2) + 60
         y_pred = ((pred.mean.detach() + 1) * 60 / 2) + 60
-        mse = self.mse(y_pred, y).item()
+        mse_ = self.mse(y_pred, y).item()
         y = y.cpu().numpy()
         y_pred = y_pred.cpu().numpy()
         print(Fore.RED,"="*50, Fore.RESET)
         print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
         print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
         print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
-        print(Fore.LIGHTRED_EX, f'mse:    {mse:.4f}', Fore.RESET)
+        print(Fore.LIGHTRED_EX, f'mse:    {mse_:.4f}, mse (normed): {mse:.4f}', Fore.RESET)
         print(Fore.RED,"-"*50, Fore.RESET)
 
         K = self.model.covar_module
@@ -412,6 +412,7 @@ class ExactGPLayer(gpytorch.models.ExactGP):
         ## Spectral kernel
         elif(kernel=='spectral'):
             self.covar_module = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=4, ard_num_dims=2916)
+            self.covar_module.initialize_from_data_empspect(train_x, train_y)
         else:
             raise ValueError("[ERROR] the kernel '" + str(kernel) + "' is not supported for regression, use 'rbf' or 'spectral'.")
 
