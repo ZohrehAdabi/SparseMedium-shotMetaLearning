@@ -54,7 +54,7 @@ class MAML_regression(nn.Module):
         super(MAML_regression, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
-        self.model = Linear_fw(4356, 1)
+        self.model = Linear_fw(2916, 1)
         self.device = 'cuda'
         self.video_path = video_path
         self.show_plots_pred = show_plots_pred
