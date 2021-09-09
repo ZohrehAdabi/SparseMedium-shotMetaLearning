@@ -62,7 +62,7 @@ class MAML_regression(nn.Module):
         if self.show_plots_pred or self.show_plots_features:
             self.initialize_plot(video_path, training)
 
-        self.n_task     = 4
+        self.n_task     = 1
         self.task_update_num = 1
         self.train_lr = 0.001
         self.approx = False
@@ -123,6 +123,8 @@ class MAML_regression(nn.Module):
         loss_all = []
         optimizer.zero_grad()
         split = np.array([True]*15 + [False]*3)
+        num_task_batch = torch.ceil(len(batch_labels/self.n_task))
+        batch_count = 0
         for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
              
             # print(split)
@@ -149,12 +151,13 @@ class MAML_regression(nn.Module):
 
             task_count += 1
 
-            if task_count == self.n_task: #MAML update several tasks at one time
+            if (task_count == self.n_task): #MAML update several tasks at one time
                 loss_q = torch.stack(loss_all).sum(0)
                 loss_q.backward()
-
+                print(f'{itr} MSE {loss_q:.4f}')
                 optimizer.step()
                 task_count = 0
+                batch_count += 1
                 loss_all = []
             optimizer.zero_grad()
             
