@@ -1111,14 +1111,15 @@ class ExactGPLayer(gpytorch.models.ExactGP):
         if(kernel=='rbf' or kernel=='RBF'):
             # self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
             self.base_covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
-            self.covar_module = gpytorch.kernels.InducingPointKernel(self.base_covar_module, inducing_points=induce_point , likelihood=likelihood)
+            
         ## Spectral kernel
         elif(kernel=='spectral'):
-            self.covar_module = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=4, ard_num_dims=2916)
-            self.covar_module.initialize_from_data_empspect(train_x, train_y)
+            self.base_covar_module = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=4, ard_num_dims=2916)
+            self.base_covar_module.initialize_from_data_empspect(train_x, train_y)
         else:
             raise ValueError("[ERROR] the kernel '" + str(kernel) + "' is not supported for regression, use 'rbf' or 'spectral'.")
-
+        self.covar_module = gpytorch.kernels.InducingPointKernel(self.base_covar_module, inducing_points=induce_point , likelihood=likelihood)
+    
     def forward(self, x):
         mean_x  = self.mean_module(x)
         covar_x = self.covar_module(x)
