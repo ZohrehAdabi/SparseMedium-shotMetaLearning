@@ -25,7 +25,7 @@ import gpytorch
 from methods.Fast_RVM_regression import Fast_RVM_regression
 
 from statistics import mean
-from data.qmul_loader import get_batch, train_people, test_people
+from data.qmul_loader import get_batch, train_people, test_people, get_unnormalized_label
 from configs import kernel_type
 from collections import namedtuple
 import torch.optim
@@ -199,7 +199,7 @@ class Sparse_DKT_regression(nn.Module):
         
 
         def inducing_max_similar_in_support_x(train_x, inducing_points, train_y):
-            y = ((train_y.detach().cpu().numpy() + 1) * 60 / 2) + 60
+            y = get_unnormalized_label(train_y.detach().cpu().numpy()) #((train_y.detach().cpu().numpy() + 1) * 60 / 2) + 60
     
             index = inducing_points.index
             x_inducing = train_x[index].detach().cpu().numpy()
@@ -224,8 +224,8 @@ class Sparse_DKT_regression(nn.Module):
 
         #**************************************************************
         mse_normed = self.mse(pred.mean, y_query).item()
-        y = ((y_query.detach() + 1) * 60 / 2) + 60
-        y_pred = ((pred.mean.detach() + 1) * 60 / 2) + 60
+        y = get_unnormalized_label(y_query.detach()) #((y_query.detach() + 1) * 60 / 2) + 60
+        y_pred = get_unnormalized_label(pred.mean.detach()) # ((pred.mean.detach() + 1) * 60 / 2) + 60
         mse = self.mse(y_pred, y).item()
         y = y.cpu().numpy()
         y_pred = y_pred.cpu().numpy()
@@ -242,7 +242,7 @@ class Sparse_DKT_regression(nn.Module):
         K = self.model.base_covar_module
         kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
         max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
-        y_s = ((y_support.detach().cpu().numpy() + 1) * 60 / 2) + 60
+        y_s = get_unnormalized_label(y_support.detach().cpu().numpy()) #((y_support.detach().cpu().numpy() + 1) * 60 / 2) + 60
         print(Fore.LIGHTGREEN_EX, f'target of most similar in support set:       {y_s[max_similar_idx_x_s]}', Fore.RESET)
         
         kernel_matrix = K(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
@@ -481,7 +481,7 @@ class Sparse_DKT_regression(nn.Module):
     def update_plots_train_fast_rvm(self,plots, train_y, embedded_z, mll, mse, epoch):
         if self.show_plots_features:
             #features
-            y = ((train_y + 1) * 60 / 2) + 60
+            y = get_unnormalized_label(train_y) #((train_y + 1) * 60 / 2) + 60
             tilt = np.unique(y)
             plots.ax_feature.clear()
             for t in tilt:
@@ -520,7 +520,7 @@ class Sparse_DKT_regression(nn.Module):
             #train images
             plots.fig.suptitle(f"Sparse DKT ({self.sparse_method}), person {person}, MSE: {mse:.4f}, num IP: {inducing_points.count}")
 
-            y = ((train_y + 1) * 60 / 2) + 60
+            y = get_unnormalized_label(train_y)#  ((train_y + 1) * 60 / 2) + 60
             tilt = [60, 70, 80, 90, 100, 110, 120]
             num = 1
             for t in tilt:
@@ -545,11 +545,11 @@ class Sparse_DKT_regression(nn.Module):
                 
         
             # test images
-            y = ((test_y + 1) * 60 / 2) + 60
+            y = get_unnormalized_label(test_y) #((test_y + 1) * 60 / 2) + 60
             y_mean = test_y_pred.mean.detach().cpu().numpy()
             y_var = test_y_pred.variance.detach().cpu().numpy()
             y_pred = ((y_mean + 1) * 60 / 2) + 60
-            y_s = ((train_y + 1) * 60 / 2) + 60
+            y_s = get_unnormalized_label(train_y) #((train_y + 1) * 60 / 2) + 60
             for t in tilt:
                 idx = np.where(y==(t))[0]
                 if idx.shape[0]==0:
@@ -580,7 +580,7 @@ class Sparse_DKT_regression(nn.Module):
                 plots = color_ax(plots, i, 15, 'white', lw=0.5)
 
             # highlight inducing points
-            y = ((train_y + 1) * 60 / 2) + 60
+            y = get_unnormalized_label(train_y) #((train_y + 1) * 60 / 2) + 60
             if inducing_points.x is not None:
                 
                 # cluster = self.kmeans_clustering.predict(inducing_points.z_values)
@@ -598,7 +598,7 @@ class Sparse_DKT_regression(nn.Module):
         
         if self.show_plots_features:
             #features
-            y = ((train_y + 1) * 60 / 2) + 60
+            y = get_unnormalized_label(train_y) #((train_y + 1) * 60 / 2) + 60
             tilt = np.unique(y)
             plots.ax_feature.clear()
             for t in tilt:
@@ -608,6 +608,7 @@ class Sparse_DKT_regression(nn.Module):
                 plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
             plots.fig_feature.suptitle(f"Sparse DKT ({self.sparse_method}), person {person}, MSE: {mse:.4f}, num IP: {inducing_points.count}")
             plots.ax_feature.legend()
+
 
 
 

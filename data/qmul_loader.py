@@ -33,7 +33,7 @@ def get_person_at_curve(person, curve, prefix='filelists/QMUL/images/'):
         img    = train_transforms(img)
 
         faces.append(img)
-        pitch_norm = 2 * ((pitch - 60) /  (120 - 60)) -1
+        pitch_norm = get_normalized_label(pitch)#2 * ((pitch - 60) /  (120 - 60)) -1
         angle_norm = 2 * ((angle - 0)  / (180 - 0)) -1
         targets.append(torch.Tensor([pitch_norm]))
 
@@ -74,13 +74,15 @@ def get_batch(train_people=train_people, num_samples=108):
 
     return torch.stack(inputs), torch.stack(targets)
 
+
+
 def get_unnormalized_label(pitch_norm):
 
     pitch = ((pitch_norm + 1) *(130-50) / 2) + 50
-    pitch = ((pitch_norm + 1) *(120-60) / 2) + 60
+    # pitch = ((pitch_norm + 1) *(120-60) / 2) + 60
     return pitch
 
-def grt_normalized_label(pitch):
+def get_normalized_label(pitch):
 
     # pitch_norm = 2 * ((pitch - 60) /  (120 - 60)) -1
     pitch_norm = 2 * ((pitch - 50) /  (130 - 50)) -1

@@ -19,7 +19,7 @@ import gpytorch
 from time import gmtime, strftime
 import random
 from statistics import mean
-from data.qmul_loader import get_batch, train_people, test_people
+from data.qmul_loader import get_batch, train_people, test_people, get_unnormalized_label
 from configs import kernel_type
 
 
@@ -380,7 +380,7 @@ class MAML_regression(nn.Module):
             cluster_colors = ['aqua', 'coral', 'lime', 'gold', 'purple', 'green']
             #train images
             plots.fig.suptitle(f'person {person}, MSE: {mse:.4f}')
-            y = ((train_y + 1) * 60 / 2) + 60
+            y = get_unnormalized_label(train_y) #((train_y + 1) * 60 / 2) + 60
             tilt = [60, 70, 80, 90, 100, 110, 120]
             num = 1
             for t in tilt:
