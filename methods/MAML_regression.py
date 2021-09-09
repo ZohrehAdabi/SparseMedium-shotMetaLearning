@@ -64,7 +64,7 @@ class MAML_regression(nn.Module):
 
         self.n_task     = 4
         self.task_update_num = 1
-        self.train_lr = 0.01
+        self.train_lr = 0.001
         self.approx = False
         self.mse        = nn.MSELoss()
 
