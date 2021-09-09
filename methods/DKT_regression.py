@@ -50,7 +50,7 @@ class DKT_regression(nn.Module):
 
         likelihood = gpytorch.likelihoods.GaussianLikelihood()
         likelihood.noise = 0.1
-        model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel='spectral')
+        model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel=kernel_type)
 
         self.model      = model.cuda()
         self.likelihood = likelihood.cuda()
