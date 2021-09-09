@@ -417,9 +417,7 @@ class ExactGPLayer(gpytorch.models.ExactGP):
         ## Spectral kernel
         elif(kernel=='spectral'):
             self.covar_module = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=16, ard_num_dims=2916)
-            batch, batch_labels = get_batch(train_people, 72)
-            batch, batch_labels = batch.cuda(), batch_labels.cuda()
-            self.covar_module.initialize_from_data_empspect(batch[0], batch_labels[0])
+            self.covar_module.initialize_from_data_empspect(train_x, train_y)
         else:
             raise ValueError("[ERROR] the kernel '" + str(kernel) + "' is not supported for regression, use 'rbf' or 'spectral'.")
 
