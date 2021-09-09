@@ -249,19 +249,19 @@ class MAML_regression(nn.Module):
 
     def train(self, stop_epoch, n_support, n_samples, optimizer):
 
-        mll_list = []
+        mse_list = []
         for epoch in range(stop_epoch):
-            mll = self.train_loop(epoch, n_support, n_samples, optimizer)
-            mll_list.append(mll)
-            if(self.writer is not None): self.writer.add_scalar('MLL per epoch', mll, epoch)
-            print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
+            mse = self.train_loop(epoch, n_support, n_samples, optimizer)
+            mse_list.append(mse)
+            if(self.writer is not None): self.writer.add_scalar('MSE per epoch', mse, epoch)
+            print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => MSE: {mse}\n', "-"*30, Fore.RESET)
         
-        mll = np.mean(mll_list)
+        mse = np.mean(mse_list)
         if self.show_plots_pred:
             self.mw.finish()
         if self.show_plots_features:
             self.mw_feature.finish()
-        return mll, mll_list
+        return mse, mse_list
 
     def test(self, n_support, n_samples, optimizer=None, test_count=None):
 

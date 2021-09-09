@@ -104,7 +104,7 @@ if params.method=='DKT' or params.method=='Sparse_DKT' or params.method=='DKT_Ne
 
 else:
 
-    mse = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer)
+    mse, _ = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer)
 
     print(Fore.GREEN,"="*40, f'\nend of meta-train => MSE: {mse}\n', "="*40, Fore.RESET)
 
