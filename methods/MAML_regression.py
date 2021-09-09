@@ -65,7 +65,11 @@ class MAML_regression(nn.Module):
         self.n_task     = 4
         self.task_update_num = 1
         self.train_lr = 0.01
+        self.approx = False
         self.mse        = nn.MSELoss()
+
+        self.init_summary('MAML')
+
         
     def init_summary(self, id):
         if(IS_TBX_INSTALLED):
