@@ -74,7 +74,10 @@ class DKT_regression(nn.Module):
             self.writer = SummaryWriter(log_dir=writer_path)
 
     def train_loop(self, epoch, n_support, n_samples, optimizer):
-
+        
+        self.model.train()
+        self.feature_extractor.train()
+        self.likelihood.train()
         batch, batch_labels = get_batch(train_people, n_samples)
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
         # print(f'{epoch}: {batch_labels[0]}')

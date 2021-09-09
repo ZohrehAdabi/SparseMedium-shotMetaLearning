@@ -21,6 +21,8 @@ import random
 from statistics import mean
 from data.qmul_loader import get_batch, train_people, test_people
 from configs import kernel_type
+
+
 #Check if tensorboardx is installed
 try:
     #tensorboard --logdir=./MAML_Loss/ --host localhost --port 8091
@@ -30,26 +32,41 @@ except ImportError:
     IS_TBX_INSTALLED = False
     print('[WARNING] install tensorboardX to record simulation logs.')
 
+class Linear_fw(nn.Linear): #used in MAML to forward input with fast weight
+    def __init__(self, in_features, out_features):
+        super(Linear_fw, self).__init__(in_features, out_features)
+        self.weight.fast = None #Lazy hack to add fast weight link
+        self.bias.fast = None
+
+    def forward(self, x):
+
+        if self.weight.fast is not None and self.bias.fast is not None:
+            out = F.linear(x, self.weight.fast, self.bias.fast) #weight.fast (fast weight) is the temporaily adapted weight
+        else:
+            out = super(Linear_fw, self).forward(x)
+        return out
+
+
+
+
 class MAML_regression(nn.Module):
     def __init__(self, backbone, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(MAML_regression, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
+        self.model = Linear_fw(2916, 1)
         self.device = 'cuda'
         self.video_path = video_path
         self.show_plots_pred = show_plots_pred
         self.show_plots_features = show_plots_features
         if self.show_plots_pred or self.show_plots_features:
             self.initialize_plot(video_path, training)
+
+        self.n_task     = 4
+        self.task_update_num = 1
+        self.train_lr = 0.01
         self.mse        = nn.MSELoss()
         
-
-    def set_forward(self, x, is_feature=False):
-        pass
-
-    def set_forward_loss(self, x):
-        pass
-
     def init_summary(self, id):
         if(IS_TBX_INSTALLED):
             time_string = strftime("%d%m%Y_%H%M", gmtime())
@@ -58,35 +75,97 @@ class MAML_regression(nn.Module):
             writer_path = './MAML_Loss/' + id #+'_'+ time_string
             self.writer = SummaryWriter(log_dir=writer_path)
 
-    def train_loop(self, epoch, n_support, n_samples, optimizer):
 
+    def set_forward(self, x, is_feature=False):
+        z = self.feature_extractor(x)
+        pred = self.model(z)
+        return pred
+
+    def set_forward_loss(self, x_support, y_support, x_query):
+        
+        fast_parameters = list(self.parameters()) #the first gradient calcuated in line 45 is based on original weight
+        for weight in self.parameters():
+            weight.fast = None
+        self.zero_grad()
+
+        for task_step in range(self.task_update_num):
+            y_pred = self.set_forward(x_support)
+            set_loss = self.mse(y_pred, y_support) 
+            grad = torch.autograd.grad(set_loss, fast_parameters, create_graph=True) #build full graph support gradient of gradient
+            if self.approx:
+                grad = [ g.detach()  for g in grad ] #do not calculate gradient of gradient if using first order approximation
+            fast_parameters = []
+            for k, weight in enumerate(self.parameters()):
+                #for usage of weight.fast, please see Linear_fw, Conv_fw in backbone.py 
+                if weight.fast is None:
+                    weight.fast = weight - self.train_lr * grad[k] #create weight.fast 
+                else:
+                    weight.fast = weight.fast - self.train_lr * grad[k] #create an updated weight.fast, note the '-' is not merely minus value, but to create a new weight.fast 
+                fast_parameters.append(weight.fast) #gradients calculated in line 45 are based on newest fast weight, but the graph will retain the link to old weight.fasts
+
+        y_pred = self.set_forward(x_query)
+        return y_pred
+
+
+    def train_loop(self, epoch, n_support, n_samples, optimizer):
+        self.model.train()
+        self.feature_extractor.train()
         batch, batch_labels = get_batch(train_people, n_samples)
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
         # print(f'{epoch}: {batch_labels[0]}')
-        mll_list = []
+        mse_list = []
+        avg_loss=0
+        task_count = 0
+        loss_all = []
+        optimizer.zero_grad()
+        split = np.array([True]*15 + [False]*3)
         for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
+             
+            # print(split)
+            shuffled_split = []
+            for _ in range(int(n_support/15)):
+                s = split.copy()
+                np.random.shuffle(s)
+                shuffled_split.extend(s)
+            shuffled_split = np.array(shuffled_split)
+            support_ind = shuffled_split
+            query_ind = ~shuffled_split
+            x_all = inputs.cuda()
+            y_all = labels.cuda()
+
+            x_support = x_all[support_ind,:,:,:]
+            y_support = y_all[support_ind]
+            x_query   = x_all[query_ind,:,:,:]
+            y_query   = y_all[query_ind]
+
+            y_pred= self.set_forward_loss(x_support, y_support, x_query)
+            loss = self.mse(y_pred, y_query) 
+            avg_loss = avg_loss+loss.item()#.data[0]
+            loss_all.append(loss)
+
+            task_count += 1
+
+            if task_count == self.n_task: #MAML update several tasks at one time
+                loss_q = torch.stack(loss_all).sum(0)
+                loss_q.backward()
+
+                optimizer.step()
+                task_count = 0
+                loss_all = []
             optimizer.zero_grad()
-            z = self.feature_extractor(inputs)
-
-            self.model.set_train_data(inputs=z, targets=labels, strict=False)
-            predictions = self.model(z)
-            loss = -self.mll(predictions, self.model.train_targets)
-
-            loss.backward()
-            optimizer.step()
-            mse = self.mse(predictions.mean, labels)
-            mll_list.append(loss.item())
-            if ((epoch%2==0) & (itr%5==0)):
-                print('[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
-                    itr, epoch, loss.item(), mse.item(),
-                    self.model.likelihood.noise.item()
+            
+            mse_list.append(loss.item())
+            if ((epoch%1==0) & (itr%2==0)):
+                print('[%02d/%02d] - Loss: %.3f ' % (
+                    itr, epoch, loss.item()
                 ))
             self.iteration = itr+(epoch*len(batch_labels))
-            if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('MSE', loss.item(), self.iteration)
 
             if (self.show_plots_pred or self.show_plots_features):
-                embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
-                self.update_plots_train(self.plots, labels.cpu().numpy(), embedded_z, None, mse, epoch)
+                z =  self.feature_extractor(x_support).detach()
+                embedded_z = TSNE(n_components=2).fit_transform(z.cpu().numpy())
+                self.update_plots_train(self.plots, labels.cpu().numpy(), embedded_z, None, loss, epoch)
 
                 if self.show_plots_pred:
                     self.plots.fig.canvas.draw()
@@ -97,7 +176,7 @@ class MAML_regression(nn.Module):
                     self.plots.fig_feature.canvas.flush_events()
                     self.mw_feature.grab_frame()
 
-        return np.mean(mll_list)
+        return np.mean(mse_list)
 
     def test_loop(self, n_support, n_samples, test_person, optimizer=None): # no optimizer needed for GP
         inputs, targets = get_batch(test_people, n_samples)
@@ -120,47 +199,35 @@ class MAML_regression(nn.Module):
         x_query   = x_all[test_person,query_ind,:,:,:]
         y_query   = y_all[test_person,query_ind]
 
-    
-        z_support = self.feature_extractor(x_support).detach()
-        self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
-
         self.model.eval()
         self.feature_extractor.eval()
-        self.likelihood.eval()
+        output = self.set_forward_loss(x_support, y_support, x_query)
+        mse = self.mse(output, y_query).item()
 
-        with torch.no_grad():
-            z_query = self.feature_extractor(x_query).detach()
-            pred    = self.likelihood(self.model(z_query))
-            lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
 
-        mse = self.mse(pred.mean, y_query).item()
         #***************************************************
-        y = ((y_query.detach() + 1) * 60 / 2) + 60
-        y_pred = ((pred.mean.detach() + 1) * 60 / 2) + 60
-        mse = self.mse(y_pred, y).item()
+        y = ((output.detach() + 1) * 60 / 2) + 60
+        y_pred = ((output + 1) * 60 / 2) + 60
+        mse_ = self.mse(y_pred, y).item()
         y = y.cpu().numpy()
         y_pred = y_pred.cpu().numpy()
         print(Fore.RED,"="*50, Fore.RESET)
         print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
         print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
-        print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
-        print(Fore.LIGHTRED_EX, f'mse:    {mse:.4f}', Fore.RESET)
+        print(Fore.LIGHTRED_EX, f'mse:    {mse_:.4f}, mse:    {mse:.4f}', Fore.RESET)
         print(Fore.RED,"-"*50, Fore.RESET)
 
-        K = self.model.covar_module
-        kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
-        max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
-        y_s = ((y_support.detach().cpu().numpy() + 1) * 60 / 2) + 60
-        print(Fore.LIGHTGREEN_EX, f'target of most similar in support set: {y_s[max_similar_idx_x_s]}', Fore.RESET)
+        
         #**************************************************
 
         if (self.show_plots_pred or self.show_plots_features):
+            z_support =  self.feature_extractor(x_support).detach()
             embedded_z_support = TSNE(n_components=2).fit_transform(z_support.detach().cpu().numpy())
 
             self.update_plots_test(self.plots, x_support, y_support.detach().cpu().numpy(), 
-                                            z_support.detach(), z_query.detach(), embedded_z_support,
-                                            x_query, y_query.detach().cpu().numpy(), pred, 
-                                            max_similar_idx_x_s, None, mse, test_person)
+                                            z_support.detach(), None, embedded_z_support,
+                                            x_query, y_query.detach().cpu().numpy(), output.squeeze().detach().cpu().numpy(), 
+                                            mse, test_person)
             if self.show_plots_pred:
                 self.plots.fig.canvas.draw()
                 self.plots.fig.canvas.flush_events()
@@ -211,18 +278,13 @@ class MAML_regression(nn.Module):
         return mse_list
 
     def save_checkpoint(self, checkpoint):
-        # save state
-        gp_state_dict         = self.model.state_dict()
-        likelihood_state_dict = self.likelihood.state_dict()
-        nn_state_dict         = self.feature_extractor.state_dict()
-        torch.save({'gp': gp_state_dict, 'likelihood': likelihood_state_dict, 'net':nn_state_dict}, checkpoint)
+        torch.save({'feature_extractor': self.feature_extractor.state_dict(), 'model':self.model.state_dict()}, checkpoint)
 
     def load_checkpoint(self, checkpoint):
         ckpt = torch.load(checkpoint)
-        self.model.load_state_dict(ckpt['gp'])
-        self.likelihood.load_state_dict(ckpt['likelihood'])
-        self.feature_extractor.load_state_dict(ckpt['net'])
-    
+        self.feature_extractor.load_state_dict(ckpt['feature_extractor'])
+        self.model.load_state_dict(ckpt['model'])
+        
     def initialize_plot(self, video_path, training):
         
         
@@ -286,7 +348,7 @@ class MAML_regression(nn.Module):
             plots.ax_feature.set_title(f'epoch {epoch}')
 
     def update_plots_test(self, plots, train_x, train_y, train_z, test_z, embedded_z,   
-                                    test_x, test_y, test_y_pred, similar_idx_x_s, mll, mse, person):
+                                    test_x, test_y, test_y_pred, mse, person):
         def clear_ax(plots, i, j):
             plots.ax[i, j].clear()
             plots.ax[i, j].set_xticks([])
@@ -326,7 +388,7 @@ class MAML_regression(nn.Module):
                     i = int(t/10-6)
                     # z = train_z[idx]
                     for j in range(0, idx.shape[0]): 
-                        img = transforms.ToPILImage()(x[j].cpu()).convert("RGB")
+                        img = transforms.ToPILImage()(x[j]).convert("RGB")
                         plots = clear_ax(plots, i, j)
                         plots = color_ax(plots, i, j, 'black', lw=0.5)
                         plots.ax[i, j].imshow(img)
@@ -337,32 +399,30 @@ class MAML_regression(nn.Module):
         
             # test images
             y = ((test_y + 1) * 60 / 2) + 60
-            y_mean = test_y_pred.mean.detach().cpu().numpy()
-            y_var = test_y_pred.variance.detach().cpu().numpy()
+            y_mean = test_y_pred
+            # y_var = test_y_pred.variance.detach().cpu().numpy()
             y_pred = ((y_mean + 1) * 60 / 2) + 60
-            y_s = ((train_y + 1) * 60 / 2) + 60
-            
             for t in tilt:
                 idx = np.where(y==(t))[0]
                 if idx.shape[0]==0:
                     continue
                 else:
                     x = test_x[idx]
-                    sim_x_s_idx = similar_idx_x_s[idx]
-                    sim_y_s = y_s[sim_x_s_idx]
+                    # sim_x_s_idx = similar_idx_x_s[idx]
+                    # sim_y_s = y_s[sim_x_s_idx]
                     y_p = y_pred[idx]
-                    y_v = y_var[idx]
+                    # y_v = y_var[idx]
                     i = int(t/10-6)
                     for j in range(idx.shape[0]):
                         
-                        img = transforms.ToPILImage()(x[j].cpu()).convert("RGB")
+                        img = transforms.ToPILImage()(x[j]).convert("RGB")
                         ii = 16
                         plots = clear_ax(plots, i, j+ii)
                         plots.ax[i, j+ii].imshow(img)
                         # plots = color_ax(plots, i, j+ii, color=cluster_colors[cluster[j]], lw=2)
                         plots.ax[i, j+ii].set_title(f'{y_p[j]:.1f}', fontsize=10)
-                        id_sim_x_s = int(plots.ax[int(sim_y_s[j]/10-6),0].get_title()) +  sim_x_s_idx[j]%15
-                        plots.ax[i, j+ii].set_xlabel(f'{int(id_sim_x_s)}', fontsize=10)
+                        # id_sim_x_s = int(plots.ax[int(sim_y_s[j]/10-6),0].get_title()) +  sim_x_s_idx[j]%15
+                        # plots.ax[i, j+ii].set_xlabel(f'{int(id_sim_x_s)}', fontsize=10)
                 
                     # plots.ax[i, j+16].legend()
             for i in range(7):
@@ -383,7 +443,6 @@ class MAML_regression(nn.Module):
                 plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
 
             plots.ax_feature.legend()
-
 
 
 class ExactGPLayer(gpytorch.models.ExactGP):

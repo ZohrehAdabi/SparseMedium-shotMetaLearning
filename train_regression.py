@@ -8,6 +8,7 @@ from io_utils import parse_args_regression, get_resume_file
 from methods.Sparse_DKT_regression import Sparse_DKT_regression
 from methods.DKT_regression import DKT_regression
 from methods.DKT_regression_New_Loss import DKT_New_Loss
+from methods.MAML_regression import     MAML_regression
 from methods.feature_transfer_regression import FeatureTransfer
 import backbone
 import os
@@ -28,6 +29,8 @@ params.checkpoint_dir = '%scheckpoints/%s/%s_%s' % (configs.save_dir, params.dat
 
 if params.dataset=='QMUL':
     bb           = backbone.Conv3().cuda()
+    if params.method=='MAML':
+        bb           = backbone.Conv3_MAML().cuda()
 
 if params.method=='DKT':
     model = DKT_regression(bb, video_path=params.checkpoint_dir, 
@@ -77,6 +80,11 @@ elif params.method=='Sparse_DKT':
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     else:
         ValueError('Unrecognised sparse method')
+
+
+elif params.method=='MAML':
+    model = MAML_regression(bb, video_path=params.checkpoint_dir, 
+                            show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
 
 elif params.method=='transfer':
     model = FeatureTransfer(bb, video_path=params.checkpoint_dir, 

@@ -65,8 +65,8 @@ class Linear_fw(nn.Linear): #used in MAML to forward input with fast weight
         return out
 
 class Conv2d_fw(nn.Conv2d): #used in MAML to forward input with fast weight
-    def __init__(self, in_channels, out_channels, kernel_size, stride=1,padding=0, bias = True):
-        super(Conv2d_fw, self).__init__(in_channels, out_channels, kernel_size, stride=stride, padding=padding, bias=bias)
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1,padding=0, dilation=0, bias = True):
+        super(Conv2d_fw, self).__init__(in_channels, out_channels, kernel_size, stride=stride, padding=padding, dilation=dilation, bias=bias)
         self.weight.fast = None
         if not self.bias is None:
             self.bias.fast = None
@@ -376,6 +376,35 @@ class ResNet(nn.Module):
         return out
 
 # Backbone for QMUL regression
+class Conv3_MAML(nn.Module): #MAML
+    def __init__(self, flatten=True):
+        super(Conv3_MAML, self).__init__()
+        self.flatten = flatten
+        self.layer1 = nn.Conv2d_fw(3, 36, 3,stride=2,dilation=2)
+        self.layer2 = nn.Conv2d_fw(36,36, 3,stride=2,dilation=2)
+        self.layer3 = nn.Conv2d_fw(36,36, 3,stride=2,dilation=2)
+
+    def return_clones(self):
+        layer1_w = self.layer1.weight.data.clone().detach()
+        layer2_w = self.layer2.weight.data.clone().detach()
+        layer3_w = self.layer3.weight.data.clone().detach()
+        return [layer1_w, layer2_w, layer3_w]
+
+    def assign_clones(self, weights_list):
+        self.layer1.weight.data.copy_(weights_list[0])
+        self.layer2.weight.data.copy_(weights_list[1])
+        self.layer3.weight.data.copy_(weights_list[2])
+
+    def forward(self, x):
+        out = F.relu(self.layer1(x))
+        out = F.relu(self.layer2(out))
+        out = F.relu(self.layer3(out))
+
+        if self.flatten:
+            out = out.view(out.size(0), -1)
+        return out
+
+
 class Conv3(nn.Module):
     def __init__(self, flatten=True):
         super(Conv3, self).__init__()
