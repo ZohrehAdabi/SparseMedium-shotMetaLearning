@@ -65,7 +65,7 @@ class Linear_fw(nn.Linear): #used in MAML to forward input with fast weight
         return out
 
 class Conv2d_fw(nn.Conv2d): #used in MAML to forward input with fast weight
-    def __init__(self, in_channels, out_channels, kernel_size, stride=1,padding=0, dilation=0, bias = True):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1,padding=0, dilation=1, bias = True):
         super(Conv2d_fw, self).__init__(in_channels, out_channels, kernel_size, stride=stride, padding=padding, dilation=dilation, bias=bias)
         self.weight.fast = None
         if not self.bias is None:
@@ -74,12 +74,12 @@ class Conv2d_fw(nn.Conv2d): #used in MAML to forward input with fast weight
     def forward(self, x):
         if self.bias is None:
             if self.weight.fast is not None:
-                out = F.conv2d(x, self.weight.fast, None, stride= self.stride, padding=self.padding)
+                out = F.conv2d(x, self.weight.fast, None, stride= self.stride, padding=self.padding, dilation=self.dilation)
             else:
                 out = super(Conv2d_fw, self).forward(x)
         else:
             if self.weight.fast is not None and self.bias.fast is not None:
-                out = F.conv2d(x, self.weight.fast, self.bias.fast, stride= self.stride, padding=self.padding)
+                out = F.conv2d(x, self.weight.fast, self.bias.fast, stride= self.stride, padding=self.padding, dilation=self.dilation)
             else:
                 out = super(Conv2d_fw, self).forward(x)
 
