@@ -26,8 +26,8 @@ def run(lr_gp, lr_net, gamma):
     mse_hist = []
     align_threshold = [1e-3]
                 # update_sigma, del, add, align_test
-                #' '1011'
-    config_frvm = [    11] 
+                #   '1001', '1011'
+    config_frvm = [   9,      11] 
     for align_thr in align_threshold:
         
         
@@ -69,6 +69,9 @@ def run(lr_gp, lr_net, gamma):
     
 
             if params.sparse_method=='FRVM':
+                params.checkpoint_dir += '/'
+                if not os.path.isdir(params.checkpoint_dir):
+                    os.makedirs(params.checkpoint_dir)
 
                 id =  f'FRVM_{params.config}_{params.align_thr:.6f}_{lr_gp:.5f}_{lr_net:.5f}'
                 if params.gamma: id += '_gamma'
@@ -116,9 +119,8 @@ def run(lr_gp, lr_net, gamma):
             bb           = backbone.Conv3().cuda()
 
 
-            params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s_seed%s_%.5f_%.5f' % (configs.save_dir, params.dataset, params.model, params.method, 
-                                                            params.sparse_method, params.seed,
-                                                            lr_gp, lr_net)
+            params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s_seed' % (configs.save_dir, params.dataset, params.model, params.method, 
+                                                            params.sparse_method, params.seed)
 
             video_path = params.checkpoint_dir
             
@@ -289,6 +291,7 @@ def run(lr_gp, lr_net, gamma):
         
 
         if params.sparse_method=='FRVM':
+            params.checkpoint_dir += '/'
             id =  f'FRVM_{params.config}_{params.align_thr:.6f}_{lr_gp:.5f}_{lr_net:.5f}'
             if params.gamma: id += '_gamma'
             params.checkpoint_dir = params.checkpoint_dir + id
