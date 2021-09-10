@@ -274,7 +274,7 @@ class Sparse_DKT_regression(nn.Module):
     def train(self, stop_epoch, n_support, n_samples, optimizer):
 
         mll_list = []
-        best_mse = 10e5
+        best_mse = 10e5 #stop_epoch//2
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=stop_epoch//2, gamma=0.1)
         for epoch in range(stop_epoch):
             
@@ -293,8 +293,8 @@ class Sparse_DKT_regression(nn.Module):
                         best_mse = mse
                         # model_name = self.best_path + f'_best_mae{best_mse:.2f}_ep{epoch}_{id}.pth'
                         # self.save_checkpoint(model_name)
-                        print(Fore.LIGHTRED_EX, f'Best MSE: {best_mse:.2f}', Fore.RESET)
-                    print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE: {mse:.2f}, Best MSE: {best_mse:.2f}', Fore.RESET)
+                        print(Fore.LIGHTRED_EX, f'Best MSE: {best_mse:.4f}', Fore.RESET)
+                    print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE: {mse:.4f}, Best MSE: {best_mse:.2f}', Fore.RESET)
                     if(self.writer is not None):
                         self.writer.add_scalar('MSE Val.', mse, epoch)
                 print(Fore.GREEN,"-"*30, Fore.RESET)
@@ -308,7 +308,8 @@ class Sparse_DKT_regression(nn.Module):
             if(self.writer is not None): self.writer.add_scalar('MLL per epoch', mll, epoch)
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
 
-        # scheduler.step()
+            scheduler.step()
+
         mll = np.mean(mll_list)
 
         
