@@ -115,7 +115,14 @@ class DKT(MetaTemplate):
                 single_model.covar_module.base_kernel.lengthscale=self.leghtscale_list[idx].clone().detach()#.requires_grad_(True)
                 single_model.likelihood.noise=self.noise_list[idx].clone().detach()
                 single_model.covar_module.outputscale=self.outputscale_list[idx].clone().detach()
-
+    
+    def pred_result(self, mean):
+        
+        max_pred, idx = torch.max(mean, axis=0)
+        index = ~idx.to(bool)
+        max_pred[index] = -np.inf
+        return max_pred
+        
     def train_loop(self, epoch, train_loader, optimizer, print_freq=5):
         optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
                                       {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
