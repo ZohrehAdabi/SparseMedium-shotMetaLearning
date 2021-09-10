@@ -127,10 +127,9 @@ def single_test(params):
             checkpoint_dir += id
         else:
             if params.dirichlet:
-                id=f'DKT_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}'
+                id=f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}'
             else:
-                id=f'DKT_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}'
-        
+                id=f'_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}'
             checkpoint_dir += id
 
     #modelfile   = get_resume_file(checkpoint_dir)
