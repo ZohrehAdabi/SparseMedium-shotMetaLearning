@@ -31,13 +31,14 @@ except ImportError:
 
 class DKT(MetaTemplate):
     def __init__(self, model_func, n_way, n_support):
-        super(DKT, self).__init__(model_func, n_way, n_support)
+        super(DKT, self).__init__(model_func, n_way, n_support, dirichlet=False)
         ## GP parameters
         self.leghtscale_list = None
         self.noise_list = None
         self.outputscale_list = None
         self.iteration = 0
         self.writer=None
+        self.dirichlet = dirichlet
         self.feature_extractor = self.feature
         self.get_model_likelihood_mll() #Init model, likelihood, and mll
         if(kernel_type=="cossim"):

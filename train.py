@@ -11,6 +11,7 @@ import glob
 
 import configs
 import backbone
+from colorama import Fore
 from data.datamgr import SimpleDataManager, SetDataManager
 from methods.baselinetrain import BaselineTrain
 from methods.baselinefinetune import BaselineFinetune
@@ -55,7 +56,7 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
 
         if not os.path.isdir(params.checkpoint_dir):
             os.makedirs(params.checkpoint_dir)
-
+        print(Fore.GREEN,"-"*50 ,f'\nValidation \n', Fore.RESET)
         acc = model.test_loop(val_loader)
         if acc > max_acc:  # for baseline and baseline++, we don't use validation here so we let acc = -1
             print("--> Best model! save...")
@@ -66,7 +67,8 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
         if (epoch % params.save_freq == 0) or (epoch == stop_epoch - 1):
             outfile = os.path.join(params.checkpoint_dir, '{:d}.tar'.format(epoch))
             torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
-
+        print(Fore.YELLOW, f'ACC: {acc:4.2f}\n', Fore.RESET)
+        print(Fore.GREEN,"-"*50 ,'\n', Fore.RESET)
     return model
 
 
@@ -107,13 +109,14 @@ if __name__ == '__main__':
                 params.stop_epoch = 400
             else:
                 params.stop_epoch = 400  # default
+        
         else:  # meta-learning methods
             if params.n_shot == 1:
                 params.stop_epoch = 600
             elif params.n_shot == 5:
                 params.stop_epoch = 400
             else:
-                params.stop_epoch = 600  # default
+                params.stop_epoch = 200  # default
 
     if params.method in ['baseline', 'baseline++']:
         base_datamgr = SimpleDataManager(image_size, batch_size=16)
@@ -162,8 +165,11 @@ if __name__ == '__main__':
                 id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_{params.gamma}'           
             model.init_summary(id=id)
         elif(params.method == 'DKT'):
-            model = DKT(model_dict[params.model], **train_few_shot_params)
-            model.init_summary(id=f'DKT_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}')
+            model = DKT(model_dict[params.model], **train_few_shot_params, dirichlet=params.dirichlet)
+            if params.dirichlet:
+                model.init_summary(id=f'DKT_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}')
+            else:
+                model.init_summary(id=f'DKT_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}')
         
         
         elif params.method == 'protonet':
@@ -209,7 +215,13 @@ if __name__ == '__main__':
                 id = f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}'           
             params.checkpoint_dir += id
         else:
-            params.checkpoint_dir += '_%dway_%dshot' % (params.train_n_way, params.n_shot)
+            if params.dirichlet:
+                id=f'DKT_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}'
+            else:
+                id=f'DKT_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}'
+        
+            params.checkpoint_dir += id
+
     if not os.path.isdir(params.checkpoint_dir):
         os.makedirs(params.checkpoint_dir)
 

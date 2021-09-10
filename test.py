@@ -79,7 +79,7 @@ def single_test(params):
     elif params.method == 'protonet':
         model           = ProtoNet( model_dict[params.model], **few_shot_params )
     elif params.method == 'DKT':
-        model           = DKT(model_dict[params.model], **few_shot_params)
+        model           = DKT(model_dict[params.model], **few_shot_params, dirichlet=params.dirichlet)
     elif params.method == 'Sparse_DKT':
         model           = Sparse_DKT(model_dict[params.model], **few_shot_params,
                                 config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
@@ -126,7 +126,12 @@ def single_test(params):
                 id = f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_{params.gamma}'           
             checkpoint_dir += id
         else:
-            params.checkpoint_dir += '_%dway_%dshot' % (params.train_n_way, params.n_shot)
+            if params.dirichlet:
+                id=f'DKT_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}'
+            else:
+                id=f'DKT_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}'
+        
+            checkpoint_dir += id
 
     #modelfile   = get_resume_file(checkpoint_dir)
 
