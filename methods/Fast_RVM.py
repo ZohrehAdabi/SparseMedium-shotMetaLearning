@@ -142,8 +142,8 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
         terminate = False
 
         if ~anyWorthwhileAction:
-            if verbose:
-                print(f'{itr:3}, No positive action, m={active_m.shape[0]:3}')
+            # if verbose:
+            print(f'{itr:3}, No positive action, m={active_m.shape[0]:3}')
             selected_action = torch.tensor(10)
             terminate = True
 
@@ -152,8 +152,8 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
            
             if no_change_in_alpha:
                 # print(selected_action)
-                if verbose:
-                    print(f'{itr:3}, No change in alpha, m={active_m.shape[0]:3}')
+                # if verbose:
+                print(f'{itr:3}, No change in alpha, m={active_m.shape[0]:3}')
                 selected_action = torch.tensor(11)
                 terminate = True
         

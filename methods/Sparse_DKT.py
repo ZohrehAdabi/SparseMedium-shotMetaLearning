@@ -139,12 +139,12 @@ class Sparse_DKT(MetaTemplate):
         return max_pred
 
     def train_loop(self, epoch, train_loader, optimizer, print_freq=10):
-        if self.dirichlet:
-            optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
-                                      {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
-        else:
-            optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-3},
-                                      {'params': self.feature_extractor.parameters(), 'lr': 1e-4}])
+        # if self.dirichlet:
+        #     optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
+        #                               {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
+        # else:
+        optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
+                                    {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
         for i, (x,_) in enumerate(train_loader):
             self.n_query = x.size(1) - self.n_support
             if self.change_way: self.n_way  = x.size(0)
@@ -177,8 +177,9 @@ class Sparse_DKT(MetaTemplate):
             lenghtscale = 0.0
             noise = 0.0
             outputscale = 0.0
+            print(Fore.LIGHTMAGENTA_EX, f'epoch:{epoch+1}', Fore.RESET)
             for idx, single_model in enumerate(self.model.models):
-
+                print(Fore.LIGHTMAGENTA_EX, f'model:{idx+1}', Fore.RESET)
                 if self.dirichlet:
                     targets = target_list[idx]
                     targets[targets==-1] = 0
