@@ -161,6 +161,7 @@ class DKT(MetaTemplate):
             outputscale = 0.0
             for idx, single_model in enumerate(self.model.models):
                 if self.dirichlet:
+                    
                     single_model.likelihood.targets = target_list[idx]
                     sigma2_labels, transformed_targets, num_classes = single_model.likelihood._prepare_targets(single_model.likelihood.targets, 
                                             alpha_epsilon=single_model.likelihood.alpha_epsilon, dtype=torch.float)

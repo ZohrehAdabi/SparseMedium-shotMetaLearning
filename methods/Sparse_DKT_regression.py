@@ -275,7 +275,7 @@ class Sparse_DKT_regression(nn.Module):
 
         mll_list = []
         best_mse = 10e5 #stop_epoch//2
-        scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5, 50, 80], gamma=0.1)
+        # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5, 50, 80], gamma=0.1)
         
         for epoch in range(stop_epoch):
             
@@ -310,10 +310,10 @@ class Sparse_DKT_regression(nn.Module):
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
 
             # scheduler.step()
-            if (epoch) in [3]:
-                optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.1
-            if (epoch) in [50, 80]:
-                optimizer.param_groups[1]['lr'] = optimizer.param_groups[1]['lr'] * 0.1
+            # if (epoch) in [3]:
+            #     optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.1
+            # if (epoch) in [50, 80]:
+            #     optimizer.param_groups[1]['lr'] = optimizer.param_groups[1]['lr'] * 0.1
 
 
         mll = np.mean(mll_list)
