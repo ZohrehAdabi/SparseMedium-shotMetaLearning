@@ -137,8 +137,8 @@ class DKT_binary(MetaTemplate):
             y_train = y_all
 
             samples_per_model = int(len(y_train) / self.n_way) #25 / 5 = 5
-            # target = torch.ones(len(y_train), dtype=torch.float32) * -1 
-            target = torch.zeros(len(y_train), dtype=torch.float32) 
+            target = torch.ones(len(y_train), dtype=torch.float32) * -1 
+            # target = torch.zeros(len(y_train), dtype=torch.float32) 
             start_index = 0
             stop_index = start_index+samples_per_model
             target[start_index:stop_index] = 1.0
@@ -155,7 +155,7 @@ class DKT_binary(MetaTemplate):
             noise = 0.0
             outputscale = 0.0
             if self.dirichlet:
-                # target[target==-1] = 0
+                target[target==-1] = 0
                 self.model.likelihood.targets = target.long()
                 sigma2_labels, transformed_targets, num_classes = self.model.likelihood._prepare_targets(self.model.likelihood.targets, 
                                         alpha_epsilon=self.model.likelihood.alpha_epsilon, dtype=torch.float)
@@ -259,8 +259,8 @@ class DKT_binary(MetaTemplate):
         y_train = y_support
 
         samples_per_model = int(len(y_train) / self.n_way) #25 / 5 = 5
-        # target = torch.ones(len(y_train), dtype=torch.float32) * -1 
-        target = torch.zeros(len(y_train), dtype=torch.float32) 
+        target = torch.ones(len(y_train), dtype=torch.float32) * -1 
+        # target = torch.zeros(len(y_train), dtype=torch.float32) 
         start_index = 0
         stop_index = start_index+samples_per_model
         target[start_index:stop_index] = 1.0
@@ -270,7 +270,7 @@ class DKT_binary(MetaTemplate):
         if(self.normalize): z_train = F.normalize(z_train, p=2, dim=1)
        
         if self.dirichlet:
-            # target[target==-1] = 0
+            target[target==-1] = 0
             self.model.likelihood.targets = target.long()
             sigma2_labels, transformed_targets, num_classes = self.model.likelihood._prepare_targets(self.model.likelihood.targets, 
                                     alpha_epsilon=self.model.likelihood.alpha_epsilon, dtype=torch.float)

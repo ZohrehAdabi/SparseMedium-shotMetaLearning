@@ -174,7 +174,7 @@ class Sparse_DKT_binary(MetaTemplate):
             outputscale = 0.0
 
             if self.dirichlet:
-                # target[target==-1] = 0
+                target[target==-1] = 0
                 self.model.likelihood.targets = target.long()
                 sigma2_labels, transformed_targets, num_classes = self.model.likelihood._prepare_targets(self.model.likelihood.targets, 
                                         alpha_epsilon=self.model.likelihood.alpha_epsilon, dtype=torch.float)
@@ -369,7 +369,7 @@ class Sparse_DKT_binary(MetaTemplate):
         if(self.normalize): z_train = F.normalize(z_train, p=2, dim=1)
         
         if self.dirichlet:
-                # target[target==-1] = 0
+                target[target==-1] = 0
                 self.model.likelihood.targets = target.long()
                 sigma2_labels, transformed_targets, num_classes = self.model.likelihood._prepare_targets(self.model.likelihood.targets, 
                                         alpha_epsilon=self.model.likelihood.alpha_epsilon, dtype=torch.float)
