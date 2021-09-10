@@ -166,8 +166,8 @@ class DKT_binary(MetaTemplate):
             if(self.model.covar_module.base_kernel.lengthscale is not None):
                 lenghtscale+=self.model.base_covar_module.base_kernel.lengthscale.mean().cpu().detach().numpy().squeeze()
             noise+=self.model.likelihood.noise.cpu().detach().numpy().squeeze().mean()
-            if(self.model.base_covar_module.outputscale is not None):
-                outputscale+=self.model.base_covar_module.outputscale.cpu().detach().numpy().squeeze()
+            if(self.model.covar_module.outputscale is not None):
+                outputscale+=self.model.covar_module.outputscale.cpu().detach().numpy().squeeze()
 
             ## Optimize
             optimizer.zero_grad()
