@@ -154,7 +154,8 @@ class DKT_binary(MetaTemplate):
             noise = 0.0
             outputscale = 0.0
             if self.dirichlet:
-                self.model.likelihood.targets = target
+                target[target==-1] = 0
+                self.model.likelihood.targets = target.long()
                 sigma2_labels, transformed_targets, num_classes = self.model.likelihood._prepare_targets(self.model.likelihood.targets, 
                                         alpha_epsilon=self.model.likelihood.alpha_epsilon, dtype=torch.float)
                 self.model.likelihood.transformed_targets = transformed_targets.transpose(-2, -1)
@@ -267,12 +268,13 @@ class DKT_binary(MetaTemplate):
         if(self.normalize): z_train = F.normalize(z_train, p=2, dim=1)
        
         if self.dirichlet:
-                self.model.likelihood.targets = target
-                sigma2_labels, transformed_targets, num_classes = self.model.likelihood._prepare_targets(self.model.likelihood.targets, 
-                                        alpha_epsilon=self.model.likelihood.alpha_epsilon, dtype=torch.float)
-                self.model.likelihood.transformed_targets = transformed_targets.transpose(-2, -1)
-                self.model.likelihood.noise.data = sigma2_labels
-                self.model.set_train_data(inputs=z_train, targets=self.model.likelihood.transformed_targets, strict=False)
+            target[target==-1] = 0
+            self.model.likelihood.targets = target.long()
+            sigma2_labels, transformed_targets, num_classes = self.model.likelihood._prepare_targets(self.model.likelihood.targets, 
+                                    alpha_epsilon=self.model.likelihood.alpha_epsilon, dtype=torch.float)
+            self.model.likelihood.transformed_targets = transformed_targets.transpose(-2, -1)
+            self.model.likelihood.noise.data = sigma2_labels
+            self.model.set_train_data(inputs=z_train, targets=self.model.likelihood.transformed_targets, strict=False)
         else: 
             self.model.set_train_data(inputs=z_train, targets=target, strict=False)
 
