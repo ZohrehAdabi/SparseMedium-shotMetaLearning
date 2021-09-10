@@ -119,7 +119,7 @@ def run(lr_gp, lr_net, gamma):
             bb           = backbone.Conv3().cuda()
 
 
-            params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s_seed' % (configs.save_dir, params.dataset, params.model, params.method, 
+            params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s_seed%s' % (configs.save_dir, params.dataset, params.model, params.method, 
                                                             params.sparse_method, params.seed)
 
             video_path = params.checkpoint_dir
