@@ -63,7 +63,7 @@ class MAML_regression(nn.Module):
             self.initialize_plot(video_path, training)
 
         self.n_task     = 4
-        self.task_update_num = 3
+        self.task_update_num = 5
         self.train_lr = 0.01
         self.approx = False
         self.mse        = nn.MSELoss()
@@ -213,7 +213,7 @@ class MAML_regression(nn.Module):
 
 
         #***************************************************
-        y = get_unnormalized_label(y_query.datach()) #((y_query.detach() + 1) * 60 / 2) + 60
+        y = get_unnormalized_label(y_query.detach()) #((y_query.detach() + 1) * 60 / 2) + 60
         y_pred = get_unnormalized_label(output.detach()) #((output + 1) * 60 / 2) + 60
         mse_ = self.mse(y_pred, y).item()
         y = y.cpu().numpy()

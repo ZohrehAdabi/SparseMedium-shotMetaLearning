@@ -194,12 +194,13 @@ class DKT_regression(nn.Module):
     def train(self, stop_epoch, n_support, n_samples, optimizer):
 
         mll_list = []
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=stop_epoch//3, gamma=0.1)
         for epoch in range(stop_epoch):
             mll = self.train_loop(epoch, n_support, n_samples, optimizer)
             mll_list.append(mll)
             if(self.writer is not None): self.writer.add_scalar('MLL per epoch', mll, epoch)
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
-        
+            scheduler.step()
         mll = np.mean(mll_list)
         if self.show_plots_pred:
             self.mw.finish()
