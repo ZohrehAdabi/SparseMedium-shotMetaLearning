@@ -121,7 +121,7 @@ class DKT_binary(MetaTemplate):
         return max_pred
         
     def train_loop(self, epoch, train_loader, optimizer, print_freq=5):
-        optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
+        optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-3},
                                       {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
 
         for i, (x,_) in enumerate(train_loader):
@@ -159,7 +159,7 @@ class DKT_binary(MetaTemplate):
                 sigma2_labels, transformed_targets, num_classes = self.model.likelihood._prepare_targets(self.model.likelihood.targets, 
                                         alpha_epsilon=self.model.likelihood.alpha_epsilon, dtype=torch.float)
                 self.model.likelihood.transformed_targets = transformed_targets.transpose(-2, -1)
-                self.model.likelihood.noise.data = sigma2_labels
+                # self.model.likelihood.noise.data = sigma2_labels
                 self.model.set_train_data(inputs=z_train, targets=self.model.likelihood.transformed_targets, strict=False)
             else: 
                 self.model.set_train_data(inputs=z_train, targets=target, strict=False)

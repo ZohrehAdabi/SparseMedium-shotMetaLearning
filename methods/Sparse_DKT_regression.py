@@ -310,9 +310,10 @@ class Sparse_DKT_regression(nn.Module):
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
 
             # scheduler.step()
-            if (epoch) in [3, 50, 80]:
-
-                optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.1
+            # if (epoch) in [4, 50, 80]:
+            #     optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.1
+            if (epoch) in [4, 50, 80]:
+                optimizer.param_groups[1]['lr'] = optimizer.param_groups[1]['lr'] * 0.1
 
 
         mll = np.mean(mll_list)
