@@ -205,7 +205,7 @@ class DKT(MetaTemplate):
                 # y_pred = np.vstack(predictions_list).argmax(axis=0) #[model, classes]
                 # accuracy_support = (np.sum(y_pred==y_support) / float(len(y_support))) * 100.0
                 # if(self.writer is not None): self.writer.add_scalar('GP_support_accuracy', accuracy_support, self.iteration)
-                # z_query = self.feature_extractor.forward(x_query).detach()
+                z_query = self.feature_extractor.forward(x_query).detach()
                 if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
                 z_query_list = [z_query]*len(y_query)
                 predictions = self.likelihood(*self.model(*z_query_list)) #return 20 MultiGaussian Distributions
