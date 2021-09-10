@@ -121,9 +121,10 @@ def single_test(params):
         # checkpoint_dir += '_%dway_%dshot' %( params.train_n_way, params.n_shot)
         if params.method=='Sparse_DKT' or params.method=='Sparse_DKT_binary':
             if params.dirichlet:
-                id = f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_{params.gamma}'
+                id = f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}'
             else:
-                id = f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_{params.gamma}'           
+                id = f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}'           
+            if params.gamma: id += '_gamma'
             checkpoint_dir += id
         else:
             if params.dirichlet:
