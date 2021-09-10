@@ -80,7 +80,7 @@ elif params.method=='Sparse_DKT':
         model = Sparse_DKT_regression(bb, f_rvm=False, random=True,  n_inducing_points=params.n_centers, video_path=video_path, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     else:
-        ValueError('Unrecognised sparse method')
+       raise  ValueError('Unrecognised sparse method')
 
 
 elif params.method=='MAML':

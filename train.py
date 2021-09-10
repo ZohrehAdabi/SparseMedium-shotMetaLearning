@@ -38,10 +38,11 @@ def _set_seed(seed, verbose=True):
     else:
         if(verbose): print("[INFO] Setting SEED: None")
 
-def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch, params):
+def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch, lr_gp, lr_net, params):
     print("Tot epochs: " + str(stop_epoch))
     if optimization == 'Adam':
-        optimizer = torch.optim.Adam(model.parameters())
+        optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr': lr_gp},
+                                      {'params': model.feature_extractor.parameters(), 'lr': lr_net}])
     else:
         raise ValueError('Unknown optimization, please define by yourself')
 
@@ -268,4 +269,4 @@ if __name__ == '__main__':
         else:
             raise ValueError('No warm_up file')
 
-    model = train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch, params)
+    model = train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch, params.lr_gp, params.lr_net, params)

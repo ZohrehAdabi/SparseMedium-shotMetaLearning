@@ -30,6 +30,8 @@ def parse_args(script):
     parser.add_argument('--sparse_method', default='FRVM', type=str, help='FRVM|KMeans|random')
     parser.add_argument('--dirichlet', action='store_true',  help='perform dirichlet classification')
     parser.add_argument('--gamma', action='store_true', help='Delete data with low Gamma in FRVM algorithm') 
+    parser.add_argument('--lr_gp', default=1e-3, type=float, help='learning rate for [GP] model')
+    parser.add_argument('--lr_net', default=1e-3, type=float, help='learning rate for feature extractor')
     if script == 'train':
         parser.add_argument('--num_classes' , default=200, type=int, help='total number of classes in softmax, only used in baseline') #make it larger than the maximum label value in base class
         parser.add_argument('--save_freq'   , default=50, type=int, help='Save frequency')

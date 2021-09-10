@@ -143,8 +143,8 @@ class Sparse_DKT(MetaTemplate):
         #     optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
         #                               {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
         # else:
-        optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
-                                    {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
+        # optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
+        #                             {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
         for i, (x,_) in enumerate(train_loader):
             self.n_query = x.size(1) - self.n_support
             if self.change_way: self.n_way  = x.size(0)
