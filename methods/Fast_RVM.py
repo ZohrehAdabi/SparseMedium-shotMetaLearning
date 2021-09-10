@@ -13,7 +13,7 @@ from sklearn.metrics import mean_squared_error as mse
 from torch.utils import data
 
 
-def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='cuda', verbose=True):
+def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, device='cuda', verbose=True):
     
 
     M = K.shape[1]
@@ -55,7 +55,7 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
     add_priority    = config[1]=="1"
     alignment_test  = config[2]=="1"
     align_zero      = align_thr
-    check_gamma = True
+    check_gamma = gamma
     gm = 0.1
     add_count = 0
     del_count = 0
@@ -122,18 +122,16 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
         anyWorthwhileAction	= deltaLogMarginal > 0 
 
         if check_gamma:
-            if (selected_action==1) and (max_idx in low_gamma):
-                # print(f'{itr:3}, low gamma selected {max_idx.cpu().numpy()}')
+                if (selected_action==1) and (max_idx in low_gamma):
+                #print(f'{itr:3}, low gamma selected {max_idx.cpu().numpy()}')
                 if add_priority:
                     deltaML[recompute] = save_deltaML_recomp
                     deltaML[delete] = save_deltaML_del
-                    deltaML[max_idx] = 0
-                    max_idx = torch.argmax(deltaML)[None]
-                    deltaLogMarginal = deltaML[max_idx]
-                    selected_action		= action[max_idx]
-                    anyWorthwhileAction	= deltaLogMarginal > 0 
-                else:
-                    anyWorthwhileAction = False
+                deltaML[low_gamma] = 0
+                max_idx = torch.argmax(deltaML)[None]
+                deltaLogMarginal = deltaML[max_idx]
+                selected_action		= action[max_idx]
+                anyWorthwhileAction	= deltaLogMarginal > 0 
         
         # already in the model
         if selected_action != 1:
@@ -159,7 +157,7 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
                 selected_action = torch.tensor(11)
                 terminate = True
         
-        if check_gamma and ((itr%6==0) or (selected_action==10)):
+        if check_gamma and ((itr%5==0) or (selected_action==10)):
             
             min_index = torch.argmin(Gamma)
             if (Gamma[min_index] < gm) and active_m.shape[0] > 5:
@@ -169,12 +167,12 @@ def Fast_RVM(K, targets, N, config, align_thr, eps, tol, max_itr=3000, device='c
                 deltaML_j = -(q[active_m[j]]**2 / (s[active_m[j]] + alpha_m[j]) - torch.log(1 + s[active_m[j]] / alpha_m[j])) /2
                 
                 if deltaML_j > -0.01:
-                    print(f'itr {itr:3} low Gamma: {Gamma[min_index].detach().cpu().numpy():.4f}, deltaML: {deltaML_j.detach().cpu().numpy():.4f}',
+                    print(f'itr {itr:3} remove low Gamma: {Gamma[min_index].detach().cpu().numpy():.4f}, deltaML: {deltaML_j.detach().cpu().numpy():.4f}',
                                 f'correspond to {del_from_active.detach().cpu().numpy()} data index')
                     selected_action = -1
                     max_idx = del_from_active
                     deltaLogMarginal = deltaML_j
-                    low_gamma.append(del_from_active)
+                    low_gamma.append(del_from_active.item())
                         
 
         
@@ -558,9 +556,10 @@ if __name__=='__main__':
     K = kernel_matrix
     config = "011"
     align_thr = 1e-3
+    gamma = True
     # scale = torch.sqrt(torch.sum(K) / N ** 2)
     # K = K / scale                                 K, targets, N, config, align_thr
-    active_m, alpha_m, gamma_m, beta, mu_m = Fast_RVM(K, targets, N, config, align_thr, eps, tol, device='cpu')
+    active_m, alpha_m, gamma_m, beta, mu_m = Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, device='cpu')
     print(f'relevant index \n {active_m}')
     print(f'relevant alpha \n {alpha_m}')
     print(f'relevant Gamma \n {gamma_m}')

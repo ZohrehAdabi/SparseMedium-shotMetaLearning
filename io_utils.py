@@ -29,6 +29,7 @@ def parse_args(script):
     parser.add_argument('--align_thr', default=1e-3, type=float, help='1e-3, larger value leads to more rejection and sparseness')
     parser.add_argument('--sparse_method', default='FRVM', type=str, help='FRVM|KMeans|random')
     parser.add_argument('--dirichlet', action='store_true',  help='perform dirichlet classification')
+    parser.add_argument('--gamma', action='store_true', help='Delete data with low Gamma in FRVM algorithm') 
     if script == 'train':
         parser.add_argument('--num_classes' , default=200, type=int, help='total number of classes in softmax, only used in baseline') #make it larger than the maximum label value in base class
         parser.add_argument('--save_freq'   , default=50, type=int, help='Save frequency')

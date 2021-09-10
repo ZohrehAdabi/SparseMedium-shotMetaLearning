@@ -36,12 +36,13 @@ except ImportError:
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=5 --train_aug
 IP = namedtuple("inducing_points", "z_values index count x y i_idx j_idx")
 class Sparse_DKT_binary(MetaTemplate):
-    def __init__(self, model_func, n_way, n_support, config="010", align_threshold=1e-3, dirichlet=False):
+    def __init__(self, model_func, n_way, n_support, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
         super(Sparse_DKT_binary, self).__init__(model_func, n_way, n_support)
         self.num_inducing_points = 10
         self.fast_rvm = True
         self.config = config
         self.align_threshold = align_threshold
+        self.gamma = gamma
         self.dirichlet = dirichlet
         self.device ='cuda'
         ## GP parameters
@@ -303,7 +304,7 @@ class Sparse_DKT_binary(MetaTemplate):
 
             kernel_matrix = kernel_matrix.to(torch.float64)
             targets = targets.to(torch.float64)
-            active, alpha, Gamma, beta, mu_m = Fast_RVM(kernel_matrix, targets, N, self.config, self.align_threshold,
+            active, alpha, Gamma, beta, mu_m = Fast_RVM(kernel_matrix, targets, N, self.config, self.align_threshold, self.gamma,
                                                     eps, tol, max_itr, self.device, verbose)
 
             index = np.argsort(active)

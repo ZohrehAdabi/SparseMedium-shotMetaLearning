@@ -64,7 +64,7 @@ def feature_evaluation(cl_data_file, model, n_way = 5, n_support = 5, n_query = 
 def single_test(params):
     acc_all = []
 
-    iter_num = 600
+    iter_num = 200 #600
 
     few_shot_params = dict(n_way = params.test_n_way , n_support = params.n_shot) 
 
@@ -81,9 +81,11 @@ def single_test(params):
     elif params.method == 'DKT':
         model           = DKT(model_dict[params.model], **few_shot_params)
     elif params.method == 'Sparse_DKT':
-        model           = Sparse_DKT(model_dict[params.model], **few_shot_params)
+        model           = Sparse_DKT(model_dict[params.model], **few_shot_params,
+                                config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
     elif params.method == 'Sparse_DKT_binary':
-        model           = Sparse_DKT_binary(model_dict[params.model], **few_shot_params)
+        model           = Sparse_DKT_binary(model_dict[params.model], **few_shot_params,
+                                    config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
     elif params.method == 'matchingnet':
         model           = MatchingNet( model_dict[params.model], **few_shot_params )
     elif params.method in ['relationnet', 'relationnet_softmax']:
@@ -119,9 +121,9 @@ def single_test(params):
         # checkpoint_dir += '_%dway_%dshot' %( params.train_n_way, params.n_shot)
         if params.method=='Sparse_DKT' or params.method=='Sparse_DKT_binary':
             if params.dirichlet:
-                id = f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}'
+                id = f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_{params.gamma}'
             else:
-                id = f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}'           
+                id = f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_{params.gamma}'           
             checkpoint_dir += id
         else:
             params.checkpoint_dir += '_%dway_%dshot' % (params.train_n_way, params.n_shot)
