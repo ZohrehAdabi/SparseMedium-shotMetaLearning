@@ -6,7 +6,7 @@ from torch.autograd import Variable
 import numpy as np
 import torch.nn.functional as F
 from methods.meta_template import MetaTemplate
-from colorama import Fore
+
 ## Our packages
 import gpytorch
 from time import gmtime, strftime
@@ -61,18 +61,13 @@ class DKT(MetaTemplate):
         model_list = list()
         likelihood_list = list()
         for train_x, train_y in zip(train_x_list, train_y_list):
-            if self.dirichlet:
-                likelihood = gpytorch.likelihoods.DirichletClassificationLikelihood(targets=train_y.long(), learn_additional_noise=False)
-            else:
-                likelihood = gpytorch.likelihoods.GaussianLikelihood()
-
-            model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, dirichlet=self.dirichlet, kernel=kernel_type)
+            likelihood = gpytorch.likelihoods.GaussianLikelihood()
+            model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel=kernel_type)
             model_list.append(model)
             likelihood_list.append(model.likelihood)
         self.model = gpytorch.models.IndependentModelList(*model_list).cuda()
         self.likelihood = gpytorch.likelihoods.LikelihoodList(*likelihood_list).cuda()
         self.mll = gpytorch.mlls.SumMarginalLogLikelihood(self.likelihood, self.model).cuda()
-
         return self.model, self.likelihood, self.mll
 
     def set_forward(self, x, is_feature=False):
@@ -115,7 +110,7 @@ class DKT(MetaTemplate):
                 single_model.likelihood.noise=self.noise_list[idx].clone().detach()
                 single_model.covar_module.outputscale=self.outputscale_list[idx].clone().detach()
 
-    def train_loop(self, epoch, train_loader, optimizer, print_freq=5):
+    def train_loop(self, epoch, train_loader, optimizer, print_freq=10):
         optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
                                       {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
 
@@ -151,18 +146,10 @@ class DKT(MetaTemplate):
             noise = 0.0
             outputscale = 0.0
             for idx, single_model in enumerate(self.model.models):
-                if self.dirichlet:
-                    single_model.likelihood.targets = target_list[idx]
-                    sigma2_labels, transformed_targets, num_classes = single_model.likelihood._prepare_targets(single_model.likelihood.targets, 
-                                            alpha_epsilon=single_model.likelihood.alpha_epsilon, dtype=torch.float)
-                    single_model.likelihood.transformed_targets = transformed_targets.transpose(-2, -1)
-                    single_model.likelihood.noise.data = sigma2_labels
-                    single_model.set_train_data(inputs=z_train, targets=single_model.likelihood.transformed_targets, strict=False)
-                else: 
-                    single_model.set_train_data(inputs=z_train, targets=target_list[idx], strict=False)
+                single_model.set_train_data(inputs=z_train, targets=target_list[idx], strict=False)
                 if(single_model.covar_module.base_kernel.lengthscale is not None):
                     lenghtscale+=single_model.covar_module.base_kernel.lengthscale.mean().cpu().detach().numpy().squeeze()
-                noise+=single_model.likelihood.noise.cpu().detach().numpy().squeeze().mean()
+                noise+=single_model.likelihood.noise.cpu().detach().numpy().squeeze()
                 if(single_model.covar_module.outputscale is not None):
                     outputscale+=single_model.covar_module.outputscale.cpu().detach().numpy().squeeze()
             if(single_model.covar_module.base_kernel.lengthscale is not None): lenghtscale /= float(len(self.model.models))
@@ -172,11 +159,7 @@ class DKT(MetaTemplate):
             ## Optimize
             optimizer.zero_grad()
             output = self.model(*self.model.train_inputs)
-            if self.dirichlet:
-                transformed_targets = [model.likelihood.transformed_targets for model in self.model.models]
-                loss = -self.mll(output, transformed_targets).sum()
-            else:
-                loss = -self.mll(output, self.model.train_targets)
+            loss = -self.mll(output, self.model.train_targets)
             loss.backward()
             optimizer.step()
 
@@ -190,41 +173,28 @@ class DKT(MetaTemplate):
                 self.feature_extractor.eval()
                 z_support = self.feature_extractor.forward(x_support).detach()
                 if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1)
-                # z_support_list = [z_support]*len(y_support)
-                # predictions = self.likelihood(*self.model(*z_support_list)) #return 20 MultiGaussian Distributions
-                # predictions_list = list()
-                # if self.dirichlet:
-                #     for dirichlet in predictions:
-
-                #         max_pred = self.pred_result(dirichlet.mean)
-                #         predictions_list.append(max_pred.cpu().detach().numpy())
-                # else:
-                #     for gaussian in predictions:
-                #         predictions_list.append(torch.sigmoid(gaussian.mean).cpu().detach().numpy())
-                # y_pred = np.vstack(predictions_list).argmax(axis=0) #[model, classes]
-                # accuracy_support = (np.sum(y_pred==y_support) / float(len(y_support))) * 100.0
-                # if(self.writer is not None): self.writer.add_scalar('GP_support_accuracy', accuracy_support, self.iteration)
-                # z_query = self.feature_extractor.forward(x_query).detach()
+                z_support_list = [z_support]*len(y_support)
+                predictions = self.likelihood(*self.model(*z_support_list)) #return 20 MultiGaussian Distributions
+                predictions_list = list()
+                for gaussian in predictions:
+                    predictions_list.append(torch.sigmoid(gaussian.mean).cpu().detach().numpy())
+                y_pred = np.vstack(predictions_list).argmax(axis=0) #[model, classes]
+                accuracy_support = (np.sum(y_pred==y_support) / float(len(y_support))) * 100.0
+                if(self.writer is not None): self.writer.add_scalar('GP_support_accuracy', accuracy_support, self.iteration)
+                z_query = self.feature_extractor.forward(x_query).detach()
                 if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
                 z_query_list = [z_query]*len(y_query)
                 predictions = self.likelihood(*self.model(*z_query_list)) #return 20 MultiGaussian Distributions
                 predictions_list = list()
-                if self.dirichlet:
-                    for dirichlet in predictions:
-          
-                        max_pred = self.pred_result(dirichlet.mean)
-                        predictions_list.append(max_pred.cpu().detach().numpy())
-                else:
-                    for gaussian in predictions:
-                        predictions_list.append(torch.sigmoid(gaussian.mean).cpu().detach().numpy())
+                for gaussian in predictions:
+                    predictions_list.append(torch.sigmoid(gaussian.mean).cpu().detach().numpy())
                 y_pred = np.vstack(predictions_list).argmax(axis=0) #[model, classes]
                 accuracy_query = (np.sum(y_pred==y_query) / float(len(y_query))) * 100.0
                 if(self.writer is not None): self.writer.add_scalar('GP_query_accuracy', accuracy_query, self.iteration)
 
             if i % print_freq==0:
                 if(self.writer is not None): self.writer.add_histogram('z_support', z_support, self.iteration)
-                print(Fore.LIGHTRED_EX, 'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} | Noise {:f} | Loss {:f} | Supp. {:f} | Query {:f}'.format(epoch, i, len(train_loader), 
-                                outputscale, lenghtscale, noise, loss.item(), 0, accuracy_query), Fore.RESET)
+                print('Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} | Noise {:f} | Loss {:f} | Supp. {:f} | Query {:f}'.format(epoch, i, len(train_loader), outputscale, lenghtscale, noise, loss.item(), accuracy_support, accuracy_query))
 
     def correct(self, x, N=0, laplace=False):
         ##Dividing input x in query and support set
@@ -267,15 +237,7 @@ class DKT(MetaTemplate):
         if(self.normalize): z_train = F.normalize(z_train, p=2, dim=1)
         train_list = [z_train]*self.n_way
         for idx, single_model in enumerate(self.model.models):
-            if self.dirichlet:
-                single_model.likelihood.targets = target_list[idx]
-                sigma2_labels, transformed_targets, _ = single_model.likelihood._prepare_targets(single_model.likelihood.targets, 
-                                        alpha_epsilon=single_model.likelihood.alpha_epsilon, dtype=torch.float)
-                single_model.likelihood.transformed_targets = transformed_targets.transpose(-2, -1)
-                single_model.likelihood.noise.data = sigma2_labels
-                single_model.set_train_data(inputs=z_train, targets=single_model.likelihood.transformed_targets, strict=False)
-            else: 
-                single_model.set_train_data(inputs=z_train, targets=target_list[idx], strict=False)
+            single_model.set_train_data(inputs=z_train, targets=target_list[idx], strict=False)
 
         optimizer = torch.optim.Adam([{'params': self.model.parameters()}], lr=1e-3)
 
@@ -302,13 +264,8 @@ class DKT(MetaTemplate):
             z_query_list = [z_query]*len(y_query)
             predictions = self.likelihood(*self.model(*z_query_list)) #return n_way MultiGaussians
             predictions_list = list()
-            if self.dirichlet:
-                for dirichlet in predictions:
-                        max_pred = self.pred_result(dirichlet.mean)
-                        predictions_list.append(max_pred.cpu().detach().numpy())
-            else:
-                for gaussian in predictions:
-                    predictions_list.append(torch.sigmoid(gaussian.mean).cpu().detach().numpy())
+            for gaussian in predictions:
+                predictions_list.append(torch.sigmoid(gaussian.mean).cpu().detach().numpy())
             y_pred = np.vstack(predictions_list).argmax(axis=0) #[model, classes]
             top1_correct = np.sum(y_pred == y_query)
             count_this = len(y_query)
@@ -326,7 +283,7 @@ class DKT(MetaTemplate):
                 self.n_way  = x.size(0)
             correct_this, count_this, loss_value = self.correct(x)
             acc_all.append(correct_this/ count_this*100)
-            if(i % 10==0):
+            if(i % 100==0):
                 acc_mean = np.mean(np.asarray(acc_all))
                 print('Test | Batch {:d}/{:d} | Loss {:f} | Acc {:f}'.format(i, len(test_loader), loss_value, acc_mean))
         acc_all  = np.asarray(acc_all)
@@ -384,16 +341,12 @@ class ExactGPLayer(gpytorch.models.ExactGP):
         covar_module.raw_outputscale
         covar_module.base_kernel.raw_lengthscale
     '''
-    def __init__(self, train_x, train_y, likelihood, dirichlet, kernel='linear'):
+    def __init__(self, train_x, train_y, likelihood, kernel='linear'):
         #Set the likelihood noise and enable/disable learning
-        if not dirichlet:
-            likelihood.noise_covar.raw_noise.requires_grad = False
-            likelihood.noise_covar.noise = torch.tensor(0.1)
+        likelihood.noise_covar.raw_noise.requires_grad = False
+        likelihood.noise_covar.noise = torch.tensor(0.1)
         super().__init__(train_x, train_y, likelihood)
-        if dirichlet:
-            self.mean_module  = gpytorch.means.ConstantMean(batch_shape=torch.Size((2,)))
-        else:
-            self.mean_module = gpytorch.means.ConstantMean()
+        self.mean_module = gpytorch.means.ConstantMean()
 
         ## Linear kernel
         if(kernel=='linear'):
