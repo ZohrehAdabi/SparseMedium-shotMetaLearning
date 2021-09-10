@@ -214,7 +214,7 @@ class DKT_binary(MetaTemplate):
                
                 if self.dirichlet:
                     
-                   max_pred = (prediction.mean[0] < prediction.mean[1]).to(int)
+                   max_pred = (prediction.mean[0] > prediction.mean[1]).to(int) #y_query [1, 1, ..., 0, 0, ..., 0]
                    y_pred = max_pred.cpu().detach().numpy()
                 else: 
                    pred = torch.sigmoid(prediction.mean)
@@ -307,7 +307,7 @@ class DKT_binary(MetaTemplate):
             
             if self.dirichlet:
                     
-                   max_pred = (prediction.mean[0] < prediction.mean[1]).to(int)
+                   max_pred = (prediction.mean[0] > prediction.mean[1]).to(int)
                    y_pred = max_pred.cpu().detach().numpy()
             else: 
                 pred = torch.sigmoid(prediction.mean)
