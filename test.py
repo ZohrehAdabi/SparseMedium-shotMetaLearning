@@ -193,7 +193,7 @@ def single_test(params):
         acc_mean = np.mean(acc_all)
         acc_std  = np.std(acc_all)
         print('%d Test Acc = %4.2f%% +- %4.2f%%' %(iter_num, acc_mean, 1.96* acc_std/np.sqrt(iter_num)))
-    with open(f'./record/results_{id}.txt' , 'a') as f:
+    with open(f'./record/results{id}.txt' , 'a') as f:
         timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime()) 
         aug_str = '-aug' if params.train_aug else ''
         aug_str += '-adapted' if params.adaptation else ''
