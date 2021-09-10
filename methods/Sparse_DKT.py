@@ -160,7 +160,8 @@ class Sparse_DKT(MetaTemplate):
             target_list = list()
             samples_per_model = int(len(y_train) / self.n_way) #25 / 5 = 5
             for way in range(self.n_way):
-                target = torch.ones(len(y_train), dtype=torch.float32) * -1 
+                # target = torch.ones(len(y_train), dtype=torch.float32) * -1 
+                target = torch.zeros(len(y_train), dtype=torch.float32) 
                 start_index = way * samples_per_model
                 stop_index = start_index+samples_per_model
                 target[start_index:stop_index] = 1.0
@@ -369,7 +370,8 @@ class Sparse_DKT(MetaTemplate):
         target_list = list()
         samples_per_model = int(len(y_train) / self.n_way)
         for way in range(self.n_way):
-            target = torch.ones(len(y_train), dtype=torch.float32) * -1.0
+            # target = torch.ones(len(y_train), dtype=torch.float32) * -1.0
+            target = torch.zeros(len(y_train), dtype=torch.float32) 
             start_index = way * samples_per_model
             stop_index = start_index+samples_per_model
             target[start_index:stop_index] = 1.0

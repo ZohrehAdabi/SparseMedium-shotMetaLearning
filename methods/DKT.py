@@ -122,7 +122,7 @@ class DKT(MetaTemplate):
         index = ~idx.to(bool)
         max_pred[index] = -np.inf
         return max_pred
-        
+
     def train_loop(self, epoch, train_loader, optimizer, print_freq=5):
         optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
                                       {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
@@ -142,7 +142,8 @@ class DKT(MetaTemplate):
             target_list = list()
             samples_per_model = int(len(y_train) / self.n_way) #25 / 5 = 5
             for way in range(self.n_way):
-                target = torch.ones(len(y_train), dtype=torch.float32) * -1.0
+                # target = torch.ones(len(y_train), dtype=torch.float32) * -1.0
+                target = torch.zeros(len(y_train), dtype=torch.float32) 
                 start_index = way * samples_per_model
                 stop_index = start_index+samples_per_model
                 target[start_index:stop_index] = 1.0
@@ -265,7 +266,8 @@ class DKT(MetaTemplate):
         target_list = list()
         samples_per_model = int(len(y_train) / self.n_way)
         for way in range(self.n_way):
-            target = torch.ones(len(y_train), dtype=torch.float32) * -1.0
+            # target = torch.ones(len(y_train), dtype=torch.float32) * -1.0
+            target = torch.zeros(len(y_train), dtype=torch.float32) 
             start_index = way * samples_per_model
             stop_index = start_index+samples_per_model
             target[start_index:stop_index] = 1.0
