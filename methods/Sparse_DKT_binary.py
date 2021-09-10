@@ -173,7 +173,8 @@ class Sparse_DKT_binary(MetaTemplate):
             outputscale = 0.0
 
             if self.dirichlet:
-                self.model.likelihood.targets = target
+                target[target==-1] = 0
+                self.model.likelihood.targets = target.long()
                 sigma2_labels, transformed_targets, num_classes = self.model.likelihood._prepare_targets(self.model.likelihood.targets, 
                                         alpha_epsilon=self.model.likelihood.alpha_epsilon, dtype=torch.float)
                 self.model.likelihood.transformed_targets = transformed_targets.transpose(-2, -1)
@@ -227,7 +228,7 @@ class Sparse_DKT_binary(MetaTemplate):
                
                 # if self.dirichlet:
                 #     
-                #    max_pred = (prediction.mean[0] < prediction.mean[1]).to(int)
+                #    max_pred = (prediction.mean[0] > prediction.mean[1]).to(int)
                 #    y_pred = max_pred.cpu().detach().numpy()
                 # else: 
                 #    pred = torch.sigmoid(prediction.mean)
@@ -246,7 +247,7 @@ class Sparse_DKT_binary(MetaTemplate):
                
                 if self.dirichlet:
                     
-                   max_pred = (prediction.mean[0] < prediction.mean[1]).to(int)
+                   max_pred = (prediction.mean[0] > prediction.mean[1]).to(int)
                    y_pred = max_pred.cpu().detach().numpy()
                 else: 
                    pred = torch.sigmoid(prediction.mean)
@@ -366,7 +367,8 @@ class Sparse_DKT_binary(MetaTemplate):
         if(self.normalize): z_train = F.normalize(z_train, p=2, dim=1)
         
         if self.dirichlet:
-                self.model.likelihood.targets = target
+                target[target==-1] = 0
+                self.model.likelihood.targets = target.long()
                 sigma2_labels, transformed_targets, num_classes = self.model.likelihood._prepare_targets(self.model.likelihood.targets, 
                                         alpha_epsilon=self.model.likelihood.alpha_epsilon, dtype=torch.float)
                 self.model.likelihood.transformed_targets = transformed_targets.transpose(-2, -1)
@@ -413,7 +415,7 @@ class Sparse_DKT_binary(MetaTemplate):
             
             if self.dirichlet:
                     
-                   max_pred = (prediction.mean[0] < prediction.mean[1]).to(int)
+                   max_pred = (prediction.mean[0] > prediction.mean[1]).to(int)
                    y_pred = max_pred.cpu().detach().numpy()
             else: 
                 pred = torch.sigmoid(prediction.mean)
