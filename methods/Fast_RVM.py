@@ -122,7 +122,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
         anyWorthwhileAction	= deltaLogMarginal > 0 
 
         if check_gamma:
-                if (selected_action==1) and (max_idx in low_gamma):
+            if (selected_action==1) and (max_idx in low_gamma):
                 #print(f'{itr:3}, low gamma selected {max_idx.cpu().numpy()}')
                 if add_priority:
                     deltaML[recompute] = save_deltaML_recomp
