@@ -137,11 +137,11 @@ class Sparse_DKT_binary(MetaTemplate):
 
     def train_loop(self, epoch, train_loader, optimizer, print_freq=10):
         if self.dirichlet:
-            optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-3},
-                                      {'params': self.feature_extractor.parameters(), 'lr': 1e-4}])
+            optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
+                                      {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
         else:
-            optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-3},
-                                      {'params': self.feature_extractor.parameters(), 'lr': 1e-4}])
+            optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
+                                      {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
         for i, (x,_) in enumerate(train_loader):
             self.n_query = x.size(1) - self.n_support
             if self.change_way: self.n_way  = x.size(0)
@@ -155,8 +155,8 @@ class Sparse_DKT_binary(MetaTemplate):
             y_train = y_all
 
             samples_per_model = int(len(y_train) / self.n_way) #25 / 5 = 5
-            # target = torch.ones(len(y_train), dtype=torch.float32) * -1 
-            target = torch.zeros(len(y_train), dtype=torch.float32) 
+            target = torch.ones(len(y_train), dtype=torch.float32) * -1 
+            # target = torch.zeros(len(y_train), dtype=torch.float32) 
             start_index = 0
             stop_index = start_index+samples_per_model
             target[start_index:stop_index] = 1.0
@@ -358,8 +358,8 @@ class Sparse_DKT_binary(MetaTemplate):
         y_train = y_support
 
         samples_per_model = int(len(y_train) / self.n_way) #25 / 5 = 5
-        # target = torch.ones(len(y_train), dtype=torch.float32) * -1 
-        target = torch.zeros(len(y_train), dtype=torch.float32) 
+        target = torch.ones(len(y_train), dtype=torch.float32) * -1 
+        # target = torch.zeros(len(y_train), dtype=torch.float32) 
         start_index = 0
         stop_index = start_index+samples_per_model
         target[start_index:stop_index] = 1.0
