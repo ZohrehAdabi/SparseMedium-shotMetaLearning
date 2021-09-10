@@ -440,7 +440,7 @@ class Sparse_DKT_binary(MetaTemplate):
                 self.n_way  = x.size(0)
             correct_this, count_this, loss_value = self.correct(x)
             acc_all.append(correct_this/ count_this*100)
-            if(i % 100==0):
+            if(i % 10==0):
                 acc_mean = np.mean(np.asarray(acc_all))
                 print('Test | Batch {:d}/{:d} | Loss {:f} | Acc {:f}'.format(i, len(test_loader), loss_value, acc_mean))
         acc_all  = np.asarray(acc_all)
