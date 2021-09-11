@@ -119,13 +119,14 @@ class FeatureTransfer(nn.Module):
         y_support = y_all[test_person, support_ind]
         x_query   = x_all[test_person, query_ind,:,:,:]
         y_query   = y_all[test_person, query_ind]
-
-        optimizer.zero_grad()
-        z_support = self.feature_extractor(x_support).detach()
-        output_support = self.model(z_support).squeeze()
-        loss = self.criterion(output_support.squeeze(), y_support)
-        loss.backward()
-        optimizer.step()
+        #fine-tune
+        for k in range(3):
+            optimizer.zero_grad()
+            z_support = self.feature_extractor(x_support).detach()
+            output_support = self.model(z_support).squeeze()
+            loss = self.criterion(output_support.squeeze(), y_support)
+            loss.backward()
+            optimizer.step()
 
         self.feature_extractor.eval()
         self.model.eval()
