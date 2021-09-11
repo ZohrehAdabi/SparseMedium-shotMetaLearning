@@ -417,7 +417,8 @@ class Sparse_DKT_regression(nn.Module):
                     mu_m = (mu_m[index] / ss)
                     mu_m = mu_m.to(torch.float)
                     y_pred = K @ mu_m
-                    mse = self.mse(y_pred, targets)
+                    y = targets[index]
+                    mse = self.mse(y_pred, y)
                     print(f'FRVM MSE: {mse:0.4f}')
             
 
