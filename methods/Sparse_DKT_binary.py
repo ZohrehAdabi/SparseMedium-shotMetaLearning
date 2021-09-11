@@ -307,6 +307,7 @@ class Sparse_DKT_binary(MetaTemplate):
                 kernel_matrix = kernel_matrix / scales
 
             kernel_matrix = kernel_matrix.to(torch.float64)
+            targets[targets==-1]= 0
             targets = targets.to(torch.float64)
             active, alpha, Gamma, beta, mu_m = Fast_RVM(kernel_matrix, targets, N, self.config, self.align_threshold, self.gamma,
                                                     eps, tol, max_itr, self.device, verbose)
@@ -326,7 +327,6 @@ class Sparse_DKT_binary(MetaTemplate):
                 y_pred = torch.sigmoid(y_pred)
                 y_pred = (y_pred > 0.5).to(int)
                 acc = torch.sum(y_pred==targets)
-                inputs = inputs * 0
                 print(f'FRVM ACC: {(acc/N):.1%}')
 
         return IP(inducing_points, IP_index, num_IP, None, None, None, None)
@@ -431,7 +431,7 @@ class Sparse_DKT_binary(MetaTemplate):
             top1_correct = np.sum(y_pred == y_query)
             count_this = len(y_query)
             acc = (top1_correct/ count_this)*100
-            print(f'itr {i:3}, ACC: {acc:.2f}')
+            print(Fore.YELLOW, f'itr {i:3}, ACC: {acc:.2f}%', Fore.RESET)
             if self.show_plot:
                 self.plot_test(x_query, y_query, y_pred, inducing_points, i)
 

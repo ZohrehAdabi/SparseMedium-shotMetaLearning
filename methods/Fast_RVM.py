@@ -19,7 +19,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
     M = K.shape[1]
     logMarginalLog = []
 
-    targets[targets==-1]= 0
+    # targets[targets==-1]= 0
 
     targets = targets.to(device)
     K = K.to(device)
