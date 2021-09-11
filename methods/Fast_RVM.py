@@ -141,13 +141,13 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
         
         terminate = False
 
-        if ~anyWorthwhileAction:
+        if not anyWorthwhileAction:
             # if verbose:
             print(f'{itr:3}, No positive action, m={active_m.shape[0]:3}')
             selected_action = torch.tensor(10)
             terminate = True
 
-        elif selected_action==0 and ~anyToDelete:
+        elif (selected_action==0) and (not anyToDelete):
             no_change_in_alpha = torch.abs(torch.log(alpha_new) - torch.log(alpha_m[j])) < tol
            
             if no_change_in_alpha:

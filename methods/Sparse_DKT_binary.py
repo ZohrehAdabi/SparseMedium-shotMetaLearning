@@ -476,9 +476,14 @@ class Sparse_DKT_binary(MetaTemplate):
         r = 3
         c = 5
         i = 1
-        x_q = torch.vstack([x_query[0:5], x_query[10:15]])
-        y_q = np.hstack([y_query[0:5], y_query[10:15]])
-        y_pred_ = np.hstack([y_pred[0:5], y_pred[10:15]])
+        if y_query.shape[0] >10:
+            x_q       = torch.vstack([x_query[0:5], x_query[10:15]])
+            y_q       = np.hstack([y_query[0:5], y_query[10:15]])
+            y_pred_   = np.hstack([y_pred[0:5], y_pred[10:15]])
+        else:
+            x_q     = x_query    
+            y_q     = y_query
+            y_pred_ = y_pred
         for i in range(10):
             x = self.denormalize(x_q[i])
             y = y_q[i]
