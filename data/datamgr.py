@@ -87,3 +87,36 @@ class SetDataManager(DataManager):
         data_loader = torch.utils.data.DataLoader(dataset, **data_loader_params)
         return data_loader
 
+
+
+def denormalize(tensor):
+    means = [0.485, 0.456, 0.406]
+    stds = [0.229, 0.224, 0.225]
+    """
+    Reverses the normalisation on a tensor.
+    Performs a reverse operation on a tensor, so the pixel value range is
+    between 0 and 1. Useful for when plotting a tensor into an image.
+    Normalisation: (image - mean) / std
+    Denormalisation: image * std + mean
+    Args:
+        tensor (torch.Tensor, dtype=torch.float32): Normalized image tensor
+    Shape:
+        Input: :math:`(N, C, H, W)`
+        Output: :math:`(N, C, H, W)` (same shape as input)
+    Return:
+        torch.Tensor (torch.float32): Demornalised image tensor with pixel
+            values between [0, 1]
+    Note:
+        Symbols used to describe dimensions:
+            - N: number of images in a batch
+            - C: number of channels
+            - H: height of the image
+            - W: width of the image
+    """
+
+    denormalized = tensor.clone()
+
+    for channel, mean, std in zip(denormalized, means, stds):
+        channel.mul_(std).add_(mean)
+
+    return denormalized

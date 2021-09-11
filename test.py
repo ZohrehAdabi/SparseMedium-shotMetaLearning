@@ -160,7 +160,7 @@ def single_test(params):
         else:
             image_size = 224
 
-        datamgr         = SetDataManager(image_size, n_eposide = iter_num, n_query = 15 , **few_shot_params)
+        datamgr         = SetDataManager(image_size, n_eposide = iter_num, n_query = params.n_query , **few_shot_params)
         
         if params.dataset == 'cross':
             if split == 'base':
@@ -172,10 +172,11 @@ def single_test(params):
                 loadfile = configs.data_dir['omniglot'] + 'noLatin.json' 
             else:
                 loadfile  = configs.data_dir['emnist'] + split +'.json' 
-        else: 
+        else: # novel
             loadfile    = configs.data_dir[params.dataset] + split + '.json'
 
         novel_loader     = datamgr.get_data_loader( loadfile, aug = False)
+        
         if params.adaptation:
             model.task_update_num = 100 #We perform adaptation on MAML simply by updating more times.
         model.eval()

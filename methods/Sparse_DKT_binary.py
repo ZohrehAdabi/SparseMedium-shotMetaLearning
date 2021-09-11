@@ -9,6 +9,8 @@ import torch.nn.functional as F
 from methods.meta_template import MetaTemplate
 from fast_pytorch_kmeans import KMeans as Fast_KMeans
 from collections import namedtuple
+import torchvision.transforms as transforms
+import matplotlib.pyplot as plt
 ## Our packages
 import gpytorch
 import os
@@ -382,6 +384,8 @@ class Sparse_DKT_binary(MetaTemplate):
         with torch.no_grad():
             inducing_points = self.get_inducing_points(self.model.base_covar_module, #.base_kernel,
                                                     z_train, target, verbose=False)
+            inducing_points = IP(inducing_points.z_values, inducing_points.index, inducing_points.count, 
+                                x_support[inducing_points.index], y_support[inducing_points.index], None, None)
     
         ip_values = inducing_points.z_values.cuda()
         self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
@@ -452,6 +456,48 @@ class Sparse_DKT_binary(MetaTemplate):
         if(self.writer is not None): self.writer.add_scalar('test_accuracy', acc_mean, self.iteration)
         if(return_std): return acc_mean, acc_std
         else: return acc_mean
+
+    
+    def plot_test(self, fig, ax, x_query, y_query, y_pred, inducing_x, inducing_y):
+
+        fig: plt.Figure = plt.figure(1, figsize=(8, 4), tight_layout=True, dpi=125)
+        
+        r = 3
+        c = 5
+        i = 1
+        for i in range(y_query.shape[0]):
+            x = self.denormalize(x_query[i])
+            y = y_query[i]
+            y_p = y_pred[i]
+            ax: plt.Axes = fig.add_subplot(r, c, i)
+            img = transforms.ToPILImage()(x.cpu()).convert("RGB")
+            ax.imshow(img)
+            ax.set_title(f'pred: {y_p:.0f}, real: {y:.0f}')
+
+        for i in range(inducing_y.shape[0]):
+            x = self.denormalize(inducing_x[i])
+            y = inducing_y[i]
+            ax: plt.Axes = fig.add_subplot(r, c, i)
+            img = transforms.ToPILImage()(x.cpu()).convert("RGB")
+            ax.imshow(img)
+            ax.set_title(f'{y:.0f}')
+            
+        os.makedirs('./save_img', exist_ok=True)
+        fig.savefig(f'./save_img/test_images.png')
+
+        
+
+    def denormalize(self, tensor):
+        means = [0.485, 0.456, 0.406]
+        stds = [0.229, 0.224, 0.225]
+
+        denormalized = tensor.clone()
+
+        for channel, mean, std in zip(denormalized, means, stds):
+            channel.mul_(std).add_(mean)
+
+        return denormalized
+
 
     def get_logits(self, x):
         self.n_query = x.size(1) - self.n_support

@@ -14,7 +14,7 @@ import torchvision.transforms as transforms
 from sklearn.manifold import TSNE
 import backbone
 from torch.autograd import Variable
-from data.qmul_loader import get_batch, train_people, test_people
+from data.qmul_loader import get_batch, train_people, test_people, get_unnormalized_label
 
 class Regressor(nn.Module):
     def __init__(self):
@@ -131,7 +131,19 @@ class FeatureTransfer(nn.Module):
         self.model.eval()
         z_query = self.feature_extractor(x_query).detach()
         output = self.model(z_query).squeeze()
-        mse = self.criterion(output.squeeze(), y_query).item()
+        mse = self.criterion(output, y_query).item()
+
+        y = get_unnormalized_label(y_query.detach()) #((y_query.detach() + 1) * 60 / 2) + 60
+        y_pred = get_unnormalized_label(output.detach()) # ((pred.mean.detach() + 1) * 60 / 2) + 60
+        mse_ = self.mse(y_pred, y).item()
+        y = y.cpu().numpy()
+        y_pred = y_pred.cpu().numpy()
+        print(Fore.RED,"-"*50, Fore.RESET)
+        print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
+        print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
+        print(Fore.LIGHTRED_EX, f'mse:    {mse_:.4f}, mse (normed):{mse:.4f}', Fore.RESET)
+        print(Fore.RED,"-"*50, Fore.RESET)
+
 
         if (self.show_plots_pred or self.show_plots_features):
             embedded_z_support = TSNE(n_components=2).fit_transform(z_support.detach().cpu().numpy())
