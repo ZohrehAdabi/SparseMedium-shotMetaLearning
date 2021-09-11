@@ -143,8 +143,10 @@ def single_test(params):
         if modelfile is not None:
             tmp = torch.load(modelfile)
             if params.method=='Sparse_DKT' or params.method=='Sparse_DKT_binary':
+                
                 IP = torch.ones(100, 64).cuda()
-                tmp['covar_module.inducing_points'] = IP
+                tmp['state']['model.covar_module.inducing_points'] = IP
+                tmp['state']['mll.model.covar_module.inducing_points'] = IP
             model.load_state_dict(tmp['state'])
 
         else:
