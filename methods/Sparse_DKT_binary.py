@@ -315,6 +315,7 @@ class Sparse_DKT_binary(MetaTemplate):
             index = np.argsort(active)
             active = active[index]
             inducing_points = inputs[active]
+            
             num_IP = active.shape[0]
             IP_index = active
 
@@ -326,7 +327,8 @@ class Sparse_DKT_binary(MetaTemplate):
                 y_pred = K @ mu_m
                 y_pred = torch.sigmoid(y_pred)
                 y_pred = (y_pred > 0.5).to(int)
-                acc = torch.sum(y_pred==targets)
+                y = targets[index]
+                acc = torch.sum(y_pred==y)
                 print(f'FRVM ACC: {(acc/N):.1%}')
 
         return IP(inducing_points, IP_index, num_IP, None, None, None, None)
