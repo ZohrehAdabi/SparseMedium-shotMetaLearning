@@ -430,8 +430,11 @@ class Sparse_DKT_binary(MetaTemplate):
 
             top1_correct = np.sum(y_pred == y_query)
             count_this = len(y_query)
+            acc = (top1_correct/ count_this)*100
+            print(f'itr {i:3}, ACC: {acc:.2f}')
             if self.show_plot:
                 self.plot_test(x_query, y_query, y_pred, inducing_points, i)
+
 
         return float(top1_correct), count_this, avg_loss/float(N+1e-10)
 
