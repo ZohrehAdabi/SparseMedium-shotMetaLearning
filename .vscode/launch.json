@@ -76,7 +76,7 @@
             "console": "integratedTerminal",
            "args": ["--method","Sparse_DKT_binary", "--sparse_method", "FRVM", "--dataset", "omniglot", 
             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "15", "--n_query", "5",
-              "--seed","1", "--config", "000", "--align_thr", "1e-3", "--lr_gp", "1e-1", "--lr_net", "1e-2"]
+              "--seed","1", "--config", "000", "--align_thr", "1e-3", "--lr_gp", "1e-1", "--lr_net", "1e-3"]
             // python test.py --method "Sparse_DKT"  --sparse_method "FRVM" --dataset "omniglot"  --train_n_way 5 --test_n_way 5 --n_shot 15 --n_query 5 --seed 1 --config "010" --align_thr 1e-3  --lr_gp  1e-1 --lr_net  1e-2
         },
         {
