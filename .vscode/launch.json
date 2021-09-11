@@ -274,7 +274,7 @@
             "program": "${workspaceFolder}/train_regression.py",
             "console": "integratedTerminal",
            "args": ["--method","transfer", "--n_samples", "72", "--stop_epoch", "100", "--seed","2"] 
-            // --method "transfer"  --n_samples 108 --stop_epoch 100  --seed  2 
+            //python train_regression.py  --method "transfer"  --n_samples 72   --stop_epoch 100  --seed  2 
         },
         {
             "name": "Transfer: test_regression",
