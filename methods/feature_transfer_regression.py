@@ -25,9 +25,11 @@ class Regressor(nn.Module):
         layer4_w = self.layer4.weight.data.clone().detach()
         layer4_b = self.layer4.bias.data.clone().detach()
 
+        return (layer4_w, layer4_b)
+
     def assign_clones(self, weights_list):
         self.layer4.weight.data.copy_(weights_list[0])
-        self.layer4.weight.data.copy_(weights_list[1])
+        self.layer4.bias.data.copy_(weights_list[1])
 
     def forward(self, x):
         out = self.layer4(x)
@@ -172,9 +174,11 @@ class FeatureTransfer(nn.Module):
         test_person = np.random.choice(np.arange(len(test_people)), size=test_count, replace=rep)
         for t in range(test_count):
             print(f'test #{t}')
-            
+            weights_1 = self.feature_extractor.return_clones()
+            weights_2 = self.model.return_clones()
             mse = self.test_loop(n_support, n_samples, test_person[t],  optimizer)
-            
+            self.feature_extractor.assign_clones(weights_1)
+            self.model.assign_clones(weights_2)
             mse_list.append(float(mse))
         
         if self.show_plots_pred:
