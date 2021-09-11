@@ -190,6 +190,7 @@ test_old.ipynb
 
 save/checkpoints/MSC44
 save
+save_img/
 save/checkpoints/
 save/checkpoints/QMUL/*.png
 log
