@@ -331,7 +331,7 @@ class Sparse_DKT_binary(MetaTemplate):
 
         return IP(inducing_points, IP_index, num_IP, None, None, None, None)
   
-    def correct(self, x, N=0, laplace=False):
+    def correct(self, x, i=0, N=0, laplace=False):
         ##Dividing input x in query and support set
         x_support = x[:,:self.n_support,:,:,:].contiguous().view(self.n_way * (self.n_support), *x.size()[2:]).cuda()
         y_support = torch.from_numpy(np.repeat(range(self.n_way), self.n_support)).cuda()
@@ -430,8 +430,8 @@ class Sparse_DKT_binary(MetaTemplate):
 
             top1_correct = np.sum(y_pred == y_query)
             count_this = len(y_query)
-
-            #self.plot_test(x_query, y_query, y_pred, inducing_points)
+            if self.show_plot:
+                self.plot_test(x_query, y_query, y_pred, inducing_points, i)
 
         return float(top1_correct), count_this, avg_loss/float(N+1e-10)
 
@@ -446,7 +446,7 @@ class Sparse_DKT_binary(MetaTemplate):
             self.n_query = x.size(1) - self.n_support
             if self.change_way:
                 self.n_way  = x.size(0)
-            correct_this, count_this, loss_value = self.correct(x)
+            correct_this, count_this, loss_value = self.correct(x, i)
             acc_all.append(correct_this/ count_this*100)
             if(i % 10==0):
                 acc_mean = np.mean(np.asarray(acc_all))
@@ -462,7 +462,7 @@ class Sparse_DKT_binary(MetaTemplate):
         else: return acc_mean
 
     
-    def plot_test(self, x_query, y_query, y_pred, inducing_points):
+    def plot_test(self, x_query, y_query, y_pred, inducing_points, k):
         def clear_ax(ax):
             ax.clear()
             ax.set_xticks([])
@@ -501,7 +501,7 @@ class Sparse_DKT_binary(MetaTemplate):
             ax.set_title(f'{y:.0f}')
             
         os.makedirs('./save_img', exist_ok=True)
-        fig.savefig(f'./save_img/test_images.png')
+        fig.savefig(f'./save_img/test_images_{k}.png')
 
         
 
