@@ -475,9 +475,9 @@ class Sparse_DKT_binary(MetaTemplate):
         r = 3
         c = 5
         i = 1
-        x_q = torch.stack([x_query[0:5], x_query[10:15]])
-        y_q = torch.stack([y_query[0:5], y_query[10:15]])
-        y_pred_ = torch.stack([y_pred[0:5], y_pred[10:15]])
+        x_q = torch.vstack([x_query[0:5], x_query[10:15]])
+        y_q = np.hstack([y_query[0:5], y_query[10:15]])
+        y_pred_ = np.hstack([y_pred[0:5], y_pred[10:15]])
         for i in range(10):
             x = self.denormalize(x_q[i])
             y = y_q[i]
@@ -488,8 +488,8 @@ class Sparse_DKT_binary(MetaTemplate):
             ax.imshow(img)
             ax.set_title(f'pred: {y_p:.0f}, real: {y:.0f}')
         inducing_x, inducing_y = inducing_points.x, inducing_points.y
-        for i in range(5):
-            x = self.denormalize(inducing_x[i])
+        for i in range(inducing_y.shape[0]):
+            x = self.denormalize(inducing_x[i].squeeze())
             y = inducing_y[i]
             ax: plt.Axes = fig.add_subplot(r, c, i+1)
             ax = clear_ax(ax)
