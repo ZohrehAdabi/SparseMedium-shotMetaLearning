@@ -64,7 +64,7 @@ def feature_evaluation(cl_data_file, model, n_way = 5, n_support = 5, n_query = 
 def single_test(params):
     acc_all = []
 
-    iter_num = 1 #600
+    iter_num = 100 #600
 
     few_shot_params = dict(n_way = params.test_n_way , n_support = params.n_shot) 
 
