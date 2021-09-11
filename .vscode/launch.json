@@ -79,8 +79,6 @@
                 "--seed","1", "--config", "010", "--align_thr", "1e-3" , "--train_aug"]  //--train_aug
     // python train.py --method "Sparse_DKT"  --sparse_method "FRVM" --dataset "CUB"  --train_n_way 5 --test_n_way 5  --n_shot 50 --n_query 10 --seed 1 --config "010" --align_thr 1e-3 --train_aug
         },
-         
-
         {
             "name": "Sparse_DKT_FRVM [CUB]: test",
             "type": "python",
@@ -92,6 +90,7 @@
               "--seed","1", "--config", "011", "--align_thr", "1e-3"]
     // python test.py --method "Sparse_DKT"  --sparse_method "FRVM" --dataset "CUB"  --train_n_way 5 --test_n_way 5 --n_shot 50  --n_query 10 --seed 1 --config "010" --align_thr 1e-3  --train_aug
         },
+        
         {
             "name": "Sparse_DKT_binary_FRVM [CUB]: train",
             "type": "python",
@@ -102,6 +101,17 @@
             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
                 "--seed","1", "--config", "010", "--align_thr", "1e-3" , "--train_aug"]  //--train_aug
     // python train.py --method "Sparse_DKT_binary"  --sparse_method "FRVM" --dataset "CUB"  --train_n_way 2 --test_n_way 2  --n_shot 50 --n_query 10 --seed 1 --config "010" --align_thr 1e-3 --train_aug
+        },
+        {
+            "name": "Sparse_DKT_binary_FRVM [CUB]: test",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/test.py",
+            "console": "integratedTerminal",
+           "args": ["--method","Sparse_DKT_binary", "--sparse_method", "FRVM", "--dataset", "CUB", 
+            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
+              "--seed","1", "--config", "010", "--align_thr", "0"]
+    // python test.py --method "Sparse_DKT"  --sparse_method "FRVM" --dataset "CUB"  --train_n_way 5 --test_n_way 5 --n_shot 50  --n_query 10 --seed 1 --config "010" --align_thr 1e-3  --train_aug
         },
          
         {
