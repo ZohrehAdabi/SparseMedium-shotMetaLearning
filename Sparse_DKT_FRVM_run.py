@@ -11,17 +11,17 @@ for config in config_list:
     for lr_gp in lr_gp_list:
         for lr_net in lr_net_list:
 
-            run(['python', f'./methods/Sparse_DKT_binary.py', 
+            run(['python', f'./train.py', 
                         "--method","Sparse_DKT_binary", "--sparse_method", "FRVM", "--dataset", "omniglot", 
-                        "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "15", "--n_query", "10",
+                        "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "15", "--n_query", "5",
                             "--seed","1", "--config", f"{config}", "--align_thr", "1e-3" , 
                             "--lr_gp", f"{lr_gp}", "--lr_nt", f"{lr_net}"
                             #,"--train_aug"
             ])
 
-            run(['python', f'./methods/Sparse_DKT_binary.py', 
+            run(['python', f'./train.py', 
                         "--method","Sparse_DKT_binary", "--sparse_method", "FRVM", "--dataset", "omniglot", 
-                        "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "15", "--n_query", "10",
+                        "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "15", "--n_query", "5",
                             "--seed","1", "--config", f"{config}", "--align_thr", "1e-3" , 
                             "--lr_gp", f"{lr_gp}", "--lr_nt", f"{lr_net}", "--gamma" 
                             #,"--train_aug"
