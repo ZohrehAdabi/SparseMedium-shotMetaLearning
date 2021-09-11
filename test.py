@@ -142,7 +142,11 @@ def single_test(params):
             modelfile   = get_best_file(checkpoint_dir)
         if modelfile is not None:
             tmp = torch.load(modelfile)
+            if params.method=='Sparse_DKT' or params.method=='Sparse_DKT_binary':
+                IP = torch.ones(5, 64).cuda()
+                tmp['covar_module.inducing_points'] = IP
             model.load_state_dict(tmp['state'])
+
         else:
             print("[WARNING] Cannot find 'best_file.tar' in: " + str(checkpoint_dir))
 
@@ -176,7 +180,7 @@ def single_test(params):
             loadfile    = configs.data_dir[params.dataset] + split + '.json'
 
         novel_loader     = datamgr.get_data_loader( loadfile, aug = False)
-        
+
         if params.adaptation:
             model.task_update_num = 100 #We perform adaptation on MAML simply by updating more times.
         model.eval()
