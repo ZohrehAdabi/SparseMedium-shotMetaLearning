@@ -441,6 +441,7 @@ class Sparse_DKT_binary(MetaTemplate):
         count = 0
         acc_all = []
         iter_num = len(test_loader)
+        self.show_plot = iter_num < 5
         for i, (x,_) in enumerate(test_loader):
             self.n_query = x.size(1) - self.n_support
             if self.change_way:
