@@ -430,6 +430,9 @@ class Sparse_DKT_binary(MetaTemplate):
 
             top1_correct = np.sum(y_pred == y_query)
             count_this = len(y_query)
+
+            self.plot_test(x_query, y_query, y_pred, inducing_points)
+
         return float(top1_correct), count_this, avg_loss/float(N+1e-10)
 
     def test_loop(self, test_loader, record=None, return_std=False):
@@ -458,7 +461,7 @@ class Sparse_DKT_binary(MetaTemplate):
         else: return acc_mean
 
     
-    def plot_test(self, fig, ax, x_query, y_query, y_pred, inducing_x, inducing_y):
+    def plot_test(self, x_query, y_query, y_pred, inducing_points):
 
         fig: plt.Figure = plt.figure(1, figsize=(8, 4), tight_layout=True, dpi=125)
         
@@ -473,7 +476,7 @@ class Sparse_DKT_binary(MetaTemplate):
             img = transforms.ToPILImage()(x.cpu()).convert("RGB")
             ax.imshow(img)
             ax.set_title(f'pred: {y_p:.0f}, real: {y:.0f}')
-
+        inducing_x, inducing_y = inducing_points.x, inducing_points.y
         for i in range(inducing_y.shape[0]):
             x = self.denormalize(inducing_x[i])
             y = inducing_y[i]
