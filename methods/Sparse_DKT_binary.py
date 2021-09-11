@@ -462,25 +462,37 @@ class Sparse_DKT_binary(MetaTemplate):
 
     
     def plot_test(self, x_query, y_query, y_pred, inducing_points):
-
+        def clear_ax(ax):
+            ax.clear()
+            ax.set_xticks([])
+            ax.set_xticklabels([])
+            ax.set_yticks([])
+            ax.set_yticklabels([])
+            ax.set_aspect('equal')
+            return ax
         fig: plt.Figure = plt.figure(1, figsize=(8, 4), tight_layout=True, dpi=125)
         
         r = 3
         c = 5
         i = 1
-        for i in range(y_query.shape[0]):
-            x = self.denormalize(x_query[i])
-            y = y_query[i]
-            y_p = y_pred[i]
-            ax: plt.Axes = fig.add_subplot(r, c, i)
+        x_q = torch.stack([x_query[0:5], x_query[10:15]])
+        y_q = torch.stack([y_query[0:5], y_query[10:15]])
+        y_pred_ = torch.stack([y_pred[0:5], y_pred[10:15]])
+        for i in range(10):
+            x = self.denormalize(x_q[i])
+            y = y_q[i]
+            y_p = y_pred_[i]
+            ax: plt.Axes = fig.add_subplot(r, c, i+1)
+            ax = clear_ax(ax)
             img = transforms.ToPILImage()(x.cpu()).convert("RGB")
             ax.imshow(img)
             ax.set_title(f'pred: {y_p:.0f}, real: {y:.0f}')
         inducing_x, inducing_y = inducing_points.x, inducing_points.y
-        for i in range(inducing_y.shape[0]):
+        for i in range(5):
             x = self.denormalize(inducing_x[i])
             y = inducing_y[i]
-            ax: plt.Axes = fig.add_subplot(r, c, i)
+            ax: plt.Axes = fig.add_subplot(r, c, i+1)
+            ax = clear_ax(ax)
             img = transforms.ToPILImage()(x.cpu()).convert("RGB")
             ax.imshow(img)
             ax.set_title(f'{y:.0f}')
