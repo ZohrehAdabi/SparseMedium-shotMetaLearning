@@ -329,8 +329,10 @@ class Sparse_DKT_binary(MetaTemplate):
                 y_pred = torch.sigmoid(y_pred)
                 y_pred = (y_pred > 0.5).to(int)
                 
-                acc = torch.sum(y_pred==target)
-                print(f'FRVM ACC: {(acc/N):.1%}')
+                acc = (torch.sum(y_pred==target) / N) * 100
+                print(f'FRVM ACC: {(acc/N):.2f}%')
+                if self.frvm_acc is not None:
+                    self.frvm_acc.append(acc)
 
         return IP(inducing_points, IP_index, num_IP, None, None, None, None)
   
@@ -448,6 +450,7 @@ class Sparse_DKT_binary(MetaTemplate):
         acc_all = []
         iter_num = len(test_loader)
         self.show_plot = iter_num < 5
+        self.frvm_acc = []
         for i, (x,_) in enumerate(test_loader):
             self.n_query = x.size(1) - self.n_support
             if self.change_way:
@@ -461,6 +464,7 @@ class Sparse_DKT_binary(MetaTemplate):
         acc_mean = np.mean(acc_all)
         acc_std  = np.std(acc_all)
         print(Fore.LIGHTRED_EX,"="*30)
+        print(f'Avg. FRVM ACC: {np.mean(self.frvm_acc):4.2f}%')
         print(Fore.YELLOW,'%d Test Acc = %4.2f%% +- %4.2f%%' %(iter_num,  acc_mean, 1.96* acc_std/np.sqrt(iter_num)), Fore.RESET)
         print(Fore.LIGHTRED_EX,"="*30)
         if(self.writer is not None): self.writer.add_scalar('test_accuracy', acc_mean, self.iteration)
