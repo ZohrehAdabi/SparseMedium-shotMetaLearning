@@ -138,7 +138,7 @@ class FeatureTransfer(nn.Module):
 
         y = get_unnormalized_label(y_query.detach()) #((y_query.detach() + 1) * 60 / 2) + 60
         y_pred = get_unnormalized_label(output.detach()) # ((pred.mean.detach() + 1) * 60 / 2) + 60
-        mse_ = self.mse(y_pred, y).item()
+        mse_ = self.criterion(y_pred, y).item()
         y = y.cpu().numpy()
         y_pred = y_pred.cpu().numpy()
         print(Fore.RED,"-"*50, Fore.RESET)

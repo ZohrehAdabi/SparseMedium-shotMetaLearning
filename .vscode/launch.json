@@ -304,7 +304,7 @@
             "program": "${workspaceFolder}/test_regression.py",
             "console": "integratedTerminal",
            "args": ["--method","transfer",  "--n_samples", "72", "--n_support", "60", "--n_test_epochs", "5", "--seed","2"]  
-            // --method "transfer"  --n_support 90 --n_test_epochs 5   --seed  2 
+            //python test_regression.py --method "transfer"  --n_samples 72 --n_support 60 --n_test_epochs 5   --seed  2 
         }, 
 
         {
