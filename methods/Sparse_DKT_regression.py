@@ -397,8 +397,8 @@ class Sparse_DKT_regression(nn.Module):
                 kernel_matrix = kernel_matrix / scales
 
             kernel_matrix = kernel_matrix.to(torch.float64)
-            targets = targets.to(torch.float64)
-            active, alpha, gamma, beta, mu_m = Fast_RVM_regression(kernel_matrix, targets, beta, N, self.config, self.align_threshold,
+            target = targets.clone().to(torch.float64)
+            active, alpha, gamma, beta, mu_m = Fast_RVM_regression(kernel_matrix, target, beta, N, self.config, self.align_threshold,
                                                     self.gamma, eps, tol, max_itr, self.device, verbose)
             
             index = np.argsort(active)
@@ -417,8 +417,8 @@ class Sparse_DKT_regression(nn.Module):
                     mu_m = (mu_m[index] / ss)
                     mu_m = mu_m.to(torch.float)
                     y_pred = K @ mu_m
-                    y = targets[index]
-                    mse = self.mse(y_pred, y)
+                    
+                    mse = self.mse(y_pred, target)
                     print(f'FRVM MSE: {mse:0.4f}')
             
 
