@@ -144,7 +144,8 @@ class Sparse_DKT_binary(MetaTemplate):
         #                               {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
         # else:
         #     optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
-        #                               {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
+        #         #                              {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
+        self.frvm_acc = []
         for i, (x,_) in enumerate(train_loader):
             self.n_query = x.size(1) - self.n_support
             if self.change_way: self.n_way  = x.size(0)
@@ -331,8 +332,8 @@ class Sparse_DKT_binary(MetaTemplate):
                 
                 acc = (torch.sum(y_pred==target) / N) * 100
                 print(f'FRVM ACC: {(acc/N):.2f}%')
-                if self.frvm_acc is not None:
-                    self.frvm_acc.append(acc)
+                
+                self.frvm_acc.append(acc)
 
         return IP(inducing_points, IP_index, num_IP, None, None, None, None)
   
