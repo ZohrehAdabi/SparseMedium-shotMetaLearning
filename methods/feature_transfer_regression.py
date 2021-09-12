@@ -96,7 +96,7 @@ class FeatureTransfer(nn.Module):
         if self.show_plots_features:
             self.mw_feature.finish()
         
-        return mse
+        return mse, mse_list
 
     def test_loop(self, n_support, n_samples, test_person, optimizer): # we need optimizer to take one gradient step
         inputs, targets = get_batch(test_people, n_samples)
