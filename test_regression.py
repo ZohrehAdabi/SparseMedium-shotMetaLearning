@@ -80,7 +80,8 @@ elif params.method=='transfer':
     optimizer = optim.Adam([{'params':model.parameters(),'lr':0.001}])
 else:
     ValueError('Unrecognised method')
-
+id =  f'FRVM_{params.config}_{params.align_thr:.6f}_{1e-2:.5f}_{1e-3:.5f}'
+params.checkpoint_dir = params.checkpoint_dir + id
 model.load_checkpoint(params.checkpoint_dir)
 
  
