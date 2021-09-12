@@ -64,12 +64,13 @@ class Sparse_DKT_binary(MetaTemplate):
         else:
             self.normalize=False
 
-    def init_summary(self, id):
+    def init_summary(self, id, dataset):
         if(IS_TBX_INSTALLED):
+            path = f'./Sparse_DKT_binary_{dataset}_log'
             time_string = strftime("%d%m%Y_%H%M", gmtime())
-            if not os.path.isdir('./Sparse_DKT_binary_log'):
-                os.makedirs('./Sparse_DKT_binary_log')
-            writer_path = "./Sparse_DKT_binary_log/" + id #+'_'+ time_string
+            if not os.path.isdir(path):
+                os.makedirs(path)
+            writer_path = path+ '/' + id #+'_'+ time_string
             self.writer = SummaryWriter(log_dir=writer_path)
 
     def get_model_likelihood_mll(self, train_x=None, train_y=None):
