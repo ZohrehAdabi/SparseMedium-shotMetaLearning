@@ -333,7 +333,7 @@ class Sparse_DKT_binary(MetaTemplate):
                 acc = (torch.sum(y_pred==target) / N) * 100
                 print(f'FRVM ACC: {(acc/N):.2f}%')
                 
-                self.frvm_acc.append(acc)
+                self.frvm_acc.append(acc.item())
 
         return IP(inducing_points, IP_index, num_IP, None, None, None, None)
   
