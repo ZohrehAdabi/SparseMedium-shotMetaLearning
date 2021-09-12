@@ -464,10 +464,10 @@ class Sparse_DKT_binary(MetaTemplate):
         acc_all  = np.asarray(acc_all)
         acc_mean = np.mean(acc_all)
         acc_std  = np.std(acc_all)
-        print(Fore.LIGHTRED_EX,"="*30)
-        print(f'Avg. FRVM ACC: {np.mean(self.frvm_acc):4.2f}%')
+        print(Fore.LIGHTRED_EX,"="*30, Fore.RESET)
+        print(f'Avg. FRVM ACC: {np.mean(self.frvm_acc):4.2f}%', Fore.RESET)
         print(Fore.YELLOW,'%d Test Acc = %4.2f%% +- %4.2f%%' %(iter_num,  acc_mean, 1.96* acc_std/np.sqrt(iter_num)), Fore.RESET)
-        print(Fore.LIGHTRED_EX,"="*30)
+        print(Fore.LIGHTRED_EX,"="*30, Fore.RESET)
         if(self.writer is not None): self.writer.add_scalar('test_accuracy', acc_mean, self.iteration)
         if(return_std): return acc_mean, acc_std
         else: return acc_mean
