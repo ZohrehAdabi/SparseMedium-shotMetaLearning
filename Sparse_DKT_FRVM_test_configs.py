@@ -24,7 +24,7 @@ def run(lr_gp, lr_net, gamma):
     mll_list_per_config = []
     mll_hist = []
     mse_hist = []
-    align_threshold = [1e-3, 1e-4]
+    align_threshold = [1e-2, 1e-3, 1e-4]
                 # update_sigma, del, add, align_test
                 #   '1001', '1011'
     config_frvm = [   9,      11] 
