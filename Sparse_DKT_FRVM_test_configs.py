@@ -359,10 +359,10 @@ def run(lr_gp, lr_net, gamma):
 
 
 
-lr_gp_list = [0.1, 0.01, 0.001, 0.0001]
-lr_net_list = [0.01, 0.001, 0.0001]
+lr_gp_list = [0.1, 0.01]
+lr_net_list = [0.01, 0.001]
 for lr_gp in lr_gp_list:
     for lr_net in lr_net_list:
         
         run(lr_gp, lr_net, gamma=False)
-        run(lr_gp, lr_net, gamma=True)
+        # run(lr_gp, lr_net, gamma=True)
