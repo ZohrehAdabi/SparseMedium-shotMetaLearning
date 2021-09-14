@@ -6,7 +6,8 @@ method_list = ['Sparse_DKT_binary', 'DKT_binary']
 
 lr_gp_list = [0.1, 0.01, 0.001, 0.0001]
 lr_net_list = [0.01, 0.001, 0.0001]
-lr_gp_list = [0.1, 0.01]
+
+lr_gp_list = [0.1, 0.01, 0.001]
 lr_net_list = [0.01, 0.001]
 for config in config_list:
     for lr_gp in lr_gp_list:
@@ -19,7 +20,7 @@ for config in config_list:
                         "--method","Sparse_DKT_binary", "--sparse_method", "FRVM", "--dataset", "omniglot", 
                         "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "15", "--n_query", "5",
                             "--seed","1", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
-                            "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}"
+                            "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "200"
                             #,"--train_aug"
             ])
 
