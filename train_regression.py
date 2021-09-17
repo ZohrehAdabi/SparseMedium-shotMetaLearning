@@ -6,6 +6,7 @@ import configs
 from data.qmul_loader import get_batch, train_people, test_people
 from io_utils import parse_args_regression, get_resume_file
 from methods.Sparse_DKT_regression import Sparse_DKT_regression
+from methods.Sparse_DKT_regression_full_rvm import Sparse_DKT_regression_full_rvm
 from methods.DKT_regression import DKT_regression
 from methods.DKT_regression_New_Loss import DKT_New_Loss
 from methods.MAML_regression import     MAML_regression
@@ -82,6 +83,26 @@ elif params.method=='Sparse_DKT':
     else:
        raise  ValueError('Unrecognised sparse method')
 
+elif params.method=='Sparse_DKT_full_rvm':
+    params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s' % (configs.save_dir, params.dataset, params.model, params.method, 
+                                                        params.sparse_method)
+    video_path = params.checkpoint_dir
+    
+    
+    if params.sparse_method=='FRVM':
+        params.checkpoint_dir += '/'
+        if not os.path.isdir(params.checkpoint_dir):
+            os.makedirs(params.checkpoint_dir)
+        
+        id =  f'FRVM_{params.config}_{params.align_thr:.6f}'
+        if params.gamma: id += '_gamma'
+        params.checkpoint_dir = params.checkpoint_dir + id
+
+        model = Sparse_DKT_regression_full_rvm(bb, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
+                            video_path=params.checkpoint_dir, 
+                            show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
+        model.init_summary(id=id)
+
 
 elif params.method=='MAML':
     model = MAML_regression(bb, video_path=params.checkpoint_dir, 
@@ -96,7 +117,7 @@ else:
 optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr': 0.001}, #0.01
                               {'params': model.feature_extractor.parameters(), 'lr': 0.001} #0.001
                               ])
-if params.method=='DKT' or params.method=='Sparse_DKT' or params.method=='DKT_New_Loss':
+if params.method=='DKT' or params.method=='Sparse_DKT' or params.method=='Sparse_DKT_full_rvm':
 
     mll, _ = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer)
 
