@@ -80,9 +80,9 @@ class Sparse_DKT_regression_full_rvm(nn.Module):
     def init_summary(self, id):
         if(IS_TBX_INSTALLED):
             time_string = strftime("%d%m%Y_%H%M", gmtime())
-            if not os.path.isdir('./Sparse_DKT_QMUL_Loss'):
-                os.makedirs('./Sparse_DKT_QMUL_Loss')
-            writer_path = './Sparse_DKT_QMUL_Loss/' + id #+'_'+ time_string
+            if not os.path.isdir('./Sparse_DKT_QMUL_full_rvm_Loss'):
+                os.makedirs('./Sparse_DKT_QMUL_full_rvm_Loss')
+            writer_path = './Sparse_DKT_QMUL_full_rvm_Loss/' + id #+'_'+ time_string
             self.writer = SummaryWriter(log_dir=writer_path)
 
     def set_forward(self, x, is_feature=False):
@@ -114,13 +114,13 @@ class Sparse_DKT_regression_full_rvm(nn.Module):
             self.model.set_train_data(inputs=ip_values, targets=labels[inducing_points.index], strict=False)
 
             # z = self.feature_extractor(x_query)
-            predictions = self.model(z)
+            predictions = self.model(ip_values)
             loss = -self.mll(predictions, self.model.train_targets)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             mll_list.append(loss.item())
-            mse = self.mse(predictions.mean, labels)
+            mse = self.mse(predictions.mean, labels[inducing_points.index])
 
             self.iteration = itr+(epoch*len(batch_labels))
             if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)
