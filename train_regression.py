@@ -53,7 +53,7 @@ elif params.method=='Sparse_DKT':
         if not os.path.isdir(params.checkpoint_dir):
             os.makedirs(params.checkpoint_dir)
         
-        id =  f'FRVM_{params.config}_{params.align_thr:.6f}'
+        id =  f'FRVM_{params.config}_{params.align_thr:.6f}_{params.lr_gp:.5f}_{params.lr_net:.5f}'
         if params.gamma: id += '_gamma'
         params.checkpoint_dir = params.checkpoint_dir + id
 
@@ -94,7 +94,7 @@ elif params.method=='Sparse_DKT_full_rvm':
         if not os.path.isdir(params.checkpoint_dir):
             os.makedirs(params.checkpoint_dir)
         
-        id =  f'FRVM_{params.config}_{params.align_thr:.6f}'
+        id =  f'Full_FRVM_{params.config}_{params.align_thr:.6f}_{params.lr_gp:.5f}_{params.lr_net:.5f}'
         if params.gamma: id += '_gamma'
         params.checkpoint_dir = params.checkpoint_dir + id
 
@@ -114,8 +114,8 @@ elif params.method=='transfer':
 else:
     ValueError('Unrecognised method')
 
-optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr': 0.1}, #0.01
-                              {'params': model.feature_extractor.parameters(), 'lr': 0.001} #0.001
+optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr': params.lr_gp}, #0.01
+                              {'params': model.feature_extractor.parameters(), 'lr': params.lr_net} #0.001
                               ])
 if params.method=='DKT' or params.method=='Sparse_DKT' or params.method=='Sparse_DKT_full_rvm':
 
