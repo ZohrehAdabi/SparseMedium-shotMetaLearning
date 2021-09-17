@@ -108,9 +108,10 @@ class Sparse_DKT_regression(nn.Module):
                 inducing_points = self.get_inducing_points(z, labels, verbose=False)
            
             ip_values = z[inducing_points.index]
-            self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
+            # self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
             self.model.train()
-            self.model.set_train_data(inputs=z, targets=labels, strict=False)
+            # NOTE 
+            self.model.set_train_data(inputs=ip_values, targets=labels[inducing_points.index], strict=False)
 
             # z = self.feature_extractor(x_query)
             predictions = self.model(z)
@@ -182,9 +183,9 @@ class Sparse_DKT_regression(nn.Module):
             inducing_points = self.get_inducing_points(z_support, y_support, verbose=False)
         
         ip_values = inducing_points.z_values.cuda()
-        self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
-        self.model.covar_module._clear_cache()
-        self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
+        # self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
+        # self.model.covar_module._clear_cache()
+        self.model.set_train_data(inputs=ip_values, targets=y_support[inducing_points.index], strict=False)
 
         self.model.eval()
         self.feature_extractor.eval()
@@ -249,9 +250,9 @@ class Sparse_DKT_regression(nn.Module):
         max_similar_idx_x_ip = np.argmax(kernel_matrix, axis=1)
         print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (K kernel): {inducing_points.y[max_similar_idx_x_ip]}', Fore.RESET)
 
-        kernel_matrix = self.model.covar_module(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
-        max_similar_index = np.argmax(kernel_matrix, axis=1)
-        print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (Q kernel): {inducing_points.y[max_similar_index]}', Fore.RESET)
+        # kernel_matrix = self.model.covar_module(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
+        # max_similar_index = np.argmax(kernel_matrix, axis=1)
+        # print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (Q kernel): {inducing_points.y[max_similar_index]}', Fore.RESET)
         #**************************************************************
         if (self.show_plots_pred or self.show_plots_features) and self.f_rvm:
             embedded_z_support = TSNE(n_components=2).fit_transform(z_support.detach().cpu().numpy())
