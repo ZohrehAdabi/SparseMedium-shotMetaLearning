@@ -419,8 +419,8 @@ class Sparse_DKT_regression_full_rvm(nn.Module):
     
         ckpt = torch.load(checkpoint)
  
-        IP = torch.ones(self.num_induce_points, 2916).cuda()
-        ckpt['gp']['covar_module.inducing_points'] = IP
+        # IP = torch.ones(self.num_induce_points, 2916).cuda()
+        # ckpt['gp']['covar_module.inducing_points'] = IP
         self.model.load_state_dict(ckpt['gp'])
         self.likelihood.load_state_dict(ckpt['likelihood'])
         self.feature_extractor.load_state_dict(ckpt['net'])
