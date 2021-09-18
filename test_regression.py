@@ -67,7 +67,7 @@ elif params.method=='Sparse_DKT':
 
     optimizer = None
 
-elif params.method=='Sparse_DKT_full_RVM':
+elif params.method=='Sparse_DKT_full_rvm':
     print(f'\n{params.sparse_method}\n')
     params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s' % (configs.save_dir, params.dataset, params.model, params.method, params.sparse_method)
 
