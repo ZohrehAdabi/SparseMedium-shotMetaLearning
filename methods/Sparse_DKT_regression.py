@@ -434,7 +434,7 @@ class Sparse_DKT_regression(nn.Module):
         nn_state_dict         = self.feature_extractor.state_dict()
         torch.save({'gp': gp_state_dict, 'likelihood': likelihood_state_dict, 'net':nn_state_dict}, checkpoint)
     
-    def save_best_checkpoint(self, epoch, mse):
+    def save_best_checkpoint(self, epoch, mse, checkpoint):
         # save state
         gp_state_dict         = self.model.state_dict()
         likelihood_state_dict = self.likelihood.state_dict()
