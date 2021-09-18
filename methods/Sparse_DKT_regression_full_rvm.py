@@ -627,16 +627,16 @@ class SparseKernel(gpytorch.kernels.InducingPointKernel):
     def _get_covariance(self, x1, x2):
         k_ux1 = delazify(self.base_kernel(x1, self.inducing_points))
         if torch.equal(x1, x2):
-            covar = LowRankRootLazyTensor(k_ux1.matmul(self._inducing_inv_root))
+            covar = LowRankRootLazyTensor(k_ux1)
 
             # Diagonal correction for predictive posterior
-            # if not self.training:
-            correction = (self.base_kernel(x1, x2, diag=True) - covar.diag()).clamp(0, math.inf)
-            covar = LowRankRootAddedDiagLazyTensor(covar, DiagLazyTensor(correction))
+            if not self.training:
+                correction = (self.base_kernel(x1, x2, diag=True) - covar.diag()).clamp(0, math.inf)
+                covar = LowRankRootAddedDiagLazyTensor(covar, DiagLazyTensor(correction))
         else:
             k_ux2 = delazify(self.base_kernel(x2, self.inducing_points))
             covar = MatmulLazyTensor(
-                k_ux1.matmul(self._inducing_inv_root), k_ux2.matmul(self._inducing_inv_root).transpose(-1, -2)
+                k_ux1, k_ux2.transpose(-1, -2)
             )
 
         return covar
