@@ -111,16 +111,16 @@ class Sparse_DKT_regression_full_rvm(nn.Module):
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
             self.model.train()
             # NOTE 
-            self.model.set_train_data(inputs=z, targets=labels, strict=False)
+            self.model.set_train_data(inputs=z, targets=labels[inducing_points.index], strict=False)
 
             # z = self.feature_extractor(x_query)
-            predictions = self.model(z)
+            predictions = self.model(ip_values)
             loss = -self.mll(predictions, self.model.train_targets)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             mll_list.append(loss.item())
-            mse = self.mse(predictions.mean, labels)
+            mse = self.mse(predictions.mean, labels[inducing_points.index])
 
             self.iteration = itr+(epoch*len(batch_labels))
             if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)
@@ -185,7 +185,7 @@ class Sparse_DKT_regression_full_rvm(nn.Module):
         ip_values = inducing_points.z_values.cuda()
         self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
         self.model.covar_module._clear_cache()
-        self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
+        self.model.set_train_data(inputs=ip_values, targets=y_support[inducing_points.index], strict=False)
 
         self.model.eval()
         self.feature_extractor.eval()
@@ -627,8 +627,7 @@ class SparseKernel(gpytorch.kernels.InducingPointKernel):
     def _get_covariance(self, x1, x2):
         k_ux1 = delazify(self.base_kernel(x1, self.inducing_points))
         if torch.equal(x1, x2):
-            # covar = LowRankRootLazyTensor(k_ux1.matmul(self._inducing_inv_root))
-            covar = LowRankRootLazyTensor(k_ux1)
+            covar = LowRankRootLazyTensor(k_ux1.matmul(self._inducing_inv_root))
 
             # Diagonal correction for predictive posterior
             # if not self.training:
@@ -636,11 +635,8 @@ class SparseKernel(gpytorch.kernels.InducingPointKernel):
             covar = LowRankRootAddedDiagLazyTensor(covar, DiagLazyTensor(correction))
         else:
             k_ux2 = delazify(self.base_kernel(x2, self.inducing_points))
-            # covar = MatmulLazyTensor(
-            #     k_ux1.matmul(self._inducing_inv_root), k_ux2.matmul(self._inducing_inv_root).transpose(-1, -2)
-            # )
             covar = MatmulLazyTensor(
-                k_ux1, k_ux2.transpose(-1, -2)
+                k_ux1.matmul(self._inducing_inv_root), k_ux2.matmul(self._inducing_inv_root).transpose(-1, -2)
             )
 
         return covar
