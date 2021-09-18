@@ -19,7 +19,7 @@ import gpytorch
 from time import gmtime, strftime
 import random
 from statistics import mean
-from data.qmul_loader import get_batch, train_people, test_people, get_unnormalized_label
+from data.qmul_loader import get_batch, train_people, val_people, test_people, get_unnormalized_label
 from configs import kernel_type
 
 
@@ -150,13 +150,14 @@ class MAML_regression(nn.Module):
             loss_all.append(loss)
 
             task_count += 1
+            
 
-            if (task_count == self.n_task): #MAML update several tasks at one time
+            if (task_count%self.n_task==0) or (task_count==len(batch_labels)): #MAML update several tasks at one time
                 loss_q = torch.stack(loss_all).sum(0)
                 loss_q.backward()
                 # print(f'{itr} MSE {loss_q:.4f}')
                 optimizer.step()
-                task_count = 0
+                if task_count >= len(batch_labels): task_count = 0
                 batch_count += 1
                 loss_all = []
             optimizer.zero_grad()
@@ -248,20 +249,43 @@ class MAML_regression(nn.Module):
         return mse, mse_
 
     def train(self, stop_epoch, n_support, n_samples, optimizer):
-
-        mse_list = []
-        for epoch in range(stop_epoch):
-            mse = self.train_loop(epoch, n_support, n_samples, optimizer)
-            mse_list.append(mse)
-            if(self.writer is not None): self.writer.add_scalar('MSE per epoch', mse, epoch)
-            print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => MSE: {mse}\n', "-"*30, Fore.RESET)
         
-        mse = np.mean(mse_list)
+        best_mse = 1e7
+        train_mse_list = []
+        val_mse_list = []
+        for epoch in range(stop_epoch):
+            train_mse = self.train_loop(epoch, n_support, n_samples, optimizer)
+            train_mse_list.append(train_mse)
+
+            if epoch%2==0:
+                print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
+                mse_list = []
+                val_count = 10
+                rep = True if val_count > len(val_people) else False
+                val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
+                for t in range(val_count):
+                    mse, mse_ = self.test_loop(n_support, n_samples, val_person[t],  optimizer)
+                    val_mse_list.append(mse)
+                mse = np.mean(mse_list)
+                if best_mse >= mse:
+                    best_mse = mse
+                    model_name = self.best_path + 'best_model.tar'
+                    self.save_best_checkpoint(epoch+1, best_mse, model_name)
+                    print(Fore.LIGHTRED_EX, f'Best MSE: {best_mse:.4f}', Fore.RESET)
+                print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => Val. MSE: {mse:.4f}, Best MSE: {best_mse:.4f}', Fore.RESET)
+                if(self.writer is not None):
+                    self.writer.add_scalar('MSE Val.', mse, epoch)
+                print(Fore.GREEN,"-"*30, Fore.RESET)
+
+            if(self.writer is not None): self.writer.add_scalar('Train MSE per epoch', mse, epoch)
+            print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => Train MSE: {mse}\n', "-"*30, Fore.RESET)
+        
+        train_mse = np.mean(train_mse_list)
         if self.show_plots_pred:
             self.mw.finish()
         if self.show_plots_features:
             self.mw_feature.finish()
-        return mse, mse_list
+        return train_mse, train_mse_list
 
     def test(self, n_support, n_samples, optimizer=None, test_count=None):
 
@@ -294,6 +318,10 @@ class MAML_regression(nn.Module):
         self.feature_extractor.load_state_dict(ckpt['feature_extractor'])
         self.model.load_state_dict(ckpt['model'])
         
+    def save_best_checkpoint(self, epoch, mse, checkpoint):
+        torch.save({'feature_extractor': self.feature_extractor.state_dict(), 
+                    'model':self.model.state_dict(), 'epoch': epoch, 'mse': mse}, checkpoint)
+
     def initialize_plot(self, video_path, training):
         
         

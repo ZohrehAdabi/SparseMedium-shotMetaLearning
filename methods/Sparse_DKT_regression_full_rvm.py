@@ -25,7 +25,7 @@ import gpytorch
 from methods.Fast_RVM_regression import Fast_RVM_regression
 
 from statistics import mean
-from data.qmul_loader import get_batch, train_people, test_people, get_unnormalized_label
+from data.qmul_loader import get_batch, train_people, val_people, test_people, get_unnormalized_label
 from configs import kernel_type
 from collections import namedtuple
 import torch.optim
@@ -279,33 +279,29 @@ class Sparse_DKT_regression_full_rvm(nn.Module):
         # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5, 50, 80], gamma=0.1)
         
         for epoch in range(stop_epoch):
+         
+            mll = self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
             
-            if  self.f_rvm:
-                mll = self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
-
-                
-                if epoch%5==0:
-                    print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
-                    mse_list = []
-                    for t in range(len(test_people)):
-                        mse, mse_ = self.test_loop_fast_rvm(n_support, n_samples, t,  optimizer)
-                        mse_list.append(mse)
-                    mse = np.mean(mse_list)
-                    if best_mse >= mse:
-                        best_mse = mse
-                        # model_name = self.best_path + f'_best_mae{best_mse:.2f}_ep{epoch}_{id}.pth'
-                        # self.save_checkpoint(model_name)
-                        print(Fore.LIGHTRED_EX, f'Best MSE: {best_mse:.4f}', Fore.RESET)
-                    print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE: {mse:.4f}, Best MSE: {best_mse:.4f}', Fore.RESET)
-                    if(self.writer is not None):
-                        self.writer.add_scalar('MSE Val.', mse, epoch)
+            if epoch%2==0:
+                print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
+                mse_list = []
+                val_count = 10
+                rep = True if val_count > len(val_people) else False
+                val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
+                for t in range(val_count):
+                    mse, mse_ = self.test_loop_fast_rvm(n_support, n_samples, val_person[t],  optimizer)
+                    mse_list.append(mse)
+                mse = np.mean(mse_list)
+                if best_mse >= mse:
+                    best_mse = mse
+                    model_name = self.best_path + 'best_model.tar'
+                    self.save_best_checkpoint(epoch+1, best_mse, model_name)
+                    print(Fore.LIGHTRED_EX, f'Best MSE: {best_mse:.4f}', Fore.RESET)
+                print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE: {mse:.4f}, Best MSE: {best_mse:.4f}', Fore.RESET)
+                if(self.writer is not None):
+                    self.writer.add_scalar('MSE Val.', mse, epoch)
                 print(Fore.GREEN,"-"*30, Fore.RESET)
-            elif self.random:
-                mll = self.train_loop_random(epoch, n_support, n_samples, optimizer)
-            elif  not self.f_rvm:
-                mll = self.train_loop_kmeans(epoch, n_support, n_samples, optimizer)
-            else:
-                ValueError("Error")
+
             mll_list.append(mll)
             if(self.writer is not None): self.writer.add_scalar('MLL per epoch', mll, epoch)
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
@@ -359,69 +355,56 @@ class Sparse_DKT_regression_full_rvm(nn.Module):
 
         
         IP_index = np.array([])
-        if not self.f_rvm:
-            num_IP = self.num_induce_points
-            
-            # self.kmeans_clustering = KMeans(n_clusters=num_IP, init='k-means++',  n_init=10, max_iter=1000).fit(inputs.cpu().numpy())
-            # inducing_points = self.kmeans_clustering.cluster_centers_
-            # inducing_points = torch.from_numpy(inducing_points).to(torch.float)
+     
+        # with sigma and updating sigma converges to more sparse solution
+        N   = inputs.shape[0]
+        tol = 1e-4
+        eps = torch.finfo(torch.float32).eps
+        max_itr = 1000
+        sigma = self.model.likelihood.noise[0].clone()
+        # sigma = torch.tensor([0.0000001])
+        # sigma = torch.tensor([torch.var(targets) * 0.1]) #sigma^2
+        sigma = sigma.to(self.device)
+        beta = 1 /(sigma + eps)
+        scale = True
+        covar_module = self.model.base_covar_module
+        # X = inputs.clone()
+        # m = X.mean(axis=0)
+        # X = (X- m) 
+        # X = F.normalize(X, p=2, dim=1)
+        kernel_matrix = covar_module(inputs).evaluate()
+        # normalize kernel
+        if scale:
+            scales	= torch.sqrt(torch.sum(kernel_matrix**2, axis=0))
+            # print(f'scale: {Scales}')
+            scales[scales==0] = 1
+            kernel_matrix = kernel_matrix / scales
 
-            self.kmeans_clustering = Fast_KMeans(n_clusters=num_IP, max_iter=1000)
-            self.kmeans_clustering.fit(inputs.cuda())
-            inducing_points = self.kmeans_clustering.centroids
-            # print(inducing_points.shape[0])
-
-
-        else:
-            # with sigma and updating sigma converges to more sparse solution
-            N   = inputs.shape[0]
-            tol = 1e-4
-            eps = torch.finfo(torch.float32).eps
-            max_itr = 1000
-            sigma = self.model.likelihood.noise[0].clone()
-            # sigma = torch.tensor([0.0000001])
-            # sigma = torch.tensor([torch.var(targets) * 0.1]) #sigma^2
-            sigma = sigma.to(self.device)
-            beta = 1 /(sigma + eps)
-            scale = True
-            covar_module = self.model.base_covar_module
-            # X = inputs.clone()
-            # m = X.mean(axis=0)
-            # X = (X- m) 
-            # X = F.normalize(X, p=2, dim=1)
-            kernel_matrix = covar_module(inputs).evaluate()
-            # normalize kernel
-            if scale:
-                scales	= torch.sqrt(torch.sum(kernel_matrix**2, axis=0))
-                # print(f'scale: {Scales}')
-                scales[scales==0] = 1
-                kernel_matrix = kernel_matrix / scales
-
-            kernel_matrix = kernel_matrix.to(torch.float64)
-            target = targets.clone().to(torch.float64)
-            active, alpha, gamma, beta, mu_m = Fast_RVM_regression(kernel_matrix, target, beta, N, self.config, self.align_threshold,
-                                                    self.gamma, eps, tol, max_itr, self.device, verbose)
-            
-            index = np.argsort(active)
-            active = active[index]
-            gamma = gamma[index]
-            ss = scales[index]
-            alpha = alpha[index] / ss
-            inducing_points = inputs[active]
-            num_IP = active.shape[0]
-            IP_index = active
-            with torch.no_grad():
-                if True:
-                    
-                    K = covar_module(inputs, inducing_points).evaluate()
-                    # K = covar_module(X, X[active]).evaluate()
-                    mu_m = (mu_m[index] / ss)
-                    mu_m = mu_m.to(torch.float)
-                    y_pred = K @ mu_m
-                    
-                    mse = self.mse(y_pred, target)
-                    print(f'FRVM MSE: {mse:0.4f}')
-            
+        kernel_matrix = kernel_matrix.to(torch.float64)
+        target = targets.clone().to(torch.float64)
+        active, alpha, gamma, beta, mu_m = Fast_RVM_regression(kernel_matrix, target, beta, N, self.config, self.align_threshold,
+                                                self.gamma, eps, tol, max_itr, self.device, verbose)
+        
+        index = np.argsort(active)
+        active = active[index]
+        gamma = gamma[index]
+        ss = scales[index]
+        alpha = alpha[index] / ss
+        inducing_points = inputs[active]
+        num_IP = active.shape[0]
+        IP_index = active
+        with torch.no_grad():
+            if True:
+                
+                K = covar_module(inputs, inducing_points).evaluate()
+                # K = covar_module(X, X[active]).evaluate()
+                mu_m = (mu_m[index] / ss)
+                mu_m = mu_m.to(torch.float)
+                y_pred = K @ mu_m
+                
+                mse = self.mse(y_pred, target)
+                print(f'FRVM MSE: {mse:0.4f}')
+        
 
         return IP(inducing_points, IP_index, num_IP, alpha, gamma, None, None, None, None)
   
@@ -441,6 +424,15 @@ class Sparse_DKT_regression_full_rvm(nn.Module):
         self.model.load_state_dict(ckpt['gp'])
         self.likelihood.load_state_dict(ckpt['likelihood'])
         self.feature_extractor.load_state_dict(ckpt['net'])
+
+    def save_best_checkpoint(self, epoch, mse):
+        # save state
+        gp_state_dict         = self.model.state_dict()
+        likelihood_state_dict = self.likelihood.state_dict()
+        nn_state_dict         = self.feature_extractor.state_dict()
+        torch.save({'gp': gp_state_dict, 'likelihood': likelihood_state_dict, 
+        'net':nn_state_dict, 'epoch': epoch, 'mse':mse}, checkpoint)
+
 
     def initialize_plot(self, video_path, training):
         

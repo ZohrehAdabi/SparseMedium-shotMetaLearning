@@ -25,7 +25,7 @@ import gpytorch
 from methods.Fast_RVM_regression import Fast_RVM_regression
 
 from statistics import mean
-from data.qmul_loader import get_batch, train_people, test_people, get_unnormalized_label
+from data.qmul_loader import get_batch, train_people, val_people, test_people, get_unnormalized_label
 from configs import kernel_type
 from collections import namedtuple
 import torch.optim
@@ -283,17 +283,20 @@ class Sparse_DKT_regression(nn.Module):
                 mll = self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
 
                 
-                if epoch%5==0:
+                if epoch%2==0:
                     print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
                     mse_list = []
-                    for t in range(len(test_people)):
-                        mse, mse_ = self.test_loop_fast_rvm(n_support, n_samples, t,  optimizer)
+                    val_count = 10
+                    rep = True if val_count > len(val_people) else False
+                    val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
+                    for t in range(val_count):
+                        mse, mse_ = self.test_loop_fast_rvm(n_support, n_samples, val_person[t],  optimizer)
                         mse_list.append(mse)
                     mse = np.mean(mse_list)
                     if best_mse >= mse:
                         best_mse = mse
-                        # model_name = self.best_path + f'_best_mae{best_mse:.2f}_ep{epoch}_{id}.pth'
-                        # self.save_checkpoint(model_name)
+                        model_name = self.best_path + 'best_model.tar'
+                        self.save_best_checkpoint(epoch+1, best_mse, model_name)
                         print(Fore.LIGHTRED_EX, f'Best MSE: {best_mse:.4f}', Fore.RESET)
                     print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE: {mse:.4f}, Best MSE: {best_mse:.4f}', Fore.RESET)
                     if(self.writer is not None):
@@ -430,6 +433,14 @@ class Sparse_DKT_regression(nn.Module):
         likelihood_state_dict = self.likelihood.state_dict()
         nn_state_dict         = self.feature_extractor.state_dict()
         torch.save({'gp': gp_state_dict, 'likelihood': likelihood_state_dict, 'net':nn_state_dict}, checkpoint)
+    
+    def save_best_checkpoint(self, epoch, mse):
+        # save state
+        gp_state_dict         = self.model.state_dict()
+        likelihood_state_dict = self.likelihood.state_dict()
+        nn_state_dict         = self.feature_extractor.state_dict()
+        torch.save({'gp': gp_state_dict, 'likelihood': likelihood_state_dict, 
+        'net':nn_state_dict, 'epoch': epoch, 'mse':mse}, checkpoint)
 
     def load_checkpoint(self, checkpoint):
     
