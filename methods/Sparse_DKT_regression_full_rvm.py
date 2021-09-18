@@ -111,7 +111,7 @@ class Sparse_DKT_regression_full_rvm(nn.Module):
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
             self.model.train()
             # NOTE 
-            self.model.set_train_data(inputs=z, targets=labels[inducing_points.index], strict=False)
+            self.model.set_train_data(inputs=ip_values, targets=labels[inducing_points.index], strict=False)
 
             # z = self.feature_extractor(x_query)
             predictions = self.model(ip_values)
