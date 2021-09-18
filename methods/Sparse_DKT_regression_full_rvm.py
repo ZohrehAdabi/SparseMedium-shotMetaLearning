@@ -111,12 +111,12 @@ class Sparse_DKT_regression_full_rvm(nn.Module):
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
             self.model.train()
             # NOTE 
-            # self.model.set_train_data(inputs=ip_values, targets=labels[inducing_points.index], strict=False)
-            self.model.set_train_data(inputs=z, targets=labels, strict=False)
+            self.model.set_train_data(inputs=ip_values, targets=labels[inducing_points.index], strict=False)
+            # self.model.set_train_data(inputs=z, targets=labels, strict=False)
 
             # z = self.feature_extractor(x_query)
-            # predictions = self.model(ip_values)
-            predictions = self.model(z)
+            predictions = self.model(ip_values)
+            # predictions = self.model(z)
             loss = -self.mll(predictions, self.model.train_targets)
             optimizer.zero_grad()
             loss.backward()
@@ -630,7 +630,8 @@ class SparseKernel(gpytorch.kernels.InducingPointKernel):
     def _get_covariance(self, x1, x2):
         k_ux1 = delazify(self.base_kernel(x1, self.inducing_points))
         if torch.equal(x1, x2):
-            covar = LowRankRootLazyTensor(k_ux1)
+            # covar = LowRankRootLazyTensor(k_ux1)
+            covar = self._inducing_mat
 
             # Diagonal correction for predictive posterior
             if not self.training:
@@ -638,11 +639,13 @@ class SparseKernel(gpytorch.kernels.InducingPointKernel):
                 covar = LowRankRootAddedDiagLazyTensor(covar, DiagLazyTensor(correction))
         else:
             k_ux2 = delazify(self.base_kernel(x2, self.inducing_points))
-            covar = MatmulLazyTensor(
-                k_ux1, k_ux2.transpose(-1, -2)
-            )
+            # covar = MatmulLazyTensor(
+            #     k_ux1, k_ux2.transpose(-1, -2)
+            # )
+            covar = k_ux2
 
         return covar
+        # return self._inducing_mat
     def forward(self, x1, x2, diag=False, **kwargs):
         covar = self._get_covariance(x1, x2)
 
