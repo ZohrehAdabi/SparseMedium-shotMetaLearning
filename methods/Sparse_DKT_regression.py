@@ -633,6 +633,32 @@ class Sparse_DKT_regression(nn.Module):
 
 
 
+
+class ExactGPLayer(gpytorch.models.ExactGP):
+    def __init__(self, train_x, train_y, likelihood, kernel='linear', induce_point=None):
+        super(ExactGPLayer, self).__init__(train_x, train_y, likelihood)
+        self.mean_module  = gpytorch.means.ConstantMean()
+
+        ## RBF kernel
+        if(kernel=='rbf' or kernel=='RBF'):
+            # self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
+            self.base_covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
+            
+        ## Spectral kernel
+        elif(kernel=='spectral'):
+            self.base_covar_module = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=16, ard_num_dims=2916)
+            self.base_covar_module.initialize_from_data_empspect(train_x, train_y)
+        else:
+            raise ValueError("[ERROR] the kernel '" + str(kernel) + "' is not supported for regression, use 'rbf' or 'spectral'.")
+        self.covar_module = gpytorch.kernels.InducingPointKernel(self.base_covar_module, inducing_points=induce_point , likelihood=likelihood)
+    
+    def forward(self, x):
+        mean_x  = self.mean_module(x)
+        covar_x = self.covar_module(x)
+        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+
+
+'''
     def train_loop_kmeans(self, epoch, n_support, n_samples, optimizer):
         
         batch, batch_labels = get_batch(train_people, n_samples)
@@ -1122,27 +1148,5 @@ class Sparse_DKT_regression(nn.Module):
                 plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
 
             plots.ax_feature.legend()
-
+'''
   
-class ExactGPLayer(gpytorch.models.ExactGP):
-    def __init__(self, train_x, train_y, likelihood, kernel='linear', induce_point=None):
-        super(ExactGPLayer, self).__init__(train_x, train_y, likelihood)
-        self.mean_module  = gpytorch.means.ConstantMean()
-
-        ## RBF kernel
-        if(kernel=='rbf' or kernel=='RBF'):
-            # self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
-            self.base_covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
-            
-        ## Spectral kernel
-        elif(kernel=='spectral'):
-            self.base_covar_module = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=16, ard_num_dims=2916)
-            self.base_covar_module.initialize_from_data_empspect(train_x, train_y)
-        else:
-            raise ValueError("[ERROR] the kernel '" + str(kernel) + "' is not supported for regression, use 'rbf' or 'spectral'.")
-        self.covar_module = gpytorch.kernels.InducingPointKernel(self.base_covar_module, inducing_points=induce_point , likelihood=likelihood)
-    
-    def forward(self, x):
-        mean_x  = self.mean_module(x)
-        covar_x = self.covar_module(x)
-        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
