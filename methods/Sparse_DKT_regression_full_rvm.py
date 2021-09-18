@@ -425,7 +425,7 @@ class Sparse_DKT_regression_full_rvm(nn.Module):
         self.likelihood.load_state_dict(ckpt['likelihood'])
         self.feature_extractor.load_state_dict(ckpt['net'])
 
-    def save_best_checkpoint(self, epoch, mse):
+    def save_best_checkpoint(self, epoch, mse, checkpoint):
         # save state
         gp_state_dict         = self.model.state_dict()
         likelihood_state_dict = self.likelihood.state_dict()
