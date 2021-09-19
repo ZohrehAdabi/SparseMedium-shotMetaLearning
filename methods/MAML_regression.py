@@ -269,7 +269,7 @@ class MAML_regression(nn.Module):
                 mse = np.mean(mse_list)
                 if best_mse >= mse:
                     best_mse = mse
-                    model_name = self.best_path + 'best_model.tar'
+                    model_name = self.best_path + '_best_model.tar'
                     self.save_best_checkpoint(epoch+1, best_mse, model_name)
                     print(Fore.LIGHTRED_EX, f'Best MSE: {best_mse:.4f}', Fore.RESET)
                 print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => Val. MSE: {mse:.4f}, Best MSE: {best_mse:.4f}', Fore.RESET)

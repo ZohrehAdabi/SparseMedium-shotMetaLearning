@@ -30,6 +30,7 @@ except ImportError:
     IS_TBX_INSTALLED = False
     print('[WARNING] install tensorboardX to record simulation logs.')
 
+IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx") #for test 
 class DKT_regression(nn.Module):
     def __init__(self, backbone, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(DKT_regression, self).__init__()
@@ -140,6 +141,10 @@ class DKT_regression(nn.Module):
 
     
         z_support = self.feature_extractor(x_support).detach()
+        #NOTE for test 
+        with torch.no_grad():
+            inducing_points = self.get_inducing_points(z_support, y_support, verbose=False)
+
         self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
 
         self.model.eval()
@@ -159,6 +164,9 @@ class DKT_regression(nn.Module):
         y = y.cpu().numpy()
         y_pred = y_pred.cpu().numpy()
         print(Fore.RED,"="*50, Fore.RESET)
+        print(f'inducing_points count: {inducing_points.count}')
+        print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha}',Fore.RESET)
+        print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma}',Fore.RESET)
         print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
         print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
         print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
@@ -252,6 +260,63 @@ class DKT_regression(nn.Module):
         print(f'MSE (unnormed): {np.mean(mse_list_):.4f}')
         return mse_list
 
+    def get_inducing_points(self, inputs, targets, verbose=True):
+
+        
+        IP_index = np.array([])
+     
+        # with sigma and updating sigma converges to more sparse solution
+        N   = inputs.shape[0]
+        tol = 1e-4
+        eps = torch.finfo(torch.float32).eps
+        max_itr = 1000
+        sigma = self.model.likelihood.noise[0].clone()
+        # sigma = torch.tensor([0.0000001])
+        # sigma = torch.tensor([torch.var(targets) * 0.1]) #sigma^2
+        sigma = sigma.to(self.device)
+        beta = 1 /(sigma + eps)
+        scale = True
+        covar_module = self.model.covar_module
+        # X = inputs.clone()
+        # m = X.mean(axis=0)
+        # X = (X- m) 
+        # X = F.normalize(X, p=2, dim=1)
+        kernel_matrix = covar_module(inputs).evaluate()
+        # normalize kernel
+        if scale:
+            scales	= torch.sqrt(torch.sum(kernel_matrix**2, axis=0))
+            # print(f'scale: {Scales}')
+            scales[scales==0] = 1
+            kernel_matrix = kernel_matrix / scales
+
+        kernel_matrix = kernel_matrix.to(torch.float64)
+        target = targets.clone().to(torch.float64)
+        active, alpha, gamma, beta, mu_m = Fast_RVM_regression(kernel_matrix, target, beta, N, self.config, self.align_threshold,
+                                                self.gamma, eps, tol, max_itr, self.device, verbose)
+        
+        index = np.argsort(active)
+        active = active[index]
+        gamma = gamma[index]
+        ss = scales[index]
+        alpha = alpha[index] / ss
+        inducing_points = inputs[active]
+        num_IP = active.shape[0]
+        IP_index = active
+        with torch.no_grad():
+            if True:
+                
+                K = covar_module(inputs, inducing_points).evaluate()
+                # K = covar_module(X, X[active]).evaluate()
+                mu_m = (mu_m[index] / ss)
+                mu_m = mu_m.to(torch.float)
+                y_pred = K @ mu_m
+                
+                mse = self.mse(y_pred, target)
+                print(f'FRVM MSE: {mse:0.4f}')
+        
+
+        return IP(inducing_points, IP_index, num_IP, alpha, gamma, None, None, None, None)
+  
     def save_checkpoint(self, checkpoint):
         # save state
         gp_state_dict         = self.model.state_dict()
