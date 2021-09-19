@@ -19,6 +19,7 @@ import gpytorch
 from time import gmtime, strftime
 import random
 from statistics import mean
+from methods.Fast_RVM_regression import Fast_RVM_regression
 from data.qmul_loader import get_batch, train_people, test_people, val_people, get_unnormalized_label
 from configs import kernel_type
 #Check if tensorboardx is installed
