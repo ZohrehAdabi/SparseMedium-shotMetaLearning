@@ -122,8 +122,8 @@ class Sparse_DKT_regression_full_rvm(nn.Module):
             loss.backward()
             optimizer.step()
             mll_list.append(loss.item())
-            # mse = self.mse(predictions.mean, labels[inducing_points.index])
-            mse = self.mse(predictions.mean, labels)
+            mse = self.mse(predictions.mean, labels[inducing_points.index])
+            # mse = self.mse(predictions.mean, labels)
 
             self.iteration = itr+(epoch*len(batch_labels))
             if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)
@@ -188,8 +188,8 @@ class Sparse_DKT_regression_full_rvm(nn.Module):
         ip_values = inducing_points.z_values.cuda()
         self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
         self.model.covar_module._clear_cache()
-        # self.model.set_train_data(inputs=ip_values, targets=y_support[inducing_points.index], strict=False)
-        self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
+        self.model.set_train_data(inputs=ip_values, targets=y_support[inducing_points.index], strict=False)
+        # self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
         self.model.eval()
         self.feature_extractor.eval()
         self.likelihood.eval()
@@ -630,19 +630,19 @@ class SparseKernel(gpytorch.kernels.InducingPointKernel):
     def _get_covariance(self, x1, x2):
         k_ux1 = delazify(self.base_kernel(x1, self.inducing_points))
         if torch.equal(x1, x2):
-            # covar = LowRankRootLazyTensor(k_ux1)
-            covar = self._inducing_mat
+            covar = LowRankRootLazyTensor(self._inducing_inv_root)
+            
 
             # Diagonal correction for predictive posterior
-            if not self.training:
-                correction = (self.base_kernel(x1, x2, diag=True) - covar.diag()).clamp(0, math.inf)
-                covar = LowRankRootAddedDiagLazyTensor(covar, DiagLazyTensor(correction))
+            # if not self.training:
+            #     correction = (self.base_kernel(x1, x2, diag=True) - covar.diag()).clamp(0, math.inf)
+            #     covar = LowRankRootAddedDiagLazyTensor(covar, DiagLazyTensor(correction))
         else:
-            k_ux2 = delazify(self.base_kernel(x2, self.inducing_points))
-            # covar = MatmulLazyTensor(
-            #     k_ux1, k_ux2.transpose(-1, -2)
-            # )
-            covar = k_ux2
+            k_ux2 = delazify(self.base_kernel(x1, x2))
+            covar = MatmulLazyTensor(
+                k_ux1, torch.eye(k_ux2.shape[1]).cuda()
+            )
+            
 
         return covar
         # return self._inducing_mat
