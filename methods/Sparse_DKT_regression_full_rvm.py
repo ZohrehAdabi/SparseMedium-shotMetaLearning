@@ -114,7 +114,7 @@ class Sparse_DKT_regression_full_rvm(nn.Module):
             alpha = inducing_points.alpha.cuda()
             root_alpha = torch.sqrt(alpha)
             inv_root_alpha = 1 / root_alpha
-            A = torch.eye(alpha.shape[1])  * inv_root_alpha
+            A = torch.eye(alpha.shape[0]).cuda()  * inv_root_alpha.to(torch.float)
             self.model.covar_module.A = nn.Parameter(A.cuda(), requires_grad=False)
             # NOTE 
             # self.model.set_train_data(inputs=ip_values, targets=labels[inducing_points.index], strict=False)
@@ -198,7 +198,7 @@ class Sparse_DKT_regression_full_rvm(nn.Module):
         alpha = inducing_points.alpha.cuda()
         root_alpha = torch.sqrt(alpha)
         inv_root_alpha = 1 / root_alpha
-        A = torch.eye(alpha.shape[1])  * inv_root_alpha
+        A = torch.eye(alpha.shape[0]).cuda()  * inv_root_alpha.to(torch.float)
         self.model.covar_module.A = nn.Parameter(A.cuda(), requires_grad=False)
         # self.model.set_train_data(inputs=ip_values, targets=y_support[inducing_points.index], strict=False)
         self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
