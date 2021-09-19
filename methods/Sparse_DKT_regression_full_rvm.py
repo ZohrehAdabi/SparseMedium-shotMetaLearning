@@ -645,7 +645,6 @@ class SparseKernel(gpytorch.kernels.InducingPointKernel):
             
 
         return covar
-        # return self._inducing_mat
     def forward(self, x1, x2, diag=False, **kwargs):
         covar = self._get_covariance(x1, x2)
 
