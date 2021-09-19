@@ -1,4 +1,4 @@
-from methods.Sparse_DKT_regression_full_rvm import Sparse_DKT_regression_full_rvm
+from methods.Sparse_DKT_regression_rvm import Sparse_DKT_regression_rvm
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -68,7 +68,7 @@ elif params.method=='Sparse_DKT':
 
     optimizer = None
 
-elif params.method=='Sparse_DKT_full_rvm':
+elif params.method=='Sparse_DKT_rvm':
     print(f'\n{params.sparse_method}\n')
     params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s' % (configs.save_dir, params.dataset, params.model, params.method, params.sparse_method)
 
@@ -76,10 +76,10 @@ elif params.method=='Sparse_DKT_full_rvm':
     
     if params.sparse_method=='FRVM':
         params.checkpoint_dir += '/'
-        id =  f'Full_FRVM_{params.config}_{params.align_thr:.6f}_{params.lr_gp:.5f}_{params.lr_net:.5f}'
+        id =  f'Exact_FRVM_{params.config}_{params.align_thr:.6f}_{params.lr_gp:.5f}_{params.lr_net:.5f}'
         if params.gamma: id += '_gamma'
         params.checkpoint_dir = params.checkpoint_dir + id
-        model = Sparse_DKT_regression_full_rvm(bb, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
+        model = Sparse_DKT_regression_rvm(bb, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
                             video_path=params.checkpoint_dir, 
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
     
