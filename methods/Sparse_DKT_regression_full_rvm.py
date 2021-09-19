@@ -637,8 +637,9 @@ from gpytorch.mlls import InducingPointKernelAddedLossTerm
 class SparseKernel(gpytorch.kernels.InducingPointKernel):
 
     def __init__(self, base_kernel, inducing_points, likelihood, active_dims=None):
-        self.register_parameter(name="A", parameter=torch.nn.Parameter(inducing_points))
+        
         super(SparseKernel, self).__init__(base_kernel, inducing_points, likelihood, active_dims=active_dims)
+        self.register_parameter(name="A", parameter=torch.nn.Parameter(inducing_points))
 
     def _get_covariance(self, x1, x2):
         k_ux1 = delazify(self.base_kernel(x1, self.inducing_points))
