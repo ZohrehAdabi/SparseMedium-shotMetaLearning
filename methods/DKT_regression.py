@@ -292,8 +292,8 @@ class DKT_regression(nn.Module):
 
         kernel_matrix = kernel_matrix.to(torch.float64)
         target = targets.clone().to(torch.float64)
-        active, alpha, gamma, beta, mu_m = Fast_RVM_regression(kernel_matrix, target, beta, N, self.config, self.align_threshold,
-                                                self.gamma, eps, tol, max_itr, self.device, verbose)
+        active, alpha, gamma, beta, mu_m = Fast_RVM_regression(kernel_matrix, target, beta, N, "1011",1e-3,
+                                                False, eps, tol, max_itr, self.device, verbose)
         
         index = np.argsort(active)
         active = active[index]
