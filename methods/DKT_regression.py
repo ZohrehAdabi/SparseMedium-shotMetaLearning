@@ -204,6 +204,7 @@ class DKT_regression(nn.Module):
 
         mll_list = []
         # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=stop_epoch//3, gamma=0.1)
+        best_mse = 1e7
         for epoch in range(stop_epoch):
             mll = self.train_loop(epoch, n_support, n_samples, optimizer)
 
