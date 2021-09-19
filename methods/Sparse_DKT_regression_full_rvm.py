@@ -653,14 +653,14 @@ class SparseKernel(gpytorch.kernels.InducingPointKernel):
             #     covar = LowRankRootAddedDiagLazyTensor(covar, DiagLazyTensor(correction))
         else:
             k_ux2 = delazify(self.base_kernel(x2, self.inducing_points))
-            # covar = MatmulLazyTensor(
-            #     k_ux1.matmul(self.A), k_ux2.matmul(self.A).transpose(-1, -2)
-            # )
-            S = torch.inv((1/self.likelihood.noise) * k_ux1.transpose(-1, -2).matmul(k_ux1) + (1/self.A).pow(2))
-            k_s = k_ux1.matmul(S)
             covar = MatmulLazyTensor(
-                k_s.transpose(-1, -2), k_ux2
+                k_ux1.matmul(self.A), k_ux2.matmul(self.A).transpose(-1, -2)
             )
+            # S = torch.inv((1/self.likelihood.noise) * k_ux1.transpose(-1, -2).matmul(k_ux1) + (1/self.A).pow(2))
+            # k_s = k_ux1.matmul(S)
+            # covar = MatmulLazyTensor(
+            #     k_s.transpose(-1, -2), k_ux2
+            # )
 
         return covar
     def forward(self, x1, x2, diag=False, **kwargs):
