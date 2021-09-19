@@ -656,7 +656,7 @@ class SparseKernel(gpytorch.kernels.InducingPointKernel):
             # covar = MatmulLazyTensor(
             #     k_ux1.matmul(self.A), k_ux2.matmul(self.A).transpose(-1, -2)
             # )
-            S = torch.inv((1/self.likelihood.noise) * k_ux1.transpose(-1, -2).matmul(k_ux1) + (1/self.A).pow(2))
+            S = torch.inverse((1/self.likelihood.noise) * k_ux1.transpose(-1, -2).matmul(k_ux1) + (1/self.A).pow(2))
             k_s = k_ux1.matmul(S)
             covar = MatmulLazyTensor(
                 k_s.transpose(-1, -2), k_ux2
