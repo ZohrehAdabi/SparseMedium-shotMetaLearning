@@ -19,7 +19,7 @@ import gpytorch
 from time import gmtime, strftime
 import random
 from statistics import mean
-from data.qmul_loader import get_batch, train_people, test_people, get_unnormalized_label
+from data.qmul_loader import get_batch, train_people, test_people, val_people, get_unnormalized_label
 from configs import kernel_type
 #Check if tensorboardx is installed
 try:
@@ -197,6 +197,27 @@ class DKT_regression(nn.Module):
         # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=stop_epoch//3, gamma=0.1)
         for epoch in range(stop_epoch):
             mll = self.train_loop(epoch, n_support, n_samples, optimizer)
+
+            if epoch%2==0:
+                print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
+                mse_list = []
+                val_count = 10
+                rep = True if val_count > len(val_people) else False
+                val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
+                for t in range(val_count):
+                    mse, mse_ = self.test_loop_fast_rvm(n_support, n_samples, val_person[t],  optimizer)
+                    mse_list.append(mse)
+                mse = np.mean(mse_list)
+                if best_mse >= mse:
+                    best_mse = mse
+                    model_name = self.best_path + '_best_model.tar'
+                    self.save_best_checkpoint(epoch+1, best_mse, model_name)
+                    print(Fore.LIGHTRED_EX, f'Best MSE: {best_mse:.4f}', Fore.RESET)
+                print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE: {mse:.4f}, Best MSE: {best_mse:.4f}', Fore.RESET)
+                if(self.writer is not None):
+                    self.writer.add_scalar('MSE Val.', mse, epoch)
+                print(Fore.GREEN,"-"*30, Fore.RESET)
+
             mll_list.append(mll)
             if(self.writer is not None): self.writer.add_scalar('MLL per epoch', mll, epoch)
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
