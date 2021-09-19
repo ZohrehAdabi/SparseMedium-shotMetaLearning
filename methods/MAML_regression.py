@@ -57,6 +57,7 @@ class MAML_regression(nn.Module):
         self.model = Linear_fw(2916, 1)
         self.device = 'cuda'
         self.video_path = video_path
+        self.best_path = video_path
         self.show_plots_pred = show_plots_pred
         self.show_plots_features = show_plots_features
         if self.show_plots_pred or self.show_plots_features:
