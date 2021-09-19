@@ -111,6 +111,12 @@ class Sparse_DKT_regression_full_rvm(nn.Module):
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
             self.model.train()
             # NOTE 
+            alpha = inducing_points.alpha.cuda()
+            root_alpha = torch.sqrt(alpha)
+            inv_root_alpha = 1 / root_alpha
+            A = torch.eye(alpha.shape[1])  * inv_root_alpha
+            self.model.covar_module.A = nn.Parameter(A.cuda(), requires_grad=False)
+            # NOTE 
             # self.model.set_train_data(inputs=ip_values, targets=labels[inducing_points.index], strict=False)
             self.model.set_train_data(inputs=z, targets=labels, strict=False)
 
@@ -193,7 +199,7 @@ class Sparse_DKT_regression_full_rvm(nn.Module):
         root_alpha = torch.sqrt(alpha)
         inv_root_alpha = 1 / root_alpha
         A = torch.eye(alpha.shape[1])  * inv_root_alpha
-        self.model.covar_module.A = nn.Parameter(A.cusa(), requires_grad=False)
+        self.model.covar_module.A = nn.Parameter(A.cuda(), requires_grad=False)
         # self.model.set_train_data(inputs=ip_values, targets=y_support[inducing_points.index], strict=False)
         self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
         self.model.eval()
@@ -631,10 +637,9 @@ from gpytorch.mlls import InducingPointKernelAddedLossTerm
 class SparseKernel(gpytorch.kernels.InducingPointKernel):
 
     def __init__(self, base_kernel, inducing_points, likelihood, active_dims=None):
-        
-        super(SparseKernel, self).__init__(base_kernel, inducing_points, likelihood, active_dims=active_dims)
         self.register_parameter(name="A", parameter=torch.nn.Parameter(inducing_points))
-        
+        super(SparseKernel, self).__init__(base_kernel, inducing_points, likelihood, active_dims=active_dims)
+
     def _get_covariance(self, x1, x2):
         k_ux1 = delazify(self.base_kernel(x1, self.inducing_points))
         if torch.equal(x1, x2):
