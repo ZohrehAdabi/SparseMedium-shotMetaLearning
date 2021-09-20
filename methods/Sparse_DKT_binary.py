@@ -70,7 +70,7 @@ class Sparse_DKT_binary(MetaTemplate):
             time_string = strftime("%d%m%Y_%H%M", gmtime())
             if not os.path.isdir(path):
                 os.makedirs(path)
-            writer_path = path+ '/' + id +'_old'+ time_string
+            writer_path = path+ '/' + id +'_old' #+ time_string
             self.writer = SummaryWriter(log_dir=writer_path)
 
     def get_model_likelihood_mll(self, train_x=None, train_y=None):
@@ -308,9 +308,9 @@ class Sparse_DKT_binary(MetaTemplate):
                 scales[scales==0] = 1
                 kernel_matrix = kernel_matrix / scales
 
-            kernel_matrix = kernel_matrix.to(torch.float64)
+            kernel_matrix = kernel_matrix.to(torch.float)
             # targets[targets==-1]= 0
-            target = targets.clone().to(torch.float64)
+            target = targets.clone().to(torch.float)
             active, alpha, Gamma, beta, mu_m = Fast_RVM(kernel_matrix, target, N, self.config, self.align_threshold, self.gamma,
                                                     eps, tol, max_itr, self.device, verbose)
 
