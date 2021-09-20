@@ -148,9 +148,9 @@ class DKT_regression(nn.Module):
             inducing_points = self.get_inducing_points(z_support, y_support, verbose=False)
 
         ip_values = inducing_points.z_values.cuda()
-        self.model.set_train_data(inputs=ip_values, targets=y_support[inducing_points.index], strict=False)
+        # self.model.set_train_data(inputs=ip_values, targets=y_support[inducing_points.index], strict=False)
         #****
-        # self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
+        self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
 
         self.model.eval()
         self.feature_extractor.eval()
