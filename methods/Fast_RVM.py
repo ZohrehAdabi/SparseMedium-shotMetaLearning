@@ -37,11 +37,11 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
     mu_m	=  K_m.pinverse() @ (torch.log(LogOut / (1 - LogOut))) #torch.linalg.lstsq(K_m, (torch.log(LogOut / (1 - LogOut)))).solution
     mu_m = mu_m.to(device)
     alpha_init = 1 / (mu_m + 1e-8).pow(2)
-    alpha_m = torch.tensor([alpha_init], dtype=torch.float64).to(device)
+    alpha_m = torch.tensor([alpha_init], dtype=torch.float).to(device)
     if alpha_m < 1e-3:
-        alpha_m = torch.tensor([1e-3], dtype=torch.float64).to(device)
+        alpha_m = torch.tensor([1e-3], dtype=torch.float).to(device)
     if alpha_m > 1e3:
-        alpha_m = torch.tensor([1e3], dtype=torch.float64).to(device)
+        alpha_m = torch.tensor([1e3], dtype=torch.float).to(device)
     
     aligned_out		= torch.tensor([], dtype=torch.int).to(device)
     aligned_in		= torch.tensor([], dtype=torch.int).to(device)
@@ -66,7 +66,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
         # 'Relevance Factor' (q^2-s) values for basis functions in model
         Factor = q*q - s 
         #compute delta in marginal log likelihood for new action selection
-        deltaML = torch.zeros(M, dtype=torch.float64).to(device)  
+        deltaML = torch.zeros(M, dtype=torch.float).to(device)  
         action = torch.zeros(M)
         active_factor = Factor[active_m]
 
@@ -533,9 +533,9 @@ if __name__=='__main__':
     # kernel_matrix = scipy.io.loadmat('./methods/K.mat')['BASIS']
     # kernel_matrix = torch.from_numpy(kernel_matrix).to(dtype=torch.float64)
     targets = scipy.io.loadmat('./methods/targets.mat')['Targets']
-    targets = targets.astype(np.float64)
+    targets = targets.astype(np.float)
     targets = 2 * targets -1
-    targets = torch.from_numpy(targets).to(dtype=torch.float64)
+    targets = torch.from_numpy(targets).to(dtype=torch.float)
     targets = targets.squeeze()
     N = targets.shape[0]
     sigma = torch.var(targets)  #sigma^2

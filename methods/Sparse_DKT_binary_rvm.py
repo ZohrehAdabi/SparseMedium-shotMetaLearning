@@ -37,9 +37,9 @@ except ImportError:
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=1 --train_aug
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=5 --train_aug
 IP = namedtuple("inducing_points", "z_values index count x y i_idx j_idx")
-class Sparse_DKT_binary(MetaTemplate):
+class Sparse_DKT_binary_rvm(MetaTemplate):
     def __init__(self, model_func, n_way, n_support, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
-        super(Sparse_DKT_binary, self).__init__(model_func, n_way, n_support)
+        super(Sparse_DKT_binary_rvm, self).__init__(model_func, n_way, n_support)
         self.num_inducing_points = 10
         self.fast_rvm = True
         self.config = config
@@ -177,26 +177,29 @@ class Sparse_DKT_binary(MetaTemplate):
             noise = 0.0
             outputscale = 0.0
 
-            if self.dirichlet:
-                target[target==-1] = 0
-                self.model.likelihood.targets = target.long()
-                sigma2_labels, transformed_targets, num_classes = self.model.likelihood._prepare_targets(self.model.likelihood.targets, 
-                                        alpha_epsilon=self.model.likelihood.alpha_epsilon, dtype=torch.float)
-                self.model.likelihood.transformed_targets = transformed_targets.transpose(-2, -1)
-                self.model.likelihood.noise.data = sigma2_labels
-                self.model.set_train_data(inputs=z_train, targets=self.model.likelihood.transformed_targets, strict=False)
-            else: 
-                self.model.set_train_data(inputs=z_train, targets=target, strict=False)
-
             with torch.no_grad():
                 inducing_points = self.get_inducing_points(self.model.base_covar_module, #.base_kernel,
                                                         z_train, target, verbose=False)
         
             ip_values = inducing_points.z_values.cuda()
-            self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
+            ip_labels = target[inducing_points.index]
+
+            if self.dirichlet:
+                ip_labels[ip_labels==-1] = 0
+                self.model.likelihood.targets = ip_labels.long()
+                sigma2_labels, transformed_targets, num_classes = self.model.likelihood._prepare_targets(self.model.likelihood.targets, 
+                                        alpha_epsilon=self.model.likelihood.alpha_epsilon, dtype=torch.float)
+                self.model.likelihood.transformed_targets = transformed_targets.transpose(-2, -1)
+                self.model.likelihood.noise.data = sigma2_labels
+                self.model.set_train_data(inputs=ip_values, targets=self.model.likelihood.transformed_targets, strict=False)
+            else: 
+                self.model.set_train_data(inputs=ip_values, targets=ip_labels, strict=False)
+
+            
+            # self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
             self.model.train()
 
-            if(self.model.covar_module.base_kernel.lengthscale is not None):
+            if(self.model.base_kernel.lengthscale is not None):
                 lenghtscale+=self.model.base_covar_module.base_kernel.lengthscale.mean().cpu().detach().numpy().squeeze()
             noise+=self.model.likelihood.noise.cpu().detach().numpy().squeeze().mean()
             if(self.model.base_covar_module.outputscale is not None):
@@ -308,9 +311,9 @@ class Sparse_DKT_binary(MetaTemplate):
                 scales[scales==0] = 1
                 kernel_matrix = kernel_matrix / scales
 
-            kernel_matrix = kernel_matrix.to(torch.float64)
+            kernel_matrix = kernel_matrix.to(torch.float)
             # targets[targets==-1]= 0
-            target = targets.clone().to(torch.float64)
+            target = targets.clone().to(torch.float)
             active, alpha, Gamma, beta, mu_m = Fast_RVM(kernel_matrix, target, N, self.config, self.align_threshold, self.gamma,
                                                     eps, tol, max_itr, self.device, verbose)
 
@@ -376,26 +379,29 @@ class Sparse_DKT_binary(MetaTemplate):
         z_train = self.feature_extractor.forward(x_train).detach() #[340, 64]
         if(self.normalize): z_train = F.normalize(z_train, p=2, dim=1)
         
-        if self.dirichlet:
-                target[target==-1] = 0
-                self.model.likelihood.targets = target.long()
-                sigma2_labels, transformed_targets, num_classes = self.model.likelihood._prepare_targets(self.model.likelihood.targets, 
-                                        alpha_epsilon=self.model.likelihood.alpha_epsilon, dtype=torch.float)
-                self.model.likelihood.transformed_targets = transformed_targets.transpose(-2, -1)
-                self.model.likelihood.noise.data = sigma2_labels
-                self.model.set_train_data(inputs=z_train, targets=self.model.likelihood.transformed_targets, strict=False)
-        else: 
-            self.model.set_train_data(inputs=z_train, targets=target, strict=False)
-
         with torch.no_grad():
             inducing_points = self.get_inducing_points(self.model.base_covar_module, #.base_kernel,
                                                     z_train, target, verbose=False)
             inducing_points = IP(inducing_points.z_values, inducing_points.index, inducing_points.count, 
                                 x_support[inducing_points.index], y_support[inducing_points.index], None, None)
-    
         ip_values = inducing_points.z_values.cuda()
-        self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
-        self.model.covar_module._clear_cache()
+        ip_labels = target[inducing_points.index]
+        if self.dirichlet:
+                ip_labels[ip_labels==-1] = 0
+                self.model.likelihood.targets = ip_labels.long()
+                sigma2_labels, transformed_targets, num_classes = self.model.likelihood._prepare_targets(self.model.likelihood.targets, 
+                                        alpha_epsilon=self.model.likelihood.alpha_epsilon, dtype=torch.float)
+                self.model.likelihood.transformed_targets = transformed_targets.transpose(-2, -1)
+                self.model.likelihood.noise.data = sigma2_labels
+                self.model.set_train_data(inputs=ip_values, targets=self.model.likelihood.transformed_targets, strict=False)
+        else: 
+            self.model.set_train_data(inputs=ip_values, targets=ip_labels, strict=False)
+
+        
+    
+        # ip_values = inducing_points.z_values.cuda()
+        # self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
+        # self.model.covar_module._clear_cache()
 
         optimizer = torch.optim.Adam([{'params': self.model.parameters()}], lr=1e-3)
 
@@ -437,7 +443,12 @@ class Sparse_DKT_binary(MetaTemplate):
             top1_correct = np.sum(y_pred == y_query)
             count_this = len(y_query)
             acc = (top1_correct/ count_this)*100
+            print(Fore.RED,"="*50, Fore.RESET)
+            print(f'inducing_points count: {inducing_points.count}')
+            print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha}',Fore.RESET)
+            print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma}',Fore.RESET)
             print(Fore.YELLOW, f'itr {i:3}, ACC: {acc:.2f}%', Fore.RESET)
+            print(Fore.RED,"-"*50, Fore.RESET)
             if self.show_plot:
                 self.plot_test(x_query, y_query, y_pred, inducing_points, i)
 

@@ -19,6 +19,7 @@ from methods.DKT import DKT
 from methods.DKT_binary import DKT_binary
 from methods.Sparse_DKT import Sparse_DKT
 from methods.Sparse_DKT_binary import Sparse_DKT_binary
+from methods.Sparse_DKT_binary_rvm import Sparse_DKT_binary_rvm
 from methods.protonet import ProtoNet
 from methods.matchingnet import MatchingNet
 from methods.relationnet import RelationNet
@@ -168,7 +169,17 @@ if __name__ == '__main__':
                 id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'           
             if params.gamma: id += '_gamma'
             model.init_summary(id=id, dataset=params.dataset)
-            
+
+        elif params.method == 'Sparse_DKT_binary_rvm':
+            model = Sparse_DKT_binary_rvm(model_dict[params.model], **train_few_shot_params, 
+                                    config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
+            if params.dirichlet:
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'
+            else:
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'           
+            if params.gamma: id += '_gamma'
+            model.init_summary(id=id, dataset=params.dataset)
+
         elif(params.method == 'DKT'):
             model = DKT(model_dict[params.model], **train_few_shot_params, dirichlet=params.dirichlet)
             if params.dirichlet:
@@ -220,7 +231,7 @@ if __name__ == '__main__':
         params.checkpoint_dir += '_aug'
     if not params.method in ['baseline', 'baseline++']:
         
-        if params.method=='Sparse_DKT' or params.method=='Sparse_DKT_binary':
+        if params.method=='Sparse_DKT' or params.method=='Sparse_DKT_binary' or params.method=='Sparse_DKT_binary_rvm':
             if params.dirichlet:
                 id = f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'
             else:

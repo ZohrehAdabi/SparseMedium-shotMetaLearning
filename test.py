@@ -19,6 +19,7 @@ from methods.baselinefinetune import BaselineFinetune
 from methods.protonet import ProtoNet
 from methods.Sparse_DKT import Sparse_DKT
 from methods.Sparse_DKT_binary import Sparse_DKT_binary
+from methods.Sparse_DKT_binary_rvm import Sparse_DKT_binary_rvm
 from methods.DKT import DKT
 from methods.matchingnet import MatchingNet
 from methods.relationnet import RelationNet
@@ -86,6 +87,10 @@ def single_test(params):
     elif params.method == 'Sparse_DKT_binary':
         model           = Sparse_DKT_binary(model_dict[params.model], **few_shot_params,
                                     config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
+    elif params.method == 'Sparse_DKT_binary_rvm':
+        model           = Sparse_DKT_binary_rvm(model_dict[params.model], **few_shot_params,
+                                    config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
+   
     elif params.method == 'matchingnet':
         model           = MatchingNet( model_dict[params.model], **few_shot_params )
     elif params.method in ['relationnet', 'relationnet_softmax']:
@@ -119,7 +124,7 @@ def single_test(params):
         checkpoint_dir += '_aug'
     if not params.method in ['baseline', 'baseline++'] :
         # checkpoint_dir += '_%dway_%dshot' %( params.train_n_way, params.n_shot)
-        if params.method=='Sparse_DKT' or params.method=='Sparse_DKT_binary':
+        if params.method=='Sparse_DKT' or params.method=='Sparse_DKT_binary' or  params.method=='Sparse_DKT_binary_rvm':
             if params.dirichlet:
                 id = f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'
             else:
@@ -147,6 +152,7 @@ def single_test(params):
                 IP = torch.ones(100, 64).cuda()
                 tmp['state']['model.covar_module.inducing_points'] = IP
                 tmp['state']['mll.model.covar_module.inducing_points'] = IP
+
             model.load_state_dict(tmp['state'])
 
         else:
@@ -157,7 +163,7 @@ def single_test(params):
         split_str = split + "_" +str(params.save_iter)
     else:
         split_str = split
-    if params.method in ['maml', 'maml_approx', 'DKT', 'Sparse_DKT', 'Sparse_DKT_binary']: #maml do not support testing with feature
+    if params.method in ['maml', 'maml_approx', 'DKT', 'Sparse_DKT', 'Sparse_DKT_binary', 'Sparse_DKT_binary_rvm']: #maml do not support testing with feature
         if 'Conv' in params.model:
             if params.dataset in ['omniglot', 'cross_char']:
                 image_size = 28
