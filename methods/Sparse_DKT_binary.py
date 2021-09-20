@@ -70,7 +70,7 @@ class Sparse_DKT_binary(MetaTemplate):
             time_string = strftime("%d%m%Y_%H%M", gmtime())
             if not os.path.isdir(path):
                 os.makedirs(path)
-            writer_path = path+ '/' + id +'_new'+ time_string
+            writer_path = path+ '/' + id +'_old'+ time_string
             self.writer = SummaryWriter(log_dir=writer_path)
 
     def get_model_likelihood_mll(self, train_x=None, train_y=None):
