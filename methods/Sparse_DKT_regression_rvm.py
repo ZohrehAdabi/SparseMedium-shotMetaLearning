@@ -79,10 +79,11 @@ class Sparse_DKT_regression_rvm(nn.Module):
     
     def init_summary(self, id):
         if(IS_TBX_INSTALLED):
+            path = './Sparse_DKT_QMUL_rvm_Loss'
             time_string = strftime("%d%m%Y_%H%M", gmtime())
-            if not os.path.isdir('./Sparse_DKT_QMUL_rvm_Loss'):
-                os.makedirs('./Sparse_DKT_QMUL_rvm_Loss')
-            writer_path = './Sparse_DKT_QMUL_rvm_Loss/' + id #+'_'+ time_string
+            if not os.path.isdir(path):
+                os.makedirs(path)
+            writer_path = path +'/' + id #+'_'+ time_string
             self.writer = SummaryWriter(log_dir=writer_path)
 
     def set_forward(self, x, is_feature=False):

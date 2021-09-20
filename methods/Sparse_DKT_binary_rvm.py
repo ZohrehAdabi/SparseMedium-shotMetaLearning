@@ -66,11 +66,11 @@ class Sparse_DKT_binary(MetaTemplate):
 
     def init_summary(self, id, dataset):
         if(IS_TBX_INSTALLED):
-            path = f'./Sparse_DKT_binary_{dataset}_log'
+            path = f'./Sparse_DKT_binary_rvm_{dataset}_log'
             time_string = strftime("%d%m%Y_%H%M", gmtime())
             if not os.path.isdir(path):
                 os.makedirs(path)
-            writer_path = path+ '/' + id #+'_'+ time_string
+            writer_path = path + '/' + id #+'_'+ time_string
             self.writer = SummaryWriter(log_dir=writer_path)
 
     def get_model_likelihood_mll(self, train_x=None, train_y=None):
@@ -594,12 +594,7 @@ class ExactGPLayer(gpytorch.models.ExactGP):
 
         ## Linear kernel
         if(kernel=='linear'):
-            # if dirichlet:
-            #     self.base_covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.LinearKernel(
-            #         batch_shape=torch.Size((2,))
-            #     ), batch_shape=torch.Size((2,)),
-            #     )
-            # else:
+
             self.base_covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.LinearKernel())
             
         ## RBF kernel
@@ -623,11 +618,12 @@ class ExactGPLayer(gpytorch.models.ExactGP):
             raise ValueError("[ERROR] the kernel '" + str(kernel) + "' is not supported!")
 
 
-        self.covar_module = gpytorch.kernels.InducingPointKernel(self.base_covar_module,
-                                         inducing_points=inducing_points, likelihood=likelihood)
+        # self.covar_module = gpytorch.kernels.InducingPointKernel(self.base_covar_module,
+        #                                  inducing_points=inducing_points, likelihood=likelihood)
 
 
     def forward(self, x):
         mean_x = self.mean_module(x)
-        covar_x = self.covar_module(x)
+        # covar_x = self.covar_module(x)
+        covar_x = self.base_covar_module(x)
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
