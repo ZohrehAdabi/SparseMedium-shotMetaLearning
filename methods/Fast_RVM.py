@@ -13,7 +13,7 @@ from sklearn.metrics import mean_squared_error as mse
 from torch.utils import data
 
 
-def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, device='cpu', verbose=True):
+def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, device='cuda', verbose=True):
     
 
     M = K.shape[1]
