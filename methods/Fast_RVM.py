@@ -24,12 +24,12 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
     targets = targets.to(device)
     K = K.to(device)
     targets_pseudo_linear	= 2 * targets - 1
-    KK = K.T @ K  # all K_j @ K_i
+    # KK = K.T @ K  # all K_j @ K_i
     Kt = K.T @ targets_pseudo_linear
     start_k = torch.argmax(abs(Kt)) #torch.argmax(kt_k)
     active_m = torch.tensor([start_k]).to(device)
     K_m         = K[:, active_m]
-    KK_m        = KK[:, active_m]
+    # KK_m        = KK[:, active_m]
     Kt          = K.T @ targets
 
     #  Heuristic initialisation based on log-odds
