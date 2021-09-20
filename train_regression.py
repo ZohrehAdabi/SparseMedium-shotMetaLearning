@@ -37,7 +37,7 @@ if params.dataset=='QMUL':
 if params.method=='DKT':
     model = DKT_regression(bb, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
-    model.init_summary(id='DKT')
+    model.init_summary(id='DKT_org')
 elif params.method=='DKT_New_Loss':
     model = DKT_New_Loss(bb, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
