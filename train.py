@@ -53,25 +53,26 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
     for epoch in range(start_epoch, stop_epoch):
         #model.eval()
         #acc = model.test_loop(val_loader)
+        print(f'Epoch {epoch}')
         model.train()
         model.train_loop(epoch, base_loader, optimizer)  # model are called by reference, no need to return
         model.eval()
+        if epoch%5==0:
+            if not os.path.isdir(params.checkpoint_dir):
+                os.makedirs(params.checkpoint_dir)
+            print(Fore.GREEN,"-"*50 ,f'\nValidation \n', Fore.RESET)
+            acc = model.test_loop(val_loader)
+            if acc > max_acc:  # for baseline and baseline++, we don't use validation here so we let acc = -1
+                print("--> Best model! save...")
+                max_acc = acc
+                outfile = os.path.join(params.checkpoint_dir, 'best_model.tar')
+                torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
 
-        if not os.path.isdir(params.checkpoint_dir):
-            os.makedirs(params.checkpoint_dir)
-        print(Fore.GREEN,"-"*50 ,f'\nValidation \n', Fore.RESET)
-        acc = model.test_loop(val_loader)
-        if acc > max_acc:  # for baseline and baseline++, we don't use validation here so we let acc = -1
-            print("--> Best model! save...")
-            max_acc = acc
-            outfile = os.path.join(params.checkpoint_dir, 'best_model.tar')
-            torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
-
-        if (epoch % params.save_freq == 0) or (epoch == stop_epoch - 1):
-            outfile = os.path.join(params.checkpoint_dir, '{:d}.tar'.format(epoch))
-            torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
-        print(Fore.YELLOW, f'ACC: {acc:4.2f}\n', Fore.RESET)
-        print(Fore.GREEN,"-"*50 ,'\n', Fore.RESET)
+            if (epoch % params.save_freq == 0) or (epoch == stop_epoch - 1):
+                outfile = os.path.join(params.checkpoint_dir, '{:d}.tar'.format(epoch))
+                torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
+            print(Fore.YELLOW, f'ACC: {acc:4.2f}\n', Fore.RESET)
+            print(Fore.GREEN,"-"*50 ,'\n', Fore.RESET)
     return model
 
 
