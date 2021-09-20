@@ -36,7 +36,7 @@ except ImportError:
 # CUB + data augmentation
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=1 --train_aug
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=5 --train_aug
-IP = namedtuple("inducing_points", "z_values index count x y i_idx j_idx")
+IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j_idx")
 class Sparse_DKT_binary(MetaTemplate):
     def __init__(self, model_func, n_way, n_support, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
         super(Sparse_DKT_binary, self).__init__(model_func, n_way, n_support)
@@ -311,13 +311,15 @@ class Sparse_DKT_binary(MetaTemplate):
             kernel_matrix = kernel_matrix.to(torch.float)
             # targets[targets==-1]= 0
             target = targets.clone().to(torch.float)
-            active, alpha, Gamma, beta, mu_m = Fast_RVM(kernel_matrix, target, N, self.config, self.align_threshold, self.gamma,
+            active, alpha, gamma, beta, mu_m = Fast_RVM(kernel_matrix, target, N, self.config, self.align_threshold, self.gamma,
                                                     eps, tol, max_itr, self.device, verbose)
 
             index = np.argsort(active)
             active = active[index]
             inducing_points = inputs[active]
-            
+            gamma = gamma[index]
+            ss = scales[index]
+            alpha = alpha[index] / ss
             num_IP = active.shape[0]
             IP_index = active
 
@@ -335,7 +337,7 @@ class Sparse_DKT_binary(MetaTemplate):
                 
                 self.frvm_acc.append(acc.item())
 
-        return IP(inducing_points, IP_index, num_IP, None, None, None, None)
+        return IP(inducing_points, IP_index, num_IP, alpha, gamma, None, None, None, None)
   
     def correct(self, x, i=0, N=0, laplace=False):
         ##Dividing input x in query and support set
@@ -390,7 +392,8 @@ class Sparse_DKT_binary(MetaTemplate):
         with torch.no_grad():
             inducing_points = self.get_inducing_points(self.model.base_covar_module, #.base_kernel,
                                                     z_train, target, verbose=False)
-            inducing_points = IP(inducing_points.z_values, inducing_points.index, inducing_points.count, 
+            inducing_points = IP(inducing_points.z_values, inducing_points.index, inducing_points.count,
+                                inducing_points.alpha, inducing_points.gamma,  
                                 x_support[inducing_points.index], y_support[inducing_points.index], None, None)
     
         ip_values = inducing_points.z_values.cuda()
