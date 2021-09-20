@@ -137,7 +137,8 @@ if __name__ == '__main__':
         elif params.method == 'baseline++':
             model = BaselineTrain(model_dict[params.model], params.num_classes, loss_type='dist')
 
-    elif params.method in ['Sparse_DKT', 'Sparse_DKT_binary', 'DKT', 'DKT_binary', 'protonet', 'matchingnet', 'relationnet', 'relationnet_softmax', 'maml', 'maml_approx']:
+    elif params.method in ['Sparse_DKT', 'Sparse_DKT_binary', 'Sparse_DKT_binary_rvm', 'DKT', 'DKT_binary', 'protonet', 
+                        'matchingnet', 'relationnet', 'relationnet_softmax', 'maml', 'maml_approx']:
         # for fewshot setting
         # n_query = max(1, int(
         #     16 * params.test_n_way / params.train_n_way))  # if test_n_way is smaller than train_n_way, reduce n_query to keep batch size small
