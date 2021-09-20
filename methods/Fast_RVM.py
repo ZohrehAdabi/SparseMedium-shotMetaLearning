@@ -13,7 +13,7 @@ from sklearn.metrics import mean_squared_error as mse
 from torch.utils import data
 
 
-def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, device='cuda', verbose=True):
+def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, device='cpu', verbose=True):
     
 
     M = K.shape[1]
@@ -78,7 +78,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
         # d_alpha =  ((alpha_m[idx] - alpha_prim)/(alpha_prim * alpha_m[idx]))
         d_alpha_S           = delta_alpha * S[recompute] + 1 
         # deltaML[recompute] = ((delta_alpha * Q[recompute]**2) / (S[recompute] + 1/delta_alpha) - torch.log(d_alpha_S)) /2
-        deltaML[recompute]  = ((delta_alpha * Q[recompute]**2) / (d_alpha_S) - torch.log(d_alpha_S)) /2
+        deltaML[recompute]  = ((delta_alpha * Q[recompute]**2) / (d_alpha_S) - torch.log(abs(d_alpha_S))) /2
         
         # DELETION: if NEGATIVE factor and IN model
         idx = ~idx #active_factor <= 1e-12
@@ -121,17 +121,17 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
         selected_action		= action[max_idx]
         anyWorthwhileAction	= deltaLogMarginal > 0 
 
-        if check_gamma:
-            if (selected_action==1) and (max_idx in low_gamma):
-                #print(f'{itr:3}, low gamma selected {max_idx.cpu().numpy()}')
-                if add_priority:
-                    deltaML[recompute] = save_deltaML_recomp
-                    deltaML[delete] = save_deltaML_del
-                deltaML[low_gamma] = 0
-                max_idx = torch.argmax(deltaML)[None]
-                deltaLogMarginal = deltaML[max_idx]
-                selected_action		= action[max_idx]
-                anyWorthwhileAction	= deltaLogMarginal > 0 
+        # if check_gamma:
+        #     if (selected_action==1) and (max_idx in low_gamma):
+        #         #print(f'{itr:3}, low gamma selected {max_idx.cpu().numpy()}')
+        #         if add_priority:
+        #             deltaML[recompute] = save_deltaML_recomp
+        #             deltaML[delete] = save_deltaML_del
+        #         deltaML[low_gamma] = 0
+        #         max_idx = torch.argmax(deltaML)[None]
+        #         deltaLogMarginal = deltaML[max_idx]
+        #         selected_action		= action[max_idx]
+        #         anyWorthwhileAction	= deltaLogMarginal > 0 
         
         # already in the model
         if selected_action != 1:
@@ -157,22 +157,22 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
                 selected_action = torch.tensor(11)
                 terminate = True
         
-        if check_gamma and ((itr%5==0) or (selected_action==10)):
+        # if check_gamma and ((itr%5==0) or (selected_action==10)):
             
-            min_index = torch.argmin(Gamma)
-            if (Gamma[min_index] < gm) and active_m.shape[0] > 5:
+        #     min_index = torch.argmin(Gamma)
+        #     if (Gamma[min_index] < gm) and active_m.shape[0] > 5:
                 
-                j = min_index
-                del_from_active = active_m[j]
-                deltaML_j = -(q[active_m[j]]**2 / (s[active_m[j]] + alpha_m[j]) - torch.log(1 + s[active_m[j]] / alpha_m[j])) /2
+        #         j = min_index
+        #         del_from_active = active_m[j]
+        #         deltaML_j = -(q[active_m[j]]**2 / (s[active_m[j]] + alpha_m[j]) - torch.log(1 + s[active_m[j]] / alpha_m[j])) /2
                 
-                if deltaML_j > -0.01:
-                    print(f'itr {itr:3} remove low Gamma: {Gamma[min_index].detach().cpu().numpy():.4f}, deltaML: {deltaML_j.detach().cpu().numpy():.4f}',
-                                f'correspond to {del_from_active.detach().cpu().numpy()} data index')
-                    selected_action = -1
-                    max_idx = del_from_active
-                    deltaLogMarginal = deltaML_j
-                    low_gamma.append(del_from_active.item())
+        #         if deltaML_j > -0.01:
+        #             print(f'itr {itr:3} remove low Gamma: {Gamma[min_index].detach().cpu().numpy():.4f}, deltaML: {deltaML_j.detach().cpu().numpy():.4f}',
+        #                         f'correspond to {del_from_active.detach().cpu().numpy()} data index')
+        #             selected_action = -1
+        #             max_idx = del_from_active
+        #             deltaLogMarginal = deltaML_j
+        #             low_gamma.append(del_from_active.item())
                         
 
         
