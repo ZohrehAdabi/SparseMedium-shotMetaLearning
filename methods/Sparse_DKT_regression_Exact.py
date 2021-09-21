@@ -271,7 +271,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
                 self.plots.fig_feature.canvas.flush_events()
                 self.mw_feature.grab_frame()
 
-        return mse, mse_
+        return mse, mse_, inducing_points.count
 
   
     def train(self, stop_epoch, n_support, n_samples, optimizer):
@@ -328,6 +328,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
 
         mse_list = []
         mse_list_ = []
+        num_sv_list = []
         # choose a random test person
         rep = True if test_count > len(test_people) else False
 
@@ -335,7 +336,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
         for t in range(test_count):
             print(f'test #{t}')
             if self.f_rvm:
-                mse, mse_ = self.test_loop_fast_rvm(n_support, n_samples, test_person[t],  optimizer)
+                mse, mse_, num_sv = self.test_loop_fast_rvm(n_support, n_samples, test_person[t],  optimizer)
             elif self.random:
                 mse = self.test_loop_random(n_support, n_samples, test_person[t],  optimizer)
             elif not self.f_rvm:
@@ -345,12 +346,14 @@ class Sparse_DKT_regression_Exact(nn.Module):
 
             mse_list.append(float(mse))
             mse_list_.append(float(mse_))
+            num_sv_list.append(num_sv)
 
         if self.show_plots_pred:
             self.mw.finish()
         if self.show_plots_features:
             self.mw_feature.finish()
         print(f'MSE (unnormed): {np.mean(mse_list_):.4f}')
+        print(f'Avg. SVs: {np.mean(num_sv_list):.2f}')
         return mse_list
         
     def get_inducing_points(self, inputs, targets, verbose=True):

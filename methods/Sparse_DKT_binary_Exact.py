@@ -138,7 +138,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         max_pred[index] = -np.inf
         return max_pred
 
-    def train_loop(self, epoch, train_loader, optimizer, print_freq=10):
+    def train_loop(self, epoch, train_loader, optimizer, print_freq=1):
         # if self.dirichlet:
         #     optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
         #                               {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
@@ -448,8 +448,8 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             acc = (top1_correct/ count_this)*100
             print(Fore.RED,"="*50, Fore.RESET)
             print(f'inducing_points count: {inducing_points.count}')
-            print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha}',Fore.RESET)
-            print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma}',Fore.RESET)
+            print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha.cpu().numpy()}',Fore.RESET)
+            print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma.cpu().numpy()}',Fore.RESET)
             print(Fore.YELLOW, f'itr {i:3}, ACC: {acc:.2f}%', Fore.RESET)
             print(Fore.RED,"-"*50, Fore.RESET)
             if self.show_plot:
