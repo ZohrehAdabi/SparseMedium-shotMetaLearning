@@ -7,7 +7,8 @@ import configs
 from data.qmul_loader import get_batch, train_people, test_people
 from io_utils import parse_args_regression, get_resume_file
 from methods.DKT_regression import DKT_regression
-from methods.Sparse_DKT_regression import Sparse_DKT_regression
+from methods.Sparse_DKT_regression_Nystrom import Sparse_DKT_regression_Nystrom
+from methods.Sparse_DKT_regression_Exact import Sparse_DKT_regression_Exact
 from methods.DKT_regression_New_Loss import DKT_New_Loss
 from methods.MAML_regression import MAML_regression
 from methods.feature_transfer_regression import FeatureTransfer
@@ -34,7 +35,7 @@ elif params.method=='DKT_New_Loss':
     model = DKT_New_Loss(bb, video_path=params.checkpoint_dir, 
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features).cuda()
     optimizer = None
-elif params.method=='Sparse_DKT':
+elif params.method=='Sparse_DKT_Nystrom':
     print(f'\n{params.sparse_method}\n')
     params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s' % (configs.save_dir, params.dataset, params.model, params.method, params.sparse_method)
 
@@ -45,7 +46,7 @@ elif params.method=='Sparse_DKT':
         id =  f'FRVM_{params.config}_{params.align_thr:.6f}_{params.lr_gp:.5f}_{params.lr_net:.5f}'
         if params.gamma: id += '_gamma'
         params.checkpoint_dir = params.checkpoint_dir + id
-        model = Sparse_DKT_regression(bb, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
+        model = Sparse_DKT_regression_Nystrom(bb, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
                             video_path=params.checkpoint_dir, 
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
     
@@ -68,7 +69,7 @@ elif params.method=='Sparse_DKT':
 
     optimizer = None
 
-elif params.method=='Sparse_DKT_rvm':
+elif params.method=='Sparse_DKT_Exact':
     print(f'\n{params.sparse_method}\n')
     params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s' % (configs.save_dir, params.dataset, params.model, params.method, params.sparse_method)
 
@@ -79,7 +80,7 @@ elif params.method=='Sparse_DKT_rvm':
         id =  f'Exact_FRVM_{params.config}_{params.align_thr:.6f}_{params.lr_gp:.5f}_{params.lr_net:.5f}'
         if params.gamma: id += '_gamma'
         params.checkpoint_dir = params.checkpoint_dir + id
-        model = Sparse_DKT_regression_rvm(bb, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
+        model = Sparse_DKT_regression_Exact(bb, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
                             video_path=params.checkpoint_dir, 
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
     

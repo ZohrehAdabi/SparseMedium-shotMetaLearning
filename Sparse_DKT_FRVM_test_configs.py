@@ -1,12 +1,9 @@
  
-
-
-
 import torch
 import configs
 from data.qmul_loader import get_batch, train_people, test_people
 from io_utils import parse_args_regression, get_resume_file
-from methods.Sparse_DKT_regression import Sparse_DKT_regression
+from methods.Sparse_DKT_regression_Nystrom import Sparse_DKT_regression_Nystrom
 import backbone
 import os
 import numpy as np
@@ -77,7 +74,7 @@ def run(lr_gp, lr_net, gamma):
                 if params.gamma: id += '_gamma'
                 params.checkpoint_dir = params.checkpoint_dir + id
 
-                model = Sparse_DKT_regression(bb, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
+                model = Sparse_DKT_regression_Nystrom(bb, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
                                     video_path=params.checkpoint_dir, 
                                     show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
                 model.init_summary(id=id)
@@ -130,7 +127,7 @@ def run(lr_gp, lr_net, gamma):
                 id =  f'FRVM_{params.config}_{params.align_thr:.6f}_{lr_gp:.5f}_{lr_net:.5f}'
                 if params.gamma: id += '_gamma'
                 params.checkpoint_dir = params.checkpoint_dir + id
-                model = Sparse_DKT_regression(bb, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
+                model = Sparse_DKT_regression_Nystrom(bb, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
                                     video_path=params.checkpoint_dir, 
                                     show_plots_pred=True, show_plots_features=params.show_plots_features, training=False).cuda()
             else:
@@ -241,7 +238,7 @@ def run(lr_gp, lr_net, gamma):
             if params.gamma: id += '_gamma'
             params.checkpoint_dir = params.checkpoint_dir + id
 
-            model = Sparse_DKT_regression(bb, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
+            model = Sparse_DKT_regression_Nystrom(bb, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
                                 video_path=params.checkpoint_dir, 
                                 show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
             model.init_summary(id=id)
@@ -295,7 +292,7 @@ def run(lr_gp, lr_net, gamma):
             id =  f'FRVM_{params.config}_{params.align_thr:.6f}_{lr_gp:.5f}_{lr_net:.5f}'
             if params.gamma: id += '_gamma'
             params.checkpoint_dir = params.checkpoint_dir + id
-            model = Sparse_DKT_regression(bb, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma, 
+            model = Sparse_DKT_regression_Nystrom(bb, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma, 
                                 video_path=params.checkpoint_dir, 
                                 show_plots_pred=True, show_plots_features=params.show_plots_features, training=False).cuda()
         else:

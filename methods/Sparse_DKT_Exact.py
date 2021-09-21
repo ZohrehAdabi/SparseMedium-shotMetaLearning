@@ -181,7 +181,7 @@ class Sparse_DKT_Exact(MetaTemplate):
             print(Fore.LIGHTMAGENTA_EX, f'epoch:{epoch+1}', Fore.RESET)
             for idx, single_model in enumerate(self.model.models):
                 print(Fore.LIGHTMAGENTA_EX, f'model:{idx+1}', Fore.RESET)
-                with torch.no_grad():
+            with torch.no_grad():
                 inducing_points = self.get_inducing_points(single_model.base_covar_module, #.base_kernel,
                                                             z_train, target_list[idx], verbose=False)
                 ip_values = inducing_points.z_values.cuda()

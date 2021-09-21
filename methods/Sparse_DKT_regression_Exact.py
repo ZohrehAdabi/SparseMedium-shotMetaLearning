@@ -40,10 +40,10 @@ except ImportError:
 
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx")
-class Sparse_DKT_regression_rvm(nn.Module):
+class Sparse_DKT_regression_Exact(nn.Module):
     def __init__(self, backbone, f_rvm=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
-        super(Sparse_DKT_regression_rvm, self).__init__()
+        super(Sparse_DKT_regression_Exact, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
         self.num_induce_points = n_inducing_points
@@ -79,7 +79,7 @@ class Sparse_DKT_regression_rvm(nn.Module):
     
     def init_summary(self, id):
         if(IS_TBX_INSTALLED):
-            path = './Sparse_DKT_QMUL_rvm_Loss'
+            path = './Sparse_DKT_QMUL_Eaxct_Loss'
             time_string = strftime("%d%m%Y_%H%M", gmtime())
             if not os.path.isdir(path):
                 os.makedirs(path)

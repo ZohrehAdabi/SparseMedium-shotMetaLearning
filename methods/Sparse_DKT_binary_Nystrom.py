@@ -440,18 +440,24 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             top1_correct = np.sum(y_pred == y_query)
             count_this = len(y_query)
             acc = (top1_correct/ count_this)*100
+            print(Fore.RED,"="*50, Fore.RESET)
+            print(f'inducing_points count: {inducing_points.count}')
+            print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha}',Fore.RESET)
+            print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma}',Fore.RESET)
             print(Fore.YELLOW, f'itr {i:3}, ACC: {acc:.2f}%', Fore.RESET)
+            print(Fore.RED,"-"*50, Fore.RESET)
             if self.show_plot:
                 self.plot_test(x_query, y_query, y_pred, inducing_points, i)
 
 
-        return float(top1_correct), count_this, avg_loss/float(N+1e-10)
+        return float(top1_correct), count_this, avg_loss/float(N+1e-10), inducing_points.count
 
     def test_loop(self, test_loader, record=None, return_std=False):
         print_freq = 10
         correct =0
         count = 0
         acc_all = []
+        num_sv_list = []
         iter_num = len(test_loader)
         self.show_plot = iter_num < 5
         self.frvm_acc = []
@@ -459,19 +465,22 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             self.n_query = x.size(1) - self.n_support
             if self.change_way:
                 self.n_way  = x.size(0)
-            correct_this, count_this, loss_value = self.correct(x, i)
+            correct_this, count_this, loss_value, num_sv = self.correct(x, i)
             acc_all.append(correct_this/ count_this*100)
+            num_sv_list.append(num_sv)
             if(i % 10==0):
                 acc_mean = np.mean(np.asarray(acc_all))
                 print('Test | Batch {:d}/{:d} | Loss {:f} | Acc {:f}'.format(i, len(test_loader), loss_value, acc_mean))
         acc_all  = np.asarray(acc_all)
         acc_mean = np.mean(acc_all)
         acc_std  = np.std(acc_all)
+        mean_num_sv = np.mean(num_sv)
         print(Fore.LIGHTRED_EX,"="*30, Fore.RESET)
-        print(f'Avg. FRVM ACC: {np.mean(self.frvm_acc):4.2f}%', Fore.RESET)
+        print(f'Avg. FRVM ACC: {np.mean(self.frvm_acc):4.2f}%, Avg. SVs {mean_num_sv:.2f}', Fore.RESET)
         print(Fore.YELLOW,'%d Test Acc = %4.2f%% +- %4.2f%%' %(iter_num,  acc_mean, 1.96* acc_std/np.sqrt(iter_num)), Fore.RESET)
         print(Fore.LIGHTRED_EX,"="*30, Fore.RESET)
         if(self.writer is not None): self.writer.add_scalar('test_accuracy', acc_mean, self.iteration)
+        if(self.writer is not None): self.writer.add_scalar('Avg. SVs', mean_num_sv, self.iteration)
         if(return_std): return acc_mean, acc_std
         else: return acc_mean
 

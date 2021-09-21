@@ -321,7 +321,7 @@ class Sparse_DKT_Nystrom(MetaTemplate):
 
             kernel_matrix = kernel_matrix.to(torch.float64)
             targets = targets.to(torch.float64)
-            active, alpha, Gamma, beta, mu_m = Fast_RVM(kernel_matrix, targets, N, self.config, self.align_threshold, self.gamma,
+            active, alpha, gamma, beta, mu_m = Fast_RVM(kernel_matrix, targets, N, self.config, self.align_threshold, self.gamma,
                                                     eps, tol, max_itr, self.device, verbose)
 
             index = np.argsort(active)
