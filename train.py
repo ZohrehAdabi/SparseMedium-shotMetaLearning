@@ -163,6 +163,7 @@ if __name__ == '__main__':
             else:
                 id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'           
             if params.gamma: id += '_gamma'
+            if params.train_aug: id += '_aug'
             model.init_summary(id=id, dataset=params.dataset)
         elif(params.method == 'Sparse_DKT_Exact'):
             model = Sparse_DKT_Exact(model_dict[params.model], **train_few_shot_params, 
@@ -172,6 +173,7 @@ if __name__ == '__main__':
             else:
                 id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'           
             if params.gamma: id += '_gamma'
+            if params.train_aug: id += '_aug'
             model.init_summary(id=id, dataset=params.dataset)
 
         elif params.method == 'Sparse_DKT_binary_Nystrom':
@@ -182,6 +184,7 @@ if __name__ == '__main__':
             else:
                 id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'           
             if params.gamma: id += '_gamma'
+            if params.train_aug: id += '_aug'
             model.init_summary(id=id, dataset=params.dataset)
 
         elif params.method == 'Sparse_DKT_binary_Exact':
@@ -192,6 +195,7 @@ if __name__ == '__main__':
             else:
                 id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'           
             if params.gamma: id += '_gamma'
+            if params.train_aug: id += '_aug'
             model.init_summary(id=id, dataset=params.dataset)
 
         elif(params.method == 'DKT'):
@@ -200,6 +204,7 @@ if __name__ == '__main__':
                 id=f'DKT_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
             else:
                 id=f'DKT_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
+            if params.train_aug: id += '_aug'
             model.init_summary(id=id)
         elif(params.method == 'DKT_binary'):
             model = DKT_binary(model_dict[params.model], **train_few_shot_params, dirichlet=params.dirichlet)
@@ -207,6 +212,7 @@ if __name__ == '__main__':
                 id=f'DKT_binary_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
             else:
                 id=f'DKT_binary_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
+            if params.train_aug: id += '_aug'
             model.init_summary(id=id)
         
         elif params.method == 'protonet':
@@ -241,8 +247,8 @@ if __name__ == '__main__':
     model = model.cuda()
 
     params.checkpoint_dir = '%s/checkpoints/%s/%s_%s' % (configs.save_dir, params.dataset, params.model, params.method)
-    if params.train_aug:
-        params.checkpoint_dir += '_aug'
+    # if params.train_aug:
+    #     params.checkpoint_dir += '_aug'
     if not params.method in ['baseline', 'baseline++']:
         
         if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_Exact']:
@@ -251,6 +257,7 @@ if __name__ == '__main__':
             else:
                 id = f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'           
             if params.gamma : id += '_gamma'
+            if params.train_aug: id += '_aug'
             params.checkpoint_dir += id
         else:
             if params.dirichlet:
@@ -258,7 +265,9 @@ if __name__ == '__main__':
             else:
                 id=f'_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
         
+            if params.train_aug: id += '_aug'
             params.checkpoint_dir += id
+
 
     if not os.path.isdir(params.checkpoint_dir):
         os.makedirs(params.checkpoint_dir)

@@ -124,8 +124,8 @@ def single_test(params):
     model = model.cuda()
 
     checkpoint_dir = '%s/checkpoints/%s/%s_%s' %(configs.save_dir, params.dataset, params.model, params.method)
-    if params.train_aug:
-        checkpoint_dir += '_aug'
+    # if params.train_aug:
+    #     checkpoint_dir += '_aug'
     if not params.method in ['baseline', 'baseline++'] :
         # checkpoint_dir += '_%dway_%dshot' %( params.train_n_way, params.n_shot)
         if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_Exact']:
@@ -134,12 +134,14 @@ def single_test(params):
             else:
                 id = f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'           
             if params.gamma: id += '_gamma'
+            if params.train_aug: id += '_aug'
             checkpoint_dir += id
         else:
             if params.dirichlet:
                 id=f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
             else:
                 id=f'_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
+            if params.train_aug: id += '_aug'
             checkpoint_dir += id
 
     #modelfile   = get_resume_file(checkpoint_dir)
