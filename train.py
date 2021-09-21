@@ -58,7 +58,7 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
         model.train()
         model.train_loop(epoch, base_loader, optimizer)  # model are called by reference, no need to return
         model.eval()
-        if epoch%2==0:
+        if (epoch+1)%2==0:
             if not os.path.isdir(params.checkpoint_dir):
                 os.makedirs(params.checkpoint_dir)
             print(Fore.GREEN,"-"*50 ,f'\nValidation \n', Fore.RESET)
