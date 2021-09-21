@@ -2,7 +2,7 @@ from subprocess import run
 
 config_list = ['1000', '1001', '1010', '1011']
 dataset_list = ['QMUL']
-method_list = ['Sparse_DKT_regression_Nystrom', 'Sparse_DKT_regression_Exact']
+method_list = ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact']
 
 lr_gp_list = [0.1, 0.01, 0.001, 0.0001]
 lr_net_list = [0.01, 0.001, 0.0001]
