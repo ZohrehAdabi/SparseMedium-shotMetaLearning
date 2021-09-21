@@ -213,5 +213,9 @@ Sparse_DKT_binary_CUB_log/
 Sparse_DKT_binary_omniglot_log/
 Sparse_DKT_QMUL_full_rvm_Loss/
 Sparse_DKT_QMUL_rvm_Loss/
+Sparse_DKT_QMUL_Nystrom_Loss/
+Sparse_DKT_QMUL_Exact_Loss/
 methods/Sparse_DKT_binary_rvm.py
 Sparse_DKT_binary_rvm_CUB_log/
+Sparse_DKT_binary_Nystrom_CUB_log/
+Sparse_DKT_binary_Exact_CUB_log/
