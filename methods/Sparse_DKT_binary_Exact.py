@@ -37,9 +37,9 @@ except ImportError:
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=1 --train_aug
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=5 --train_aug
 IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j_idx")
-class Sparse_DKT_binary_rvm(MetaTemplate):
+class Sparse_DKT_binary_Exact(MetaTemplate):
     def __init__(self, model_func, n_way, n_support, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
-        super(Sparse_DKT_binary_rvm, self).__init__(model_func, n_way, n_support)
+        super(Sparse_DKT_binary_Exact, self).__init__(model_func, n_way, n_support)
         self.num_inducing_points = 10
         self.fast_rvm = True
         self.config = config
@@ -66,7 +66,7 @@ class Sparse_DKT_binary_rvm(MetaTemplate):
 
     def init_summary(self, id, dataset):
         if(IS_TBX_INSTALLED):
-            path = f'./Sparse_DKT_binary_rvm_{dataset}_log'
+            path = f'./Sparse_DKT_binary_Exact_{dataset}_log'
             time_string = strftime("%d%m%Y_%H%M", gmtime())
             if not os.path.isdir(path):
                 os.makedirs(path)

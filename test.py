@@ -17,9 +17,10 @@ from data.datamgr import SetDataManager
 from methods.baselinetrain import BaselineTrain
 from methods.baselinefinetune import BaselineFinetune
 from methods.protonet import ProtoNet
-from methods.Sparse_DKT import Sparse_DKT
-from methods.Sparse_DKT_binary import Sparse_DKT_binary
-from methods.Sparse_DKT_binary_rvm import Sparse_DKT_binary_rvm
+from methods.Sparse_DKT_Nystrom import Sparse_DKT_Nystrom
+from methods.Sparse_DKT_Exact import Sparse_DKT_Exact
+from methods.Sparse_DKT_binary_Nystrom import Sparse_DKT_binary_Nystrom
+from methods.Sparse_DKT_binary_Exact import Sparse_DKT_binary_Exact
 from methods.DKT import DKT
 from methods.matchingnet import MatchingNet
 from methods.relationnet import RelationNet
@@ -81,14 +82,17 @@ def single_test(params):
         model           = ProtoNet( model_dict[params.model], **few_shot_params )
     elif params.method == 'DKT':
         model           = DKT(model_dict[params.model], **few_shot_params, dirichlet=params.dirichlet)
-    elif params.method == 'Sparse_DKT':
-        model           = Sparse_DKT(model_dict[params.model], **few_shot_params,
+    elif params.method == 'Sparse_DKT_Nystrom':
+        model           = Sparse_DKT_Nystrom(model_dict[params.model], **few_shot_params,
                                 config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
-    elif params.method == 'Sparse_DKT_binary':
-        model           = Sparse_DKT_binary(model_dict[params.model], **few_shot_params,
+    elif params.method == 'Sparse_DKT_Exact':
+        model           = Sparse_DKT_Exact(model_dict[params.model], **few_shot_params,
+                                config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
+    elif params.method == 'Sparse_DKT_binary_Nystrom':
+        model           = Sparse_DKT_binary_Nystrom(model_dict[params.model], **few_shot_params,
                                     config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
-    elif params.method == 'Sparse_DKT_binary_rvm':
-        model           = Sparse_DKT_binary_rvm(model_dict[params.model], **few_shot_params,
+    elif params.method == 'Sparse_DKT_binary_Exact':
+        model           = Sparse_DKT_binary_Exact(model_dict[params.model], **few_shot_params,
                                     config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
    
     elif params.method == 'matchingnet':
@@ -124,7 +128,7 @@ def single_test(params):
         checkpoint_dir += '_aug'
     if not params.method in ['baseline', 'baseline++'] :
         # checkpoint_dir += '_%dway_%dshot' %( params.train_n_way, params.n_shot)
-        if params.method=='Sparse_DKT' or params.method=='Sparse_DKT_binary' or  params.method=='Sparse_DKT_binary_rvm':
+        if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_Exact']:
             if params.dirichlet:
                 id = f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'
             else:
@@ -147,7 +151,7 @@ def single_test(params):
             modelfile   = get_best_file(checkpoint_dir)
         if modelfile is not None:
             tmp = torch.load(modelfile)
-            if params.method=='Sparse_DKT' or params.method=='Sparse_DKT_binary':
+            if params.method=='Sparse_DKT_Nystrom' or params.method=='Sparse_DKT_binary_Nystrom':
                 
                 IP = torch.ones(100, 64).cuda()
                 tmp['state']['model.covar_module.inducing_points'] = IP
@@ -163,7 +167,7 @@ def single_test(params):
         split_str = split + "_" +str(params.save_iter)
     else:
         split_str = split
-    if params.method in ['maml', 'maml_approx', 'DKT', 'Sparse_DKT', 'Sparse_DKT_binary', 'Sparse_DKT_binary_rvm']: #maml do not support testing with feature
+    if params.method in ['maml', 'maml_approx', 'DKT', 'Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_Exact']: #maml do not support testing with feature
         if 'Conv' in params.model:
             if params.dataset in ['omniglot', 'cross_char']:
                 image_size = 28
