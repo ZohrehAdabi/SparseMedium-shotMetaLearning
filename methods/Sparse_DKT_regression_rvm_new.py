@@ -40,10 +40,10 @@ except ImportError:
 
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx")
-class Sparse_DKT_regression_full_rvm(nn.Module):
+class Sparse_DKT_regression_rvm_new(nn.Module):
     def __init__(self, backbone, f_rvm=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
-        super(Sparse_DKT_regression_full_rvm, self).__init__()
+        super(Sparse_DKT_regression_rvm_new, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
         self.num_induce_points = n_inducing_points
@@ -80,9 +80,9 @@ class Sparse_DKT_regression_full_rvm(nn.Module):
     def init_summary(self, id):
         if(IS_TBX_INSTALLED):
             time_string = strftime("%d%m%Y_%H%M", gmtime())
-            if not os.path.isdir('./Sparse_DKT_QMUL_full_rvm_Loss'):
-                os.makedirs('./Sparse_DKT_QMUL_full_rvm_Loss')
-            writer_path = './Sparse_DKT_QMUL_full_rvm_Loss/' + id #+'_'+ time_string
+            if not os.path.isdir('./Sparse_DKT_QMUL_rvm_new_Loss'):
+                os.makedirs('./Sparse_DKT_QMUL_rvm_new_Loss')
+            writer_path = './Sparse_DKT_QMUL_rvm_new_Loss/' + id #+'_'+ time_string
             self.writer = SummaryWriter(log_dir=writer_path)
 
     def set_forward(self, x, is_feature=False):
@@ -633,6 +633,7 @@ import copy
 import math 
 from gpytorch.distributions  import MultivariateNormal
 from gpytorch.mlls import InducingPointKernelAddedLossTerm
+from gpytorch.utils.cholesky import psd_safe_cholesky
 
 class SparseKernel(gpytorch.kernels.InducingPointKernel):
 
@@ -641,11 +642,26 @@ class SparseKernel(gpytorch.kernels.InducingPointKernel):
         super(SparseKernel, self).__init__(base_kernel, inducing_points, likelihood, active_dims=active_dims)
         self.register_parameter(name="A", parameter=torch.nn.Parameter(inducing_points))
 
+    @property
+    def _A_inv_root(self):
+        if not self.training and hasattr(self, "_cached_kernel_inv_root"):
+            return self._cached_kernel_inv_root
+        else:
+            chol = psd_safe_cholesky(self.A, upper=True)
+            eye = torch.eye(chol.size(-1), device=chol.device, dtype=chol.dtype)
+            inv_root = torch.triangular_solve(eye, chol)[0]
+
+            res = inv_root
+            # if not self.training:
+            #     self._cached_kernel_inv_root = res
+            return res
+    
+    
     def _get_covariance(self, x1, x2):
         k_ux1 = delazify(self.base_kernel(x1, self.inducing_points))
         if torch.equal(x1, x2):
-            covar = LowRankRootLazyTensor(k_ux1.matmul(self.A))
-            
+            covar = LowRankRootLazyTensor(k_ux1.matmul(self._A_inv_root))
+            covar = LowRankRootAddedDiagLazyTensor(torch.eye(covar.shape[0]).to('cuda') * (self.likelihood.noise),  covar)
 
             # Diagonal correction for predictive posterior
             # if not self.training:
@@ -654,8 +670,9 @@ class SparseKernel(gpytorch.kernels.InducingPointKernel):
         else:
             k_ux2 = delazify(self.base_kernel(x2, self.inducing_points))
             covar = MatmulLazyTensor(
-                k_ux1.matmul(self.A), k_ux2.matmul(self.A).transpose(-1, -2)
+                k_ux1.matmul(self._A_inv_root), k_ux2.matmul(self._A_inv_root).transpose(-1, -2)
             )
+            covar = LowRankRootAddedDiagLazyTensor(torch.eye(covar.shape[0]).to('cuda') * (self.likelihood.noise),  covar)
             # S = torch.inv((1/self.likelihood.noise) * k_ux1.transpose(-1, -2).matmul(k_ux1) + (1/self.A).pow(2))
             # k_s = k_ux1.matmul(S)
             # covar = MatmulLazyTensor(
