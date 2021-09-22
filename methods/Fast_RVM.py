@@ -74,7 +74,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
         idx                 = active_factor > 1e-12
         recompute           = active_m[idx]
         alpha_prim          =  s[recompute]**2 / (Factor[recompute])
-        delta_alpha         = (1/(alpha_prim+1e10) - 1/alpha_m[idx])
+        delta_alpha         = (1/(alpha_prim+1e-10) - 1/(alpha_m[idx]+1e-10))
         # d_alpha =  ((alpha_m[idx] - alpha_prim)/(alpha_prim * alpha_m[idx]))
         d_alpha_S           = delta_alpha * S[recompute] + 1 
         # deltaML[recompute] = ((delta_alpha * Q[recompute]**2) / (S[recompute] + 1/delta_alpha) - torch.log(d_alpha_S)) /2
@@ -100,18 +100,20 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
         add = torch.where(good_factor)[0]
         anyToAdd = len(add) > 0
         if anyToAdd:
-            Q_S             = Q[add]**2 / S[add]
+            Q_S             = Q[add]**2 / (S[add]**2 + 1e-12)
             deltaML[add]    = (Q_S - 1 - torch.log(Q_S)) /2
             action[add]     = 1
+            deltaML[torch.isnan(deltaML)] = 0 
 
+        delta = deltaML.clone()
         # Priority of Deletion   
         if anyToDelete and delete_priority and not add_priority:
             deltaML[recompute] = 0
             deltaML[add] = 0
         # Priority of Addition       
-        if anyToAdd and add_priority:
-            save_deltaML_recomp = deltaML[recompute].clone() 
-            save_deltaML_del = deltaML[delete].clone() 
+        if anyToAdd and add_priority and (deltaML[add]>0).any():
+            # save_deltaML_recomp = deltaML[recompute].clone() 
+            # save_deltaML_del = deltaML[delete].clone() 
             deltaML[recompute] = 0
             deltaML[delete] = 0
 
@@ -364,15 +366,15 @@ def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
     # Termination criterion for each gradient dimension
     grad_min = 1e-6
     # Minimum fraction of the full Newton step considered
-    step_min = 1 / (2**8)
+    step_min = 1 / (2**9)
 
     K_mu_m = K_m @ mu_m
 
     def compute_data_error(K_mu_m, targets):
         y	= torch.sigmoid(K_mu_m)
         #  Handle probability zero cases
-        y0	= (y==0)
-        y1	= (y==1)
+        y0	=(y==0) # (y<1e-6)
+        y1	= (y==1) #(y>=(1-1e-6))
         if (y0[targets>0]).any() or (y1[targets<1]).any():
             #  Error infinite when model gives zero probability in
             #  contradiction to data
@@ -380,6 +382,7 @@ def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
         else:
             # Any y=0 or y=1 cases must now be accompanied by appropriate
             # output=0 or output=1 values, so can be excluded.
+            # data_error	= -(targets[~y0].T @ torch.log(y[~y0]+1e-12) + ((1-targets[~y1]).T @ torch.log(1-y[~y1]+1e-12)))
             data_error	= -(targets[~y0].T @ torch.log(y[~y0]) + ((1-targets[~y1]).T @ torch.log(1-y[~y1])))
         return y, data_error
     
@@ -408,6 +411,7 @@ def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
         H			= (K_m.T @ beta_K_m + torch.diag(alpha_m))
         #  Invert Hessian via Cholesky, watching out for ill-conditioning
         # try:
+            # torch.linalg.cholesky(H)
             # U	=  torch.linalg.cholesky((H).transpose(-2, -1).conj()).transpose(-2, -1).conj()
         U, info =  torch.linalg.cholesky_ex(H)
         if info>0:
