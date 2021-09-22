@@ -407,16 +407,16 @@ def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
         beta_K_m	= (torch.diag(beta) @ K_m)  #K_m * (beta.repeat([1, alpha_m.shape[0]]))
         H			= (K_m.T @ beta_K_m + torch.diag(alpha_m))
         #  Invert Hessian via Cholesky, watching out for ill-conditioning
-        try:
+        # try:
             # U	=  torch.linalg.cholesky((H).transpose(-2, -1).conj()).transpose(-2, -1).conj()
-            U, info =  torch.linalg.cholesky_ex(H)
-            if info>0:
-                print('pd_err of Hessian')
-                return None, H, None, None, True
-            #  Make sure its positive definite
-        except:
+        U, info =  torch.linalg.cholesky_ex(H)
+        if info>0:
             print('pd_err of Hessian')
             return None, H, None, None, True
+            #  Make sure its positive definite
+        # except:
+        #     print('pd_err of Hessian')
+        #     return None, H, None, None, True
         
         #  Before progressing, check for termination based on the gradient norm
         if all(abs(g)< grad_min): 
