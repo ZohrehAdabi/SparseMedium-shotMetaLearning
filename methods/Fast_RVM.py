@@ -37,11 +37,11 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
     mu_m	=  K_m.pinverse() @ (torch.log(LogOut / (1 - LogOut))) #torch.linalg.lstsq(K_m, (torch.log(LogOut / (1 - LogOut)))).solution
     mu_m = mu_m.to(device)
     alpha_init = 1 / (mu_m + 1e-8).pow(2)
-    alpha_m = torch.tensor([alpha_init], dtype=torch.float).to(device)
+    alpha_m = torch.tensor([alpha_init], dtype=torch.float64).to(device)
     if alpha_m < 1e-3:
-        alpha_m = torch.tensor([1e-3], dtype=torch.float).to(device)
+        alpha_m = torch.tensor([1e-3], dtype=torch.float64).to(device)
     if alpha_m > 1e3:
-        alpha_m = torch.tensor([1e3], dtype=torch.float).to(device)
+        alpha_m = torch.tensor([1e3], dtype=torch.float64).to(device)
     
     aligned_out		= torch.tensor([], dtype=torch.int).to(device)
     aligned_in		= torch.tensor([], dtype=torch.int).to(device)
@@ -61,25 +61,27 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
     del_count = 0
     recomp_count = 0
     count = 0
+    deltaML = torch.zeros(M, dtype=torch.float64).to(device)  
+    action = torch.zeros(M)
     for itr in range(max_itr):
 
         # 'Relevance Factor' (q^2-s) values for basis functions in model
         Factor = q*q - s 
         #compute delta in marginal log likelihood for new action selection
-        deltaML = torch.zeros(M, dtype=torch.float).to(device)  
-        action = torch.zeros(M)
+        deltaML = deltaML * 0
+        action = action * 0
         active_factor = Factor[active_m]
 
         # RECOMPUTE: must be a POSITIVE 'factor' and already IN the model
         idx                 = active_factor > 1e-12
         recompute           = active_m[idx]
         alpha_prim          =  s[recompute]**2 / (Factor[recompute])
-        delta_alpha         = (1/(alpha_prim) - 1/(alpha_m[idx]))
+        delta_alpha         = (1/(alpha_prim+1e-10) - 1/(alpha_m[idx]))
         # d_alpha =  ((alpha_m[idx] - alpha_prim)/(alpha_prim * alpha_m[idx]))
         d_alpha_S           = delta_alpha * S[recompute] + 1 
         # deltaML[recompute] = ((delta_alpha * Q[recompute]**2) / (S[recompute] + 1/delta_alpha) - torch.log(d_alpha_S)) /2
         deltaML[recompute]  = ((delta_alpha * Q[recompute]**2) / (d_alpha_S) - torch.log(abs(d_alpha_S))) /2
-        
+        deltaML[torch.isnan(deltaML)] = 0 
         # DELETION: if NEGATIVE factor and IN model
         idx = ~idx #active_factor <= 1e-12
         delete = active_m[idx]
@@ -100,7 +102,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
         add = torch.where(good_factor)[0]
         anyToAdd = len(add) > 0
         if anyToAdd:
-            Q_S             = Q[add]**2 / S[add]
+            Q_S             = Q[add]**2 / (S[add] +1e-10)
             deltaML[add]    = (Q_S - 1 - torch.log(Q_S)) /2
             action[add]     = 1
             deltaML[torch.isnan(deltaML)] = 0 
@@ -269,7 +271,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
             # beta_K_k_new  	= K.T @ beta_k_new
 
             tmp		        = ((beta_k_new.T @ K_m) @ Sigma_m).T
-            s_ii		    = 1/ (alpha_new + S[max_idx])
+            s_ii		    = 1/ (alpha_new + S[max_idx] + 1e-8)
             # s_i			    = -s_ii * tmp
             # tau			    = -s_i @ tmp.T
             # Sigma_          = torch.cat([Sigma_m + tau, s_i.unsqueeze(-1)], axis=1)
@@ -322,7 +324,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
 def Statistics(K, K_m, mu_m, alpha_m, active_m, targets, N, device):
         
         
-        mu_m, U, beta, dataLikely, bad_Hess = posterior_mode(K_m, targets, alpha_m, mu_m, max_itr=50, device=device)
+        mu_m, U, beta, dataLikely, bad_Hess = posterior_mode(K_m, targets, alpha_m, mu_m, max_itr=25, device=device)
         
         if bad_Hess: raise ValueError('bad Hessian')
 
@@ -375,15 +377,15 @@ def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
         #  Handle probability zero cases
         y0	=(y==0) # (y<1e-6)
         y1	= (y==1) #(y>=(1-1e-6))
-        if (y0[targets>0]).any() or (y1[targets<1]).any():
-            #  Error infinite when model gives zero probability in
-            #  contradiction to data
-            data_error	= torch.tensor(np.inf)
-        else:
+        # if (y0[targets>0]).any() or (y1[targets<1]).any():
+        #     #  Error infinite when model gives zero probability in
+        #     #  contradiction to data
+        #     data_error	= torch.tensor(np.inf)
+        # else:
             # Any y=0 or y=1 cases must now be accompanied by appropriate
             # output=0 or output=1 values, so can be excluded.
-            # data_error	= -(targets[~y0].T @ torch.log(y[~y0]+1e-12) + ((1-targets[~y1]).T @ torch.log(1-y[~y1]+1e-12)))
-            data_error	= -(targets[~y0].T @ torch.log(y[~y0]) + ((1-targets[~y1]).T @ torch.log(1-y[~y1])))
+        data_error	= -(targets[~y0].T @ torch.log(y[~y0]+1e-12) + ((1-targets[~y1]).T @ torch.log(1-y[~y1]+1e-12)))
+            # data_error	= -(targets[~y0].T @ torch.log(y[~y0]) + ((1-targets[~y1]).T @ torch.log(1-y[~y1])))
         return y, data_error
     
     y, data_error = compute_data_error(K_mu_m.squeeze(), targets)

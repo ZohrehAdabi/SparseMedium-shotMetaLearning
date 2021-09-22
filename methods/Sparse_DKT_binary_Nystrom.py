@@ -308,9 +308,9 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                 scales[scales==0] = 1
                 kernel_matrix = kernel_matrix / scales
 
-            kernel_matrix = kernel_matrix.to(torch.float)
+            kernel_matrix = kernel_matrix.to(torch.float64)
             # targets[targets==-1]= 0
-            target = targets.clone().to(torch.float)
+            target = targets.clone().to(torch.float64)
             active, alpha, gamma, beta, mu_m = Fast_RVM(kernel_matrix, target, N, self.config, self.align_threshold, self.gamma,
                                                     eps, tol, max_itr, self.device, verbose)
 
