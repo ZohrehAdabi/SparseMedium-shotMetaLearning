@@ -74,7 +74,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
         idx                 = active_factor > 1e-12
         recompute           = active_m[idx]
         alpha_prim          =  s[recompute]**2 / (Factor[recompute])
-        delta_alpha         = (1/(alpha_prim+1e-10) - 1/(alpha_m[idx]+1e-10))
+        delta_alpha         = (1/(alpha_prim) - 1/(alpha_m[idx]))
         # d_alpha =  ((alpha_m[idx] - alpha_prim)/(alpha_prim * alpha_m[idx]))
         d_alpha_S           = delta_alpha * S[recompute] + 1 
         # deltaML[recompute] = ((delta_alpha * Q[recompute]**2) / (S[recompute] + 1/delta_alpha) - torch.log(d_alpha_S)) /2
@@ -100,7 +100,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
         add = torch.where(good_factor)[0]
         anyToAdd = len(add) > 0
         if anyToAdd:
-            Q_S             = Q[add]**2 / (S[add]**2 + 1e-12)
+            Q_S             = Q[add]**2 / S[add]
             deltaML[add]    = (Q_S - 1 - torch.log(Q_S)) /2
             action[add]     = 1
             deltaML[torch.isnan(deltaML)] = 0 
