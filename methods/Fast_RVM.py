@@ -11,6 +11,7 @@ import numpy as np
 from sklearn.svm import SVR
 from sklearn.metrics import mean_squared_error as mse
 from torch.utils import data
+from autograd_minimize import minimize
 
 
 def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, device='cuda', verbose=True):
@@ -370,24 +371,61 @@ def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
     # Minimum fraction of the full Newton step considered
     step_min = 1 / (2**9)
 
-    K_mu_m = K_m @ mu_m
+
+    def compute_log_post(K_m, mu_m, targets, alpha_m):
+
+        y	= torch.sigmoid(K_m @ mu_m)  
+        log_p_y = - (torch.log(y[targets==1]+1e-12).sum() + torch.log(y[targets==0]+1e-12).sum())
+        log_p_y = log_p_y + (alpha_m @ (mu_m.pow(2)))/2
+        jacobian =  (alpha_m * mu_m) - K_m.T @ (targets-y))
+        return log_p_y, jacobian
+
+    def hessian(K_m, mu_m, targets):
+        y	= torch.sigmoid(K_m @ mu_m)  
+        beta   = y * (1-y)
+        H = (K_m.T @ torch.diag(beta) @ K_m + torch.diag(alpha_m))
+        return H
+    res = minimize(compute_log_post, [K_m, mu_m, targets, alpha_m], method='Newton-CG', precision='float64', tol=1e-6, backend='torch')
+ 
+    y, data_error = compute_log_post(K_m, mu_m, targets, alpha_m)
+    #  Add on the weight penalty
+    regulariser		= (alpha_m @ (mu_m.pow(2)))/2
+    new_total_error	= data_error + regulariser
+
+    bad_Hess	= False
+    error_log	= torch.zeros([max_itr])
+
+    dataLikely	= -data_error
+
+    return mu_m, U, beta, dataLikely, bad_Hess 
+
+
+
+def posterior_mode_old(K_m, targets, alpha_m, mu_m, max_itr, device):
+
+    # Termination criterion for each gradient dimension
+    grad_min = 1e-6
+    # Minimum fraction of the full Newton step considered
+    step_min = 1 / (2**9)
+
 
     def compute_data_error(K_mu_m, targets):
         y	= torch.sigmoid(K_mu_m)
         #  Handle probability zero cases
         y0	=(y==0) # (y<1e-6)
         y1	= (y==1) #(y>=(1-1e-6))
-        # if (y0[targets>0]).any() or (y1[targets<1]).any():
+        if (y0[targets>0]).any() or (y1[targets<1]).any():
         #     #  Error infinite when model gives zero probability in
         #     #  contradiction to data
-        #     data_error	= torch.tensor(np.inf)
+            data_error	= torch.tensor(np.inf)
         # else:
             # Any y=0 or y=1 cases must now be accompanied by appropriate
             # output=0 or output=1 values, so can be excluded.
-        data_error	= -(targets[~y0].T @ torch.log(y[~y0]+1e-12) + ((1-targets[~y1]).T @ torch.log(1-y[~y1]+1e-12)))
-            # data_error	= -(targets[~y0].T @ torch.log(y[~y0]) + ((1-targets[~y1]).T @ torch.log(1-y[~y1])))
+        # data_error	= -(targets[~y0].T @ torch.log(y[~y0]+1e-12) + ((1-targets[~y1]).T @ torch.log(1-y[~y1]+1e-12)))
+        data_error	= -(targets[~y0].T @ torch.log(y[~y0]) + ((1-targets[~y1]).T @ torch.log(1-y[~y1])))
         return y, data_error
     
+    K_mu_m = K_m @ mu_m
     y, data_error = compute_data_error(K_mu_m.squeeze(), targets)
     #  Add on the weight penalty
     regulariser		= (alpha_m @ (mu_m.pow(2)))/2
