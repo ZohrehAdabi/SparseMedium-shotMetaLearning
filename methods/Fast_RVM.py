@@ -320,7 +320,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
 def Statistics(K, K_m, mu_m, alpha_m, active_m, targets, N, device):
         
         
-        mu_m, U, beta, dataLikely, bad_Hess = posterior_mode(K_m, targets, alpha_m, mu_m, max_itr=25, device=device)
+        mu_m, U, beta, dataLikely, bad_Hess = posterior_mode(K_m, targets, alpha_m, mu_m, max_itr=50, device=device)
         
         if bad_Hess: raise ValueError('bad Hessian')
 
