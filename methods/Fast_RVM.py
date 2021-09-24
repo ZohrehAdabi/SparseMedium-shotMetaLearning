@@ -377,7 +377,7 @@ def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
         y	= torch.sigmoid(K_m @ mu_m)  
         log_p_y = - (torch.log(y[targets==1]+1e-12).sum() + torch.log(y[targets==0]+1e-12).sum())
         log_p_y = log_p_y + (alpha_m @ (mu_m.pow(2)))/2
-        jacobian =  (alpha_m * mu_m) - K_m.T @ (targets-y))
+        jacobian =  (alpha_m * mu_m) - K_m.T @ (targets-y)
         return log_p_y, jacobian
 
     def hessian(K_m, mu_m, targets):
@@ -385,7 +385,17 @@ def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
         beta   = y * (1-y)
         H = (K_m.T @ torch.diag(beta) @ K_m + torch.diag(alpha_m))
         return H
-    res = minimize(compute_log_post, [K_m, mu_m, targets, alpha_m], method='Newton-CG', precision='float64', tol=1e-6, backend='torch')
+
+    alpha_m.requires_grad = True
+    mu_m.requires_grad = True
+    K_m.requires_grad = True
+    targets.requires_grad = True
+    K_m = K_m.detach().cpu()
+    mu_m = mu_m.detach().cpu()
+    targets = targets.detach().cpu()
+    alpha_m = alpha_m.detach().cpu()
+    res = minimize(compute_log_post, [K_m.detach().cpu(), mu_m.detach().cpu(), targets.detach().cpu(), alpha_m.detach().cpu()], method='Newton-CG', 
+    precision='float64', tol=1e-6, backend='torch')
  
     y, data_error = compute_log_post(K_m, mu_m, targets, alpha_m)
     #  Add on the weight penalty
