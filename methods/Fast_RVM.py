@@ -390,12 +390,16 @@ def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
     mu_m.requires_grad = True
     K_m.requires_grad = True
     targets.requires_grad = True
-    K_m = K_m.detach().cpu()
-    mu_m = mu_m.detach().cpu()
-    targets = targets.detach().cpu()
-    alpha_m = alpha_m.detach().cpu()
-    res = minimize(compute_log_post, [K_m.detach().cpu(), mu_m.detach().cpu(), targets.detach().cpu(), alpha_m.detach().cpu()], method='Newton-CG', 
-    precision='float64', tol=1e-6, backend='torch')
+    K_m = K_m.cpu()
+    mu_m = mu_m.cpu()
+    targets = targets.cpu()
+    alpha_m = alpha_m.cpu()
+    alpha_m.requires_grad = True
+    mu_m.requires_grad = True
+    K_m.requires_grad = True
+    targets.requires_grad = True
+    res = minimize(compute_log_post, [K_m, mu_m, targets, alpha_m], method='Newton-CG', 
+                precision='float64', tol=1e-6, backend='torch', torch_device='cuda')
  
     y, data_error = compute_log_post(K_m, mu_m, targets, alpha_m)
     #  Add on the weight penalty
