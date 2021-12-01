@@ -2,6 +2,8 @@ from gpytorch.likelihoods import likelihood
 import torch
 import gpytorch
 import numpy as np
+from scipy.optimize import minimize
+from scipy.special import expit
 
 import time
 import torch
@@ -11,10 +13,10 @@ import numpy as np
 from sklearn.svm import SVR
 from sklearn.metrics import mean_squared_error as mse
 from torch.utils import data
-from autograd_minimize import minimize
+# from autograd_minimize import minimize
 
 
-def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, device='cuda', verbose=True):
+def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, device='cuda', verbose=True):
     
 
     M = K.shape[1]
@@ -64,6 +66,8 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
     count = 0
     deltaML = torch.zeros(M, dtype=torch.float64).to(device)  
     action = torch.zeros(M)
+    tic = time.time()
+    
     for itr in range(max_itr):
 
         # 'Relevance Factor' (q^2-s) values for basis functions in model
@@ -76,20 +80,20 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
         # RECOMPUTE: must be a POSITIVE 'factor' and already IN the model
         idx                 = active_factor > 1e-12
         recompute           = active_m[idx]
-        alpha_prim          =  s[recompute]**2 / (Factor[recompute])
-        delta_alpha         = (1/(alpha_prim+1e-10) - 1/(alpha_m[idx]))
+        alpha_prim          =  s[recompute]**2 / (Factor[recompute]+1e-10)
+        delta_alpha         = (1/(alpha_prim) - 1/(alpha_m[idx]))
         # d_alpha =  ((alpha_m[idx] - alpha_prim)/(alpha_prim * alpha_m[idx]))
         d_alpha_S           = delta_alpha * S[recompute] + 1 
-        # deltaML[recompute] = ((delta_alpha * Q[recompute]**2) / (S[recompute] + 1/delta_alpha) - torch.log(d_alpha_S)) /2
-        deltaML[recompute]  = ((delta_alpha * Q[recompute]**2) / (d_alpha_S) - torch.log(abs(d_alpha_S))) /2
-        deltaML[torch.isnan(deltaML)] = 0 
+        # deltaML[recompute] = ((delta_alpha * Q[recompute]**2) / (S[recompute] + 1/delta_alpha) - torch.log(d_alpha_S))
+        deltaML[recompute]  = ((delta_alpha * Q[recompute]**2) / (d_alpha_S) - torch.log(abs(d_alpha_S)))
+        # deltaML[torch.isnan(deltaML)] = 0 
         # DELETION: if NEGATIVE factor and IN model
         idx = ~idx #active_factor <= 1e-12
         delete = active_m[idx]
         anyToDelete = len(delete) > 0
         if anyToDelete and active_m.shape[0] > 1:
-            deltaML[delete] = -(q[delete]**2 / (s[delete] + alpha_m[idx]) - torch.log(1 + s[delete] / alpha_m[idx])) /2
-            # deltaML[delete] = -(Q[delete]**2 / (S[delete] + alpha_m[idx]) - torch.log(1 + S[delete] / alpha_m[idx])) /2
+            deltaML[delete] = -(q[delete]**2 / (s[delete] + alpha_m[idx]) - torch.log(1 + s[delete] / alpha_m[idx])) 
+            # deltaML[delete] = (Q[delete]**2 / (S[delete] - alpha_m[idx]) - torch.log(1 - S[delete] / alpha_m[idx]))
             action[delete]  = -1
 
         # ADDITION: must be a POSITIVE factor and OUT of the model
@@ -104,7 +108,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
         anyToAdd = len(add) > 0
         if anyToAdd:
             Q_S             = Q[add]**2 / (S[add] +1e-10)
-            deltaML[add]    = (Q_S - 1 - torch.log(Q_S)) /2
+            deltaML[add]    = (Q_S - 1 - torch.log(Q_S))
             action[add]     = 1
             deltaML[torch.isnan(deltaML)] = 0 
 
@@ -126,18 +130,6 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
         selected_action		= action[max_idx]
         anyWorthwhileAction	= deltaLogMarginal > 0 
 
-        # if check_gamma:
-        #     if (selected_action==1) and (max_idx in low_gamma):
-        #         #print(f'{itr:3}, low gamma selected {max_idx.cpu().numpy()}')
-        #         if add_priority:
-        #             deltaML[recompute] = save_deltaML_recomp
-        #             deltaML[delete] = save_deltaML_del
-        #         deltaML[low_gamma] = 0
-        #         max_idx = torch.argmax(deltaML)[None]
-        #         deltaLogMarginal = deltaML[max_idx]
-        #         selected_action		= action[max_idx]
-        #         anyWorthwhileAction	= deltaLogMarginal > 0 
-        
         # already in the model
         if selected_action != 1:
             j = torch.where(active_m==max_idx)[0]
@@ -161,24 +153,6 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
                 print(f'{itr:3}, No change in alpha, m={active_m.shape[0]:3}')
                 selected_action = torch.tensor(11)
                 terminate = True
-        
-        # if check_gamma and ((itr%5==0) or (selected_action==10)):
-            
-        #     min_index = torch.argmin(Gamma)
-        #     if (Gamma[min_index] < gm) and active_m.shape[0] > 5:
-                
-        #         j = min_index
-        #         del_from_active = active_m[j]
-        #         deltaML_j = -(q[active_m[j]]**2 / (s[active_m[j]] + alpha_m[j]) - torch.log(1 + s[active_m[j]] / alpha_m[j])) /2
-                
-        #         if deltaML_j > -0.01:
-        #             print(f'itr {itr:3} remove low Gamma: {Gamma[min_index].detach().cpu().numpy():.4f}, deltaML: {deltaML_j.detach().cpu().numpy():.4f}',
-        #                         f'correspond to {del_from_active.detach().cpu().numpy()} data index')
-        #             selected_action = -1
-        #             max_idx = del_from_active
-        #             deltaLogMarginal = deltaML_j
-        #             low_gamma.append(del_from_active.item())
-                        
 
         
         if alignment_test:
@@ -305,6 +279,8 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
             # if verbose:
             # if active_m.shape[0] < 3:
             print(f'Finished at {itr:3}, m= {active_m.shape[0]:3}')
+            toc = time.time()
+            print(f'elapsed time: {toc-tic}')
             # if count > 0:
             #     print(f'add: {add_count:3d} ({add_count/count:.1%}), delete: {del_count:3d} ({del_count/count:.1%}), recompute: {recomp_count:3d} ({recomp_count/count:.1%})')
             return active_m.cpu().numpy(), alpha_m, Gamma, beta, mu_m
@@ -315,6 +291,8 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=3000, de
 
     # print(f'logML= {logML/N}\n{logMarginalLog}')
     print(f'End, m= {active_m.shape[0]:3}')
+    toc = time.time()
+    print(f'elapsed time: {toc-tic}')
     if count > 0:
         print(f'add: {add_count:3d} ({add_count/count:.1%}), delete: {del_count:3d} ({del_count/count:.1%}), recompute: {recomp_count:3d} ({recomp_count/count:.1%})')
 
@@ -363,64 +341,12 @@ def Statistics(K, K_m, mu_m, alpha_m, active_m, targets, N, device):
 
         return Sigma_m, mu_m, S, Q, s, q, beta, beta_KK_m, logML, Gamma  
 
-
 def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
 
     # Termination criterion for each gradient dimension
     grad_min = 1e-6
     # Minimum fraction of the full Newton step considered
-    step_min = 1 / (2**9)
-
-
-    def compute_log_post(K_m, mu_m, targets, alpha_m):
-
-        y	= torch.sigmoid(K_m @ mu_m)  
-        log_p_y = - (torch.log(y[targets==1]+1e-12).sum() + torch.log(y[targets==0]+1e-12).sum())
-        log_p_y = log_p_y + (alpha_m @ (mu_m.pow(2)))/2
-        jacobian =  (alpha_m * mu_m) - K_m.T @ (targets-y)
-        return log_p_y, jacobian
-
-    def hessian(K_m, mu_m, targets):
-        y	= torch.sigmoid(K_m @ mu_m)  
-        beta   = y * (1-y)
-        H = (K_m.T @ torch.diag(beta) @ K_m + torch.diag(alpha_m))
-        return H
-
-    alpha_m.requires_grad = True
-    mu_m.requires_grad = True
-    K_m.requires_grad = True
-    targets.requires_grad = True
-    K_m = K_m.cpu()
-    mu_m = mu_m.cpu()
-    targets = targets.cpu()
-    alpha_m = alpha_m.cpu()
-    alpha_m.requires_grad = True
-    mu_m.requires_grad = True
-    K_m.requires_grad = True
-    targets.requires_grad = True
-    res = minimize(compute_log_post, [K_m, mu_m, targets, alpha_m], method='Newton-CG', 
-                precision='float64', tol=1e-6, backend='torch', torch_device='cuda')
- 
-    y, data_error = compute_log_post(K_m, mu_m, targets, alpha_m)
-    #  Add on the weight penalty
-    regulariser		= (alpha_m @ (mu_m.pow(2)))/2
-    new_total_error	= data_error + regulariser
-
-    bad_Hess	= False
-    error_log	= torch.zeros([max_itr])
-
-    dataLikely	= -data_error
-
-    return mu_m, U, beta, dataLikely, bad_Hess 
-
-
-
-def posterior_mode_old(K_m, targets, alpha_m, mu_m, max_itr, device):
-
-    # Termination criterion for each gradient dimension
-    grad_min = 1e-6
-    # Minimum fraction of the full Newton step considered
-    step_min = 1 / (2**9)
+    step_min = 1 / (2**8)
 
 
     def compute_data_error(K_mu_m, targets):
@@ -461,20 +387,21 @@ def posterior_mode_old(K_m, targets, alpha_m, mu_m, max_itr, device):
         beta	= y * (1-y)
         # beta = beta.unsqueeze(1)
         #   Compute the Hessian
-        beta_K_m	= (torch.diag(beta) @ K_m)  #K_m * (beta.repeat([1, alpha_m.shape[0]]))
+        beta_K_m	= (torch.diag(beta) @ K_m)  #K_m * (beta.unsqueeze(1).repeat([1, alpha_m.shape[0]]))
         H			= (K_m.T @ beta_K_m + torch.diag(alpha_m))
         #  Invert Hessian via Cholesky, watching out for ill-conditioning
         # try:
-            # torch.linalg.cholesky(H)
             # U	=  torch.linalg.cholesky((H).transpose(-2, -1).conj()).transpose(-2, -1).conj()
-        U, info =  torch.linalg.cholesky_ex(H)
-        if info>0:
-            print('pd_err of Hessian')
-            return None, H, None, None, True
-            #  Make sure its positive definite
         # except:
         #     print('pd_err of Hessian')
         #     return None, H, None, None, True
+        # U =  torch.linalg.cholesky(H, upper=True)
+        U, info =  torch.linalg.cholesky_ex(H, upper=True)
+        # if info>0:
+        #     print('pd_err of Hessian')
+        #     return None, H, None, None, True
+            #  Make sure its positive definite
+        
         
         #  Before progressing, check for termination based on the gradient norm
         if all(abs(g)< grad_min): 
@@ -487,7 +414,7 @@ def posterior_mode_old(K_m, targets, alpha_m, mu_m, max_itr, device):
         while step > step_min:
             #  Follow gradient to get new value of parameters
             mu_new		= mu_m + step * delta_mu
-            K_mu_m	= K_m @ mu_new
+            K_mu_m	    = K_m @ mu_new
             #  Compute outputs and error at new point
             y, data_error = compute_data_error(K_mu_m.squeeze(), targets)
 
@@ -507,6 +434,73 @@ def posterior_mode_old(K_m, targets, alpha_m, mu_m, max_itr, device):
     dataLikely	= -data_error
 
     return mu_m, U, beta, dataLikely, bad_Hess 
+
+
+def posterior_mode_scipy(K_m, targets, alpha_m, mu_m, max_itr, device):
+
+    # Termination criterion for each gradient dimension
+    grad_min = 1e-6
+    # Minimum fraction of the full Newton step considered
+    step_min = 1 / (2**9)
+
+
+    def compute_log_post(mu_m, K_m, targets, alpha_m):
+
+        y	= expit(K_m @ mu_m)  
+        # log_p_y = - (np.log(y[targets==1]+1e-12).sum() + np.log(y[targets==0]+1e-12).sum())
+        log_p_y = -1 * (np.sum(np.log(y[targets == 1]), 0) +
+                      np.sum(np.log(1-y[targets == 0]), 0))
+        log_p_y = log_p_y + (alpha_m @ (mu_m**2))/2
+        jacobian =  (alpha_m * mu_m) - K_m.T @ (targets-y)
+        return log_p_y, jacobian
+
+    def hessian(mu_m, K_m, targets, alpha_m):
+        y	= expit(K_m @ mu_m)  
+        beta   = y * (1-y)
+        H = (K_m.T @ np.diag(beta) @ K_m + np.diag(alpha_m))
+        return H
+
+    tic = time.time()
+    K_m_ = K_m.detach().cpu().numpy()
+    mu_m_ = mu_m.detach().cpu().numpy()
+    targets_ = targets.detach().cpu().numpy()
+    alpha_m_ = alpha_m.detach().cpu().numpy()
+    result = minimize(
+            fun=compute_log_post,
+            hess=hessian,
+            x0=mu_m_,
+            args=(K_m_, targets_, alpha_m_),
+            # method='BFGS',
+            method='Newton-CG',
+            jac=True,
+            options={
+                'maxiter': 50,
+                'tol': 1e-6, 'disp': False
+            }
+        )
+    mu_m_ = result.x
+    H = hessian(mu_m_, K_m_, targets_, alpha_m_)
+    mu_m = torch.tensor(mu_m_).to(device=device)
+    H = torch.tensor(H).to(device=device)
+    # U =  torch.linalg.cholesky(H, upper=True)
+    U, info =  torch.linalg.cholesky_ex(H, upper=True)
+    if info>0:
+        print('pd_err of Hessian')
+        return None, H, None, None, True
+
+    data_error, _ = compute_log_post(mu_m_, K_m_, targets_, alpha_m_)
+    dataLikely	= - torch.tensor(data_error).to(device=device)
+    y	= torch.sigmoid(K_m @ mu_m)
+    beta	= y * (1-y)
+    # res = minimize(compute_log_post, [K_m, mu_m, targets, alpha_m], method='Newton-CG', 
+    #             precision='float64', tol=1e-6, backend='torch', torch_device='cuda')
+    toc = time.time()
+    print(toc-tic)
+    tic = time.time()
+    # mu_m_old, U_old, beta_old, dataLikely_old, bad_Hess = posterior_mode_old(K_m, targets, alpha_m, mu_m, max_itr, device)
+    # toc = time.time()
+    # print(toc-tic)
+    return mu_m, U, beta, dataLikely, False 
 
 
 
@@ -592,12 +586,12 @@ if __name__=='__main__':
     kernel_matrix = covar_module(inputs).evaluate()
     N = inputs.shape[0]
     import scipy.io
-    # kernel_matrix = scipy.io.loadmat('./methods/K.mat')['BASIS']
-    # kernel_matrix = torch.from_numpy(kernel_matrix).to(dtype=torch.float64)
+    kernel_matrix = scipy.io.loadmat('./methods/K.mat')['BASIS']
+    kernel_matrix = torch.from_numpy(kernel_matrix).to(dtype=torch.float64)
     targets = scipy.io.loadmat('./methods/targets.mat')['Targets']
-    targets = targets.astype(np.float)
+    targets = targets.astype(np.float64)
     targets = 2 * targets -1
-    targets = torch.from_numpy(targets).to(dtype=torch.float)
+    targets = torch.from_numpy(targets).to(dtype=torch.float64)
     targets = targets.squeeze()
     N = targets.shape[0]
     sigma = torch.var(targets)  #sigma^2

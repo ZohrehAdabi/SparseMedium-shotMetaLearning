@@ -370,8 +370,13 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
 
 def Statistics(K_m, KK_m, KK_mm, Kt, K_mt, alpha_m, active_m, beta, targets, N):
         A_m = torch.diag(alpha_m)
-        
-        U = torch.linalg.cholesky((A_m + beta * KK_mm).transpose(-2, -1).conj()).transpose(-2, -1).conj()
+        H = A_m + beta * KK_mm
+        U = torch.linalg.cholesky((H).transpose(-2, -1).conj()).transpose(-2, -1).conj()
+        U = torch.linalg.cholesky(H, upper=True)
+        U, info =  torch.linalg.cholesky_ex(H, upper=True)
+        # if info>0:
+        #     print('pd_err of Hessian')
+        #     return None, H, None, None, True
         U_inv = torch.linalg.inv(U)
         Sigma_m = U_inv @ U_inv.T
                  

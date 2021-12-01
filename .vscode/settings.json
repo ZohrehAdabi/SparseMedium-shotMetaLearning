@@ -1,4 +1,10 @@
 {
     "python.pythonPath": "/home/ghiasi/anaconda3/bin/python",
-    "jupyter.jupyterServerType": "local"
+    "jupyter.jupyterServerType": "local",
+    "python.linting.pylintEnabled": false,
+    "python.linting.enabled": false,
+    "python.linting.banditEnabled": false,
+    "python.linting.mypyEnabled": false,
+    "python.linting.pylamaEnabled": false,
+    "python.linting.pycodestyleEnabled": true
 }
