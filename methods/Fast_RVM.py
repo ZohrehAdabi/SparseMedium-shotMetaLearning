@@ -72,6 +72,8 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
 
         # 'Relevance Factor' (q^2-s) values for basis functions in model
         Factor = q*q - s 
+        if (Factor<0).all():
+            print(f' Factor <0 all -------------------------')
         #compute delta in marginal log likelihood for new action selection
         deltaML = deltaML * 0
         action = action * 0
@@ -85,7 +87,15 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
         # d_alpha =  ((alpha_m[idx] - alpha_prim)/(alpha_prim * alpha_m[idx]))
         d_alpha_S           = delta_alpha * S[recompute] + 1 
         # deltaML[recompute] = ((delta_alpha * Q[recompute]**2) / (S[recompute] + 1/delta_alpha) - torch.log(d_alpha_S))
-        deltaML[recompute]  = ((delta_alpha * Q[recompute]**2) / (d_alpha_S) - torch.log(abs(d_alpha_S)))
+        deltaML[recompute]  = ((delta_alpha * Q[recompute]**2) / (d_alpha_S) - torch.log(d_alpha_S))
+        if torch.isinf(d_alpha_S).any() or torch.isnan(d_alpha_S).any():
+            print(f'nan d_alpha_S-------------------')
+        if (d_alpha_S < 0).any():
+            print(f'negative d_alpha_S-------------------')
+        if torch.isinf(delta_alpha).any() or torch.isnan(delta_alpha).any():
+            print(f'nan delta_alpha-------------------')
+        if torch.isinf(deltaML[recompute]).any() or torch.isnan(deltaML[recompute]).any():
+                print(f'inf deltaML[recompute]-------------------')
         # deltaML[torch.isnan(deltaML)] = 0 
         # DELETION: if NEGATIVE factor and IN model
         idx = ~idx #active_factor <= 1e-12
@@ -95,6 +105,8 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
             deltaML[delete] = -(q[delete]**2 / (s[delete] + alpha_m[idx]) - torch.log(1 + s[delete] / alpha_m[idx])) 
             # deltaML[delete] = (Q[delete]**2 / (S[delete] - alpha_m[idx]) - torch.log(1 - S[delete] / alpha_m[idx]))
             action[delete]  = -1
+            if torch.isinf(deltaML[delete]).any() or torch.isnan(deltaML[delete]).any():
+                print(f'inf deltaML[delete]-------------------')
 
         # ADDITION: must be a POSITIVE factor and OUT of the model
         good_factor = Factor > 1e-12
@@ -110,7 +122,9 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
             Q_S             = Q[add]**2 / (S[add] +1e-10)
             deltaML[add]    = (Q_S - 1 - torch.log(Q_S))
             action[add]     = 1
-            deltaML[torch.isnan(deltaML)] = 0 
+            # deltaML[torch.isnan(deltaML)] = 0 
+            if torch.isinf(deltaML[add]).any() or torch.isnan(deltaML[add]).any():
+                print(f'inf deltaML[add]-------------------')
 
         delta = deltaML.clone()
         # Priority of Deletion   
@@ -391,7 +405,7 @@ def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
         H			= (K_m.T @ beta_K_m + torch.diag(alpha_m))
         #  Invert Hessian via Cholesky, watching out for ill-conditioning
         # try:
-            # U	=  torch.linalg.cholesky((H).transpose(-2, -1).conj()).transpose(-2, -1).conj()
+        #     U	=  torch.linalg.cholesky((H).transpose(-2, -1).conj()).transpose(-2, -1).conj()
         # except:
         #     print('pd_err of Hessian')
         #     return None, H, None, None, True
