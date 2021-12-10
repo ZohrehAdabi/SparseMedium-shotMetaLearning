@@ -353,6 +353,8 @@ def Statistics(K, K_m, mu_m, alpha_m, active_m, targets, N, device):
         s[active_m] = alpha_m * S_active / (alpha_m - S_active)
         q[active_m] = alpha_m * Q[active_m] / (alpha_m - S_active)
 
+        if ((q*q-s) < 0).all():
+            print(f'factor < 0 all')
         return Sigma_m, mu_m, S, Q, s, q, beta, beta_KK_m, logML, Gamma  
 
 def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
