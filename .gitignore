@@ -219,3 +219,4 @@ methods/Sparse_DKT_binary_rvm.py
 Sparse_DKT_binary_rvm_CUB_log/
 Sparse_DKT_binary_Nystrom_CUB_log/
 Sparse_DKT_binary_Exact_CUB_log/
+old-experiments.tar.gz
