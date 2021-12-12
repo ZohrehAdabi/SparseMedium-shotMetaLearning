@@ -5,7 +5,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
-./l
+
 # C extensions
 *.so
 *.mp4
