@@ -134,7 +134,7 @@ filelists/QMUL/*.zip
 filelists/QMUL/images/
 filelists/QMUL/QMUL_360degreeViewSphere_FaceDatabase
 filelists/QMUL/*.json
-
+filelists/QMUL/
 filelists/omniglot/*.zip
 filelists/omniglot/images
 filelists/miniImagenet/miniImagenet_dataset/*.pkl
@@ -147,7 +147,7 @@ filelists/miniImagenet/val
 filelists/CUB/*.zip
 filelists/CUB/CUB_200_2011
 filelists/CUB/*.txt
-
+filelists/CUB
 
 
 test.ipynb
@@ -220,3 +220,11 @@ Sparse_DKT_binary_rvm_CUB_log/
 Sparse_DKT_binary_Nystrom_CUB_log/
 Sparse_DKT_binary_Exact_CUB_log/
 old-experiments.tar.gz
+filelists/CUB/base.json
+filelists/CUB/novel.json
+filelists/CUB/val.json
+filelists/CUB/val.json
+filelists/CUB/val.json
+filelists/CUB/write_CUB_filelist.py
+filelists/CUB/novel.json
+filelists/CUB/base.json

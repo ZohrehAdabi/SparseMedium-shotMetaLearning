@@ -7,7 +7,7 @@ import numpy as np
 import os
 import torch.nn.functional as F
 from methods.meta_template import MetaTemplate
-from fast_pytorch_kmeans import KMeans as Fast_KMeans
+# from fast_pytorch_kmeans import KMeans as Fast_KMeans
 from collections import namedtuple
 ## Our packages
 import gpytorch
