@@ -37,7 +37,8 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
 
     #  Heuristic initialisation based on log-odds
     LogOut	= (targets_pseudo_linear * 0.9 + 1) / 2
-    mu_m	=  K_m.pinverse() @ (torch.log(LogOut / (1 - LogOut))) #torch.linalg.lstsq(K_m, (torch.log(LogOut / (1 - LogOut)))).solution
+    # mu_m	=  K_m.pinverse() @ (torch.log(LogOut / (1 - LogOut))) #
+    mu_m = torch.linalg.lstsq(K_m, (torch.log(LogOut / (1 - LogOut)))).solution
     mu_m = mu_m.to(device)
     alpha_init = 1 / (mu_m + 1e-8).pow(2)
     alpha_m = torch.tensor([alpha_init], dtype=torch.float64).to(device)
@@ -101,7 +102,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
         idx = ~idx #active_factor <= 1e-12
         delete = active_m[idx]
         anyToDelete = len(delete) > 0
-        if anyToDelete and active_m.shape[0] > 1:
+        if anyToDelete and active_m.shape[0] >2:
             deltaML[delete] = -(q[delete]**2 / (s[delete] + alpha_m[idx]) - torch.log(1 + s[delete] / alpha_m[idx])) 
             # deltaML[delete] = (Q[delete]**2 / (S[delete] - alpha_m[idx]) - torch.log(1 - S[delete] / alpha_m[idx]))
             action[delete]  = -1
@@ -379,6 +380,7 @@ def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
             # output=0 or output=1 values, so can be excluded.
         data_error	= -(targets[~y0].T @ torch.log(y[~y0]+1e-12) + ((1-targets[~y1]).T @ torch.log(1-y[~y1]+1e-12)))
         # data_error	= -(targets[~y0].T @ torch.log(y[~y0]) + ((1-targets[~y1]).T @ torch.log(1-y[~y1])))
+        
         return y, data_error
     
     K_mu_m = K_m @ mu_m
@@ -424,8 +426,10 @@ def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
             break
 
         #  If all OK, compute full Newton step: H^{-1} * g
-        U_g = U.T.pinverse() @ g  #torch.linalg.lstsq(U.T, g).solution
-        delta_mu = U.pinverse() @ U_g #torch.linalg.lstsq(U, U_g).solution
+        # U_g = U.T.pinverse() @ g  #
+        U_g = torch.linalg.lstsq(U.T, g).solution
+        # delta_mu = U.pinverse() @ U_g #
+        delta_mu = torch.linalg.lstsq(U, U_g).solution
         step		= 1
         while step > step_min:
             #  Follow gradient to get new value of parameters

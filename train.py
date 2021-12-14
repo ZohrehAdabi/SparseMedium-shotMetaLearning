@@ -121,7 +121,7 @@ if __name__ == '__main__':
             elif params.n_shot == 5:
                 params.stop_epoch = 400
             else:
-                params.stop_epoch = 100  # default
+                params.stop_epoch = 100  # default*******************
 
     if params.method in ['baseline', 'baseline++']:
         base_datamgr = SimpleDataManager(image_size, batch_size=16)
@@ -281,8 +281,15 @@ if __name__ == '__main__':
         resume_file = get_resume_file(params.checkpoint_dir)
         if resume_file is not None:
             tmp = torch.load(resume_file)
+            if params.method=='Sparse_DKT_Nystrom' or params.method=='Sparse_DKT_binary_Nystrom':
+                
+                IP = torch.ones(100, 64).cuda()
+                tmp['state']['model.covar_module.inducing_points'] = IP
+                tmp['state']['mll.model.covar_module.inducing_points'] = IP
             start_epoch = tmp['epoch'] + 1
+            stop_epoch = start_epoch + stop_epoch
             model.load_state_dict(tmp['state'])
+
     elif params.warmup:  # We also support warmup from pretrained baseline feature, but we never used in our paper
         baseline_checkpoint_dir = '%s/checkpoints/%s/%s_%s' % (
         configs.save_dir, params.dataset, params.model, 'baseline')

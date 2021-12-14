@@ -135,6 +135,7 @@ filelists/QMUL/images/
 filelists/QMUL/QMUL_360degreeViewSphere_FaceDatabase
 filelists/QMUL/*.json
 filelists/QMUL/
+filelists/omniglot/
 filelists/omniglot/*.zip
 filelists/omniglot/images
 filelists/miniImagenet/miniImagenet_dataset/*.pkl
@@ -228,3 +229,4 @@ filelists/CUB/val.json
 filelists/CUB/write_CUB_filelist.py
 filelists/CUB/novel.json
 filelists/CUB/base.json
+test_code.ipynb
