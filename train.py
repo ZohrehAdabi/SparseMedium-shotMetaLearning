@@ -51,6 +51,8 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
     max_acc = 0
     print(f'num train task {len(base_loader)}')
     print(f'num val task {len(val_loader)}')
+
+    acc_val_list = []
     for epoch in range(start_epoch, stop_epoch):
         #model.eval()
         #acc = model.test_loop(val_loader)
@@ -64,6 +66,7 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
                 os.makedirs(params.checkpoint_dir)
             print(Fore.GREEN,"-"*50 ,f'\nValidation \n', Fore.RESET)
             acc = model.test_loop(val_loader)
+            acc_val_list.append(acc)
             if acc > max_acc:  # for baseline and baseline++, we don't use validation here so we let acc = -1
                 print("--> Best model! save...")
                 max_acc = acc
@@ -75,6 +78,7 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
                 torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
             print(Fore.YELLOW, f'ACC: {acc:4.2f}\n', Fore.RESET)
             print(Fore.GREEN,"-"*50 ,'\n', Fore.RESET)
+        print(Fore.YELLOW, f'Avg. Val ACC: {np.mean(acc_val_list):4.2f}\n', Fore.RESET)
     return model
 
 
