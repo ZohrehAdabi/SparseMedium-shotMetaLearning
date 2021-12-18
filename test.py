@@ -22,6 +22,7 @@ from methods.Sparse_DKT_Exact import Sparse_DKT_Exact
 from methods.Sparse_DKT_binary_Nystrom import Sparse_DKT_binary_Nystrom
 from methods.Sparse_DKT_binary_Exact import Sparse_DKT_binary_Exact
 from methods.DKT import DKT
+from methods.DKT_binary import DKT_binary
 from methods.matchingnet import MatchingNet
 from methods.relationnet import RelationNet
 from methods.maml import MAML
@@ -82,6 +83,8 @@ def single_test(params):
         model           = ProtoNet( model_dict[params.model], **few_shot_params )
     elif params.method == 'DKT':
         model           = DKT(model_dict[params.model], **few_shot_params, dirichlet=params.dirichlet)
+    elif params.method == 'DKT_binary':
+        model           = DKT_binary(model_dict[params.model], **few_shot_params, dirichlet=params.dirichlet)
     elif params.method == 'Sparse_DKT_Nystrom':
         model           = Sparse_DKT_Nystrom(model_dict[params.model], **few_shot_params,
                                 config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
@@ -169,7 +172,7 @@ def single_test(params):
         split_str = split + "_" +str(params.save_iter)
     else:
         split_str = split
-    if params.method in ['maml', 'maml_approx', 'DKT', 'Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_Exact']: #maml do not support testing with feature
+    if params.method in ['maml', 'maml_approx', 'DKT', 'DKT_binary', 'Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_Exact']: #maml do not support testing with feature
         if 'Conv' in params.model:
             if params.dataset in ['omniglot', 'cross_char']:
                 image_size = 28
