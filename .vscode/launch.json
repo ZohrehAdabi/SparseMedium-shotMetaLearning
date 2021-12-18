@@ -112,9 +112,20 @@
             "console": "integratedTerminal",
             "args": ["--method","Sparse_DKT_binary_Nystrom", "--sparse_method", "FRVM", "--dataset", "CUB", 
             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
-                "--seed","1", "--config", "011", "--align_thr", "1e-3" ,  "--lr_gp", "1e-2", "--lr_net", "1e-3", "--resume"]  //--train_aug
-    // python train.py --method "Sparse_DKT_binary_Nystrom"  --sparse_method "FRVM" --dataset "CUB"  --train_n_way 2 --test_n_way 2  --n_shot 50 --n_query 10 --seed 1 --config "010" --align_thr 1e-3  --lr_gp 1e-1 --lr_net 1e-3 --train_aug
+                "--seed","1", "--config", "011", "--align_thr", "1e-3" ,  "--lr_gp", "1e-1", "--lr_net", "1e-3"]  //"warmup" "--resume" "--train_aug"
+    // python train.py --method "Sparse_DKT_binary_Nystrom"  --sparse_method "FRVM" --dataset "CUB"  --train_n_way 2 --test_n_way 2  --n_shot 50 --n_query 10 --seed 1 --config "011" --align_thr 1e-3  --lr_gp 1e-1 --lr_net 1e-3 --train_aug
         },
+    //     {
+    //         "name": "Sparse_DKT_binary_Nystrom Kmeans[CUB]: train",
+    //         "type": "python",
+    //         "request": "launch",
+    //         "program": "${workspaceFolder}/train.py",
+    //         "console": "integratedTerminal",
+    //         "args": ["--method","Sparse_DKT_binary_Nystrom", "--sparse_method", "Kmenas", "--dataset", "CUB", 
+    //         "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
+    //             "--seed","1", "--config", "011", "--align_thr", "1e-3" ,  "--lr_gp", "1e-1", "--lr_net", "1e-3"]  //"warmup" "--resume" "--train_aug"
+    // // python train.py --method "Sparse_DKT_binary_Nystrom"  --sparse_method "Kmeans" --dataset "CUB"  --train_n_way 2 --test_n_way 2  --n_shot 50 --n_query 10 --seed 1 --config "011" --align_thr 1e-3  --lr_gp 1e-1 --lr_net 1e-3 --train_aug
+    //     },
         {
             "name": "Sparse_DKT_binary_Nystrom [CUB]: test",
             "type": "python",
@@ -123,7 +134,7 @@
             "console": "integratedTerminal",
            "args": ["--method","Sparse_DKT_binary_Nystrom", "--sparse_method", "FRVM", "--dataset", "CUB", 
             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
-              "--seed","1", "--config", "011", "--align_thr", "1e-3", "--lr_gp", "1e-1", "--lr_net", "1e-3","--train_aug"]
+              "--seed","1", "--config", "011", "--align_thr", "1e-3", "--lr_gp", "1e-2", "--lr_net", "1e-3"] // ,"--train_aug"
     // python test.py --method "Sparse_DKT_binary_Nystrom"  --sparse_method "FRVM" --dataset "CUB"  --train_n_way 2 --test_n_way 2 --n_shot 50  --n_query 10 --seed 1 --config "010" --align_thr 1e-3  --lr_gp 1e-1 --lr_net 1e-3  --train_aug
         },
         {
@@ -205,9 +216,9 @@
             "request": "launch",
             "program": "${workspaceFolder}/train.py",
             "console": "integratedTerminal",
-           "args": ["--method","DKT", "--dataset", "CUB", 
-            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50",  "--n_query", "10",
-            "--seed","1"]  //, "--train_aug"
+           "args": ["--method","DKT_binary", "--dataset", "CUB", 
+            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50",  "--n_query", "10",  "--lr_gp", "1e-1", "--lr_net", "1e-3",
+            "--seed","1"]  // "--resume", "--train_aug"
          // python train.py --method "DKT_binary"  --dataset "CUB"  --train_n_way 2 --test_n_way 2 --n_shot 50 --n_query 10 --seed 1 --lr_gp  1e-2 --lr_net  1e-3  --train_aug
         },
         {
@@ -220,7 +231,7 @@
             "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "15", "--n_query", "5", "--dirichlet",
             "--seed","1"]  //, "--train_aug"
          // python train.py --method "DKT"  --dataset "omniglot"  --train_n_way 5 --test_n_way 5 --n_shot 15 --n_query 5 --seed 1 --lr_gp  1e-2 --lr_net  1e-3 
-        },
+         },
   
 
         {

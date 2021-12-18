@@ -140,7 +140,7 @@ def single_test(params):
             if params.dirichlet:
                 id=f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
             else:
-                id=f'_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
+                id=f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
             if params.train_aug: id += '_aug'
             checkpoint_dir += id
 

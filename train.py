@@ -47,7 +47,7 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
                                       {'params': model.feature_extractor.parameters(), 'lr': lr_net}])
     else:
         raise ValueError('Unknown optimization, please define by yourself')
-
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=25, gamma=0.1)
     max_acc = 0
     print(f'num train task {len(base_loader)}')
     print(f'num val task {len(val_loader)}')
@@ -57,6 +57,7 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
         print(f'Epoch {epoch}')
         model.train()
         model.train_loop(epoch, base_loader, optimizer)  # model are called by reference, no need to return
+        scheduler.step()
         model.eval()
         if (epoch+1)%2==0:
             if not os.path.isdir(params.checkpoint_dir):
@@ -164,6 +165,7 @@ if __name__ == '__main__':
                 id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'           
             if params.gamma: id += '_gamma'
             if params.train_aug: id += '_aug'
+            if params.warmup:  id += '_warmup'
             model.init_summary(id=id, dataset=params.dataset)
         elif(params.method == 'Sparse_DKT_Exact'):
             model = Sparse_DKT_Exact(model_dict[params.model], **train_few_shot_params, 
@@ -174,6 +176,7 @@ if __name__ == '__main__':
                 id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'           
             if params.gamma: id += '_gamma'
             if params.train_aug: id += '_aug'
+            if params.warmup:  id += '_warmup'
             model.init_summary(id=id, dataset=params.dataset)
 
         elif params.method == 'Sparse_DKT_binary_Nystrom':
@@ -185,6 +188,7 @@ if __name__ == '__main__':
                 id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'           
             if params.gamma: id += '_gamma'
             if params.train_aug: id += '_aug'
+            if params.warmup:  id += '_warmup'
             model.init_summary(id=id, dataset=params.dataset)
 
         elif params.method == 'Sparse_DKT_binary_Exact':
@@ -196,6 +200,7 @@ if __name__ == '__main__':
                 id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'           
             if params.gamma: id += '_gamma'
             if params.train_aug: id += '_aug'
+            if params.warmup:  id += '_warmup'
             model.init_summary(id=id, dataset=params.dataset)
 
         elif(params.method == 'DKT'):
@@ -205,6 +210,7 @@ if __name__ == '__main__':
             else:
                 id=f'DKT_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
             if params.train_aug: id += '_aug'
+            if params.warmup:  id += '_warmup'
             model.init_summary(id=id)
         elif(params.method == 'DKT_binary'):
             model = DKT_binary(model_dict[params.model], **train_few_shot_params, dirichlet=params.dirichlet)
@@ -213,6 +219,7 @@ if __name__ == '__main__':
             else:
                 id=f'DKT_binary_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
             if params.train_aug: id += '_aug'
+            if params.warmup:  id += '_warmup'
             model.init_summary(id=id)
         
         elif params.method == 'protonet':
@@ -263,9 +270,11 @@ if __name__ == '__main__':
             if params.dirichlet:
                 id=f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
             else:
-                id=f'_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
+                id=f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
         
+            
             if params.train_aug: id += '_aug'
+            if params.warmup:  id += '_warmup'
             params.checkpoint_dir += id
 
 
@@ -291,23 +300,49 @@ if __name__ == '__main__':
             model.load_state_dict(tmp['state'])
 
     elif params.warmup:  # We also support warmup from pretrained baseline feature, but we never used in our paper
-        baseline_checkpoint_dir = '%s/checkpoints/%s/%s_%s' % (
-        configs.save_dir, params.dataset, params.model, 'baseline')
-        if params.train_aug:
-            baseline_checkpoint_dir += '_aug'
-        warmup_resume_file = get_resume_file(baseline_checkpoint_dir)
+
+        
+           
+        if('DKT_binary' in params.method):
+            warmup_model = DKT_binary(model_dict[params.model], **train_few_shot_params, dirichlet=params.dirichlet)
+            warmup_model_checkpoint_dir = '%s/checkpoints/%s/%s_%s' % (configs.save_dir, params.dataset, params.model, 'DKT_binary')
+           
+        elif('DKT' in params.method):
+            warmup_model = DKT(model_dict[params.model], **train_few_shot_params, dirichlet=params.dirichlet)
+            warmup_model_checkpoint_dir = '%s/checkpoints/%s/%s_%s' % (configs.save_dir, params.dataset, params.model, 'DKT')
+        
+        
+
+        warmup_model = warmup_model.cuda()
+
+        if params.dirichlet:
+            warmup_id=f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
+        else:
+            warmup_id=f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
+        
+        if params.train_aug: warmup_id += '_aug'
+        warmup_model_checkpoint_dir += warmup_id
+        # baseline_checkpoint_dir = '%s/checkpoints/%s/%s_%s' % (
+        # configs.save_dir, params.dataset, params.model, 'baseline')
+        # if params.train_aug:
+        #     baseline_checkpoint_dir += '_aug'
+
+        warmup_resume_file = get_resume_file(warmup_model_checkpoint_dir)
         tmp = torch.load(warmup_resume_file)
         if tmp is not None:
-            state = tmp['state']
-            state_keys = list(state.keys())
-            for i, key in enumerate(state_keys):
-                if "feature." in key:
-                    newkey = key.replace("feature.",
-                                         "")  # an architecture model has attribute 'feature', load architecture feature to backbone by casting name from 'feature.trunk.xx' to 'trunk.xx'
-                    state[newkey] = state.pop(key)
-                else:
-                    state.pop(key)
-            model.feature.load_state_dict(state)
+
+            warmup_model.load_state_dict(tmp['state'])
+            model.feature_extractor.load_state_dict(warmup_model.feature_extractor.state_dict())
+            # state = tmp['state']
+            # state_keys = list(state.keys())
+            # for i, key in enumerate(state_keys):
+            #     if "feature." in key:
+            #         newkey = key.replace("feature.",
+            #                              "")  # an architecture model has attribute 'feature', load architecture feature to backbone by casting name from 'feature.trunk.xx' to 'trunk.xx'
+            #         state[newkey] = state.pop(key)
+            #     else:
+            #         state.pop(key)
+            # model.feature.load_state_dict(state)
         else:
             raise ValueError('No warm_up file')
 

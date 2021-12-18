@@ -375,10 +375,12 @@ def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
         #     #  Error infinite when model gives zero probability in
         #     #  contradiction to data
             data_error	= torch.tensor(np.inf)
+            print(f'data_error inf------------------')
         # else:
             # Any y=0 or y=1 cases must now be accompanied by appropriate
             # output=0 or output=1 values, so can be excluded.
-        data_error	= -(targets[~y0].T @ torch.log(y[~y0]+1e-12) + ((1-targets[~y1]).T @ torch.log(1-y[~y1]+1e-12)))
+        # data_error	= -(targets[~y0].T @ torch.log(y[~y0]+1e-12) + ((1-targets[~y1]).T @ torch.log(1-y[~y1]+1e-12)))
+        data_error = -(targets[targets==1].T @ torch.log(y[targets==1]) + ((1-targets[targets==0]).T @ torch.log(1-y[targets==0])))
         # data_error	= -(targets[~y0].T @ torch.log(y[~y0]) + ((1-targets[~y1]).T @ torch.log(1-y[~y1])))
         
         return y, data_error
