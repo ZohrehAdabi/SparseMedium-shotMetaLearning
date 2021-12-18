@@ -222,7 +222,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                 self.model.eval()
                 self.likelihood.eval()
                 self.feature_extractor.eval()
-                z_support = self.feature_extractor.forward(x_support).detach()
+                z_support = self.feature_extractor(x_support).detach()
                 if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1)
                 ## z_support_list = [z_support]*len(y_support)
 
@@ -302,6 +302,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             # X = (X- m) / s 
             kernel_matrix = base_covar_module(inputs).evaluate()
             # normalize kernel
+            scales = torch.ones(kernel_matrix.shape[1]).to(self.device)
             if scale:
                 scales	= torch.sqrt(torch.sum(kernel_matrix**2, axis=0))
                 # print(f'scale: {Scales}')
