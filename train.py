@@ -77,8 +77,9 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
                 outfile = os.path.join(params.checkpoint_dir, '{:d}.tar'.format(epoch))
                 torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
             print(Fore.YELLOW, f'ACC: {acc:4.2f}\n', Fore.RESET)
+            print(Fore.YELLOW, f'Avg. Val ACC: {np.mean(acc_val_list):4.2f}\n', Fore.RESET)
             print(Fore.GREEN,"-"*50 ,'\n', Fore.RESET)
-        print(Fore.YELLOW, f'Avg. Val ACC: {np.mean(acc_val_list):4.2f}\n', Fore.RESET)
+    
     return model
 
 
