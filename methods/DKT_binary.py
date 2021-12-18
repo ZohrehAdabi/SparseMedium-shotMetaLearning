@@ -48,7 +48,7 @@ class DKT_binary(MetaTemplate):
             latent_size = np.prod(self.feature_extractor.final_feat_dim)
             self.feature_extractor.trunk.add_module("bn_out", nn.BatchNorm1d(latent_size))
         else:
-            self.normalize=False
+            self.normalize=True
 
     def init_summary(self, id):
         if(IS_TBX_INSTALLED):
