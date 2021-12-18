@@ -62,7 +62,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             latent_size = np.prod(self.feature_extractor.final_feat_dim)
             self.feature_extractor.trunk.add_module("bn_out", nn.BatchNorm1d(latent_size))
         else:
-            self.normalize=False
+            self.normalize=True
 
     def init_summary(self, id, dataset):
         if(IS_TBX_INSTALLED):
@@ -171,7 +171,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             self.feature_extractor.train()
             z_train = self.feature_extractor.forward(x_train)
             if(self.normalize): z_train = F.normalize(z_train, p=2, dim=1)
-
+            z_train_norm = F.normalize(z_train, p=2, dim=1)
             # train_list = [z_train]*self.n_way
             lenghtscale = 0.0
             noise = 0.0
@@ -193,6 +193,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                                                         z_train, target, verbose=False)
         
             ip_values = inducing_points.z_values.cuda()
+            # ip_values = z_train[inducing_points.index].cuda()
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
             self.model.train()
 
@@ -244,6 +245,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                 # if(self.writer is not None): self.writer.add_scalar('GP_support_accuracy', accuracy_support, self.iteration)
                 z_query = self.feature_extractor.forward(x_query).detach()
                 if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
+                
                 
                 if self.dirichlet:
                     prediction = self.likelihood(self.model(z_query)) 
@@ -378,6 +380,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
 
         z_train = self.feature_extractor.forward(x_train).detach() #[340, 64]
         if(self.normalize): z_train = F.normalize(z_train, p=2, dim=1)
+        # z_train_norm = F.normalize(z_train, p=2, dim=1)
         
         if self.dirichlet:
                 target[target==-1] = 0
@@ -398,6 +401,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                                 x_support[inducing_points.index], y_support[inducing_points.index], None, None)
     
         ip_values = inducing_points.z_values.cuda()
+        # ip_values = z_train[inducing_points.index].cuda()
         self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
         self.model.covar_module._clear_cache()
 
