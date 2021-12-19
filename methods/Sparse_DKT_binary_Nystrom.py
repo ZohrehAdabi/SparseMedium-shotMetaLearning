@@ -138,7 +138,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
         max_pred[index] = -np.inf
         return max_pred
 
-    def train_loop(self, epoch, train_loader, optimizer, print_freq=1):
+    def train_loop(self, epoch, train_loader, optimizer, print_freq=5):
         # if self.dirichlet:
         #     optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
         #                               {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
@@ -293,7 +293,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
         else:
             # with sigma and updating sigma converges to more sparse solution
             N   = inputs.shape[0]
-            tol = 1e-4
+            tol = 1e-6
             eps = torch.finfo(torch.float32).eps
             max_itr = 1000
             
@@ -336,7 +336,8 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                 y_pred = (y_pred > 0.5).to(int)
                 
                 acc = (torch.sum(y_pred==target) / N) * 100
-                print(f'FRVM ACC: {(acc):.2f}%')
+                if verbose:
+                    print(f'FRVM ACC: {(acc):.2f}%')
                 
                 self.frvm_acc.append(acc.item())
 

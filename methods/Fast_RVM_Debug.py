@@ -85,23 +85,36 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
         recompute           = active_m[idx]
         alpha_prim          =  s[recompute]**2 / (Factor[recompute]+1e-10)
         delta_alpha         = (1/(alpha_prim) - 1/(alpha_m[idx]))
+        # d_alpha =  ((alpha_m[idx] - alpha_prim)/(alpha_prim * alpha_m[idx]))
         d_alpha_S           = delta_alpha * S[recompute] + 1 
+        # deltaML[recompute] = ((delta_alpha * Q[recompute]**2) / (S[recompute] + 1/delta_alpha) - torch.log(d_alpha_S))
         deltaML[recompute]  = ((delta_alpha * Q[recompute]**2) / (d_alpha_S) - torch.log(d_alpha_S))
-     
+        if torch.isinf(d_alpha_S).any() or torch.isnan(d_alpha_S).any():
+            print(f'nan d_alpha_S-------------------')
+        if (d_alpha_S < 0).any():
+            print(f'negative d_alpha_S-------------------')
+        if torch.isinf(delta_alpha).any() or torch.isnan(delta_alpha).any():
+            print(f'nan delta_alpha-------------------')
+        if torch.isinf(deltaML[recompute]).any() or torch.isnan(deltaML[recompute]).any():
+                print(f'inf deltaML[recompute]-------------------')
+        # deltaML[torch.isnan(deltaML)] = 0 
         # DELETION: if NEGATIVE factor and IN model
         idx = ~idx #active_factor <= 1e-12
         delete = active_m[idx]
         anyToDelete = len(delete) > 0
-        if anyToDelete and active_m.shape[0] > 1:
+        if anyToDelete and active_m.shape[0] >2:
             deltaML[delete] = -(q[delete]**2 / (s[delete] + alpha_m[idx]) - torch.log(1 + s[delete] / alpha_m[idx])) 
             # deltaML[delete] = (Q[delete]**2 / (S[delete] - alpha_m[idx]) - torch.log(1 - S[delete] / alpha_m[idx]))
             action[delete]  = -1
+            if torch.isinf(deltaML[delete]).any() or torch.isnan(deltaML[delete]).any():
+                print(f'inf deltaML[delete]-------------------')
 
         # ADDITION: must be a POSITIVE factor and OUT of the model
         good_factor = Factor > 1e-12
         good_factor[active_m] = False
         
         if alignment_test and len(aligned_out) > 0:
+            
             good_factor[aligned_out] = False
 
         add = torch.where(good_factor)[0]
@@ -110,13 +123,19 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
             Q_S             = Q[add]**2 / (S[add] +1e-10)
             deltaML[add]    = (Q_S - 1 - torch.log(Q_S))
             action[add]     = 1
-            
+            # deltaML[torch.isnan(deltaML)] = 0 
+            if torch.isinf(deltaML[add]).any() or torch.isnan(deltaML[add]).any():
+                print(f'inf deltaML[add]-------------------')
+
+        delta = deltaML.clone()
         # Priority of Deletion   
         if anyToDelete and delete_priority and not add_priority:
             deltaML[recompute] = 0
             deltaML[add] = 0
         # Priority of Addition       
         if anyToAdd and add_priority and (deltaML[add]>0).any():
+            # save_deltaML_recomp = deltaML[recompute].clone() 
+            # save_deltaML_del = deltaML[delete].clone() 
             deltaML[recompute] = 0
             deltaML[delete] = 0
 
@@ -131,37 +150,48 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
             j = torch.where(active_m==max_idx)[0]
 
         alpha_new = s[max_idx]**2 / (Factor[max_idx])
+        
         terminate = False
 
         if not anyWorthwhileAction:
-            if verbose:
-                print(f'{itr:3}, No positive action, m={active_m.shape[0]:3}')
+            # if verbose:
+            print(f'{itr:3}, No positive action, m={active_m.shape[0]:3}')
             selected_action = torch.tensor(10)
             terminate = True
 
         elif (selected_action==0) and (not anyToDelete):
             no_change_in_alpha = torch.abs(torch.log(alpha_new) - torch.log(alpha_m[j])) < tol
+           
             if no_change_in_alpha:
-                if verbose:
-                    print(f'{itr:3}, No change in alpha, m={active_m.shape[0]:3}')
+                # print(selected_action)
+                # if verbose:
+                print(f'{itr:3}, No change in alpha, m={active_m.shape[0]:3}')
                 selected_action = torch.tensor(11)
                 terminate = True
 
         
         if alignment_test:
+            #
             # Addition - rule out addition (from now onwards) if the new basis
             # vector is aligned too closely to one or more already in the model
+            # 
             if selected_action== 1:
             # Basic test for correlated basis vectors
             # (note, Phi and columns of PHI are normalised)
+            # 
                 k_new = K[:, max_idx]
                 k_new_K_m         = k_new.T @ K_m 
+                # p				= Phi'*PHI;
                 aligned_idx = torch.where(k_new_K_m > (1- align_zero))[0]
                 num_aligned	= len(aligned_idx)
                 if num_aligned > 0:
-                    # The added basis function is effectively indistinguishable from one present already
+                    # The added basis function is effectively indistinguishable from
+                    # one present already
                     selected_action	= torch.tensor(12)
-                    # Make a note so we don't try this next time. May be more than one in the model, which we need to note was
+                    # act_			= 'alignment-deferred addition';
+                    # alignDeferCount	= alignDeferCount+1;
+                    # Make a note so we don't try this next time
+                    # May be more than one in the model, which we need to note was
                     # the cause of function 'nu' being rejected
                     aligned_out = torch.cat([aligned_out, max_idx * torch.ones(num_aligned, dtype=torch.int).to(device)])
                     aligned_in = torch.cat([aligned_in, active_m[aligned_idx]])
@@ -260,9 +290,10 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
             logMarginalLog.append(logML.item())
 
         if terminate:
-           
-            if verbose:
-                print(f'Finished at {itr:3}, m= {active_m.shape[0]:3}')
+            # print(f'sigma2={1/beta:.4f}')
+            # if verbose:
+            # if active_m.shape[0] < 3:
+            print(f'Finished at {itr:3}, m= {active_m.shape[0]:3}')
             toc = time.time()
             print(f'elapsed time: {toc-tic}')
             # if count > 0:
@@ -276,9 +307,9 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
     # print(f'logML= {logML/N}\n{logMarginalLog}')
     print(f'End, m= {active_m.shape[0]:3}')
     toc = time.time()
-    # print(f'elapsed time: {toc-tic}')
-    # if count > 0:
-    #     print(f'add: {add_count:3d} ({add_count/count:.1%}), delete: {del_count:3d} ({del_count/count:.1%}), recompute: {recomp_count:3d} ({recomp_count/count:.1%})')
+    print(f'elapsed time: {toc-tic}')
+    if count > 0:
+        print(f'add: {add_count:3d} ({add_count/count:.1%}), delete: {del_count:3d} ({del_count/count:.1%}), recompute: {recomp_count:3d} ({recomp_count/count:.1%})')
 
 
     return active_m.cpu().numpy(), alpha_m, Gamma, beta, mu_m 
@@ -323,7 +354,8 @@ def Statistics(K, K_m, mu_m, alpha_m, active_m, targets, N, device):
         s[active_m] = alpha_m * S_active / (alpha_m - S_active)
         q[active_m] = alpha_m * Q[active_m] / (alpha_m - S_active)
 
-        
+        if ((q*q-s) < 0).all():
+            print(f'factor < 0 all')
         return Sigma_m, mu_m, S, Q, s, q, beta, beta_KK_m, logML, Gamma  
 
 def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
