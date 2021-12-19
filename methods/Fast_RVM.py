@@ -262,9 +262,10 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
         if terminate:
            
             if verbose:
-                print(f'Finished at {itr:3}, m= {active_m.shape[0]:3}')
+                if selected_action!=11:
+                    print(f'Finished at {itr:3}, m= {active_m.shape[0]:3}')
             toc = time.time()
-            print(f'elapsed time: {toc-tic}')
+            # print(f'elapsed time: {toc-tic}')
             # if count > 0:
             #     print(f'add: {add_count:3d} ({add_count/count:.1%}), delete: {del_count:3d} ({del_count/count:.1%}), recompute: {recomp_count:3d} ({recomp_count/count:.1%})')
             return active_m.cpu().numpy(), alpha_m, Gamma, beta, mu_m

@@ -190,7 +190,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
 
             with torch.no_grad():
                 inducing_points = self.get_inducing_points(self.model.base_covar_module, #.base_kernel,
-                                                        z_train, target, verbose=False)
+                                                        z_train, target, verbose=True)
         
             ip_values = inducing_points.z_values.cuda()
             # ip_values = z_train[inducing_points.index].cuda()
@@ -446,12 +446,13 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             top1_correct = np.sum(y_pred == y_query)
             count_this = len(y_query)
             acc = (top1_correct/ count_this)*100
-            print(Fore.RED,"="*50, Fore.RESET)
-            print(f'inducing_points count: {inducing_points.count}')
-            print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha.cpu().numpy()}',Fore.RESET)
-            print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma.cpu().numpy()}',Fore.RESET)
-            print(Fore.YELLOW, f'itr {i:3}, ACC: {acc:.2f}%', Fore.RESET)
-            print(Fore.RED,"-"*50, Fore.RESET)
+            if i%10==0:
+                # print(Fore.RED,"-"*25, Fore.RESET)
+                print(f'inducing_points count: {inducing_points.count}')
+                # print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha.cpu().numpy()}',Fore.RESET)
+                # print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma.cpu().numpy()}',Fore.RESET)
+                print(Fore.YELLOW, f'itr {i:3}, ACC: {acc:.2f}%', Fore.RESET)
+                print(Fore.RED,"="*50, Fore.RESET)
             if self.show_plot:
                 self.plot_test(x_query, y_query, y_pred, inducing_points, i)
 
