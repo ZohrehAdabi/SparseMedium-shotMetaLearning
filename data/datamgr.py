@@ -67,7 +67,7 @@ class SimpleDataManager(DataManager):
         return data_loader
 
 class SetDataManager(DataManager):
-    def __init__(self, image_size, n_way, n_support, n_query, n_eposide =10): 
+    def __init__(self, image_size, n_way, n_support, n_query, n_eposide =100): 
         """
         n_episode: num tasks
         """       
