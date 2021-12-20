@@ -161,8 +161,16 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             y_train = y_all
 
             
-            samples_per_model = int(len(y_train) / self.n_way) #25 / 5 = 5
-            target = torch.ones(len(y_train), dtype=torch.float32) * -1 
+            if new_loss:
+                samples_per_model = int(len(y_query) / self.n_way) #25 / 5 = 5
+                target_query = torch.ones(len(y_query), dtype=torch.float32) * -1 
+                start_index = 0
+                stop_index = start_index+samples_per_model
+                target_query[start_index:stop_index] = 1.0
+                target_query = target_query.to(self.device)
+            
+            samples_per_model = int(len(y_support) / self.n_way) #25 / 5 = 5
+            target = torch.ones(len(y_support), dtype=torch.float32) * -1 
             # target = torch.zeros(len(y_train), dtype=torch.float32) 
             start_index = 0
             stop_index = start_index+samples_per_model
@@ -172,7 +180,10 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             self.model.train()
             self.likelihood.train()
             self.feature_extractor.train()
-            z_train = self.feature_extractor.forward(x_train)
+            if new_loss:
+                z_train = self.feature_extractor.forward(x_support)
+            else:
+                z_train = self.feature_extractor.forward(x_train)
             if(self.normalize): z_train = F.normalize(z_train, p=2, dim=1)
             # z_train_norm = F.normalize(z_train, p=2, dim=1)
             # train_list = [z_train]*self.n_way
@@ -209,13 +220,23 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
 
             ## Optimize
             optimizer.zero_grad()
-           
-            output = self.model(*self.model.train_inputs)
-            if self.dirichlet:
-                transformed_targets = self.model.likelihood.transformed_targets
-                loss = -self.mll(output, transformed_targets).sum()
+            if new_loss:
+                z_query = self.feature_extractor.forward(x_query)
+                self.model.eval()
+                output = self.model(z_query)
+                self.model.train()
+                if self.dirichlet:
+                    transformed_targets = self.model.likelihood.transformed_targets
+                    loss = -self.mll(output, transformed_targets).sum()
+                else:
+                    loss = -self.mll(output, target_query)
             else:
-                loss = -self.mll(output, self.model.train_targets)
+                output = self.model(*self.model.train_inputs)
+                if self.dirichlet:
+                    transformed_targets = self.model.likelihood.transformed_targets
+                    loss = -self.mll(output, transformed_targets).sum()
+                else:
+                    loss = -self.mll(output, self.model.train_targets)
             loss.backward()
             optimizer.step()
 
@@ -227,8 +248,8 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                 self.model.eval()
                 self.likelihood.eval()
                 self.feature_extractor.eval()
-                z_support = self.feature_extractor(x_support).detach()
-                if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1)
+                # z_support = self.feature_extractor(x_support).detach()
+                # if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1)
                 ## z_support_list = [z_support]*len(y_support)
 
                 # if self.dirichlet:
