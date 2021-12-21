@@ -216,6 +216,7 @@ if __name__ == '__main__':
                 id=f'DKT_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
+            if params.freeze: id += '_freeze'
             model.init_summary(id=id)
         elif(params.method == 'DKT_binary'):
             model = DKT_binary(model_dict[params.model], **train_few_shot_params, dirichlet=params.dirichlet)
@@ -225,6 +226,7 @@ if __name__ == '__main__':
                 id=f'DKT_binary_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
+            if params.freeze: id += '_freeze'
             model.init_summary(id=id)
         
         elif params.method == 'protonet':
