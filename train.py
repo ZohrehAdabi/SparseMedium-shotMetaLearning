@@ -182,6 +182,7 @@ if __name__ == '__main__':
             if params.gamma: id += '_gamma'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
+            if params.freeze: id += '_freeze'
             model.init_summary(id=id, dataset=params.dataset)
 
         elif params.method == 'Sparse_DKT_binary_Nystrom':
@@ -194,6 +195,7 @@ if __name__ == '__main__':
             if params.gamma: id += '_gamma'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
+            if params.freeze: id += '_freeze'
             model.init_summary(id=id, dataset=params.dataset)
 
         elif params.method == 'Sparse_DKT_binary_Exact':
@@ -206,6 +208,7 @@ if __name__ == '__main__':
             if params.gamma: id += '_gamma'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
+            if params.freeze: id += '_freeze'
             model.init_summary(id=id, dataset=params.dataset)
 
         elif(params.method == 'DKT'):
