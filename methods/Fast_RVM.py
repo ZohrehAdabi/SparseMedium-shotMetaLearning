@@ -39,7 +39,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
     LogOut	= (targets_pseudo_linear * 0.9 + 1) / 2
     # mu_m	=  K_m.pinverse() @ (torch.log(LogOut / (1 - LogOut))) #
     mu_m = torch.linalg.lstsq(K_m, (torch.log(LogOut / (1 - LogOut)))).solution
-    mu_m = mu_m.to(device)
+    mu_m = mu_m.to(device).to(torch.float64)
     alpha_init = 1 / (mu_m + 1e-8).pow(2)
     alpha_m = torch.tensor([alpha_init], dtype=torch.float64).to(device)
     if alpha_m < 1e-3:

@@ -62,7 +62,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             latent_size = np.prod(self.feature_extractor.final_feat_dim)
             self.feature_extractor.trunk.add_module("bn_out", nn.BatchNorm1d(latent_size))
         else:
-            self.normalize=False
+            self.normalize=True
 
     def init_summary(self, id, dataset):
         if(IS_TBX_INSTALLED):
@@ -138,7 +138,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         max_pred[index] = -np.inf
         return max_pred
 
-    def train_loop(self, epoch, train_loader, optimizer, print_freq=1):
+    def train_loop(self, epoch, train_loader, optimizer, print_freq=5):
         # if self.dirichlet:
         #     optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
         #                               {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
@@ -179,7 +179,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
 
             with torch.no_grad():
                 inducing_points = self.get_inducing_points(self.model.base_covar_module, #.base_kernel,
-                                                        z_train, target, verbose=False)
+                                                        z_train, target, verbose=True)
         
             ip_values = inducing_points.z_values.cuda()
             ip_labels = target[inducing_points.index]
@@ -294,7 +294,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         else:
             # with sigma and updating sigma converges to more sparse solution
             N   = inputs.shape[0]
-            tol = 1e-4
+            tol = 1e-6
             eps = torch.finfo(torch.float32).eps
             max_itr = 1000
             
@@ -311,9 +311,9 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
                 scales[scales==0] = 1
                 kernel_matrix = kernel_matrix / scales
 
-            kernel_matrix = kernel_matrix.to(torch.float)
+            kernel_matrix = kernel_matrix.to(torch.float64)
             # targets[targets==-1]= 0
-            target = targets.clone().to(torch.float)
+            target = targets.clone().to(torch.float64)
             active, alpha, gamma, beta, mu_m = Fast_RVM(kernel_matrix, target, N, self.config, self.align_threshold, self.gamma,
                                                     eps, tol, max_itr, self.device, verbose)
 
@@ -326,7 +326,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             num_IP = active.shape[0]
             IP_index = active
 
-            if True:
+            if verbose:
                 ss = scales[index]
                 K = base_covar_module(inputs, inducing_points).evaluate()
                 mu_m = mu_m[index] / ss
@@ -446,12 +446,12 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             top1_correct = np.sum(y_pred == y_query)
             count_this = len(y_query)
             acc = (top1_correct/ count_this)*100
-            print(Fore.RED,"="*50, Fore.RESET)
+            print(Fore.RED,"-"*50, Fore.RESET)
             print(f'inducing_points count: {inducing_points.count}')
             print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha.cpu().numpy()}',Fore.RESET)
             print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma.cpu().numpy()}',Fore.RESET)
             print(Fore.YELLOW, f'itr {i:3}, ACC: {acc:.2f}%', Fore.RESET)
-            print(Fore.RED,"-"*50, Fore.RESET)
+            print(Fore.RED,"="*50, Fore.RESET)
             if self.show_plot:
                 self.plot_test(x_query, y_query, y_pred, inducing_points, i)
 
