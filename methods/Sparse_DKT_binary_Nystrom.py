@@ -282,8 +282,8 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
 
         
         IP_index = np.array([])
-        if not self.fast_rvm:
-            num_IP = self.num_induce_points
+        if True or not self.fast_rvm:
+            num_IP = self.num_inducing_points
             
             # self.kmeans_clustering = KMeans(n_clusters=num_IP, init='k-means++',  n_init=10, max_iter=1000).fit(inputs.cpu().numpy())
             # inducing_points = self.kmeans_clustering.cluster_centers_
@@ -293,6 +293,10 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             self.kmeans_clustering.fit(inputs.cuda())
             inducing_points = self.kmeans_clustering.centroids
             # print(inducing_points.shape[0])
+
+            IP_index = None
+            alpha = None
+            gamma = None
 
 
         else:
