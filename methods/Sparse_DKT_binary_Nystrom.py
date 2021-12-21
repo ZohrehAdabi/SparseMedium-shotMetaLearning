@@ -282,7 +282,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
 
         
         IP_index = np.array([])
-        if True or not self.fast_rvm:
+        if not self.fast_rvm:
             num_IP = self.num_inducing_points
             
             # self.kmeans_clustering = KMeans(n_clusters=num_IP, init='k-means++',  n_init=10, max_iter=1000).fit(inputs.cpu().numpy())
