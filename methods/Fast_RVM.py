@@ -40,7 +40,8 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
     # mu_m	=  K_m.pinverse() @ (torch.log(LogOut / (1 - LogOut))) #
     mu_m = torch.linalg.lstsq(K_m, (torch.log(LogOut / (1 - LogOut)))).solution
     mu_m = mu_m.to(device).to(torch.float64)
-    alpha_init = 1 / (mu_m + 1e-8).pow(2)
+    alpha_init = 1 / (mu_m + 1e-12).pow(2)
+    # print(f'alpha_init {alpha_init.item()}')
     alpha_m = torch.tensor([alpha_init], dtype=torch.float64).to(device)
     if alpha_m < 1e-3:
         alpha_m = torch.tensor([1e-3], dtype=torch.float64).to(device)
@@ -266,11 +267,11 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
                     print(f'Finished at {itr:3}, m= {active_m.shape[0]:3}')
             toc = time.time()
             # print(f'elapsed time: {toc-tic}')
-            # if count > 0:
-            #     print(f'add: {add_count:3d} ({add_count/count:.1%}), delete: {del_count:3d} ({del_count/count:.1%}), recompute: {recomp_count:3d} ({recomp_count/count:.1%})')
+            if count > 0:
+                print(f'add: {add_count:3d} ({add_count/count:.1%}), delete: {del_count:3d} ({del_count/count:.1%}), recompute: {recomp_count:3d} ({recomp_count/count:.1%})')
             return active_m.cpu().numpy(), alpha_m, Gamma, beta, mu_m
 
-        if ((itr+1)%50==0) and False:
+        if ((itr+1)%25==0) and True:
             print(f'#{itr+1:3},     m={active_m.shape[0]}, selected_action= {selected_action.item():.0f}, logML= {logML.item()/N:.5f}')
 
 
@@ -506,7 +507,7 @@ def generate_data():
     y_org += 0.25 * (0.5 + 5 * rng.rand(X_org.shape[0]))  # add noise
     # y_org = (np.random.rand(X_org.shape[0]) < (1/(1+np.exp(-X_org))))
     y_org = (rng.rand(n) > y_org)
-    y_org = y_org.astype(np.float)
+    y_org = y_org.astype(np.float64)
     normalized = True
     if normalized:
         X = np.copy(X_org) - np.mean(X_org, axis=0)
@@ -522,11 +523,11 @@ def generate_data():
     # X, y
 
 
-def plot_result(rv, X_test, y_test, covar_module, N, mu_m, active):
+def plot_result(rv, X_test, y_test, covar_module, K, N, mu_m, active):
     
     # rv = torch.tensor(X_org[active])
     """Evaluate the RVR model at x."""
-    K = covar_module(X_test, rv).evaluate()
+    # K = covar_module(X_test, rv).evaluate()
    
     y_pred = K @ mu_m
     y_pred = torch.sigmoid(y_pred)
@@ -563,7 +564,7 @@ if __name__=='__main__':
     # import torch.nn.functional as F
     # inputs = F.normalize(inputs, p=2, dim=0)
     N   = inputs.shape[0]
-    tol = 1e-4
+    tol = 1e-6
     eps = torch.finfo(torch.float32).eps
     # sigma = model.likelihood.raw_noise.detach().clone()
     
@@ -572,11 +573,14 @@ if __name__=='__main__':
     scale = True
     bias = False
     covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
-    covar_module.base_kernel.lengthscale = 0.06  #0.23
-    covar_module.outputscale = 0.55
+    covar_module.base_kernel.lengthscale = 0.05 
+    covar_module.outputscale = 1
     kernel_matrix = covar_module(inputs).evaluate()
-    N = inputs.shape[0]
+    
     import scipy.io
+    X = scipy.io.loadmat('./methods/X.mat')['X']
+    inputs = torch.from_numpy(X).to(dtype=torch.float64)
+    N = inputs.shape[0]
     kernel_matrix = scipy.io.loadmat('./methods/K.mat')['BASIS']
     kernel_matrix = torch.from_numpy(kernel_matrix).to(dtype=torch.float64)
     targets = scipy.io.loadmat('./methods/targets.mat')['Targets']
@@ -599,9 +603,8 @@ if __name__=='__main__':
         # kernel_matrix = kernel_matrix / scale
         # normalize k(x,z) vector
         Scales	= torch.sqrt(torch.sum(kernel_matrix**2, axis=0))
-        kernel_matrix = kernel_matrix / Scales
+        K = kernel_matrix.clone() / Scales
 
-    K = kernel_matrix
     config = "011"
     align_thr = 1e-3
     gamma = True
@@ -619,7 +622,7 @@ if __name__=='__main__':
     alpha_m = alpha_m[index] / ss.pow(2)
     mu_m = mu_m[index] / ss
     
-    plot_result(inputs[active_m], inputs, targets, covar_module, N, mu_m, active_m)
+    plot_result(inputs[active_m], inputs, targets, covar_module, kernel_matrix[:, active_m], N, mu_m, active_m)
 
 
 

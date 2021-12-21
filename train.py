@@ -44,7 +44,8 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
     print("Tot epochs: " + str(stop_epoch))
     if optimization == 'Adam':
         optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr': lr_gp},
-                                      {'params': model.feature_extractor.parameters(), 'lr': lr_net}])
+                                      {'params': filter(lambda p: p.requires_grad, model.feature_extractor.parameters()), 'lr': lr_net}])
+                                      
     else:
         raise ValueError('Unknown optimization, please define by yourself')
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1)

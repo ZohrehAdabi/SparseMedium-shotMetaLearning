@@ -204,7 +204,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             if(self.model.covar_module.base_kernel.lengthscale is not None):
                 lenghtscale+=self.model.base_covar_module.base_kernel.lengthscale.mean().cpu().detach().numpy().squeeze()
             noise+=self.model.likelihood.noise.cpu().detach().numpy().squeeze().mean()
-            if(self.model.base_covar_module.outputscale is not None):
+            if(self.model.base_covar_module.outputscale is not None): #Sparse DKT Linear
                 outputscale+=self.model.base_covar_module.outputscale.cpu().detach().numpy().squeeze()
             
 
