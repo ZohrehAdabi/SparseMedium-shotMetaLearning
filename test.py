@@ -137,16 +137,20 @@ def single_test(params):
             else:
                 id = f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'           
             if params.gamma: id += '_gamma'
-            if params.train_aug: id += '_aug'
-            checkpoint_dir += id
+            
+            
         else:
             if params.dirichlet:
                 id=f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
             else:
                 id=f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
-            if params.train_aug: id += '_aug'
-            checkpoint_dir += id
+            
+           
 
+        if params.train_aug: id += '_aug'
+        if params.warmup:  id += '_warmup'
+        if params.freeze: id += '_freeze'
+        checkpoint_dir += id
     #modelfile   = get_resume_file(checkpoint_dir)
 
     if not params.method in ['baseline', 'baseline++'] : 

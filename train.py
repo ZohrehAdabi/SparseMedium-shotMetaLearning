@@ -280,6 +280,7 @@ if __name__ == '__main__':
             
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
+            if params.freeze: id += '_freeze'
             params.checkpoint_dir += id
 
 
@@ -303,7 +304,7 @@ if __name__ == '__main__':
             start_epoch = tmp['epoch'] + 1
             stop_epoch = start_epoch + stop_epoch
             model.load_state_dict(tmp['state'])
-
+            print(f'\nResume \n')
     elif params.warmup:  # We also support warmup from pretrained baseline feature, but we never used in our paper
 
         
@@ -338,6 +339,11 @@ if __name__ == '__main__':
 
             warmup_model.load_state_dict(tmp['state'])
             model.feature_extractor.load_state_dict(warmup_model.feature_extractor.state_dict())
+            print(f'\nWarmup\n')
+            if params.freeze:
+                for param in model.feature_extractor.parameters():
+                    param.requires_grad = False
+                print(f'\nWarmup and Freeze\n')
             # state = tmp['state']
             # state_keys = list(state.keys())
             # for i, key in enumerate(state_keys):
