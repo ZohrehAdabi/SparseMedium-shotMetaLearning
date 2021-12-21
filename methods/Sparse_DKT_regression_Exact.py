@@ -16,7 +16,7 @@ from colorama import Fore
 from sklearn.manifold import TSNE
 import torchvision.transforms as transforms
 from sklearn.cluster import KMeans
-# from fast_pytorch_kmeans import KMeans as Fast_KMeans
+from fast_pytorch_kmeans import KMeans as Fast_KMeans
 from time import gmtime, strftime
 import torch.nn.functional as F
 import random
