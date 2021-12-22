@@ -302,7 +302,7 @@ if __name__ == '__main__':
             if params.dirichlet:
                 id = f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
             else:
-                id = f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}lr_{params.lr_gp}_{params.lr_net}'           
+                id = f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'           
             if params.sparse_method in ['FRVM', 'augmFRVM']: 
                 id += f'_confg_{params.config}_{params.align_thr}'
                 if params.gamma: id += '_gamma'
