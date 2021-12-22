@@ -167,12 +167,14 @@ if __name__ == '__main__':
                                     num_inducing_points=params.num_ip, 
                                     normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
             if params.dirichlet:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
             else:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'           
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'           
             
-            if params.gamma: id += '_gamma'
-            if params.scale: id += '_scale'
+            if params.sparse_method in ['FRVM', 'augmFRVM']: 
+                id += f'_confg_{params.config}_{params.align_thr}'
+                if params.gamma: id += '_gamma'
+                if params.scale: id += '_scale'
             if params.normalize: id += '_norm'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
@@ -184,11 +186,13 @@ if __name__ == '__main__':
                                     num_inducing_points=params.num_ip,
                                     normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
             if params.dirichlet:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
             else:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'           
-            if params.gamma: id += '_gamma'
-            if params.scale: id += '_scale'
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'           
+            if params.sparse_method in ['FRVM', 'augmFRVM']: 
+                id += f'_confg_{params.config}_{params.align_thr}'
+                if params.gamma: id += '_gamma'
+                if params.scale: id += '_scale'
             if params.normalize: id += '_norm'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
@@ -201,12 +205,13 @@ if __name__ == '__main__':
                                     num_inducing_points=params.num_ip,
                                     normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
             if params.dirichlet:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
             else:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'           
-            if params.gamma: id += '_gamma'
-            if params.scale: id += '_scale'
-            if params.normalize: id += '_norm'
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'           
+            if params.sparse_method in ['FRVM', 'augmFRVM']: 
+                id += f'_confg_{params.config}_{params.align_thr}'
+                if params.gamma: id += '_gamma'
+                if params.scale: id += '_scale'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
@@ -218,11 +223,14 @@ if __name__ == '__main__':
                                     num_inducing_points=params.num_ip,
                                     normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
             if params.dirichlet:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
             else:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'           
-            if params.gamma: id += '_gamma'
-            if params.scale: id += '_scale'
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'           
+            
+            if params.sparse_method in ['FRVM', 'augmFRVM']: 
+                id += f'_confg_{params.config}_{params.align_thr}'
+                if params.gamma: id += '_gamma'
+                if params.scale: id += '_scale'
             if params.normalize: id += '_norm'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
@@ -292,11 +300,18 @@ if __name__ == '__main__':
         
         if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_Exact']:
             if params.dirichlet:
-                id = f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'
+                id = f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
             else:
-                id = f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'           
-            if params.gamma : id += '_gamma'
+                id = f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}lr_{params.lr_gp}_{params.lr_net}'           
+            if params.sparse_method in ['FRVM', 'augmFRVM']: 
+                id += f'_confg_{params.config}_{params.align_thr}'
+                if params.gamma: id += '_gamma'
+                if params.scale: id += '_scale'
+            if params.normalize: id += '_norm'
             if params.train_aug: id += '_aug'
+            if params.warmup:  id += '_warmup'
+            if params.freeze: id += '_freeze'
+            if params.sparse_method in ['Random', 'KMeans', 'augmFRVM']:  id += f'_ip_{params.num_ip}'
             params.checkpoint_dir += id
         else:
             if params.dirichlet:

@@ -133,10 +133,14 @@ def single_test(params):
         # checkpoint_dir += '_%dway_%dshot' %( params.train_n_way, params.n_shot)
         if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_Exact']:
             if params.dirichlet:
-                id = f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'
+                id = f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
             else:
-                id = f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'           
-         
+                id = f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'           
+
+            if params.sparse_method in ['FRVM', 'augmFRVM']: 
+                id += f'_confg_{params.config}_{params.align_thr}'
+                if params.gamma: id += '_gamma'
+                if params.scale: id += '_scale'
             
         else:
             if params.dirichlet:
@@ -146,8 +150,6 @@ def single_test(params):
             
            
 
-        if params.gamma: id += '_gamma'
-        if params.scale: id += '_scale'
         if params.normalize: id += '_norm'
         if params.train_aug: id += '_aug'
         if params.warmup:  id += '_warmup'
