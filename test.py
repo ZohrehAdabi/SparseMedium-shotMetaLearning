@@ -141,9 +141,9 @@ def single_test(params):
         # checkpoint_dir += '_%dway_%dshot' %( params.train_n_way, params.n_shot)
         if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_Exact']:
             if params.dirichlet:
-                id = f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
+                id = f'{params.sparse_method}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
             else:
-                id = f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'           
+                id = f'{params.sparse_method}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'           
 
             if params.sparse_method in ['FRVM', 'augmFRVM']: 
                 id += f'_confg_{params.config}_{params.align_thr}'
