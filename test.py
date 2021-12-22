@@ -86,17 +86,25 @@ def single_test(params):
     elif params.method == 'DKT_binary':
         model           = DKT_binary(model_dict[params.model], **few_shot_params, dirichlet=params.dirichlet)
     elif params.method == 'Sparse_DKT_Nystrom':
-        model           = Sparse_DKT_Nystrom(model_dict[params.model], **few_shot_params,
+        model           = Sparse_DKT_Nystrom(model_dict[params.model], **few_shot_params, sparse_method=params.sparse_method, 
+                                num_inducing_points=params.num_ip,
+                                normalize=params.normalize, scale=params.scale,
                                 config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
     elif params.method == 'Sparse_DKT_Exact':
-        model           = Sparse_DKT_Exact(model_dict[params.model], **few_shot_params,
+        model           = Sparse_DKT_Exact(model_dict[params.model], **few_shot_params, sparse_method=params.sparse_method, 
+                                num_inducing_points=params.num_ip,
+                                normalize=params.normalize, scale=params.scale,
                                 config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
     elif params.method == 'Sparse_DKT_binary_Nystrom':
-        model           = Sparse_DKT_binary_Nystrom(model_dict[params.model], **few_shot_params,
-                                    config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
+        model           = Sparse_DKT_binary_Nystrom(model_dict[params.model], **few_shot_params, sparse_method=params.sparse_method, 
+                                num_inducing_points=params.num_ip,
+                                normalize=params.normalize, scale=params.scale,
+                                config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
     elif params.method == 'Sparse_DKT_binary_Exact':
-        model           = Sparse_DKT_binary_Exact(model_dict[params.model], **few_shot_params,
-                                    config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
+        model           = Sparse_DKT_binary_Exact(model_dict[params.model], **few_shot_params, sparse_method=params.sparse_method, 
+                                num_inducing_points=params.num_ip,
+                                normalize=params.normalize, scale=params.scale,
+                                config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
    
     elif params.method == 'matchingnet':
         model           = MatchingNet( model_dict[params.model], **few_shot_params )

@@ -40,7 +40,7 @@ except ImportError:
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=5 --train_aug
 IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j_idx")
 class Sparse_DKT_binary_Nystrom(MetaTemplate):
-    def __init__(self, model_func, n_way, n_support, sparse_method='f_rvm', num_inducing_points=10, normalize=False, scale=False, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
+    def __init__(self, model_func, n_way, n_support, sparse_method='FRVM', num_inducing_points=10, normalize=False, scale=False, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
         super(Sparse_DKT_binary_Nystrom, self).__init__(model_func, n_way, n_support)
 
         self.num_inducing_points = num_inducing_points
@@ -142,6 +142,28 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
         max_pred[index] = -np.inf
         return max_pred
 
+    def load_constant_model(self):
+        from io_utils import model_dict, get_resume_file
+        model_path = f'save/checkpoints/CUBConv4_Sparse_DKT_binary_Nystrom_way_2_shot_50_query_10_011_0.001_lr_0.001_0.0001'
+        
+        few_shot_params = dict(n_way=2, n_support=50)
+        model           = Sparse_DKT_binary_Nystrom(model_dict['Conv4'], **few_shot_params, sparse_method="FRVM", 
+                                num_inducing_points=10,
+                                normalize=True, scale=True,
+                                config='011', align_threshold=1e-3, gamma=False, dirichlet=False)
+        model_file = get_resume_file(model_path)
+        tmp = torch.load(model_file)
+        if tmp is not None:
+            IP = torch.ones(100, 64).cuda()
+            tmp['state']['model.covar_module.inducing_points'] = IP
+            tmp['state']['mll.model.covar_module.inducing_points'] = IP
+            model.load_state_dict(tmp['state'])
+            print(f'\nLoad constant model.\n')
+            self.constant_feature_extractor = model.feature_extractor
+            self.constant_feature_extractor.eval()
+            self.constant_model = model.model
+            self.constant_model.eval()
+
     def train_loop(self, epoch, train_loader, optimizer, print_freq=5):
         # if self.dirichlet:
         #     optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
@@ -196,11 +218,18 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                 self.model.set_train_data(inputs=z_train, targets=target, strict=False)
 
             with torch.no_grad():
-                inducing_points, frvm_acc = get_inducing_points(self.model.base_covar_module, #.base_kernel,
-                                                        z_train, target, sparse_method=self.sparse_method, scale=self.scale,
-                                                        config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-                                                        num_inducing_points=self.num_inducing_points, verbose=True, device=self.device)
-            self.frvm_acc.append(frvm_acc)
+                if self.sparse_method=="constFRVM":
+                    z_train_rvm = self.constant_feature_extractor(x_train)
+                    inducing_points, frvm_acc = get_inducing_points(self.constant_model.base_covar_module, #.base_kernel,
+                                                            z_train_rvm, target, sparse_method=self.sparse_method, scale=self.scale,
+                                                            config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
+                                                            num_inducing_points=self.num_inducing_points, verbose=True, device=self.device)
+                else:
+                    inducing_points, frvm_acc = get_inducing_points(self.model.base_covar_module, #.base_kernel,
+                                                            z_train, target, sparse_method=self.sparse_method, scale=self.scale,
+                                                            config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
+                                                            num_inducing_points=self.num_inducing_points, verbose=True, device=self.device)
+                self.frvm_acc.append(frvm_acc)
 
             ip_values = inducing_points.z_values.cuda()
             # ip_values = z_train[inducing_points.index].cuda()
