@@ -152,7 +152,7 @@ def single_test(params):
         if params.train_aug: id += '_aug'
         if params.warmup:  id += '_warmup'
         if params.freeze: id += '_freeze'
-        if params.num_ip:  id += '_num_ip'
+        if params.sparse_method in ['Random', 'KMeans', 'augmFRVM']:  id += f'_ip_{params.num_ip}'
         checkpoint_dir += id
     #modelfile   = get_resume_file(checkpoint_dir)
 

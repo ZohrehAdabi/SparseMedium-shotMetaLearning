@@ -170,13 +170,14 @@ if __name__ == '__main__':
                 id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'
             else:
                 id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_{params.config}_{params.align_thr}_lr_{params.lr_gp}_{params.lr_net}'           
+            
             if params.gamma: id += '_gamma'
             if params.scale: id += '_scale'
             if params.normalize: id += '_norm'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
-            if params.num_ip:  id += '_num_ip'
+            if params.sparse_method in ['Random', 'KMeans', 'augmFRVM']:  id += f'_ip_{params.num_ip}'
             model.init_summary(id=id, dataset=params.dataset)
         elif(params.method == 'Sparse_DKT_Exact'):
             model = Sparse_DKT_Exact(model_dict[params.model], **train_few_shot_params, sparse_method=params.sparse_method, 
@@ -192,7 +193,7 @@ if __name__ == '__main__':
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
-            if params.num_ip:  id += '_num_ip'
+            if params.sparse_method in ['Random', 'KMeans', 'augmFRVM']:  id += f'_ip_{params.num_ip}'
             model.init_summary(id=id, dataset=params.dataset)
 
         elif params.method == 'Sparse_DKT_binary_Nystrom':
@@ -209,7 +210,7 @@ if __name__ == '__main__':
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
-            if params.num_ip:  id += '_num_ip'
+            if params.sparse_method in ['Random', 'KMeans', 'augmFRVM']:  id += f'_ip_{params.num_ip}'
             model.init_summary(id=id, dataset=params.dataset)
 
         elif params.method == 'Sparse_DKT_binary_Exact':
@@ -226,7 +227,7 @@ if __name__ == '__main__':
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
-            if params.num_ip:  id += '_num_ip'
+            if params.sparse_method in ['Random', 'KMeans', 'augmFRVM']:  id += f'_ip_{params.num_ip}'
             model.init_summary(id=id, dataset=params.dataset)
 
         elif(params.method == 'DKT'):

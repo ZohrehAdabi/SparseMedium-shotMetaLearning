@@ -638,7 +638,7 @@ class ExactGPLayer(gpytorch.models.ExactGP):
             #     )
             # else:
             self.base_covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.LinearKernel())
-            self.base_covar_module.lengthscale = 0.1
+            self.base_covar_module.outputscale = 0.1
             
         ## RBF kernel
         elif(kernel=='rbf' or kernel=='RBF'):

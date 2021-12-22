@@ -100,7 +100,7 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
                 print(f'FRVM ACC: {(acc):.2f}%')
             
             # self.frvm_acc.append(acc.item())
-    elif sparse_method=='augm_FRVM':
+    elif sparse_method=='augmFRVM':
          
         # with sigma and updating sigma converges to more sparse solution
         N   = inputs.shape[0]
@@ -147,7 +147,7 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
             if verbose:
                 print(f'FRVM ACC: {(acc):.2f}%  class one #{ones.sum()}, zero #{zeros.sum()}')
 
-        if num_IP < 10:
+        if num_IP < num_inducing_points:
             num_IP = num_inducing_points + num_IP
             # random selection of inducing points
             idx_zero = torch.where((targets==-1) | (targets==0))[0]
