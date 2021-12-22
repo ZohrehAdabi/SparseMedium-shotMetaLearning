@@ -262,9 +262,9 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
 
         if terminate:
            
-            if verbose:
-                if selected_action!=11:
-                    print(f'Finished at {itr:3}, m= {active_m.shape[0]:3}')
+            # if verbose:
+            #     if selected_action!=11:
+            #         print(f'Finished at {itr:3}, m= {active_m.shape[0]:3}')
             toc = time.time()
             # print(f'elapsed time: {toc-tic}')
             # if count > 0:

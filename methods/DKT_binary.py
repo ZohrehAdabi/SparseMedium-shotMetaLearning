@@ -30,7 +30,7 @@ except ImportError:
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=5 --train_aug
 
 class DKT_binary(MetaTemplate):
-    def __init__(self, model_func, n_way, n_support, dirichlet=False):
+    def __init__(self, model_func, n_way, n_support, normalize=False, dirichlet=False):
         super(DKT_binary, self).__init__(model_func, n_way, n_support)
         ## GP parameters
         self.leghtscale_list = None
@@ -48,7 +48,7 @@ class DKT_binary(MetaTemplate):
             latent_size = np.prod(self.feature_extractor.final_feat_dim)
             self.feature_extractor.trunk.add_module("bn_out", nn.BatchNorm1d(latent_size))
         else:
-            self.normalize=True
+            self.normalize=normalize
 
     def init_summary(self, id):
         if(IS_TBX_INSTALLED):

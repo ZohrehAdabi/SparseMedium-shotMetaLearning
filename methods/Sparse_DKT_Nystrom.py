@@ -35,7 +35,7 @@ except ImportError:
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=5 --train_aug
 IP = namedtuple("inducing_points", "z_values index count x y i_idx j_idx")
 class Sparse_DKT_Nystrom(MetaTemplate):
-    def __init__(self, model_func, n_way, n_support, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
+    def __init__(self, model_func, n_way, n_support, sparse_method, num_inducing_points=10, normalize=False, scale=False, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
         super(Sparse_DKT_Nystrom, self).__init__(model_func, n_way, n_support)
         self.num_inducing_points = 10
         self.fast_rvm = True
@@ -43,6 +43,7 @@ class Sparse_DKT_Nystrom(MetaTemplate):
         self.align_threshold = align_threshold
         self.gamma = gamma
         self.dirichlet = dirichlet
+        self.scale = scale
         self.device ='cuda'
         ## GP parameters
         self.leghtscale_list = None
@@ -59,7 +60,7 @@ class Sparse_DKT_Nystrom(MetaTemplate):
             latent_size = np.prod(self.feature_extractor.final_feat_dim)
             self.feature_extractor.trunk.add_module("bn_out", nn.BatchNorm1d(latent_size))
         else:
-            self.normalize=False
+            self.normalize=normalize
 
     def init_summary(self, id, dataset):
          if(IS_TBX_INSTALLED):
@@ -306,7 +307,7 @@ class Sparse_DKT_Nystrom(MetaTemplate):
             eps = torch.finfo(torch.float32).eps
             max_itr = 1000
             
-            scale = True
+            scale = self.scale
             # X = inputs.clone()
             # m = X.mean(axis=0)
             # s = X.std(axis=0)
@@ -320,8 +321,8 @@ class Sparse_DKT_Nystrom(MetaTemplate):
                 kernel_matrix = kernel_matrix / scales
 
             kernel_matrix = kernel_matrix.to(torch.float64)
-            targets = targets.to(torch.float64)
-            active, alpha, gamma, beta, mu_m = Fast_RVM(kernel_matrix, targets, N, self.config, self.align_threshold, self.gamma,
+            target = targets.clone().to(torch.float64)
+            active, alpha, gamma, beta, mu_m = Fast_RVM(kernel_matrix, target, N, self.config, self.align_threshold, self.gamma,
                                                     eps, tol, max_itr, self.device, verbose)
 
             index = np.argsort(active)
@@ -335,11 +336,12 @@ class Sparse_DKT_Nystrom(MetaTemplate):
                 mu_m = mu_m[index] / ss
                 mu_m = mu_m.to(torch.float)
                 y_pred = K @ mu_m
-                targets[targets==-1]= 0
+                # targets[targets==-1]= 0
                 y_pred = torch.sigmoid(y_pred)
                 y_pred = (y_pred > 0.5).to(int)
-                acc = torch.sum(y_pred==targets)
-                print(f'FRVM ACC: {(acc/N):.1%}')
+                acc = (torch.sum(y_pred==target) / N) * 100 # targets is zero and one (after FRVM)
+                if verbose:
+                    print(f'FRVM ACC: {(acc):.2f}%')
 
         return IP(inducing_points, IP_index, num_IP, None, None, None, None)
   

@@ -38,7 +38,7 @@ except ImportError:
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=5 --train_aug
 IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j_idx")
 class Sparse_DKT_binary_Exact(MetaTemplate):
-    def __init__(self, model_func, n_way, n_support, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
+    def __init__(self, model_func, n_way, n_support, sparse_method, num_inducing_points=10, normalize=False, scale=False, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
         super(Sparse_DKT_binary_Exact, self).__init__(model_func, n_way, n_support)
         self.num_inducing_points = 10
         self.fast_rvm = True
@@ -46,6 +46,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         self.align_threshold = align_threshold
         self.gamma = gamma
         self.dirichlet = dirichlet
+        self.scale = scale
         self.device ='cuda'
         ## GP parameters
         self.leghtscale_list = None
@@ -298,7 +299,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             eps = torch.finfo(torch.float32).eps
             max_itr = 1000
             
-            scale = True
+            scale = self.scale
             # X = inputs.clone()
             # m = X.mean(axis=0)
             # s = X.std(axis=0)
@@ -326,7 +327,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             num_IP = active.shape[0]
             IP_index = active
 
-            if verbose:
+            if True:
                 ss = scales[index]
                 K = base_covar_module(inputs, inducing_points).evaluate()
                 mu_m = mu_m[index] / ss
@@ -336,7 +337,8 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
                 y_pred = (y_pred > 0.5).to(int)
                 
                 acc = (torch.sum(y_pred==target) / N) * 100
-                print(f'FRVM ACC: {(acc):.2f}%')
+                if verbose:
+                    print(f'FRVM ACC: {(acc):.2f}%')
                 
                 self.frvm_acc.append(acc.item())
 

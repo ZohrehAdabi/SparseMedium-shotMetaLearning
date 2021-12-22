@@ -20,6 +20,7 @@ import random
 from colorama import Fore
 from configs import kernel_type
 from methods.Fast_RVM import Fast_RVM
+from methods.Inducing_points import get_inducing_points
 #Check if tensorboardx is installed
 try:
     #tensorboard --logdir=./Sparse_DKT_binary_Nystrom_CUB_log/ --host localhost --port 8090
@@ -39,14 +40,16 @@ except ImportError:
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=5 --train_aug
 IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j_idx")
 class Sparse_DKT_binary_Nystrom(MetaTemplate):
-    def __init__(self, model_func, n_way, n_support, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
+    def __init__(self, model_func, n_way, n_support, sparse_method='f_rvm', num_inducing_points=10, normalize=False, scale=False, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
         super(Sparse_DKT_binary_Nystrom, self).__init__(model_func, n_way, n_support)
-        self.num_inducing_points = 10
-        self.fast_rvm = True
+
+        self.num_inducing_points = num_inducing_points
+        self.sparse_method = sparse_method
         self.config = config
         self.align_threshold = align_threshold
         self.gamma = gamma
         self.dirichlet = dirichlet
+        self.scale = scale
         self.device ='cuda'
         ## GP parameters
         self.leghtscale_list = None
@@ -63,7 +66,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             latent_size = np.prod(self.feature_extractor.final_feat_dim)
             self.feature_extractor.trunk.add_module("bn_out", nn.BatchNorm1d(latent_size))
         else:
-            self.normalize=True
+            self.normalize=normalize
 
     def init_summary(self, id, dataset):
         if(IS_TBX_INSTALLED):
@@ -193,9 +196,12 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                 self.model.set_train_data(inputs=z_train, targets=target, strict=False)
 
             with torch.no_grad():
-                inducing_points = self.get_inducing_points(self.model.base_covar_module, #.base_kernel,
-                                                        z_train, target, verbose=True)
-        
+                inducing_points, frvm_acc = get_inducing_points(self.model.base_covar_module, #.base_kernel,
+                                                        z_train, target, sparse_method=self.sparse_method, scale=self.scale,
+                                                        config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
+                                                        num_inducing_points=self.num_inducing_points, verbose=True, device=self.device)
+            self.frvm_acc.append(frvm_acc)
+
             ip_values = inducing_points.z_values.cuda()
             # ip_values = z_train[inducing_points.index].cuda()
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
@@ -306,7 +312,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             eps = torch.finfo(torch.float32).eps
             max_itr = 1000
             
-            scale = True
+            scale = self.scale
             # X = inputs.clone()
             # m = X.mean(axis=0)
             # s = X.std(axis=0)
@@ -344,7 +350,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                 y_pred = torch.sigmoid(y_pred)
                 y_pred = (y_pred > 0.5).to(int)
                 
-                acc = (torch.sum(y_pred==target) / N) * 100
+                acc = (torch.sum(y_pred==target) / N) * 100 # targets is zero and one (after FRVM)
                 if verbose:
                     print(f'FRVM ACC: {(acc):.2f}%')
                 
@@ -404,8 +410,11 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             self.model.set_train_data(inputs=z_train, targets=target, strict=False)
 
         with torch.no_grad():
-            inducing_points = self.get_inducing_points(self.model.base_covar_module, #.base_kernel,
-                                                    z_train, target, verbose=False)
+            inducing_points, frvm_acc = get_inducing_points(self.model.base_covar_module, #.base_kernel,
+                                                        z_train, target, sparse_method=self.sparse_method, scale=self.scale,
+                                                        config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
+                                                        num_inducing_points=self.num_inducing_points, verbose=False, device=self.device)
+            
             inducing_points = IP(inducing_points.z_values, inducing_points.index, inducing_points.count,
                                 inducing_points.alpha, inducing_points.gamma,  
                                 x_support[inducing_points.index], y_support[inducing_points.index], None, None)
@@ -629,6 +638,7 @@ class ExactGPLayer(gpytorch.models.ExactGP):
             #     )
             # else:
             self.base_covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.LinearKernel())
+            self.base_covar_module.lengthscale = 0.1
             
         ## RBF kernel
         elif(kernel=='rbf' or kernel=='RBF'):

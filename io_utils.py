@@ -25,15 +25,18 @@ def parse_args(script):
     parser.add_argument('--n_shot'      , default=5, type=int,  help='number of labeled data in each class, same as n_support') #baseline and baseline++ only use this parameter in finetuning
     parser.add_argument('--n_query'      , default=2, type=int,  help='number of test labeled data in each class') 
     parser.add_argument('--train_aug'   , action='store_true',  help='perform data augmentation or not during training ') #still required for save_features.py and test.py to find the model path correctly
-    parser.add_argument('--config', default='010', type=str, help='config for Fast RVM = {delete_priority|add_priority|align_test}')
+    parser.add_argument('--config',    default='010', type=str, help='config for Fast RVM = {delete_priority|add_priority|align_test}')
     parser.add_argument('--align_thr', default=1e-3, type=float, help='1e-3, larger value leads to more rejection and sparseness')
-    parser.add_argument('--sparse_method', default='FRVM', type=str, help='FRVM|KMeans|random')
+    parser.add_argument('--num_ip',    default=10, type=int, help='num inducing points for random and Kmeans')
+    parser.add_argument('--sparse_method', default='FRVM', type=str, help='FRVM|KMeans|Random|augm_FRVM')
     parser.add_argument('--dirichlet', action='store_true',  help='perform dirichlet classification')
     parser.add_argument('--gamma', action='store_true', help='Delete data with low Gamma in FRVM algorithm') 
     parser.add_argument('--lr_gp', default=1e-3, type=float, help='learning rate for [GP] model')
     parser.add_argument('--lr_net', default=1e-3, type=float, help='learning rate for feature extractor')
     parser.add_argument('--warmup'      , action='store_true', help='continue from baseline, neglected if resume is true') #never used in the paper
     parser.add_argument('--freeze'      , action='store_true', help='continue from baseline, but freeze feature extractor')
+    parser.add_argument('--normalize'   , action='store_true', help='normalize features by vector norm in z space')
+    parser.add_argument('--scale'       , action='store_true', help='normalize kernel matrix in z space')
     if script == 'train':
         parser.add_argument('--num_classes' , default=200, type=int, help='total number of classes in softmax, only used in baseline') #make it larger than the maximum label value in base class
         parser.add_argument('--save_freq'   , default=50, type=int, help='Save frequency')

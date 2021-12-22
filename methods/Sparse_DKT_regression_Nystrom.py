@@ -41,7 +41,7 @@ except ImportError:
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx")
 class Sparse_DKT_regression_Nystrom(nn.Module):
-    def __init__(self, backbone, f_rvm=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
+    def __init__(self, backbone, f_rvm=True, scale=False, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_regression_Nystrom, self).__init__()
         ## GP parameters
@@ -51,6 +51,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         self.gamma = gamma
         self.align_threshold = align_threshold
         self.f_rvm = f_rvm
+        self.scale = scale
         self.random = random
         self.device = 'cuda'
         self.video_path = video_path
@@ -388,7 +389,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             # sigma = torch.tensor([torch.var(targets) * 0.1]) #sigma^2
             sigma = sigma.to(self.device)
             beta = 1 /(sigma + eps)
-            scale = True
+            scale = self.scale
             covar_module = self.model.base_covar_module
             # X = inputs.clone()
             # m = X.mean(axis=0)
