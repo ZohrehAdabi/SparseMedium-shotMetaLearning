@@ -179,7 +179,9 @@ if __name__ == '__main__':
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
-            if params.sparse_method in ['Random', 'KMeans', 'augmFRVM']:  id += f'_ip_{params.num_ip}'
+            if params.sparse_method in ['Random', 'KMeans', 'augmFRVM']: 
+                if params.num_ip is not None:
+                    id += f'_ip_{params.num_ip}'
             model.init_summary(id=id, dataset=params.dataset)
         elif(params.method == 'Sparse_DKT_Exact'):
             model = Sparse_DKT_Exact(model_dict[params.model], **train_few_shot_params, sparse_method=params.sparse_method, 
@@ -197,7 +199,9 @@ if __name__ == '__main__':
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
-            if params.sparse_method in ['Random', 'KMeans', 'augmFRVM']:  id += f'_ip_{params.num_ip}'
+            if params.sparse_method in ['Random', 'KMeans', 'augmFRVM']: 
+                if params.num_ip is not None:
+                    id += f'_ip_{params.num_ip}'
             model.init_summary(id=id, dataset=params.dataset)
 
         elif params.method == 'Sparse_DKT_binary_Nystrom':
@@ -216,7 +220,9 @@ if __name__ == '__main__':
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
-            if params.sparse_method in ['Random', 'KMeans', 'augmFRVM', 'constFRVM']:  id += f'_ip_{params.num_ip}'
+            if params.sparse_method in ['Random', 'KMeans', 'augmFRVM', 'constFRVM']: 
+                if params.num_ip is not None:
+                    id += f'_ip_{params.num_ip}'
             model.init_summary(id=id, dataset=params.dataset)
             if params.sparse_method=='constFRVM':
                 print(f'\nconstFRVM\n')
@@ -239,7 +245,9 @@ if __name__ == '__main__':
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
-            if params.sparse_method in ['Random', 'KMeans', 'augmFRVM']:  id += f'_ip_{params.num_ip}'
+            if params.sparse_method in ['Random', 'KMeans', 'augmFRVM']: 
+                if params.num_ip is not None:
+                    id += f'_ip_{params.num_ip}'
             model.init_summary(id=id, dataset=params.dataset)
 
         elif(params.method == 'DKT'):
@@ -315,7 +323,9 @@ if __name__ == '__main__':
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
-            if params.sparse_method in ['Random', 'KMeans', 'augmFRVM']:  id += f'_ip_{params.num_ip}'
+            if params.sparse_method in ['Random', 'KMeans', 'augmFRVM']:  
+                if params.num_ip is not None:
+                    id += f'_ip_{params.num_ip}'
             params.checkpoint_dir += id
         else:
             if params.dirichlet:
