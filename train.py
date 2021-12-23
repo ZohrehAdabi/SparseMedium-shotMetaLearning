@@ -219,6 +219,7 @@ if __name__ == '__main__':
             if params.sparse_method in ['Random', 'KMeans', 'augmFRVM', 'constFRVM']:  id += f'_ip_{params.num_ip}'
             model.init_summary(id=id, dataset=params.dataset)
             if params.sparse_method=='constFRVM':
+                print(f'\nconstFRVM\n')
                 model.load_constant_model()
 
         elif params.method == 'Sparse_DKT_binary_Exact':
