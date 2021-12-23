@@ -22,7 +22,7 @@ from methods.Fast_RVM import Fast_RVM
 from methods.Inducing_points import get_inducing_points
 #Check if tensorboardx is installed
 try:
-    #tensorboard --logdir=./Sparse_DKT_binary_rvm_log/ --host localhost --port 8090
+    #tensorboard --logdir=./Sparse_DKT_binary_Exact_CUB_log/ --host localhost --port 8090
     from tensorboardX import SummaryWriter
     IS_TBX_INSTALLED = True
 except ImportError:
@@ -457,12 +457,12 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             top1_correct = np.sum(y_pred == y_query)
             count_this = len(y_query)
             acc = (top1_correct/ count_this)*100
-            print(Fore.RED,"-"*50, Fore.RESET)
-            print(f'inducing_points count: {inducing_points.count}')
-            print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha.cpu().numpy()}',Fore.RESET)
-            print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma.cpu().numpy()}',Fore.RESET)
-            print(Fore.YELLOW, f'itr {i:3}, ACC: {acc:.2f}%', Fore.RESET)
             print(Fore.RED,"="*50, Fore.RESET)
+            print(f'inducing_points count: {inducing_points.count}')
+            # print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha.cpu().numpy()}',Fore.RESET)
+            # print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma.cpu().numpy()}',Fore.RESET)
+            print(Fore.YELLOW, f'itr {i:3}, ACC: {acc:.2f}%', Fore.RESET)
+            print(Fore.RED,"-"*50, Fore.RESET)
             if self.show_plot:
                 self.plot_test(x_query, y_query, y_pred, inducing_points, i)
 
