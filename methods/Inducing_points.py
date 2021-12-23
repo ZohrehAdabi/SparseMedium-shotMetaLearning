@@ -21,7 +21,7 @@ IP = namedtuple("inducing_points", "z_values index count alpha gamma")
 
 def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale,
                         config='000', align_threshold='0', gamma=False, 
-                        num_inducing_points=10, verbose=True, device='cuda'):
+                        num_inducing_points=None, verbose=True, device='cuda'):
 
         
     IP_index = np.array([])
@@ -148,7 +148,7 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
             acc = (torch.sum(y_pred==target) / N).item()  * 100 # targets is zero and one (after FRVM)
             if verbose:
                 print(f'FRVM [augm] ACC on IPs: {(acc):.2f}%  class one #{ones.sum()}, zero #{zeros.sum()}')
-                
+
         if num_inducing_points is not None:
             if num_IP < num_inducing_points:
                 num_IP = num_inducing_points + num_IP
