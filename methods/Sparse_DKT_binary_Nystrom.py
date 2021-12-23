@@ -40,7 +40,7 @@ except ImportError:
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=5 --train_aug
 IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j_idx")
 class Sparse_DKT_binary_Nystrom(MetaTemplate):
-    def __init__(self, model_func, n_way, n_support, sparse_method='FRVM', num_inducing_points=10, normalize=False, scale=False, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
+    def __init__(self, model_func, n_way, n_support, sparse_method='FRVM', num_inducing_points=None, normalize=False, scale=False, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
         super(Sparse_DKT_binary_Nystrom, self).__init__(model_func, n_way, n_support)
 
         self.num_inducing_points = num_inducing_points

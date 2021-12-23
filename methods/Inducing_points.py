@@ -27,32 +27,34 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
     IP_index = np.array([])
     acc = None
     if sparse_method=='Random':
-        num_IP = num_inducing_points
-        # random selection of inducing points
-        idx_zero = torch.where((targets==-1) | (targets==0))[0]
-        idx_one = torch.where(targets==-1)[0]
-        inducing_points_zero = list(np.random.choice(idx_zero.cpu().numpy(), replace=False, size=num_inducing_points//2))
-        inducing_points_one = list(np.random.choice(idx_one.cpu().numpy(), replace=False, size=num_inducing_points//2))
+        if num_inducing_points is not None:
+            num_IP = num_inducing_points
+            # random selection of inducing points
+            idx_zero = torch.where((targets==-1) | (targets==0))[0]
+            idx_one = torch.where(targets==-1)[0]
+            inducing_points_zero = list(np.random.choice(idx_zero.cpu().numpy(), replace=False, size=num_inducing_points//2))
+            inducing_points_one = list(np.random.choice(idx_one.cpu().numpy(), replace=False, size=num_inducing_points//2))
 
-        IP_index = inducing_points_one + inducing_points_zero
-        inducing_points = inputs[IP_index, :]
-        alpha = None
-        gamma = None
+            IP_index = inducing_points_one + inducing_points_zero
+            inducing_points = inputs[IP_index, :]
+            alpha = None
+            gamma = None
 
     elif sparse_method=='KMeans':
-        num_IP = num_inducing_points
-        # self.kmeans_clustering = KMeans(n_clusters=num_IP, init='k-means++',  n_init=10, max_iter=1000).fit(inputs.cpu().numpy())
-        # inducing_points = self.kmeans_clustering.cluster_centers_
-        # inducing_points = torch.from_numpy(inducing_points).to(torch.float)
+        if num_inducing_points is not None:
+            num_IP = num_inducing_points
+            # self.kmeans_clustering = KMeans(n_clusters=num_IP, init='k-means++',  n_init=10, max_iter=1000).fit(inputs.cpu().numpy())
+            # inducing_points = self.kmeans_clustering.cluster_centers_
+            # inducing_points = torch.from_numpy(inducing_points).to(torch.float)
 
-        kmeans_clustering = Fast_KMeans(n_clusters=num_IP, max_iter=1000)
-        kmeans_clustering.fit(inputs.cuda())
-        inducing_points = kmeans_clustering.centroids
-        # print(inducing_points.shape[0])
+            kmeans_clustering = Fast_KMeans(n_clusters=num_IP, max_iter=1000)
+            kmeans_clustering.fit(inputs.cuda())
+            inducing_points = kmeans_clustering.centroids
+            # print(inducing_points.shape[0])
 
-        IP_index = None
-        alpha = None
-        gamma = None
+            IP_index = None
+            alpha = None
+            gamma = None
 
 
     elif sparse_method=='FRVM':
@@ -146,26 +148,27 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
             acc = (torch.sum(y_pred==target) / N).item()  * 100 # targets is zero and one (after FRVM)
             if verbose:
                 print(f'FRVM [augm] ACC on IPs: {(acc):.2f}%  class one #{ones.sum()}, zero #{zeros.sum()}')
+                
+        if num_inducing_points is not None:
+            if num_IP < num_inducing_points:
+                num_IP = num_inducing_points + num_IP
+                # random selection of inducing points
+                idx_zero = torch.where((targets==-1) | (targets==0))[0]
+                idx_one = torch.where(targets==-1)[0]
+                inducing_points_zero = list(np.random.choice(idx_zero.cpu().numpy(), replace=False, size=num_inducing_points//2))
+                inducing_points_one = list(np.random.choice(idx_one.cpu().numpy(), replace=False, size=num_inducing_points//2))
 
-        if num_IP < num_inducing_points:
-            num_IP = num_inducing_points + num_IP
-            # random selection of inducing points
-            idx_zero = torch.where((targets==-1) | (targets==0))[0]
-            idx_one = torch.where(targets==-1)[0]
-            inducing_points_zero = list(np.random.choice(idx_zero.cpu().numpy(), replace=False, size=num_inducing_points//2))
-            inducing_points_one = list(np.random.choice(idx_one.cpu().numpy(), replace=False, size=num_inducing_points//2))
-
-            IP_index_rand = inducing_points_one + inducing_points_zero
-            for ix in IP_index:
-                if ix in IP_index_rand:
-                    IP_index_rand.remove(ix)
-    
-            random_inducing_points = inputs[IP_index_rand, :]
-            IP_index = np.concatenate([IP_index, IP_index_rand])
-            inducing_points = torch.cat([inducing_points, random_inducing_points])
-            alpha = None
-            gamma = None
-            print(f'   augmented IP, m={num_IP:3}')
+                IP_index_rand = inducing_points_one + inducing_points_zero
+                for ix in IP_index:
+                    if ix in IP_index_rand:
+                        IP_index_rand.remove(ix)
+        
+                random_inducing_points = inputs[IP_index_rand, :]
+                IP_index = np.concatenate([IP_index, IP_index_rand])
+                inducing_points = torch.cat([inducing_points, random_inducing_points])
+                alpha = None
+                gamma = None
+                print(f'   augmented IP, m={num_IP:3}')
     
     elif sparse_method=='constFRVM':
          
@@ -213,26 +216,26 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
             acc = (torch.sum(y_pred==target) / N).item()  * 100 # targets is zero and one (after FRVM)
             if verbose:
                 print(f'FRVM [const] ACC on IPs: {(acc):.2f}%  class one #{ones.sum()}, zero #{zeros.sum()}')
+        if num_inducing_points is not None:
+            if num_IP < num_inducing_points:
+                num_IP = num_inducing_points + num_IP
+                # random selection of inducing points
+                idx_zero = torch.where((targets==-1) | (targets==0))[0]
+                idx_one = torch.where(targets==-1)[0]
+                inducing_points_zero = list(np.random.choice(idx_zero.cpu().numpy(), replace=False, size=num_inducing_points//2))
+                inducing_points_one = list(np.random.choice(idx_one.cpu().numpy(), replace=False, size=num_inducing_points//2))
 
-        if num_IP < num_inducing_points:
-            num_IP = num_inducing_points + num_IP
-            # random selection of inducing points
-            idx_zero = torch.where((targets==-1) | (targets==0))[0]
-            idx_one = torch.where(targets==-1)[0]
-            inducing_points_zero = list(np.random.choice(idx_zero.cpu().numpy(), replace=False, size=num_inducing_points//2))
-            inducing_points_one = list(np.random.choice(idx_one.cpu().numpy(), replace=False, size=num_inducing_points//2))
-
-            IP_index_rand = inducing_points_one + inducing_points_zero
-            for ix in IP_index:
-                if ix in IP_index_rand:
-                    IP_index_rand.remove(ix)
-    
-            random_inducing_points = inputs[IP_index_rand, :]
-            IP_index = np.concatenate([IP_index, IP_index_rand])
-            inducing_points = torch.cat([inducing_points, random_inducing_points])
-            alpha = None
-            gamma = None
-            print(f'   augmented IP, m={num_IP:3}')
+                IP_index_rand = inducing_points_one + inducing_points_zero
+                for ix in IP_index:
+                    if ix in IP_index_rand:
+                        IP_index_rand.remove(ix)
+        
+                random_inducing_points = inputs[IP_index_rand, :]
+                IP_index = np.concatenate([IP_index, IP_index_rand])
+                inducing_points = torch.cat([inducing_points, random_inducing_points])
+                alpha = None
+                gamma = None
+                print(f'   augmented IP, m={num_IP:3}')
     
     else:
         print(f'No method')
