@@ -228,6 +228,7 @@ class Sparse_DKT_binary_Nystrom_new_loss(MetaTemplate):
             optimizer.zero_grad()
             #NOTE new_loss:
             z_query = self.feature_extractor.forward(x_query)
+            if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
             self.model.eval()
             output = self.model(z_query)
             self.model.train()
@@ -653,7 +654,7 @@ class ExactGPLayer(gpytorch.models.ExactGP):
             #     )
             # else:
             self.base_covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.LinearKernel())
-            self.base_covar_module.outputscale = 0.1
+            # self.base_covar_module.outputscale = 0.5
         ## RBF kernel
         elif(kernel=='rbf' or kernel=='RBF'):
             self.base_covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())

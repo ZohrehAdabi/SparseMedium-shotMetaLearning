@@ -300,7 +300,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                    y_pred = max_pred.cpu().detach().numpy()
                 else: 
                    pred = torch.sigmoid(prediction.mean)
-                   y_pred = (pred < 0.5).to(int)
+                   y_pred = (pred < 0.5).to(int) #0,1 --- 1,-1
                    y_pred = y_pred.cpu().detach().numpy()
 
                 accuracy_query = (np.sum(y_pred==y_query) / float(len(y_query))) * 100.0
@@ -452,7 +452,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                                                         z_train, target, sparse_method=self.sparse_method, scale=self.scale,
                                                         config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
                                                         num_inducing_points=self.num_inducing_points, verbose=False, device=self.device)
-            
+            self.frvm_acc.append(frvm_acc)  
             inducing_points = IP(inducing_points.z_values, inducing_points.index, inducing_points.count,
                                 inducing_points.alpha, inducing_points.gamma,  
                                 x_support[inducing_points.index], y_support[inducing_points.index], None, None)
