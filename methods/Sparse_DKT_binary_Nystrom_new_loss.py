@@ -431,10 +431,11 @@ class Sparse_DKT_binary_Nystrom_new_loss(MetaTemplate):
                                                         z_train, target, sparse_method=self.sparse_method, scale=self.scale,
                                                         config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
                                                         num_inducing_points=self.num_inducing_points, verbose=False, device=self.device)
+            self.frvm_acc.append(frvm_acc)
             inducing_points = IP(inducing_points.z_values, inducing_points.index, inducing_points.count,
                                 inducing_points.alpha, inducing_points.gamma,  
                                 x_support[inducing_points.index], y_support[inducing_points.index], None, None)
-    
+        
         ip_values = inducing_points.z_values.cuda()
         # ip_values = z_train[inducing_points.index].cuda()
         self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
