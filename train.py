@@ -315,7 +315,7 @@ if __name__ == '__main__':
                 id = f'_{params.sparse_method}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
             else:
                 id = f'_{params.sparse_method}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'           
-            if params.sparse_method in ['FRVM', 'augmFRVM']: 
+            if params.sparse_method in ['FRVM', 'augmFRVM', 'constFRVM']: 
                 id += f'_confg_{params.config}_{params.align_thr}'
                 if params.gamma: id += '_gamma'
                 if params.scale: id += '_scale'
@@ -323,7 +323,7 @@ if __name__ == '__main__':
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
-            if params.sparse_method in ['Random', 'KMeans', 'augmFRVM']:  
+            if params.sparse_method in ['Random', 'KMeans', 'augmFRVM', 'constFRVM']:  
                 if params.num_ip is not None:
                     id += f'_ip_{params.num_ip}'
             params.checkpoint_dir += id
