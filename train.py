@@ -244,7 +244,7 @@ if __name__ == '__main__':
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
-            
+            model.init_summary(id=id, dataset=params.dataset)
         elif params.method == 'Sparse_DKT_binary_Exact':
             model = Sparse_DKT_binary_Exact(model_dict[params.model], params.kernel_type, **train_few_shot_params, sparse_method=params.sparse_method, 
                                     num_inducing_points=params.num_ip,

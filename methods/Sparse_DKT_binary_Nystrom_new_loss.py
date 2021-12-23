@@ -22,7 +22,7 @@ from methods.Fast_RVM import Fast_RVM
 from methods.Inducing_points import get_inducing_points
 #Check if tensorboardx is installed
 try:
-    #tensorboard --logdir=./Sparse_DKT_binary_Nystrom_CUB_log/ --host localhost --port 8090
+    #tensorboard --logdir=./Sparse_DKT_binary_Nystrom_new_loss_CUB_log/ --host localhost --port 8090
     from tensorboardX import SummaryWriter
     IS_TBX_INSTALLED = True
 except ImportError:
