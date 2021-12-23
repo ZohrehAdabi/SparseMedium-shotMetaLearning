@@ -11,7 +11,7 @@ from colorama import Fore
 import gpytorch
 from time import gmtime, strftime
 import random
-from configs import kernel_type
+# from configs import kernel_type
 #Check if tensorboardx is installed
 try:
     from tensorboardX import SummaryWriter
@@ -30,7 +30,7 @@ except ImportError:
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=5 --train_aug
 
 class DKT(MetaTemplate):
-    def __init__(self, model_func, n_way, n_support, dirichlet=False):
+    def __init__(self, model_func, kernel_type, n_way, n_support, normalize=False, dirichlet=False):
         super(DKT, self).__init__(model_func, n_way, n_support)
         ## GP parameters
         self.leghtscale_list = None
@@ -40,6 +40,7 @@ class DKT(MetaTemplate):
         self.writer=None
         self.dirichlet = dirichlet
         self.feature_extractor = self.feature
+        self.kernel_type = kernel_type
         self.get_model_likelihood_mll() #Init model, likelihood, and mll
         if(kernel_type=="cossim"):
             self.normalize=True
@@ -48,7 +49,7 @@ class DKT(MetaTemplate):
             latent_size = np.prod(self.feature_extractor.final_feat_dim)
             self.feature_extractor.trunk.add_module("bn_out", nn.BatchNorm1d(latent_size))
         else:
-            self.normalize=False
+            self.normalize=normalize
 
     def init_summary(self, id):
         if(IS_TBX_INSTALLED):
@@ -67,7 +68,7 @@ class DKT(MetaTemplate):
             else:
                 likelihood = gpytorch.likelihoods.GaussianLikelihood()
 
-            model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, dirichlet=self.dirichlet, kernel=kernel_type)
+            model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, dirichlet=self.dirichlet, kernel=self.kernel_type)
             model_list.append(model)
             likelihood_list.append(model.likelihood)
         self.model = gpytorch.models.IndependentModelList(*model_list).cuda()

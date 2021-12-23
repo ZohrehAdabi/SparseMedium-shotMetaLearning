@@ -20,6 +20,7 @@ from methods.DKT_binary import DKT_binary
 from methods.Sparse_DKT_Nystrom import Sparse_DKT_Nystrom
 from methods.Sparse_DKT_Exact import Sparse_DKT_Exact
 from methods.Sparse_DKT_binary_Nystrom import Sparse_DKT_binary_Nystrom
+from methods.Sparse_DKT_binary_Nystrom_new_loss import Sparse_DKT_binary_Nystrom_new_loss
 from methods.Sparse_DKT_binary_Exact import Sparse_DKT_binary_Exact
 from methods.protonet import ProtoNet
 from methods.matchingnet import MatchingNet
@@ -146,7 +147,7 @@ if __name__ == '__main__':
         elif params.method == 'baseline++':
             model = BaselineTrain(model_dict[params.model], params.num_classes, loss_type='dist')
 
-    elif params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_Exact', 
+    elif params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_Nystrom_new_loss', 'Sparse_DKT_binary_Exact', 
                             'DKT', 'DKT_binary', 'protonet', 
                         'matchingnet', 'relationnet', 'relationnet_softmax', 'maml', 'maml_approx']:
         # for fewshot setting
@@ -163,13 +164,13 @@ if __name__ == '__main__':
         # a batch for SetDataManager: a [n_way, n_support + n_query, dim, w, h] tensor
 
         if(params.method == 'Sparse_DKT_Nystrom'):
-            model = Sparse_DKT_Nystrom(model_dict[params.model], **train_few_shot_params, sparse_method=params.sparse_method, 
+            model = Sparse_DKT_Nystrom(model_dict[params.model], params.kernel_type, **train_few_shot_params, sparse_method=params.sparse_method, 
                                     num_inducing_points=params.num_ip, 
                                     normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
             if params.dirichlet:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'           
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'           
             
             if params.sparse_method in ['FRVM', 'augmFRVM']: 
                 id += f'_confg_{params.config}_{params.align_thr}'
@@ -184,13 +185,13 @@ if __name__ == '__main__':
                     id += f'_ip_{params.num_ip}'
             model.init_summary(id=id, dataset=params.dataset)
         elif(params.method == 'Sparse_DKT_Exact'):
-            model = Sparse_DKT_Exact(model_dict[params.model], **train_few_shot_params, sparse_method=params.sparse_method, 
+            model = Sparse_DKT_Exact(model_dict[params.model], params.kernel_type, **train_few_shot_params, sparse_method=params.sparse_method, 
                                     num_inducing_points=params.num_ip,
                                     normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
             if params.dirichlet:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'           
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'           
             if params.sparse_method in ['FRVM', 'augmFRVM']: 
                 id += f'_confg_{params.config}_{params.align_thr}'
                 if params.gamma: id += '_gamma'
@@ -205,13 +206,13 @@ if __name__ == '__main__':
             model.init_summary(id=id, dataset=params.dataset)
 
         elif params.method == 'Sparse_DKT_binary_Nystrom':
-            model = Sparse_DKT_binary_Nystrom(model_dict[params.model], **train_few_shot_params, sparse_method=params.sparse_method, 
+            model = Sparse_DKT_binary_Nystrom(model_dict[params.model], params.kernel_type, **train_few_shot_params, sparse_method=params.sparse_method, 
                                     num_inducing_points=params.num_ip,
                                     normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
             if params.dirichlet:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'           
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'           
             if params.sparse_method in ['FRVM', 'augmFRVM', 'constFRVM']: 
                 id += f'_confg_{params.config}_{params.align_thr}'
                 if params.gamma: id += '_gamma'
@@ -227,15 +228,31 @@ if __name__ == '__main__':
             if params.sparse_method=='constFRVM':
                 print(f'\nconstFRVM\n')
                 model.load_constant_model()
-
-        elif params.method == 'Sparse_DKT_binary_Exact':
-            model = Sparse_DKT_binary_Exact(model_dict[params.model], **train_few_shot_params, sparse_method=params.sparse_method, 
+        elif params.method == 'Sparse_DKT_binary_Nystrom_new_loss':
+            model = Sparse_DKT_binary_Nystrom(model_dict[params.model], params.kernel_type, **train_few_shot_params, sparse_method=params.sparse_method, 
                                     num_inducing_points=params.num_ip,
                                     normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
             if params.dirichlet:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'           
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'           
+            if params.sparse_method in ['FRVM']: 
+                id += f'_confg_{params.config}_{params.align_thr}'
+                if params.gamma: id += '_gamma'
+                if params.scale: id += '_scale'
+            if params.normalize: id += '_norm'
+            if params.train_aug: id += '_aug'
+            if params.warmup:  id += '_warmup'
+            if params.freeze: id += '_freeze'
+            
+        elif params.method == 'Sparse_DKT_binary_Exact':
+            model = Sparse_DKT_binary_Exact(model_dict[params.model], params.kernel_type, **train_few_shot_params, sparse_method=params.sparse_method, 
+                                    num_inducing_points=params.num_ip,
+                                    normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
+            if params.dirichlet:
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+            else:
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'           
             
             if params.sparse_method in ['FRVM', 'augmFRVM']: 
                 id += f'_confg_{params.config}_{params.align_thr}'
@@ -251,11 +268,11 @@ if __name__ == '__main__':
             model.init_summary(id=id, dataset=params.dataset)
 
         elif(params.method == 'DKT'):
-            model = DKT(model_dict[params.model], **train_few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
+            model = DKT(model_dict[params.model], params.kernel_type, **train_few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
             if params.dirichlet:
-                id=f'DKT_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
+                id=f'DKT_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
-                id=f'DKT_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
+                id=f'DKT_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
            
             if params.normalize: id += '_norm'
             if params.train_aug: id += '_aug'
@@ -263,11 +280,11 @@ if __name__ == '__main__':
             if params.freeze: id += '_freeze'
             model.init_summary(id=id)
         elif(params.method == 'DKT_binary'):
-            model = DKT_binary(model_dict[params.model], **train_few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
+            model = DKT_binary(model_dict[params.model], params.kernel_type, **train_few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
             if params.dirichlet:
-                id=f'DKT_binary_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
+                id=f'DKT_binary_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
-                id=f'DKT_binary_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
+                id=f'DKT_binary_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             if params.normalize: id += '_norm'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
@@ -310,11 +327,11 @@ if __name__ == '__main__':
     #     params.checkpoint_dir += '_aug'
     if not params.method in ['baseline', 'baseline++']:
         
-        if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_Exact']:
+        if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_Nystrom_new_loss', 'Sparse_DKT_binary_Exact']:
             if params.dirichlet:
-                id = f'_{params.sparse_method}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
+                id = f'_{params.sparse_method}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
-                id = f'_{params.sparse_method}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'           
+                id = f'_{params.sparse_method}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'           
             if params.sparse_method in ['FRVM', 'augmFRVM', 'constFRVM']: 
                 id += f'_confg_{params.config}_{params.align_thr}'
                 if params.gamma: id += '_gamma'
@@ -329,11 +346,11 @@ if __name__ == '__main__':
             params.checkpoint_dir += id
         else:
             if params.dirichlet:
-                id=f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
+                id=f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
-                id=f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
+                id=f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
         
-            
+            if params.normalize: id += '_norm'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
@@ -352,7 +369,7 @@ if __name__ == '__main__':
         resume_file = get_resume_file(params.checkpoint_dir)
         if resume_file is not None:
             tmp = torch.load(resume_file)
-            if params.method=='Sparse_DKT_Nystrom' or params.method=='Sparse_DKT_binary_Nystrom':
+            if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_Nystrom_new_loss']:
                 
                 IP = torch.ones(100, 64).cuda()
                 tmp['state']['model.covar_module.inducing_points'] = IP

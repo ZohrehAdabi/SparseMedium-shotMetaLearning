@@ -82,26 +82,26 @@ def single_test(params):
     elif params.method == 'protonet':
         model           = ProtoNet( model_dict[params.model], **few_shot_params )
     elif params.method == 'DKT':
-        model           = DKT(model_dict[params.model], **few_shot_params, dirichlet=params.dirichlet)
+        model           = DKT(model_dict[params.model], params.kernel_type, **few_shot_params, dirichlet=params.dirichlet)
     elif params.method == 'DKT_binary':
-        model           = DKT_binary(model_dict[params.model], **few_shot_params, dirichlet=params.dirichlet)
+        model           = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, dirichlet=params.dirichlet)
     elif params.method == 'Sparse_DKT_Nystrom':
-        model           = Sparse_DKT_Nystrom(model_dict[params.model], **few_shot_params, sparse_method=params.sparse_method, 
+        model           = Sparse_DKT_Nystrom(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
                                 num_inducing_points=params.num_ip,
                                 normalize=params.normalize, scale=params.scale,
                                 config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
     elif params.method == 'Sparse_DKT_Exact':
-        model           = Sparse_DKT_Exact(model_dict[params.model], **few_shot_params, sparse_method=params.sparse_method, 
+        model           = Sparse_DKT_Exact(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
                                 num_inducing_points=params.num_ip,
                                 normalize=params.normalize, scale=params.scale,
                                 config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
     elif params.method == 'Sparse_DKT_binary_Nystrom':
-        model           = Sparse_DKT_binary_Nystrom(model_dict[params.model], **few_shot_params, sparse_method=params.sparse_method, 
+        model           = Sparse_DKT_binary_Nystrom(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
                                 num_inducing_points=params.num_ip,
                                 normalize=params.normalize, scale=params.scale,
                                 config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
     elif params.method == 'Sparse_DKT_binary_Exact':
-        model           = Sparse_DKT_binary_Exact(model_dict[params.model], **few_shot_params, sparse_method=params.sparse_method, 
+        model           = Sparse_DKT_binary_Exact(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
                                 num_inducing_points=params.num_ip,
                                 normalize=params.normalize, scale=params.scale,
                                 config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
@@ -141,9 +141,9 @@ def single_test(params):
         # checkpoint_dir += '_%dway_%dshot' %( params.train_n_way, params.n_shot)
         if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_Exact']:
             if params.dirichlet:
-                id = f'_{params.sparse_method}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
+                id = f'_{params.sparse_method}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
-                id = f'_{params.sparse_method}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'           
+                id = f'_{params.sparse_method}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'           
 
             if params.sparse_method in ['FRVM', 'augmFRVM', 'constFRVM']: 
                 id += f'_confg_{params.config}_{params.align_thr}'
@@ -152,9 +152,9 @@ def single_test(params):
             
         else:
             if params.dirichlet:
-                id=f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
+                id=f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
-                id=f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}'
+                id=f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             
            
 
@@ -169,9 +169,12 @@ def single_test(params):
     #modelfile   = get_resume_file(checkpoint_dir)
 
     if not params.method in ['baseline', 'baseline++'] : 
+        print(f'\n{checkpoint_dir}\n')
         if params.save_iter != -1:
+            print(f'\nModel at epoch {params.save_iter}\n')
             modelfile   = get_assigned_file(checkpoint_dir, params.save_iter)
         else:
+            print(f'\nBest model\n')
             modelfile   = get_best_file(checkpoint_dir)
         if modelfile is not None:
             tmp = torch.load(modelfile)

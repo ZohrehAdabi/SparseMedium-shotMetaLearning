@@ -14,8 +14,9 @@ import gpytorch
 from time import gmtime, strftime
 import random
 from colorama import Fore
-from configs import kernel_type
+# from configs import kernel_type
 from methods.Fast_RVM import Fast_RVM
+from methods.Inducing_points import get_inducing_points
 #Check if tensorboardx is installed
 try:
     # tensorboard --logdir=./Sparse_DKT_log/ --host localhost --port 8089
@@ -35,10 +36,11 @@ except ImportError:
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=5 --train_aug
 IP = namedtuple("inducing_points", "z_values index count x y i_idx j_idx")
 class Sparse_DKT_Nystrom(MetaTemplate):
-    def __init__(self, model_func, n_way, n_support, sparse_method, num_inducing_points=10, normalize=False, scale=False, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
+    def __init__(self, model_func, kernel_type, n_way, n_support, sparse_method, num_inducing_points=None, normalize=False, 
+                                    scale=False, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
         super(Sparse_DKT_Nystrom, self).__init__(model_func, n_way, n_support)
-        self.num_inducing_points = 10
-        self.fast_rvm = True
+        self.num_inducing_points = num_inducing_points
+        self.sparse_method = sparse_method
         self.config = config
         self.align_threshold = align_threshold
         self.gamma = gamma
@@ -52,6 +54,7 @@ class Sparse_DKT_Nystrom(MetaTemplate):
         self.iteration = 0
         self.writer=None
         self.feature_extractor = self.feature
+        self.kernel_type = kernel_type
         self.get_model_likelihood_mll() #Init model, likelihood, and mll
         if(kernel_type=="cossim"):
             self.normalize=True
@@ -84,7 +87,7 @@ class Sparse_DKT_Nystrom(MetaTemplate):
                 likelihood = gpytorch.likelihoods.GaussianLikelihood()
 
             model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, dirichlet=self.dirichlet,
-                                 inducing_points=train_x, kernel=kernel_type)
+                                 inducing_points=train_x, kernel=self.kernel_type)
             model_list.append(model)
             likelihood_list.append(model.likelihood)
         self.model = gpytorch.models.IndependentModelList(*model_list).cuda()
@@ -195,8 +198,12 @@ class Sparse_DKT_Nystrom(MetaTemplate):
                     single_model.set_train_data(inputs=z_train, targets=target_list[idx], strict=False)
 
                 with torch.no_grad():
-                    inducing_points = self.get_inducing_points(single_model.base_covar_module, #.base_kernel,
-                                                            z_train, target_list[idx], verbose=False)
+                    # inducing_points = self.get_inducing_points(single_model.base_covar_module, #.base_kernel,
+                    #                                         z_train, target_list[idx], verbose=False)
+                    inducing_points, frvm_acc = get_inducing_points(single_model.base_covar_module, #.base_kernel,
+                                                            z_train, target_list[idx], sparse_method=self.sparse_method, scale=self.scale,
+                                                            config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
+                                                            num_inducing_points=self.num_inducing_points, verbose=True, device=self.device)
             
                 ip_values = inducing_points.z_values.cuda()
                 single_model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
@@ -401,8 +408,12 @@ class Sparse_DKT_Nystrom(MetaTemplate):
                 single_model.set_train_data(inputs=z_train, targets=target_list[idx], strict=False)
             
             with torch.no_grad():
-                inducing_points = self.get_inducing_points(single_model.base_covar_module, #.base_kernel,
-                                                            z_train, target_list[idx], verbose=False)
+                # inducing_points = self.get_inducing_points(single_model.base_covar_module, #.base_kernel,
+                #                                             z_train, target_list[idx], verbose=False)
+                inducing_points, frvm_acc = get_inducing_points(single_model.base_covar_module, #.base_kernel,
+                                                        z_train, target, sparse_method=self.sparse_method, scale=self.scale,
+                                                        config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
+                                                        num_inducing_points=self.num_inducing_points, verbose=False, device=self.device)
             
             ip_values = inducing_points.z_values.cuda()
             single_model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
