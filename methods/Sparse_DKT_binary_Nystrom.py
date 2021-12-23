@@ -439,7 +439,14 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             self.model.set_train_data(inputs=z_train, targets=target, strict=False)
 
         with torch.no_grad():
-            inducing_points, frvm_acc = get_inducing_points(self.model.base_covar_module, #.base_kernel,
+            if self.sparse_method=="constFRVM":
+                    z_train_rvm = self.constant_feature_extractor(x_train).detach()
+                    inducing_points, frvm_acc = get_inducing_points(self.constant_model.base_covar_module, #.base_kernel,
+                                                            z_train_rvm, target, sparse_method=self.sparse_method, scale=self.scale,
+                                                            config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
+                                                            num_inducing_points=self.num_inducing_points, verbose=False, device=self.device)
+            else:
+                inducing_points, frvm_acc = get_inducing_points(self.model.base_covar_module, #.base_kernel,
                                                         z_train, target, sparse_method=self.sparse_method, scale=self.scale,
                                                         config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
                                                         num_inducing_points=self.num_inducing_points, verbose=False, device=self.device)
