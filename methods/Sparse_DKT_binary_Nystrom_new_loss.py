@@ -255,8 +255,8 @@ class Sparse_DKT_binary_Nystrom_new_loss(MetaTemplate):
                 self.model.eval()
                 self.likelihood.eval()
                 self.feature_extractor.eval()
-                # z_support = self.feature_extractor(x_support).detach()
-                # if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1)
+                z_support = self.feature_extractor(x_support).detach()
+                if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1)
                 ## z_support_list = [z_support]*len(y_support)
 
                 # if self.dirichlet:

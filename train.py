@@ -147,7 +147,7 @@ if __name__ == '__main__':
         elif params.method == 'baseline++':
             model = BaselineTrain(model_dict[params.model], params.num_classes, loss_type='dist')
 
-    elif params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_Nystrom_new_loss', 'Sparse_DKT_binary_Exact', 
+    elif params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sp_DKT_Bin_Nyst_NLoss', 'Sparse_DKT_binary_Exact', 
                             'DKT', 'DKT_binary', 'protonet', 
                         'matchingnet', 'relationnet', 'relationnet_softmax', 'maml', 'maml_approx']:
         # for fewshot setting
@@ -228,8 +228,8 @@ if __name__ == '__main__':
             if params.sparse_method=='constFRVM':
                 print(f'\nconstFRVM\n')
                 model.load_constant_model()
-        elif params.method == 'Sparse_DKT_binary_Nystrom_new_loss':
-            model = Sparse_DKT_binary_Nystrom(model_dict[params.model], params.kernel_type, **train_few_shot_params, sparse_method=params.sparse_method, 
+        elif params.method == 'Sp_DKT_Bin_Nyst_NLoss':
+            model = Sparse_DKT_binary_Nystrom_new_loss(model_dict[params.model], params.kernel_type, **train_few_shot_params, sparse_method=params.sparse_method, 
                                     num_inducing_points=params.num_ip,
                                     normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
             if params.dirichlet:
@@ -327,7 +327,7 @@ if __name__ == '__main__':
     #     params.checkpoint_dir += '_aug'
     if not params.method in ['baseline', 'baseline++']:
         
-        if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_Nystrom_new_loss', 'Sparse_DKT_binary_Exact']:
+        if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sp_DKT_Bin_Nyst_NLoss', 'Sparse_DKT_binary_Exact']:
             if params.dirichlet:
                 id = f'_{params.sparse_method}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
@@ -369,7 +369,7 @@ if __name__ == '__main__':
         resume_file = get_resume_file(params.checkpoint_dir)
         if resume_file is not None:
             tmp = torch.load(resume_file)
-            if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_Nystrom_new_loss']:
+            if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_binary_Nystrom', 'Sp_DKT_Bin_Nyst_NLoss']:
                 
                 IP = torch.ones(100, 64).cuda()
                 tmp['state']['model.covar_module.inducing_points'] = IP
