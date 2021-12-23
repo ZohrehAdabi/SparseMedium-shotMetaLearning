@@ -145,6 +145,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
     def load_constant_model(self):
         from io_utils import model_dict, get_resume_file
         model_path = 'save/checkpoints/CUB/Conv4_Sparse_DKT_binary_Nystrom_way_2_shot_50_query_10_011_0.001_lr_0.001_0.001'
+        model_path = 'save/checkpoints/CUB/Conv4_Sparse_DKT_binary_Nystrom_augmFRVM_way_2_shot_50_query_10_lr_0.001_0.001_confg_011_0.001_scale_norm_ip_30'
         few_shot_params = dict(n_way=2, n_support=50)
         model           = Sparse_DKT_binary_Nystrom(model_dict['Conv4'], **few_shot_params, sparse_method="FRVM", 
                                 num_inducing_points=10,
