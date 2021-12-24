@@ -66,12 +66,10 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
         # RECOMPUTE: must be a POSITIVE 'factor' and already IN the model
         idx                 = active_factor > 1e-12
         recompute           = active_m[idx]
-        alpha_prim          =  s[recompute]**2 / (Factor[recompute])
-        delta_alpha         = (1/alpha_prim - 1/alpha_m[idx])
-        # d_alpha =  ((alpha_m[idx] - alpha_prim)/(alpha_prim * alpha_m[idx]))
+        alpha_prim          =  s[recompute]**2 / (Factor[recompute]+1e-10)
+        delta_alpha         = (1/alpha_prim) - (1/alpha_m[idx])
         d_alpha_S           = delta_alpha * S[recompute] + 1 
-        # deltaML[recompute] = ((delta_alpha * Q[recompute]**2) / (S[recompute] * delta_alpha +1) - torch.log(d_alpha_S)) /2
-        deltaML[recompute]  = ((delta_alpha * Q[recompute]**2) / (d_alpha_S) - torch.log(abs(d_alpha_S))) /2
+        deltaML[recompute]  = ((delta_alpha * Q[recompute]**2) / (d_alpha_S) - torch.log(d_alpha_S)) 
         # DELETION: if NEGATIVE factor and IN model
         idx = ~idx #active_factor <= 1e-12
         delete = active_m[idx]
@@ -79,8 +77,8 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
         if anyToDelete and alpha_m.shape[0] > 1: 	   # if there is only one basis function (M=1) (In practice, this latter event ought only to happen with the Gaussian
                                                         #    likelihood when initial noise is too high. In that case, a later beta
                                                         #    update should 'cure' this.)
-            deltaML[delete] = -(q[delete]**2 / (s[delete] + alpha_m[idx]) - torch.log(1 + s[delete] / alpha_m[idx])) /2
-            # deltaML[delete] = -(Q[delete]**2 / (S[delete] + alpha_m[idx]) - torch.log(1 + S[delete] / alpha_m[idx])) /2
+            deltaML[delete] = -(q[delete]**2 / (s[delete] + alpha_m[idx]) - torch.log(1 + s[delete] / alpha_m[idx])) 
+            # deltaML[delete] = (Q[delete]**2 / (S[delete] - alpha_m[idx]) - torch.log(1 - S[delete] / alpha_m[idx]))
             action[delete]  = -1
 
         # ADDITION: must be a POSITIVE factor and OUT of the model
@@ -94,8 +92,8 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
         add = torch.where(good_factor)[0]
         anyToAdd = len(add) > 0
         if anyToAdd:
-            Q_S             = Q[add]**2 / S[add]
-            deltaML[add]    = (Q_S - 1 - torch.log(Q_S)) /2
+            Q_S             = Q[add]**2 / (S[add] +1e-10)
+            deltaML[add]    = (Q_S - 1 - torch.log(Q_S)) 
             action[add]     = 1
 
         # Priority of Deletion   
@@ -371,8 +369,8 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
 def Statistics(K_m, KK_m, KK_mm, Kt, K_mt, alpha_m, active_m, beta, targets, N):
         A_m = torch.diag(alpha_m)
         H = A_m + beta * KK_mm
-        U = torch.linalg.cholesky((H).transpose(-2, -1).conj()).transpose(-2, -1).conj()
-        U = torch.linalg.cholesky(H, upper=True)
+        # U = torch.linalg.cholesky((H).transpose(-2, -1).conj()).transpose(-2, -1).conj()
+        # U = torch.linalg.cholesky(H, upper=True)
         U, info =  torch.linalg.cholesky_ex(H, upper=True)
         # if info>0:
         #     print('pd_err of Hessian')
@@ -469,7 +467,7 @@ def Fast_RVM_regression_fullout(K, targets, beta, N, config, align_thr, eps, tol
         # d_alpha =  ((alpha_m[idx] - alpha_prim)/(alpha_prim * alpha_m[idx]))
         d_alpha_S           = delta_alpha * S[recompute] + 1 
         # deltaML[recompute] = ((delta_alpha * Q[recompute]**2) / (S[recompute] + 1/delta_alpha) - torch.log(d_alpha_S)) /2
-        deltaML[recompute]  = ((delta_alpha * Q[recompute]**2) / (d_alpha_S) - torch.log(d_alpha_S)) /2
+        deltaML[recompute]  = ((delta_alpha * Q[recompute]**2) / (d_alpha_S) - torch.log(d_alpha_S)) 
         
         # DELETION: if NEGATIVE factor and IN model
         idx = ~idx #active_factor <= 1e-12
@@ -478,7 +476,7 @@ def Fast_RVM_regression_fullout(K, targets, beta, N, config, align_thr, eps, tol
         if anyToDelete and alpha_m.shape[0] > 1: 	   # if there is only one basis function (M=1) (In practice, this latter event ought only to happen with the Gaussian
                                                         #    likelihood when initial noise is too high. In that case, a later beta
                                                         #    update should 'cure' this.)
-            deltaML[delete] = -(q[delete]**2 / (s[delete] + alpha_m[idx]) - torch.log(1 + s[delete] / alpha_m[idx])) /2
+            deltaML[delete] = -(q[delete]**2 / (s[delete] + alpha_m[idx]) - torch.log(1 + s[delete] / alpha_m[idx])) 
             # deltaML[delete] = -(Q[delete]**2 / (S[delete] + alpha_m[idx]) - torch.log(1 + S[delete] / alpha_m[idx])) /2
             action[delete]  = -1
 
@@ -494,7 +492,7 @@ def Fast_RVM_regression_fullout(K, targets, beta, N, config, align_thr, eps, tol
         anyToAdd = len(add) > 0
         if anyToAdd:
             Q_S             = Q[add]**2 / S[add]
-            deltaML[add]    = (Q_S - 1 - torch.log(Q_S)) /2
+            deltaML[add]    = (Q_S - 1 - torch.log(Q_S)) 
             action[add]     = 1
 
         # Priority of Deletion   
@@ -667,41 +665,41 @@ def Fast_RVM_regression_fullout(K, targets, beta, N, config, align_thr, eps, tol
             logMarginalLog.append(logML.item())
             beta_KK_m = beta * KK_m
 
-        min_index = torch.where(Gamma < 0.5)[0]
-        if min_index.shape[0] >0:
-            del_from_active = active_m[min_index]
-            print(f'remove low Gamma: {Gamma[min_index].detach().cpu().numpy()} correspond to {del_from_active.detach().cpu().numpy()} data index')
-            for j in min_index:
-                del_count += 1
-                active_m        = active_m[active_m!=active_m[j]]
-                alpha_m         = alpha_m[alpha_m!=alpha_m[j]]
+        # min_index = torch.where(Gamma < 0.5)[0]
+        # if min_index.shape[0] >0:
+        #     del_from_active = active_m[min_index]
+        #     print(f'remove low Gamma: {Gamma[min_index].detach().cpu().numpy()} correspond to {del_from_active.detach().cpu().numpy()} data index')
+        #     for j in min_index:
+        #         del_count += 1
+        #         active_m        = active_m[active_m!=active_m[j]]
+        #         alpha_m         = alpha_m[alpha_m!=alpha_m[j]]
 
-                s_jj			= Sigma_m[j, j]
-                s_j				= Sigma_m[:, j]
-                tmp				= s_j/s_jj
-                Sigma_		    = Sigma_m - tmp @ s_j.T
-                Sigma_          = Sigma_[torch.arange(Sigma_.size(0)).to(device)!=j]
-                Sigma_new       = Sigma_[:, torch.arange(Sigma_.size(1)).to(device)!=j]
-                delta_mu		= -mu_m[j] * tmp
-                mu_j			= mu_m[j]
-                mu_m			= mu_m + delta_mu.squeeze()
-                mu_m			= mu_m[torch.arange(mu_m.size(0)).to(device)!=j]
+        #         s_jj			= Sigma_m[j, j]
+        #         s_j				= Sigma_m[:, j]
+        #         tmp				= s_j/s_jj
+        #         Sigma_		    = Sigma_m - tmp @ s_j.T
+        #         Sigma_          = Sigma_[torch.arange(Sigma_.size(0)).to(device)!=j]
+        #         Sigma_new       = Sigma_[:, torch.arange(Sigma_.size(1)).to(device)!=j]
+        #         delta_mu		= -mu_m[j] * tmp
+        #         mu_j			= mu_m[j]
+        #         mu_m			= mu_m + delta_mu.squeeze()
+        #         mu_m			= mu_m[torch.arange(mu_m.size(0)).to(device)!=j]
                 
-                # jPm	            = (beta_KK_m @ s_j).squeeze()
-                # S	            = S + jPm.pow(2) / s_jj
-                # Q	            = Q + jPm * mu_j / s_jj
-                Sigma_m = Sigma_new
-                K_m             = K[:, active_m]
-                KK_m            = KK[:, active_m]
-                KK_mm           = KK[active_m, :][:, active_m]
-                K_mt            = Kt[active_m]
-                # beta_KK_m       = beta * KK_m
-                # update_required = True
-                count += 1
-                #quantity Gamma_i measures how well the corresponding parameter mu_i is determined by the data
-            Gamma = 1 - alpha_m * torch.diag(Sigma_m)
+        #         # jPm	            = (beta_KK_m @ s_j).squeeze()
+        #         # S	            = S + jPm.pow(2) / s_jj
+        #         # Q	            = Q + jPm * mu_j / s_jj
+        #         Sigma_m = Sigma_new
+        #         K_m             = K[:, active_m]
+        #         KK_m            = KK[:, active_m]
+        #         KK_mm           = KK[active_m, :][:, active_m]
+        #         K_mt            = Kt[active_m]
+        #         # beta_KK_m       = beta * KK_m
+        #         # update_required = True
+        #         count += 1
+        #         #quantity Gamma_i measures how well the corresponding parameter mu_i is determined by the data
+        #     Gamma = 1 - alpha_m * torch.diag(Sigma_m)
             
-            terminate = True
+        #     terminate = True
 
         #compute mu and beta
         if update_sigma and ((itr%5==0) or (itr <=10) or terminate):
@@ -714,8 +712,8 @@ def Fast_RVM_regression_fullout(K, targets, beta, N, config, align_thr, eps, tol
             delta_beta	= torch.log(beta)-torch.log(beta_old)
             beta_KK_m       = beta * KK_m
             if torch.abs(delta_beta) > 1e-6:
-                if verbose:
-                    print(f'{itr:3}, update statistics after beta update')
+                # if verbose:
+                #     print(f'{itr:3}, update statistics after beta update')
                 Sigma_m, mu_m, S, Q, s, q, logML, Gamma = Statistics(K_m, KK_m, KK_mm, Kt, K_mt, alpha_m, active_m, beta, targets, N)
                 count = count + 1
                 logMarginalLog.append(logML.item())
@@ -726,13 +724,13 @@ def Fast_RVM_regression_fullout(K, targets, beta, N, config, align_thr, eps, tol
         if terminate:
             # print(f'sigma2={1/beta:.4f}')
             # if verbose:
-            if active_m.shape[0] < 3:
-                print(f'Finished at {itr:3}, m= {active_m.shape[0]:3} sigma2= {1/beta:4.4f}')
+            # if active_m.shape[0] < 3:
+            print(f'Finished at {itr:3}, m= {active_m.shape[0]:3} sigma2= {1/beta:4.4f}')
             if count > 0:
                 print(f'add: {add_count:3d} ({add_count/count:.1%}), delete: {del_count:3d} ({del_count/count:.1%}), recompute: {recomp_count:3d} ({recomp_count/count:.1%})')
             return active_m.cpu().numpy(), alpha_m, Gamma, beta, mu_m, Sigma_m, K_m 
 
-        if ((itr+1)%1==0) and verbose:
+        if ((itr+1)%25==0) and verbose:
             print(f'#{itr+1:3},     m={active_m.shape[0]}, selected_action= {selected_action.item():.0f}, logML= {logML.item()/N:.5f}, sigma2= {1/beta:.4f}')
 
 
@@ -764,11 +762,11 @@ def generate_data():
     # X, y
 
 
-def plot_result(rv, X_test, y_test, covar_module, mu_m, Sigma_m, K_m, active):
+def plot_result(rv, X_test, y_test, covar_module, K, mu_m, Sigma_m, K_m, active):
     
     # rv = torch.tensor(X_org[active])
     """Evaluate the RVR model at x."""
-    K = covar_module(X_test, rv).evaluate()
+    # K = covar_module(X_test, rv).evaluate()
    
     y_pred = K @ mu_m
 
@@ -802,7 +800,7 @@ if __name__=='__main__':
     # import torch.nn.functional as F
     # inputs = F.normalize(inputs, p=2, dim=0)
     N   = inputs.shape[0]
-    tol = 1e-4
+    tol = 1e-6
     eps = torch.finfo(torch.float32).eps
     # sigma = model.likelihood.raw_noise.detach().clone()
     
@@ -815,12 +813,14 @@ if __name__=='__main__':
     covar_module.outputscale = 1
     kernel_matrix = covar_module(inputs).evaluate()
     N = inputs.shape[0]
-    # import scipy.io
-    # kernel_matrix = scipy.io.loadmat('./methods/K2.mat')['BASIS']
-    # kernel_matrix = torch.from_numpy(kernel_matrix).to(dtype=torch.float64)
-    # targets = scipy.io.loadmat('./methods/targets2.mat')['Targets']
-    # targets = torch.from_numpy(targets).to(dtype=torch.float64).squeeze()
-    # N = targets.shape[0]
+    import scipy.io
+    X = scipy.io.loadmat('./methods/X2.mat')['X']
+    inputs = torch.from_numpy(X).to(dtype=torch.float64).squeeze()
+    kernel_matrix = scipy.io.loadmat('./methods/K2.mat')['BASIS']
+    kernel_matrix = torch.from_numpy(kernel_matrix).to(dtype=torch.float64)
+    targets = scipy.io.loadmat('./methods/targets2.mat')['Outputs']
+    targets = torch.from_numpy(targets).to(dtype=torch.float64).squeeze()
+    N = targets.shape[0]
     sigma = torch.var(targets)  #sigma^2
     sigma = torch.tensor([0.01])
     update_sigma = True
@@ -839,13 +839,14 @@ if __name__=='__main__':
     K = kernel_matrix
     # scale = torch.sqrt(torch.sum(K) / N ** 2)
     # K = K / scale
-    config = "1001"
+    config = "1011"
     align_thr = 1e-3
     device= 'cuda'
     active_m, alpha_m, gamma_m, beta, mu_m, Sigma_m, K_m = Fast_RVM_regression_fullout(K.to(device), targets.to(device), beta.to(device), N,  config, align_thr, eps, tol)
     print(f'relevant index \n {active_m}')
     print(f'relevant alpha \n {alpha_m}')
     print(f'relevant Gamma \n {gamma_m}')
+    print(f'relevant mu \n {mu_m}')
 
     index = np.argsort(active_m)
     ss = Scales[active_m]
@@ -856,9 +857,10 @@ if __name__=='__main__':
     Sigma_m = Sigma_m[:, index]
     Sigma_m = Sigma_m[index, :].cpu()
     K_m = K_m[index].cpu()
+    print(f'relevant mu \n {mu_m}')
 
     
-    plot_result(inputs[active_m], inputs, targets, covar_module, mu_m, Sigma_m, K_m, active_m)
+    plot_result(inputs[active_m], inputs, targets, covar_module, kernel_matrix[:, active_m], mu_m, Sigma_m, K_m, active_m)
 
 
 
@@ -872,25 +874,3 @@ if __name__=='__main__':
 
 
 
-
-# kernel_matrix = torch.tensor([
-    # [0.9241,    0.2553,    0.0060,    0.0000,    0.2553,    0.0705,    0.0017,    0.0000,    0.0060,    0.0017,    0.0000,    0.0000,     0.0000,    0.0000,    0.0000,    0.0000],
-    # [0.2648,    0.8909,    0.2553,    0.0062,    0.0731,    0.2461,    0.0705,    0.0017,    0.0017,    0.0058,    0.0017,    0.0000,     0.0000,    0.0000,    0.0000,    0.0000],
-    # [0.0062,    0.2553,    0.8909,    0.2648,    0.0017,    0.0705,    0.2461,    0.0731,    0.0000,    0.0017,    0.0058,    0.0017,     0.0000,    0.0000,    0.0000,    0.0000],
-    # [0.0000,    0.0060,    0.2553,    0.9241,    0.0000,    0.0017,    0.0705,    0.2553,    0.0000,    0.0000,    0.0017,    0.0060,     0.0000,    0.0000,    0.0000,    0.0000],
-    # [0.2648,    0.0731,    0.0017,    0.0000,    0.8909,    0.2461,    0.0058,    0.0000,    0.2553,    0.0705,    0.0017,    0.0000,     0.0062,    0.0017,    0.0000,    0.0000],
-    # [0.0759,    0.2553,    0.0731,    0.0018,    0.2553,    0.8589,    0.2461,    0.0060,    0.0731,    0.2461,    0.0705,    0.0017,     0.0018,    0.0060,    0.0017,    0.0000],
-    # [0.0018,    0.0731,    0.2553,    0.0759,    0.0060,    0.2461,    0.8589,    0.2553,    0.0017,    0.0705,    0.2461,    0.0731,     0.0000,    0.0017,    0.0060,    0.0018],
-    # [0.0000,    0.0017,    0.0731,    0.2648,    0.0000,    0.0058,    0.2461,    0.8909,    0.0000,    0.0017,    0.0705,    0.2553,     0.0000,    0.0000,    0.0017,    0.0062],
-    # [0.0062,    0.0017,    0.0000,    0.0000,    0.2553,    0.0705,    0.0017,    0.0000,    0.8909,    0.2461,    0.0058,    0.0000,     0.2648,    0.0731,    0.0017,    0.0000],
-    # [0.0018,    0.0060,    0.0017,    0.0000,    0.0731,    0.2461,    0.0705,    0.0017,    0.2553,    0.8589,    0.2461,    0.0060,     0.0759,    0.2553,    0.0731,    0.0018],
-    # [0.0000,    0.0017,    0.0060,    0.0018,    0.0017,    0.0705,    0.2461,    0.0731,    0.0060,    0.2461,    0.8589,    0.2553,     0.0018,    0.0731,    0.2553,    0.0759],
-    # [0.0000,    0.0000,    0.0017,    0.0062,    0.0000,    0.0017,    0.0705,    0.2553,    0.0000,    0.0058,    0.2461,    0.8909,     0.0000,    0.0017,    0.0731,    0.2648],
-    # [0.0000,    0.0000,    0.0000,    0.0000,    0.0060,    0.0017,    0.0000,    0.0000,    0.2553,    0.0705,    0.0017,    0.0000,     0.9241,    0.2553,    0.0060,    0.0000],
-    # [0.0000,    0.0000,    0.0000,    0.0000,    0.0017,    0.0058,    0.0017,    0.0000,    0.0731,    0.2461,    0.0705,    0.0017,     0.2648,    0.8909,    0.2553,    0.0062],
-    # [0.0000,    0.0000,    0.0000,    0.0000,    0.0000,    0.0017,    0.0058,    0.0017,    0.0017,    0.0705,    0.2461,    0.0731,     0.0062,    0.2553,    0.8909,    0.2648],
-    # [0.0000,    0.0000,    0.0000,    0.0000,    0.0000,    0.0000,    0.0017,    0.0060,    0.0000,    0.0017,    0.0705,    0.2553,     0.0000,    0.0060,    0.2553,    0.9241],
-    # ], dtype=torch.float64)
-    # targets = torch.tensor([ 52.5118,  -0.9995, -60.4597, -23.7588,  17.9821,  -3.8639, -24.8190,
-    #      -9.0013,   1.3258,   2.0937,  -3.0549,  -9.7661,   2.5847,  -7.6229,
-    #      -8.0955, -35.3434], dtype=torch.float64)

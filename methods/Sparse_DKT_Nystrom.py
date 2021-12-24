@@ -411,7 +411,7 @@ class Sparse_DKT_Nystrom(MetaTemplate):
                 # inducing_points = self.get_inducing_points(single_model.base_covar_module, #.base_kernel,
                 #                                             z_train, target_list[idx], verbose=False)
                 inducing_points, frvm_acc = get_inducing_points(single_model.base_covar_module, #.base_kernel,
-                                                        z_train, target, sparse_method=self.sparse_method, scale=self.scale,
+                                                        z_train, target_list[idx], sparse_method=self.sparse_method, scale=self.scale,
                                                         config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
                                                         num_inducing_points=self.num_inducing_points, verbose=False, device=self.device)
             

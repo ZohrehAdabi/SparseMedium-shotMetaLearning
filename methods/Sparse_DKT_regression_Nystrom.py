@@ -162,7 +162,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         split = np.array([True]*15 + [False]*3)
         # print(split)
         shuffled_split = []
-        for _ in range(int(n_support/15)):
+        for _ in range(n_support//15):
             s = split.copy()
             np.random.shuffle(s)
             shuffled_split.extend(s)
@@ -284,7 +284,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                 mll = self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
 
                 
-                if epoch%2==0:
+                if epoch%1==0:
                     print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
                     mse_list = []
                     mse_unnorm_list = []
@@ -292,7 +292,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                     rep = True if val_count > len(val_people) else False
                     val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
                     for t in range(val_count):
-                        mse, mse_ = self.test_loop_fast_rvm(n_support, n_samples, val_person[t],  optimizer)
+                        mse, mse_, _ = self.test_loop_fast_rvm(n_support, n_samples, val_person[t],  optimizer)
                         mse_list.append(mse)
                         mse_unnorm_list.append(mse_)
                     mse = np.mean(mse_list)
