@@ -17,6 +17,7 @@ from methods.baselinetrain import BaselineTrain
 from methods.baselinefinetune import BaselineFinetune
 from methods.DKT import DKT
 from methods.DKT_binary import DKT_binary
+from methods.DKT_binary_new_loss import DKT_binary_new_loss
 from methods.Sparse_DKT_Nystrom import Sparse_DKT_Nystrom
 from methods.Sparse_DKT_Exact import Sparse_DKT_Exact
 from methods.Sparse_DKT_binary_Nystrom import Sparse_DKT_binary_Nystrom
@@ -148,7 +149,7 @@ if __name__ == '__main__':
             model = BaselineTrain(model_dict[params.model], params.num_classes, loss_type='dist')
 
     elif params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sp_DKT_Bin_Nyst_NLoss', 'Sparse_DKT_binary_Exact', 
-                            'DKT', 'DKT_binary', 'protonet', 
+                            'DKT', 'DKT_binary', 'DKT_binary_new_loss', 'protonet', 
                         'matchingnet', 'relationnet', 'relationnet_softmax', 'maml', 'maml_approx']:
         # for fewshot setting
         # n_query = max(1, int(
@@ -285,6 +286,18 @@ if __name__ == '__main__':
                 id=f'DKT_binary_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
                 id=f'DKT_binary_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+            if params.normalize: id += '_norm'
+            if params.train_aug: id += '_aug'
+            if params.warmup:  id += '_warmup'
+            if params.freeze: id += '_freeze'
+            model.init_summary(id=id)
+        
+        elif(params.method == 'DKT_binary_new_loss'):
+            model = DKT_binary_new_loss(model_dict[params.model], params.kernel_type, **train_few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
+            if params.dirichlet:
+                id=f'DKT_binary_new_loss_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+            else:
+                id=f'DKT_binary_new_loss_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             if params.normalize: id += '_norm'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
