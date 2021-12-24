@@ -102,25 +102,44 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
        
         for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
 
-            
-            z = self.feature_extractor(inputs)
+            split = np.array([True]*15 + [False]*3)
+            # print(split)
+            shuffled_split = []
+            for _ in range(n_support//15):
+                s = split.copy()
+                np.random.shuffle(s)
+                shuffled_split.extend(s)
+            shuffled_split = np.array(shuffled_split)
+            support_ind = shuffled_split
+            query_ind = ~shuffled_split
+            x_all = inputs.cuda()
+            y_all = labels.cuda()
+
+            x_support = x_all[support_ind,:,:,:]
+            y_support = y_all[support_ind]
+            x_query   = x_all[query_ind,:,:,:]
+            y_query   = y_all[query_ind]
+
+            z = self.feature_extractor(x_support)
             # z = F.normalize(z, p=2, dim=1)
             with torch.no_grad():
-                inducing_points = self.get_inducing_points(z, labels, verbose=False)
+                inducing_points = self.get_inducing_points(z, y_support, verbose=False)
            
             ip_values = z[inducing_points.index]
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
             self.model.train()
-            self.model.set_train_data(inputs=z, targets=labels, strict=False)
+            self.model.set_train_data(inputs=z, targets=y_support, strict=False)
 
-            # z = self.feature_extractor(x_query)
-            predictions = self.model(z)
-            loss = -self.mll(predictions, self.model.train_targets)
+            z_query = self.feature_extractor(x_query)
+            self.model.eval()
+            predictions = self.model(z_query)
+            self.model.train()
+            loss = -self.mll(predictions, y_query)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             mll_list.append(loss.item())
-            mse = self.mse(predictions.mean, labels)
+            mse = self.mse(predictions.mean, y_query)
 
             self.iteration = itr+(epoch*len(batch_labels))
             if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)
@@ -133,7 +152,7 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
             
             if (self.show_plots_pred or self.show_plots_features) and  self.f_rvm:
                 embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
-                self.update_plots_train_fast_rvm(self.plots, labels.cpu().numpy(), embedded_z, None, mse, epoch)
+                self.update_plots_train_fast_rvm(self.plots, y_support.cpu().numpy(), embedded_z, None, mse, epoch)
 
                 if self.show_plots_pred:
                     self.plots.fig.canvas.draw()

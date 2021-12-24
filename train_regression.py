@@ -6,9 +6,10 @@ import configs
 from data.qmul_loader import get_batch, train_people, test_people
 from io_utils import parse_args_regression, get_resume_file
 from methods.Sparse_DKT_regression_Nystrom import Sparse_DKT_regression_Nystrom
+from methods.Sparse_DKT_regression_Nystrom_new_loss import Sparse_DKT_regression_Nystrom_new_loss
 from methods.Sparse_DKT_regression_Exact import Sparse_DKT_regression_Exact
 from methods.DKT_regression import DKT_regression
-from methods.DKT_regression_New_Loss import DKT_New_Loss
+from methods.DKT_regression_New_Loss import DKT_regression_New_Loss
 from methods.MAML_regression import     MAML_regression
 from methods.feature_transfer_regression import FeatureTransfer
 import backbone
@@ -39,7 +40,7 @@ if params.method=='DKT':
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     model.init_summary(id='DKT_org')
 elif params.method=='DKT_New_Loss':
-    model = DKT_New_Loss(bb, video_path=params.checkpoint_dir, 
+    model = DKT_regression_New_Loss(bb, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
 
 elif params.method=='Sparse_DKT_Nystrom':
@@ -70,7 +71,7 @@ elif params.method=='Sparse_DKT_Nystrom':
             os.makedirs(params.checkpoint_dir)
         params.checkpoint_dir = params.checkpoint_dir +  f'KMeans_{str(params.n_centers)}'
         
-        model = Sparse_DKT_regression(bb, f_rvm=False, n_inducing_points=params.n_centers, video_path=video_path, 
+        model = Sparse_DKT_regression_Nystrom(bb, f_rvm=False, n_inducing_points=params.n_centers, video_path=video_path, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     
     elif params.sparse_method=='random':
@@ -78,10 +79,30 @@ elif params.method=='Sparse_DKT_Nystrom':
         if not os.path.isdir(params.checkpoint_dir):
             os.makedirs(params.checkpoint_dir)
         params.checkpoint_dir = params.checkpoint_dir +  f'random_{str(params.n_centers)}'
-        model = Sparse_DKT_regression(bb, f_rvm=False, random=True,  n_inducing_points=params.n_centers, video_path=video_path, 
+        model = Sparse_DKT_regression_Nystrom(bb, f_rvm=False, random=True,  n_inducing_points=params.n_centers, video_path=video_path, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     else:
        raise  ValueError('Unrecognised sparse method')
+
+elif params.method=='Sparse_DKT_Nystrom_new_loss':
+    params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s' % (configs.save_dir, params.dataset, params.model, params.method, 
+                                                        params.sparse_method)
+    video_path = params.checkpoint_dir
+    
+    
+    if params.sparse_method=='FRVM':
+        params.checkpoint_dir += '/'
+        if not os.path.isdir(params.checkpoint_dir):
+            os.makedirs(params.checkpoint_dir)
+        
+        id =  f'Nystrom_new_loss_FRVM_{params.config}_{params.align_thr:.6f}_{params.lr_gp:.5f}_{params.lr_net:.5f}'
+        if params.gamma: id += '_gamma'
+        params.checkpoint_dir = params.checkpoint_dir + id
+
+        model = Sparse_DKT_regression_Nystrom_new_loss(bb, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
+                            video_path=params.checkpoint_dir, 
+                            show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
+        model.init_summary(id=id)
 
 elif params.method=='Sparse_DKT_Exact':
     params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s' % (configs.save_dir, params.dataset, params.model, params.method, 

@@ -22,9 +22,9 @@ from statistics import mean
 from data.qmul_loader import get_batch, train_people, test_people
 from configs import kernel_type
 
-class DKT_New_Loss(nn.Module):
+class DKT_regression_New_Loss(nn.Module):
     def __init__(self, backbone, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
-        super(DKT_New_Loss, self).__init__()
+        super(DKT_regression_New_Loss, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
         self.device = 'cuda'
@@ -67,7 +67,7 @@ class DKT_New_Loss(nn.Module):
             split = np.array([True]*15 + [False]*3)
             # print(split)
             shuffled_split = []
-            for _ in range(6):
+            for _ in range(n_support//15):
                 s = split.copy()
                 np.random.shuffle(s)
                 shuffled_split.extend(s)
