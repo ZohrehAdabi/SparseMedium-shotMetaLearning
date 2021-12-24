@@ -427,9 +427,11 @@
             "request": "launch",
             "program": "${workspaceFolder}/train_regression.py",
             "console": "integratedTerminal",
-           "args": ["--method","DKT", "--n_samples", "72", "--stop_epoch", "100", "--show_plots_features", "--seed","2",
+           "args": ["--method","DKT", "--n_samples", "72", "--stop_epoch", "100",
+            // "--show_plots_features", 
+             "--seed","2",
             "--lr_gp", "1e-1", "--lr_net", "1e-2"] 
-            //python train_regression.py --method "DKT"  --n_samples 72 --stop_epoch 100 --show_plots_features  --seed  2  --lr_gp  1e-2 --lr_net  1e-3
+            //python train_regression.py --method "DKT"  --n_samples 72 --n_support 60  --stop_epoch 100 --show_plots_features  --seed  2  --lr_gp  1e-2 --lr_net  1e-3
         },
         {
             "name": "DKT: test_regression",
@@ -450,7 +452,7 @@
             "console": "integratedTerminal",
            "args": ["--method","DKT_New_Loss", "--n_samples", "72",  "--n_support", "60", "--stop_epoch", "100", "--show_plots_features", "--seed","2",
             "--lr_gp", "1e-1", "--lr_net", "1e-2"] 
-            //python train_regression.py --method "DKT_New_Loss"  --n_samples 72 --stop_epoch 100 --show_plots_features  --seed  2  --lr_gp  1e-2 --lr_net  1e-3
+            //python train_regression.py --method "DKT_New_Loss"  --n_samples 72  --n_support 60 --stop_epoch 100 --show_plots_features  --seed  2  --lr_gp  1e-2 --lr_net  1e-3
         },
         {
             "name": "DKT_New_Loss: test_regression",

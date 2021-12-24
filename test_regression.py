@@ -1,4 +1,4 @@
-from methods.Sparse_DKT_regression_rvm import Sparse_DKT_regression_rvm
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -7,10 +7,10 @@ import configs
 from data.qmul_loader import get_batch, train_people, test_people
 from io_utils import parse_args_regression, get_resume_file
 from methods.DKT_regression import DKT_regression
+from methods.DKT_regression_New_Loss import DKT_regression_New_Loss
 from methods.Sparse_DKT_regression_Nystrom import Sparse_DKT_regression_Nystrom
 from methods.Sparse_DKT_regression_Nystrom_new_loss import Sparse_DKT_regression_Nystrom_new_loss
 from methods.Sparse_DKT_regression_Exact import Sparse_DKT_regression_Exact
-from methods.DKT_regression_New_Loss import DKT_regression_New_Loss
 from methods.MAML_regression import MAML_regression
 from methods.feature_transfer_regression import FeatureTransfer
 import backbone

@@ -19,9 +19,19 @@ import gpytorch
 from time import gmtime, strftime
 import random
 from statistics import mean
-from data.qmul_loader import get_batch, train_people, test_people
+from methods.Fast_RVM_regression import Fast_RVM_regression
+from data.qmul_loader import get_batch, train_people, test_people, val_people, get_unnormalized_label
 from configs import kernel_type
+#Check if tensorboardx is installed
+try:
+    #tensorboard --logdir=./QMUL_Loss/ --host localhost --port 8091
+    from tensorboardX import SummaryWriter
+    IS_TBX_INSTALLED = True
+except ImportError:
+    IS_TBX_INSTALLED = False
+    print('[WARNING] install tensorboardX to record simulation logs.')
 
+IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx") #for test 
 class DKT_regression_New_Loss(nn.Module):
     def __init__(self, backbone, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(DKT_regression_New_Loss, self).__init__()
@@ -29,6 +39,7 @@ class DKT_regression_New_Loss(nn.Module):
         self.feature_extractor = backbone
         self.device = 'cuda'
         self.video_path = video_path
+        self.best_path = video_path
         self.show_plots_pred = show_plots_pred
         self.show_plots_features = show_plots_features
         if self.show_plots_pred or self.show_plots_features:
@@ -41,7 +52,8 @@ class DKT_regression_New_Loss(nn.Module):
         if(train_y is None): train_y=torch.ones(19).cuda()
 
         likelihood = gpytorch.likelihoods.GaussianLikelihood()
-        model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel=kernel_type)
+        likelihood.noise = 0.1
+        model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel='rbf')
 
         self.model      = model.cuda()
         self.likelihood = likelihood.cuda()
@@ -56,8 +68,19 @@ class DKT_regression_New_Loss(nn.Module):
     def set_forward_loss(self, x):
         pass
 
-    def train_loop(self, epoch, n_support, n_samples, optimizer):
+    def init_summary(self, id):
+        if(IS_TBX_INSTALLED):
+            time_string = strftime("%d%m%Y_%H%M", gmtime())
+            if not os.path.isdir('./QMUL_Loss'):
+                os.makedirs('./QMUL_Loss')
+            writer_path = './QMUL_Loss/' + id #+'_'+ time_string
+            self.writer = SummaryWriter(log_dir=writer_path)
 
+    def train_loop(self, epoch, n_support, n_samples, optimizer):
+        
+        self.model.train()
+        self.feature_extractor.train()
+        self.likelihood.train()
         batch, batch_labels = get_batch(train_people, n_samples)
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
         # print(f'{epoch}: {batch_labels[0]}')
@@ -83,14 +106,14 @@ class DKT_regression_New_Loss(nn.Module):
             y_query   = y_all[query_ind]
 
             optimizer.zero_grad()
-            z_support = self.feature_extractor(x_support)
+            z = self.feature_extractor(x_support)
 
-            self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
-            self.model.eval()
+            self.model.set_train_data(inputs=z, targets=y_support, strict=False)
             z_query = self.feature_extractor(x_query)
+            self.model.eval()
             predictions = self.model(z_query)
             self.model.train()
-            loss = -self.mll(predictions, y_query) #self.model.train_targets
+            loss = -self.mll(predictions, y_query)
 
             loss.backward()
             optimizer.step()
@@ -101,10 +124,12 @@ class DKT_regression_New_Loss(nn.Module):
                     itr, epoch, loss.item(), mse.item(),
                     self.model.likelihood.noise.item()
                 ))
+            self.iteration = itr+(epoch*len(batch_labels))
+            if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)
 
             if (self.show_plots_pred or self.show_plots_features):
-                embedded_z = TSNE(n_components=2).fit_transform(z_support.detach().cpu().numpy())
-                self.update_plots_train(self.plots, y_support.cpu().numpy(), embedded_z, None, mse, None)
+                embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
+                self.update_plots_train(self.plots, y_support.cpu().numpy(), embedded_z, None, mse, epoch)
 
                 if self.show_plots_pred:
                     self.plots.fig.canvas.draw()
@@ -114,9 +139,8 @@ class DKT_regression_New_Loss(nn.Module):
                     self.plots.fig_feature.canvas.draw()
                     self.plots.fig_feature.canvas.flush_events()
                     self.mw_feature.grab_frame()
-        
-        return np.mean(mll_list)
 
+        return np.mean(mll_list)
 
     def test_loop(self, n_support, n_samples, test_person, optimizer=None): # no optimizer needed for GP
         inputs, targets = get_batch(test_people, n_samples)
@@ -141,6 +165,13 @@ class DKT_regression_New_Loss(nn.Module):
 
     
         z_support = self.feature_extractor(x_support).detach()
+        #NOTE for test 
+        # with torch.no_grad():
+        #     inducing_points = self.get_inducing_points(z_support, y_support, verbose=False)
+
+        # ip_values = inducing_points.z_values.cuda()
+        # self.model.set_train_data(inputs=ip_values, targets=y_support[inducing_points.index], strict=False)
+        #****
         self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
 
         self.model.eval()
@@ -154,13 +185,16 @@ class DKT_regression_New_Loss(nn.Module):
 
         mse = self.mse(pred.mean, y_query).item()
         #***************************************************
-        y = ((y_query.detach().cpu().numpy() + 1) * 60 / 2) + 60
-        y_pred = ((pred.mean.detach().cpu().numpy() + 1) * 60 / 2) + 60
+        y = get_unnormalized_label(y_query.detach()) #((y_query.detach() + 1) * 60 / 2) + 60
+        y_pred = get_unnormalized_label(pred.mean.detach()) # ((pred.mean.detach() + 1) * 60 / 2) + 60
+        mse_ = self.mse(y_pred, y).item()
+        y = y.cpu().numpy()
+        y_pred = y_pred.cpu().numpy()
         print(Fore.RED,"="*50, Fore.RESET)
         print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
         print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
         print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
-        print(Fore.LIGHTRED_EX, f'mse:    {mse:.4f}', Fore.RESET)
+        print(Fore.LIGHTRED_EX, f'mse:    {mse_:.4f}, mse (normed): {mse:.4f}', Fore.RESET)
         print(Fore.RED,"-"*50, Fore.RESET)
 
         K = self.model.covar_module
@@ -187,36 +221,131 @@ class DKT_regression_New_Loss(nn.Module):
                 self.mw_feature.grab_frame()
 
 
-        return mse
+        return mse, mse_
 
-    def train(self, epoch, n_support, n_samples, optimizer):
+    def train(self, stop_epoch, n_support, n_samples, optimizer):
 
-        mll = self.train_loop(epoch, n_support, n_samples, optimizer)
+        mll_list = []
+        # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=stop_epoch//3, gamma=0.1)
+        best_mse = 1e7
+        for epoch in range(stop_epoch):
+            mll = self.train_loop(epoch, n_support, n_samples, optimizer)
+
+            if epoch%2==0:
+                print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
+                mse_list = []
+                mse_unnorm_list = []
+                val_count = 10
+                rep = True if val_count > len(val_people) else False
+                val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
+                for t in range(val_count):
+                    mse, mse_ = self.test_loop(n_support, n_samples, val_person[t],  optimizer)
+                    mse_list.append(mse)
+                    mse_unnorm_list.append(mse_)
+                mse = np.mean(mse_list)
+                mse_ = np.mean(mse_unnorm_list)
+                if best_mse >= mse:
+                    best_mse = mse
+                    model_name = self.best_path + '_best_model.tar'
+                    self.save_best_checkpoint(epoch+1, best_mse, model_name)
+                    print(Fore.LIGHTRED_EX, f'Best MSE: {best_mse:.4f}', Fore.RESET)
+                print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE (norm): {mse:.4f}, MSE: {mse_:.4f} Best MSE: {best_mse:.4f}', Fore.RESET)
+                if(self.writer is not None):
+                    self.writer.add_scalar('MSE (norm) Val.', mse, epoch)
+                    self.writer.add_scalar('MSE Val.', mse_, epoch)
+                print(Fore.GREEN,"-"*30, Fore.RESET)
+
+            mll_list.append(mll)
+            if(self.writer is not None): self.writer.add_scalar('MLL per epoch', mll, epoch)
+            print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
+            # scheduler.step()
+        mll = np.mean(mll_list)
         if self.show_plots_pred:
             self.mw.finish()
         if self.show_plots_features:
             self.mw_feature.finish()
-        return mll
+        return mll, mll_list
 
     def test(self, n_support, n_samples, optimizer=None, test_count=None):
 
         mse_list = []
+        mse_list_ = []
         # choose a random test person
-        test_person = np.random.choice(np.arange(len(test_people)), size=test_count, replace=False)
+        rep = True if test_count > len(test_people) else False
+
+        test_person = np.random.choice(np.arange(len(test_people)), size=test_count, replace=rep)
         for t in range(test_count):
             print(f'test #{t}')
             
-            mse = self.test_loop(n_support, n_samples, test_person[t],  optimizer)
+            mse, mse_ = self.test_loop(n_support, n_samples, test_person[t],  optimizer)
             
             mse_list.append(float(mse))
+            mse_list_.append(float(mse_))
 
         if self.show_plots_pred:
             self.mw.finish()
         if self.show_plots_features:
             self.mw_feature.finish()
-
+        print(f'MSE (unnormed): {np.mean(mse_list_):.4f}')
         return mse_list
 
+    def get_inducing_points(self, inputs, targets, verbose=True):
+
+        
+        IP_index = np.array([])
+     
+        # with sigma and updating sigma converges to more sparse solution
+        N   = inputs.shape[0]
+        tol = 1e-4
+        eps = torch.finfo(torch.float32).eps
+        max_itr = 1000
+        sigma = self.model.likelihood.noise[0].clone()
+        # sigma = torch.tensor([0.0000001])
+        # sigma = torch.tensor([torch.var(targets) * 0.1]) #sigma^2
+        sigma = sigma.to(self.device)
+        beta = 1 /(sigma + eps)
+        scale = True
+        covar_module = self.model.covar_module
+        # X = inputs.clone()
+        # m = X.mean(axis=0)
+        # X = (X- m) 
+        # X = F.normalize(X, p=2, dim=1)
+        kernel_matrix = covar_module(inputs).evaluate()
+        # normalize kernel
+        if scale:
+            scales	= torch.sqrt(torch.sum(kernel_matrix**2, axis=0))
+            # print(f'scale: {Scales}')
+            scales[scales==0] = 1
+            kernel_matrix = kernel_matrix / scales
+
+        kernel_matrix = kernel_matrix.to(torch.float64)
+        target = targets.clone().to(torch.float64)
+        active, alpha, gamma, beta, mu_m = Fast_RVM_regression(kernel_matrix, target, beta, N, "1011",1e-3,
+                                                False, eps, tol, max_itr, self.device, verbose)
+        
+        index = np.argsort(active)
+        active = active[index]
+        gamma = gamma[index]
+        ss = scales[index]
+        alpha = alpha[index] / ss
+        inducing_points = inputs[active]
+        num_IP = active.shape[0]
+        IP_index = active
+        with torch.no_grad():
+            if True:
+                
+                K = covar_module(inputs, inducing_points).evaluate()
+                # K = covar_module(X, X[active]).evaluate()
+                mu_m = (mu_m[index] / ss)
+                mu_m = mu_m.to(torch.float)
+                y_pred = K @ mu_m
+                
+                mse = self.mse(y_pred, target)
+                print(f'FRVM MSE: {mse:0.4f}')
+        
+
+        return IP(inducing_points, IP_index, num_IP, alpha, gamma, None, None, None, None)
+  
     def save_checkpoint(self, checkpoint):
         # save state
         gp_state_dict         = self.model.state_dict()
@@ -230,6 +359,15 @@ class DKT_regression_New_Loss(nn.Module):
         self.likelihood.load_state_dict(ckpt['likelihood'])
         self.feature_extractor.load_state_dict(ckpt['net'])
     
+    def save_best_checkpoint(self, epoch, mse, checkpoint):
+        # save state
+        gp_state_dict         = self.model.state_dict()
+        likelihood_state_dict = self.likelihood.state_dict()
+        nn_state_dict         = self.feature_extractor.state_dict()
+        torch.save({'gp': gp_state_dict, 'likelihood': likelihood_state_dict, 
+        'net':nn_state_dict, 'epoch': epoch, 'mse':mse}, checkpoint)
+
+ 
     def initialize_plot(self, video_path, training):
         
         
@@ -239,6 +377,7 @@ class DKT_regression_New_Loss(nn.Module):
             self.video_path = video_path+'_Test_video'
 
         os.makedirs(self.video_path, exist_ok=True)
+
         time_now = datetime.now().strftime('%Y-%m-%d--%H-%M')
          
         self.plots = self.prepare_plots()
@@ -279,7 +418,7 @@ class DKT_regression_New_Loss(nn.Module):
     def update_plots_train(self,plots, train_y, embedded_z, mll, mse, epoch):
         if self.show_plots_features:
             #features
-            y = ((train_y + 1) * 60 / 2) + 60
+            y = get_unnormalized_label(train_y)#((train_y + 1) * 60 / 2) + 60
             tilt = np.unique(y)
             plots.ax_feature.clear()
             for t in tilt:
@@ -289,6 +428,7 @@ class DKT_regression_New_Loss(nn.Module):
                 plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
 
             plots.ax_feature.legend()
+            plots.ax_feature.set_title(f'epoch {epoch}')
 
     def update_plots_test(self, plots, train_x, train_y, train_z, test_z, embedded_z,   
                                     test_x, test_y, test_y_pred, similar_idx_x_s, mll, mse, person):
@@ -312,11 +452,11 @@ class DKT_regression_New_Loss(nn.Module):
             return plots
 
         if self.show_plots_pred:
-            plots.fig.suptitle(f"person {person}, MSE: {mse:.4f}")
+
             cluster_colors = ['aqua', 'coral', 'lime', 'gold', 'purple', 'green']
             #train images
-
-            y = ((train_y + 1) * 60 / 2) + 60
+            plots.fig.suptitle(f'person {person}, MSE: {mse:.4f}')
+            y = get_unnormalized_label(train_y)# ((train_y + 1) * 60 / 2) + 60
             tilt = [60, 70, 80, 90, 100, 110, 120]
             num = 1
             for t in tilt:
@@ -331,7 +471,7 @@ class DKT_regression_New_Loss(nn.Module):
                     i = int(t/10-6)
                     # z = train_z[idx]
                     for j in range(0, idx.shape[0]): 
-                        img = transforms.ToPILImage()(x[j]).convert("RGB")
+                        img = transforms.ToPILImage()(x[j].cpu()).convert("RGB")
                         plots = clear_ax(plots, i, j)
                         plots = color_ax(plots, i, j, 'black', lw=0.5)
                         plots.ax[i, j].imshow(img)
@@ -341,11 +481,11 @@ class DKT_regression_New_Loss(nn.Module):
                 
         
             # test images
-            y = ((test_y + 1) * 60 / 2) + 60
+            y = get_unnormalized_label(test_y) #((test_y + 1) * 60 / 2) + 60
             y_mean = test_y_pred.mean.detach().cpu().numpy()
             y_var = test_y_pred.variance.detach().cpu().numpy()
             y_pred = ((y_mean + 1) * 60 / 2) + 60
-            y_s = ((train_y + 1) * 60 / 2) + 60
+            y_s = get_unnormalized_label(train_y) #((train_y + 1) * 60 / 2) + 60
             
             for t in tilt:
                 idx = np.where(y==(t))[0]
@@ -360,7 +500,7 @@ class DKT_regression_New_Loss(nn.Module):
                     i = int(t/10-6)
                     for j in range(idx.shape[0]):
                         
-                        img = transforms.ToPILImage()(x[j]).convert("RGB")
+                        img = transforms.ToPILImage()(x[j].cpu()).convert("RGB")
                         ii = 16
                         plots = clear_ax(plots, i, j+ii)
                         plots.ax[i, j+ii].imshow(img)
@@ -378,7 +518,7 @@ class DKT_regression_New_Loss(nn.Module):
 
         if self.show_plots_features:
             #features
-            y = ((train_y + 1) * 60 / 2) + 60
+            y = get_unnormalized_label(train_y)#((train_y + 1) * 60 / 2) + 60
             tilt = np.unique(y)
             plots.ax_feature.clear()
             for t in tilt:
@@ -401,7 +541,8 @@ class ExactGPLayer(gpytorch.models.ExactGP):
             self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
         ## Spectral kernel
         elif(kernel=='spectral'):
-            self.covar_module = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=4, ard_num_dims=2916)
+            self.covar_module = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=16, ard_num_dims=2916)
+            self.covar_module.initialize_from_data_empspect(train_x, train_y)
         else:
             raise ValueError("[ERROR] the kernel '" + str(kernel) + "' is not supported for regression, use 'rbf' or 'spectral'.")
 

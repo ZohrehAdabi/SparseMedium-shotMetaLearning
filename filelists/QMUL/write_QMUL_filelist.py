@@ -80,7 +80,7 @@ for dataset in dataset_list:
     fo.write('],')
 
     fo.write('"image_names": [')
-    fo.writelines(['"%s",' % item  for item in file_list])
+    fo.writelines(['"%s",' % item.replace("\\","\\\\")  for item in file_list])
     fo.seek(0, os.SEEK_END) 
     fo.seek(fo.tell()-1, os.SEEK_SET)
     fo.write('],')

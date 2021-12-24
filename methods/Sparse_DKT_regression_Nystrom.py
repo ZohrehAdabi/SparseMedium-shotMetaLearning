@@ -40,10 +40,10 @@ except ImportError:
 
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx")
-class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
-    def __init__(self, backbone, f_rvm=True, scale=False, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
+class Sparse_DKT_regression_Nystrom(nn.Module):
+    def __init__(self, backbone, f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
-        super(Sparse_DKT_regression_Nystrom_new_loss, self).__init__()
+        super(Sparse_DKT_regression_Nystrom, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
         self.num_induce_points = n_inducing_points
@@ -287,21 +287,25 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
                 if epoch%2==0:
                     print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
                     mse_list = []
+                    mse_unnorm_list = []
                     val_count = 10
                     rep = True if val_count > len(val_people) else False
                     val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
                     for t in range(val_count):
                         mse, mse_ = self.test_loop_fast_rvm(n_support, n_samples, val_person[t],  optimizer)
                         mse_list.append(mse)
+                        mse_unnorm_list.append(mse_)
                     mse = np.mean(mse_list)
+                    mse_ = np.mean(mse_unnorm_list)
                     if best_mse >= mse:
                         best_mse = mse
                         model_name = self.best_path + 'best_model.tar'
                         self.save_best_checkpoint(epoch+1, best_mse, model_name)
                         print(Fore.LIGHTRED_EX, f'Best MSE: {best_mse:.4f}', Fore.RESET)
-                    print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE: {mse:.4f}, Best MSE: {best_mse:.4f}', Fore.RESET)
+                    print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE (norm): {mse:.4f}, MSE: {mse_:.4f} Best MSE: {best_mse:.4f}', Fore.RESET)
                     if(self.writer is not None):
-                        self.writer.add_scalar('MSE Val.', mse, epoch)
+                        self.writer.add_scalar('MSE (norm) Val.', mse, epoch)
+                        self.writer.add_scalar('MSE Val.', mse_, epoch)
                 print(Fore.GREEN,"-"*30, Fore.RESET)
             elif self.random:
                 mll = self.train_loop_random(epoch, n_support, n_samples, optimizer)

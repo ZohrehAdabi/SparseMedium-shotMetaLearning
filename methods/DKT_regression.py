@@ -144,10 +144,10 @@ class DKT_regression(nn.Module):
     
         z_support = self.feature_extractor(x_support).detach()
         #NOTE for test 
-        with torch.no_grad():
-            inducing_points = self.get_inducing_points(z_support, y_support, verbose=False)
+        # with torch.no_grad():
+        #     inducing_points = self.get_inducing_points(z_support, y_support, verbose=False)
 
-        ip_values = inducing_points.z_values.cuda()
+        # ip_values = inducing_points.z_values.cuda()
         # self.model.set_train_data(inputs=ip_values, targets=y_support[inducing_points.index], strict=False)
         #****
         self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
@@ -169,9 +169,6 @@ class DKT_regression(nn.Module):
         y = y.cpu().numpy()
         y_pred = y_pred.cpu().numpy()
         print(Fore.RED,"="*50, Fore.RESET)
-        print(f'inducing_points count: {inducing_points.count}')
-        print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha}',Fore.RESET)
-        print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma}',Fore.RESET)
         print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
         print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
         print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
@@ -215,21 +212,25 @@ class DKT_regression(nn.Module):
             if epoch%2==0:
                 print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
                 mse_list = []
+                mse_unnorm_list = []
                 val_count = 10
                 rep = True if val_count > len(val_people) else False
                 val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
                 for t in range(val_count):
                     mse, mse_ = self.test_loop(n_support, n_samples, val_person[t],  optimizer)
                     mse_list.append(mse)
+                    mse_unnorm_list.append(mse_)
                 mse = np.mean(mse_list)
+                mse_ = np.mean(mse_unnorm_list)
                 if best_mse >= mse:
                     best_mse = mse
                     model_name = self.best_path + '_best_model.tar'
                     self.save_best_checkpoint(epoch+1, best_mse, model_name)
                     print(Fore.LIGHTRED_EX, f'Best MSE: {best_mse:.4f}', Fore.RESET)
-                print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE: {mse:.4f}, Best MSE: {best_mse:.4f}', Fore.RESET)
+                print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE (norm): {mse:.4f}, MSE: {mse_:.4f} Best MSE: {best_mse:.4f}', Fore.RESET)
                 if(self.writer is not None):
-                    self.writer.add_scalar('MSE Val.', mse, epoch)
+                    self.writer.add_scalar('MSE (norm) Val.', mse, epoch)
+                    self.writer.add_scalar('MSE Val.', mse_, epoch)
                 print(Fore.GREEN,"-"*30, Fore.RESET)
 
             mll_list.append(mll)

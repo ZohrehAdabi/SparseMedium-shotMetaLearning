@@ -42,6 +42,7 @@ if params.method=='DKT':
 elif params.method=='DKT_New_Loss':
     model = DKT_regression_New_Loss(bb, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
+    model.init_summary(id='DKT_new_loss')
 
 elif params.method=='Sparse_DKT_Nystrom':
     params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s' % (configs.save_dir, params.dataset, params.model, params.method, 
@@ -138,7 +139,7 @@ else:
 optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr': params.lr_gp}, #0.01
                               {'params': model.feature_extractor.parameters(), 'lr': params.lr_net} #0.001
                               ])
-if params.method=='DKT' or params.method=='Sparse_DKT' or params.method=='Sparse_DKT_rvm':
+if params.method in ['DKT', 'DKT_New_Loss', 'Sparse_DKT_Nystrom', 'Sparse_DKT_Nystrom_new_loss', 'Sparse_DKT_Exact']:
 
     mll, _ = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer)
 
