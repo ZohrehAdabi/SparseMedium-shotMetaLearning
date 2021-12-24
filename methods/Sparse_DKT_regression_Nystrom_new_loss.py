@@ -334,7 +334,7 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
                 ValueError("Error")
             mll_list.append(mll)
             if(self.writer is not None): self.writer.add_scalar('MLL per epoch', mll, epoch)
-            print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
+            print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch+1} => MLL: {mll}\n', "-"*30, Fore.RESET)
 
             # scheduler.step()
             # if (epoch) in [3]:
