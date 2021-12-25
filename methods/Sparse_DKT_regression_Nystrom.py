@@ -41,11 +41,12 @@ except ImportError:
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx")
 class Sparse_DKT_regression_Nystrom(nn.Module):
-    def __init__(self, backbone, f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
+    def __init__(self, backbone, kernel_type='rbf', f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_regression_Nystrom, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
+        self.kernel_type = kernel_type
         self.normalize = False
         self.num_induce_points = n_inducing_points
         self.config = config
@@ -70,7 +71,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
 
         likelihood = gpytorch.likelihoods.GaussianLikelihood()
         likelihood.noise = 0.1
-        model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel='rbf', induce_point=train_x)
+        model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel=self.kernel_type, induce_point=train_x)
 
         self.model      = model.cuda()
         self.likelihood = likelihood.cuda()
@@ -125,14 +126,20 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
 
             self.iteration = itr+(epoch*len(batch_labels))
             if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)
-
-            if ((epoch%1==0) & (itr%2==0)):
-                print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f outputscale: %.3f lengthscale: %.3f' % (
-                    itr, epoch, loss.item(), mse.item(),
-                    self.model.likelihood.noise.item(), self.model.base_covar_module.outputscale,
-                    self.model.base_covar_module.base_kernel.lengthscale
-                ),Fore.RESET)
-            
+            if self.kernel_type=='rbf':
+                if ((epoch%1==0) & (itr%2==0)):
+                    print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f outputscale: %.3f lengthscale: %.3f' % (
+                        itr, epoch, loss.item(), mse.item(),
+                        self.model.likelihood.noise.item(), self.model.base_covar_module.outputscale,
+                        self.model.base_covar_module.base_kernel.lengthscale
+                    ),Fore.RESET)
+            else:
+                if ((epoch%1==0) & (itr%2==0)):
+                    print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
+                        itr, epoch, loss.item(), mse.item(),
+                        self.model.likelihood.noise.item(), 
+                    ),Fore.RESET)
+                
             if (self.show_plots_pred or self.show_plots_features) and  self.f_rvm:
                 embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
                 self.update_plots_train_fast_rvm(self.plots, labels.cpu().numpy(), embedded_z, None, mse, epoch)
@@ -656,7 +663,7 @@ class ExactGPLayer(gpytorch.models.ExactGP):
             
         ## Spectral kernel
         elif(kernel=='spectral'):
-            self.base_covar_module = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=16, ard_num_dims=2916)
+            self.base_covar_module = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=4, ard_num_dims=2916)
             self.base_covar_module.initialize_from_data_empspect(train_x, train_y)
         else:
             raise ValueError("[ERROR] the kernel '" + str(kernel) + "' is not supported for regression, use 'rbf' or 'spectral'.")
@@ -666,6 +673,7 @@ class ExactGPLayer(gpytorch.models.ExactGP):
         mean_x  = self.mean_module(x)
         covar_x = self.covar_module(x)
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+
 
 
 '''

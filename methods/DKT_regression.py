@@ -33,10 +33,11 @@ except ImportError:
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx") #for test 
 class DKT_regression(nn.Module):
-    def __init__(self, backbone, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
+    def __init__(self, backbone, kernel_type='rbf', video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(DKT_regression, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
+        self.kernel_type = kernel_type
         self.device = 'cuda'
         self.video_path = video_path
         self.best_path = video_path
@@ -53,7 +54,7 @@ class DKT_regression(nn.Module):
 
         likelihood = gpytorch.likelihoods.GaussianLikelihood()
         likelihood.noise = 0.1
-        model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel='rbf')
+        model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel=self.kernel_type)
         # model.covar_module.outputscale = 0.2
         # model.covar_module.base_kernel.lengthscale = 0.2
         self.model      = model.cuda()
@@ -98,13 +99,20 @@ class DKT_regression(nn.Module):
             optimizer.step()
             mse = self.mse(predictions.mean, labels)
             mll_list.append(loss.item())
-            if ((epoch%2==0) & (itr%5==0)):
-                print('[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f outputscale: %.3f lengthscale: %.3f' % (
-                    itr, epoch+1, loss.item(), mse.item(),
-                    self.model.likelihood.noise.item(),
-                    self.model.covar_module.outputscale,
-                    self.model.covar_module.base_kernel.lengthscale
-                ))
+            if self.kernel_type=='rbf':
+                if ((epoch%2==0) & (itr%5==0)):
+                    print('[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f outputscale: %.3f lengthscale: %.3f' % (
+                        itr, epoch+1, loss.item(), mse.item(),
+                        self.model.likelihood.noise.item(),
+                        self.model.covar_module.outputscale,
+                        self.model.covar_module.base_kernel.lengthscale
+                    ))
+            else:
+                 if ((epoch%2==0) & (itr%5==0)):
+                    print('[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
+                        itr, epoch+1, loss.item(), mse.item(),
+                        self.model.likelihood.noise.item(),
+                    ))
             self.iteration = itr+(epoch*len(batch_labels))
             if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)
 

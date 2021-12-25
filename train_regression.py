@@ -36,13 +36,15 @@ if params.dataset=='QMUL':
         bb           = backbone.Conv3_MAML().cuda()
 
 if params.method=='DKT':
-    model = DKT_regression(bb, video_path=params.checkpoint_dir, 
+    model = DKT_regression(bb, kernel_type=params.kernel_type, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
-    model.init_summary(id='DKT_org')
+    params.checkpoint_dir += f'_{params.kernel_type}'
+    model.init_summary(id=f'DKT_org_{params.kernel_type}')
 elif params.method=='DKT_New_Loss':
-    model = DKT_regression_New_Loss(bb, video_path=params.checkpoint_dir, 
+    model = DKT_regression_New_Loss(bb, kernel_type=params.kernel_type, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
-    model.init_summary(id='DKT_new_loss')
+    params.checkpoint_dir += f'_{params.kernel_type}'
+    model.init_summary(id=f'DKT_new_loss_{params.kernel_type}')
 
 elif params.method=='Sparse_DKT_Nystrom':
     params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s' % (configs.save_dir, params.dataset, params.model, params.method, 
@@ -57,9 +59,10 @@ elif params.method=='Sparse_DKT_Nystrom':
         
         id =  f'FRVM_{params.config}_{params.align_thr:.6f}_{params.lr_gp:.5f}_{params.lr_net:.5f}'
         if params.gamma: id += '_gamma'
+        id += f'_{params.kernel_type}'
         params.checkpoint_dir = params.checkpoint_dir + id
 
-        model = Sparse_DKT_regression_Nystrom(bb, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
+        model = Sparse_DKT_regression_Nystrom(bb, kernel_type=params.kernel_type, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
                             video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
         model.init_summary(id=id)
@@ -98,9 +101,10 @@ elif params.method=='Sparse_DKT_Nystrom_new_loss':
         
         id =  f'Nystrom_new_loss_FRVM_{params.config}_{params.align_thr:.6f}_{params.lr_gp:.5f}_{params.lr_net:.5f}'
         if params.gamma: id += '_gamma'
+        id += f'_{params.kernel_type}'
         params.checkpoint_dir = params.checkpoint_dir + id
 
-        model = Sparse_DKT_regression_Nystrom_new_loss(bb, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
+        model = Sparse_DKT_regression_Nystrom_new_loss(bb, kernel_type=params.kernel_type, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
                             video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
         model.init_summary(id=id)
@@ -118,9 +122,10 @@ elif params.method=='Sparse_DKT_Exact':
         
         id =  f'Exact_FRVM_{params.config}_{params.align_thr:.6f}_{params.lr_gp:.5f}_{params.lr_net:.5f}'
         if params.gamma: id += '_gamma'
+        id += f'_{params.kernel_type}'
         params.checkpoint_dir = params.checkpoint_dir + id
 
-        model = Sparse_DKT_regression_Exact(bb, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
+        model = Sparse_DKT_regression_Exact(bb, kernel_type=params.kernel_type, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
                             video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
         model.init_summary(id=id)
