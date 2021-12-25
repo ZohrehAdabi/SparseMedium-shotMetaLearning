@@ -54,7 +54,8 @@ class DKT_regression(nn.Module):
         likelihood = gpytorch.likelihoods.GaussianLikelihood()
         likelihood.noise = 0.1
         model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel='rbf')
-
+        # model.covar_module.outputscale = 0.2
+        # model.covar_module.base_kernel.lengthscale = 0.2
         self.model      = model.cuda()
         self.likelihood = likelihood.cuda()
         self.mll        = gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self.model).cuda()
@@ -98,9 +99,11 @@ class DKT_regression(nn.Module):
             mse = self.mse(predictions.mean, labels)
             mll_list.append(loss.item())
             if ((epoch%2==0) & (itr%5==0)):
-                print('[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
+                print('[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f outputscale: %.3f lengthscale: %.3f' % (
                     itr, epoch+1, loss.item(), mse.item(),
-                    self.model.likelihood.noise.item()
+                    self.model.likelihood.noise.item(),
+                    self.model.covar_module.outputscale,
+                    self.model.covar_module.base_kernel.lengthscale
                 ))
             self.iteration = itr+(epoch*len(batch_labels))
             if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)

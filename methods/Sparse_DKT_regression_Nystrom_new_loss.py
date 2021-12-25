@@ -1,5 +1,6 @@
 ## Original packages
 # from torch._C import ShortTensor
+from PIL.Image import TRANSPOSE
 from numpy.core.defchararray import count
 import backbone
 import torch
@@ -46,7 +47,7 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
         super(Sparse_DKT_regression_Nystrom_new_loss, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
-        self.normalize = False
+        self.normalize = True
         self.num_induce_points = n_inducing_points
         self.config = config
         self.gamma = gamma
@@ -71,8 +72,8 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
         likelihood = gpytorch.likelihoods.GaussianLikelihood()
         likelihood.noise = 0.1
         model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel='rbf', induce_point=train_x)
-        model.base_covar_module.outputscale = 0.2
-        model.base_covar_module.base_kernel.lengthscale = 0.2
+        model.base_covar_module.outputscale = 0.1
+        model.base_covar_module.base_kernel.lengthscale = 0.1
         self.model      = model.cuda()
         self.likelihood = likelihood.cuda()
         self.mll        = gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self.model).cuda()

@@ -129,7 +129,6 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             if ((epoch%1==0) & (itr%2==0)):
                 print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f outputscale: %.3f lengthscale: %.3f' % (
                     itr, epoch, loss.item(), mse.item(),
-                    self.model.likelihood.noise.item(),
                     self.model.likelihood.noise.item(), self.model.base_covar_module.outputscale,
                     self.model.base_covar_module.base_kernel.lengthscale
                 ),Fore.RESET)
