@@ -46,6 +46,7 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
         super(Sparse_DKT_regression_Nystrom_new_loss, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
+        self.normalize = False
         self.num_induce_points = n_inducing_points
         self.config = config
         self.gamma = gamma
@@ -70,7 +71,8 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
         likelihood = gpytorch.likelihoods.GaussianLikelihood()
         likelihood.noise = 0.1
         model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel='rbf', induce_point=train_x)
-
+        model.base_covar_module.outputscale = 0.2
+        model.base_covar_module.base_kernel.lengthscale = 0.2
         self.model      = model.cuda()
         self.likelihood = likelihood.cuda()
         self.mll        = gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self.model).cuda()
@@ -121,7 +123,7 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
             y_query   = y_all[query_ind]
 
             z = self.feature_extractor(x_support)
-            # z = F.normalize(z, p=2, dim=1)
+            if self.normalize: z = F.normalize(z, p=2, dim=1)
             with torch.no_grad():
                 inducing_points = self.get_inducing_points(z, y_support, verbose=False)
            
@@ -131,6 +133,7 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
             self.model.set_train_data(inputs=z, targets=y_support, strict=False)
 
             z_query = self.feature_extractor(x_query)
+            if self.normalize: z_query = F.normalize(z_query, p=2, dim=1)
             self.model.eval()
             predictions = self.model(z_query)
             self.model.train()
@@ -145,9 +148,10 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
             if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)
 
             if ((epoch%1==0) & (itr%2==0)):
-                print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
+                print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f outputscale: %.3f lengthscale: %.3f' % (
                     itr, epoch, loss.item(), mse.item(),
-                    self.model.likelihood.noise.item()
+                    self.model.likelihood.noise.item(), self.model.base_covar_module.outputscale,
+                    self.model.base_covar_module.base_kernel.lengthscale
                 ),Fore.RESET)
             
             if (self.show_plots_pred or self.show_plots_features) and  self.f_rvm:
@@ -181,7 +185,7 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
         split = np.array([True]*15 + [False]*3)
         # print(split)
         shuffled_split = []
-        for _ in range(int(n_support/15)):
+        for _ in range(int(n_support//15)):
             s = split.copy()
             np.random.shuffle(s)
             shuffled_split.extend(s)
@@ -197,7 +201,7 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
         # induce_ind = list(np.random.choice(list(range(n_samples)), replace=False, size=self.num_induce_points))
         # induce_point = self.feature_extractor(x_support[induce_ind, :,:,:])
         z_support = self.feature_extractor(x_support).detach()
-        # z_support = F.normalize(z_support, p=2, dim=1)
+        if self.normalize: z_support = F.normalize(z_support, p=2, dim=1)
         with torch.no_grad():
             inducing_points = self.get_inducing_points(z_support, y_support, verbose=False)
         
@@ -212,7 +216,7 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
 
         with torch.no_grad():
             z_query = self.feature_extractor(x_query).detach()
-            # z_query = F.normalize(z_query, p=2, dim=1)
+            if self.normalize: z_query = F.normalize(z_query, p=2, dim=1)
             pred    = self.likelihood(self.model(z_query))
             lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
 
@@ -311,7 +315,7 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
                     rep = True if val_count > len(val_people) else False
                     val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
                     for t in range(val_count):
-                        mse, mse_ = self.test_loop_fast_rvm(n_support, n_samples, val_person[t],  optimizer)
+                        mse, mse_, _ = self.test_loop_fast_rvm(n_support, n_samples, val_person[t],  optimizer)
                         mse_list.append(mse)
                         mse_unnorm_list.append(mse_)
                     mse = np.mean(mse_list)

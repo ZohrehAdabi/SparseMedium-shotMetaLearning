@@ -74,7 +74,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
         idx = ~idx #active_factor <= 1e-12
         delete = active_m[idx]
         anyToDelete = len(delete) > 0
-        if anyToDelete and alpha_m.shape[0] > 1: 	   # if there is only one basis function (M=1) (In practice, this latter event ought only to happen with the Gaussian
+        if anyToDelete and active_m.shape[0] > 1: 	   # if there is only one basis function (M=1) (In practice, this latter event ought only to happen with the Gaussian
                                                         #    likelihood when initial noise is too high. In that case, a later beta
                                                         #    update should 'cure' this.)
             deltaML[delete] = -(q[delete]**2 / (s[delete] + alpha_m[idx]) - torch.log(1 + s[delete] / alpha_m[idx])) 
@@ -834,9 +834,8 @@ if __name__=='__main__':
         # kernel_matrix = kernel_matrix / scale
         # normalize k(x,z) vector
         Scales	= torch.sqrt(torch.sum(kernel_matrix**2, axis=0))
-        kernel_matrix = kernel_matrix / Scales
+        K = kernel_matrix.clone() / Scales
 
-    K = kernel_matrix
     # scale = torch.sqrt(torch.sum(K) / N ** 2)
     # K = K / scale
     config = "1011"

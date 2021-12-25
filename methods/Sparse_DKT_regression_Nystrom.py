@@ -46,6 +46,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         super(Sparse_DKT_regression_Nystrom, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
+        self.normalize = False
         self.num_induce_points = n_inducing_points
         self.config = config
         self.gamma = gamma
@@ -104,7 +105,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
 
             
             z = self.feature_extractor(inputs)
-            # z = F.normalize(z, p=2, dim=1)
+            if(self.normalize): z = F.normalize(z, p=2, dim=1)
             with torch.no_grad():
                 inducing_points = self.get_inducing_points(z, labels, verbose=False)
            
@@ -113,7 +114,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             self.model.train()
             self.model.set_train_data(inputs=z, targets=labels, strict=False)
 
-            # z = self.feature_extractor(x_query)
+           
             predictions = self.model(z)
             loss = -self.mll(predictions, self.model.train_targets)
             optimizer.zero_grad()
@@ -126,9 +127,11 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)
 
             if ((epoch%1==0) & (itr%2==0)):
-                print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
+                print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f outputscale: %.3f lengthscale: %.3f' % (
                     itr, epoch, loss.item(), mse.item(),
-                    self.model.likelihood.noise.item()
+                    self.model.likelihood.noise.item(),
+                    self.model.likelihood.noise.item(), self.model.base_covar_module.outputscale,
+                    self.model.base_covar_module.base_kernel.lengthscale
                 ),Fore.RESET)
             
             if (self.show_plots_pred or self.show_plots_features) and  self.f_rvm:
@@ -178,7 +181,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         # induce_ind = list(np.random.choice(list(range(n_samples)), replace=False, size=self.num_induce_points))
         # induce_point = self.feature_extractor(x_support[induce_ind, :,:,:])
         z_support = self.feature_extractor(x_support).detach()
-        # z_support = F.normalize(z_support, p=2, dim=1)
+        if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1) 
         with torch.no_grad():
             inducing_points = self.get_inducing_points(z_support, y_support, verbose=False)
         
@@ -193,7 +196,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
 
         with torch.no_grad():
             z_query = self.feature_extractor(x_query).detach()
-            # z_query = F.normalize(z_query, p=2, dim=1)
+            if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
             pred    = self.likelihood(self.model(z_query))
             lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
 
@@ -299,7 +302,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                     mse_ = np.mean(mse_unnorm_list)
                     if best_mse >= mse:
                         best_mse = mse
-                        model_name = self.best_path + 'best_model.tar'
+                        model_name = self.best_path + '_best_model.tar'
                         self.save_best_checkpoint(epoch+1, best_mse, model_name)
                         print(Fore.LIGHTRED_EX, f'Best MSE: {best_mse:.4f}', Fore.RESET)
                     print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE (norm): {mse:.4f}, MSE: {mse_:.4f} Best MSE: {best_mse:.4f}', Fore.RESET)
