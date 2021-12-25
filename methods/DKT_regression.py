@@ -92,6 +92,8 @@ class DKT_regression(nn.Module):
             z = self.feature_extractor(inputs)
 
             self.model.set_train_data(inputs=z, targets=labels, strict=False)
+            if self.kernel_type=='spectral':
+                self.model.covar_module.initialize_from_data_empspect(z, labels)
             predictions = self.model(z)
             loss = -self.mll(predictions, self.model.train_targets)
 
@@ -162,7 +164,8 @@ class DKT_regression(nn.Module):
         # self.model.set_train_data(inputs=ip_values, targets=y_support[inducing_points.index], strict=False)
         #****
         self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
-
+        if self.kernel_type=='spectral':
+            self.model.covar_module.initialize_from_data_empspect(z_support, y_support)
         self.model.eval()
         self.feature_extractor.eval()
         self.likelihood.eval()
@@ -530,7 +533,7 @@ class ExactGPLayer(gpytorch.models.ExactGP):
             self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
         ## Spectral kernel
         elif(kernel=='spectral'):
-            self.covar_module = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=16, ard_num_dims=2916)
+            self.covar_module = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=4, ard_num_dims=2916)
             self.covar_module.initialize_from_data_empspect(train_x, train_y)
         else:
             raise ValueError("[ERROR] the kernel '" + str(kernel) + "' is not supported for regression, use 'rbf' or 'spectral'.")

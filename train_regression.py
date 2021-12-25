@@ -36,14 +36,17 @@ if params.dataset=='QMUL':
         bb           = backbone.Conv3_MAML().cuda()
 
 if params.method=='DKT':
+    id = f'_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+    params.checkpoint_dir += id
     model = DKT_regression(bb, kernel_type=params.kernel_type, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
-    params.checkpoint_dir += f'_{params.kernel_type}'
     model.init_summary(id=f'DKT_org_{params.kernel_type}')
+
 elif params.method=='DKT_New_Loss':
+    id = f'_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+    params.checkpoint_dir += id
     model = DKT_regression_New_Loss(bb, kernel_type=params.kernel_type, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
-    params.checkpoint_dir += f'_{params.kernel_type}'
     model.init_summary(id=f'DKT_new_loss_{params.kernel_type}')
 
 elif params.method=='Sparse_DKT_Nystrom':
@@ -57,7 +60,7 @@ elif params.method=='Sparse_DKT_Nystrom':
         if not os.path.isdir(params.checkpoint_dir):
             os.makedirs(params.checkpoint_dir)
         
-        id =  f'FRVM_{params.config}_{params.align_thr:.6f}_{params.lr_gp:.5f}_{params.lr_net:.5f}'
+        id =  f'FRVM_{params.config}_{params.align_thr}_{params.lr_gp}_{params.lr_net}'
         if params.gamma: id += '_gamma'
         id += f'_{params.kernel_type}'
         params.checkpoint_dir = params.checkpoint_dir + id
@@ -99,7 +102,7 @@ elif params.method=='Sparse_DKT_Nystrom_new_loss':
         if not os.path.isdir(params.checkpoint_dir):
             os.makedirs(params.checkpoint_dir)
         
-        id =  f'Nystrom_new_loss_FRVM_{params.config}_{params.align_thr:.6f}_{params.lr_gp:.5f}_{params.lr_net:.5f}'
+        id =  f'Nystrom_new_loss_FRVM_{params.config}_{params.align_thr}_{params.lr_gp}_{params.lr_net}'
         if params.gamma: id += '_gamma'
         id += f'_{params.kernel_type}'
         params.checkpoint_dir = params.checkpoint_dir + id
@@ -120,7 +123,7 @@ elif params.method=='Sparse_DKT_Exact':
         if not os.path.isdir(params.checkpoint_dir):
             os.makedirs(params.checkpoint_dir)
         
-        id =  f'Exact_FRVM_{params.config}_{params.align_thr:.6f}_{params.lr_gp:.5f}_{params.lr_net:.5f}'
+        id =  f'Exact_FRVM_{params.config}_{params.align_thr}_{params.lr_gp}_{params.lr_net}'
         if params.gamma: id += '_gamma'
         id += f'_{params.kernel_type}'
         params.checkpoint_dir = params.checkpoint_dir + id
@@ -138,6 +141,7 @@ elif params.method=='MAML':
 elif params.method=='transfer':
     model = FeatureTransfer(bb, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
+
 else:
     ValueError('Unrecognised method')
 

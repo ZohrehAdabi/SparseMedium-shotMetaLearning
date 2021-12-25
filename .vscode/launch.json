@@ -430,7 +430,7 @@
            "args": ["--method","DKT", "--n_samples", "72", "--stop_epoch", "100",
             // "--show_plots_features", 
              "--seed","2",
-            "--lr_gp", "1e-1", "--lr_net", "1e-2", "--kernel_type", "rbf"] 
+            "--lr_gp", "1e-1", "--lr_net", "1e-2", "--kernel_type", "spectral"] 
             //python train_regression.py --method "DKT"  --n_samples 72 --n_support 60  --stop_epoch 100 --show_plots_features  --seed  2  --lr_gp  1e-2 --lr_net  1e-3 --kernel_type "rbf"
         },
         {

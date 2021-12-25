@@ -114,7 +114,8 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
             self.model.train()
             self.model.set_train_data(inputs=z, targets=labels, strict=False)
-
+            if self.kernel_type=='spectral':
+                self.model.base_covar_module.initialize_from_data_empspect(z, labels)
            
             predictions = self.model(z)
             loss = -self.mll(predictions, self.model.train_targets)
@@ -195,7 +196,8 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
         self.model.covar_module._clear_cache()
         self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
-
+        if self.kernel_type=='spectral':
+            self.model.base_covar_module.initialize_from_data_empspect(z_support, y_support)
         self.model.eval()
         self.feature_extractor.eval()
         self.likelihood.eval()

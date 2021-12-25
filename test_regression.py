@@ -29,15 +29,19 @@ if params.method=='MAML':
     bb      = backbone.Conv3_MAML().cuda()
 
 if params.method=='DKT':
+    id = f'_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+    params.checkpoint_dir += id
     model = DKT_regression(bb, kernel_type=params.kernel_type, video_path=params.checkpoint_dir, 
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features).cuda()
-    params.checkpoint_dir += f'_{params.kernel_type}'
     optimizer = None
+
 elif params.method=='DKT_New_Loss':
+    id = f'_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+    params.checkpoint_dir += id
     model = DKT_regression_New_Loss(bb, kernel_type=params.kernel_type, video_path=params.checkpoint_dir, 
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features).cuda()
-    params.checkpoint_dir += f'_{params.kernel_type}'
     optimizer = None
+
 elif params.method=='Sparse_DKT_Nystrom':
     print(f'\n{params.sparse_method}\n')
     params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s' % (configs.save_dir, params.dataset, params.model, params.method, params.sparse_method)
@@ -46,7 +50,7 @@ elif params.method=='Sparse_DKT_Nystrom':
     
     if params.sparse_method=='FRVM':
         params.checkpoint_dir += '/'
-        id =  f'FRVM_{params.config}_{params.align_thr:.6f}_{params.lr_gp:.5f}_{params.lr_net:.5f}'
+        id =  f'FRVM_{params.config}_{params.align_thr}_{params.lr_gp}_{params.lr_net}'
         if params.gamma: id += '_gamma'
         id += f'_{params.kernel_type}'
         params.checkpoint_dir = params.checkpoint_dir + id
@@ -81,7 +85,7 @@ elif params.method=='Sparse_DKT_Nystrom_new_loss':
     
     if params.sparse_method=='FRVM':
         params.checkpoint_dir += '/'
-        id =  f'Nystrom_new_loss_FRVM_{params.config}_{params.align_thr:.6f}_{params.lr_gp:.5f}_{params.lr_net:.5f}'
+        id =  f'Nystrom_new_loss_FRVM_{params.config}_{params.align_thr}_{params.lr_gp}_{params.lr_net}'
         if params.gamma: id += '_gamma'
         id += f'_{params.kernel_type}'
         params.checkpoint_dir = params.checkpoint_dir + id
@@ -97,7 +101,7 @@ elif params.method=='Sparse_DKT_Exact':
     
     if params.sparse_method=='FRVM':
         params.checkpoint_dir += '/'
-        id =  f'Exact_FRVM_{params.config}_{params.align_thr:.6f}_{params.lr_gp:.5f}_{params.lr_net:.5f}'
+        id =  f'Exact_FRVM_{params.config}_{params.align_thr}_{params.lr_gp}_{params.lr_net}'
         if params.gamma: id += '_gamma'
         id += f'_{params.kernel_type}'
         params.checkpoint_dir = params.checkpoint_dir + id
@@ -119,6 +123,7 @@ elif params.method=='transfer':
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features).cuda()
                             
     optimizer = optim.Adam([{'params':model.parameters(),'lr':params.lr_net}])
+
 else:
     ValueError('Unrecognised method')
 
