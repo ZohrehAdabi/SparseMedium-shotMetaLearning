@@ -466,7 +466,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
     
         ckpt = torch.load(checkpoint)
  
-        IP = torch.ones(self.num_induce_points, 2916).cuda()
+        IP = torch.ones(self.model.covar_module.inducing_points.shape[0], 2916).cuda()
         ckpt['gp']['covar_module.inducing_points'] = IP
         self.model.load_state_dict(ckpt['gp'])
         self.likelihood.load_state_dict(ckpt['likelihood'])
