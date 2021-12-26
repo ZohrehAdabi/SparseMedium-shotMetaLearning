@@ -269,13 +269,13 @@ def single_test(params):
             model.eval()
             acc_mean, acc_std = model.test_loop( novel_loader, return_std = True)
         if last:
-            model.eval()
+            last_model.eval()
             acc_mean, acc_std = last_model.test_loop( novel_loader, return_std = True)
             print("-----------------------------")
             print('Test Acc last model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
             print("-----------------------------") 
         if best:
-            model.eval()
+            best_model.eval()
             acc_mean, acc_std = best_model.test_loop( novel_loader, return_std = True)
             print("-----------------------------")
             print('Test Acc best model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
