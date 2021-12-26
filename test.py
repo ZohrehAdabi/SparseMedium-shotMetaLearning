@@ -182,6 +182,7 @@ def single_test(params):
         best = True
         last = True
         print(f'\n{checkpoint_dir}\n')
+        modelfile = None
         if params.save_iter != -1:
             print(f'\nModel at epoch {params.save_iter}\n')
             modelfile   = get_assigned_file(checkpoint_dir, params.save_iter)
@@ -196,6 +197,7 @@ def single_test(params):
             best_model = deepcopy(model)
             print(f'\nBest model\n')
             best_modelfile   = get_best_file(checkpoint_dir)
+
         if modelfile is not None:
             tmp = torch.load(modelfile)
             if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_binary_Nystrom', 'Sp_DKT_Bin_Nyst_NLoss']:
