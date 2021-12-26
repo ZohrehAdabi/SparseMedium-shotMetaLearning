@@ -82,7 +82,7 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
             print(Fore.YELLOW, f'ACC: {acc:4.2f}\n', Fore.RESET)
             print(Fore.YELLOW, f'Avg. Val ACC: {np.mean(acc_val_list):4.2f}\n', Fore.RESET)
             print(Fore.GREEN,"-"*50 ,'\n', Fore.RESET)
-    
+    print(f'\n{model.id}\n')
     return model
 
 

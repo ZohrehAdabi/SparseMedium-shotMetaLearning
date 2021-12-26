@@ -54,6 +54,7 @@ class DKT_binary(MetaTemplate):
             self.normalize=normalize
 
     def init_summary(self, id):
+        self.id = id
         if(IS_TBX_INSTALLED):
             time_string = strftime("%d%m%Y_%H%M", gmtime())
             writer_path = "./log/" + id #+'_'+ time_string 

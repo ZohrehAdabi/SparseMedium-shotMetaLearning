@@ -69,6 +69,7 @@ class Sparse_DKT_binary_Nystrom_new_loss(MetaTemplate):
             self.normalize=normalize
 
     def init_summary(self, id, dataset):
+        self.id = id
         if(IS_TBX_INSTALLED):
             path = f'./Sparse_DKT_binary_Nystrom_new_loss_{dataset}_log'
             time_string = strftime("%d%m%Y_%H%M", gmtime())
