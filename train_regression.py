@@ -40,14 +40,14 @@ if params.method=='DKT':
     params.checkpoint_dir += id
     model = DKT_regression(bb, kernel_type=params.kernel_type, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
-    model.init_summary(id=f'DKT_org_{params.kernel_type}')
+    model.init_summary(id=f'DKT_org_{id}')
 
 elif params.method=='DKT_New_Loss':
     id = f'_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
     params.checkpoint_dir += id
     model = DKT_regression_New_Loss(bb, kernel_type=params.kernel_type, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
-    model.init_summary(id=f'DKT_new_loss_{params.kernel_type}')
+    model.init_summary(id=f'DKT_new_loss_{id}')
 
 elif params.method=='Sparse_DKT_Nystrom':
     params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s' % (configs.save_dir, params.dataset, params.model, params.method, 
