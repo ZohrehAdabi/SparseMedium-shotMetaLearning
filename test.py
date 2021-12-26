@@ -9,7 +9,7 @@ import torch.utils.data.sampler
 import os
 import glob
 import time
-
+from copy import deepcopy
 import configs
 import backbone
 import data.feature_loader as feat_loader
@@ -179,13 +179,23 @@ def single_test(params):
     #modelfile   = get_resume_file(checkpoint_dir)
 
     if not params.method in ['baseline', 'baseline++'] : 
+        best = True
+        last = True
         print(f'\n{checkpoint_dir}\n')
         if params.save_iter != -1:
             print(f'\nModel at epoch {params.save_iter}\n')
             modelfile   = get_assigned_file(checkpoint_dir, params.save_iter)
-        else:
+        if last:
+            last_model = deepcopy(model)
+            files = os.listdir(checkpoint_dir)
+            nums =  [int(f.split('.')[0]) for f in files if 'best' not in f]
+            num = max(nums)
+            print(f'\nModel at last epoch {num}\n')
+            last_modelfile = os.path.join(checkpoint_dir, '{:d}.tar'.format(num))
+        if best: #else:
+            best_model = deepcopy(model)
             print(f'\nBest model\n')
-            modelfile   = get_best_file(checkpoint_dir)
+            best_modelfile   = get_best_file(checkpoint_dir)
         if modelfile is not None:
             tmp = torch.load(modelfile)
             if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_binary_Nystrom', 'Sp_DKT_Bin_Nyst_NLoss']:
@@ -195,6 +205,26 @@ def single_test(params):
                 tmp['state']['mll.model.covar_module.inducing_points'] = IP
 
             model.load_state_dict(tmp['state'])
+
+        if last_modelfile is not None:
+            tmp = torch.load(last_modelfile)
+            if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_binary_Nystrom', 'Sp_DKT_Bin_Nyst_NLoss']:
+                
+                IP = torch.ones(100, 64).cuda()
+                tmp['state']['model.covar_module.inducing_points'] = IP
+                tmp['state']['mll.model.covar_module.inducing_points'] = IP
+
+            last_model.load_state_dict(tmp['state'])
+
+        if best_modelfile is not None:
+            tmp = torch.load(best_modelfile)
+            if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_binary_Nystrom', 'Sp_DKT_Bin_Nyst_NLoss']:
+                
+                IP = torch.ones(100, 64).cuda()
+                tmp['state']['model.covar_module.inducing_points'] = IP
+                tmp['state']['mll.model.covar_module.inducing_points'] = IP
+
+            best_model.load_state_dict(tmp['state'])
 
         else:
             print("[WARNING] Cannot find 'best_file.tar' in: " + str(checkpoint_dir))
@@ -232,8 +262,22 @@ def single_test(params):
 
         if params.adaptation:
             model.task_update_num = 100 #We perform adaptation on MAML simply by updating more times.
-        model.eval()
-        acc_mean, acc_std = model.test_loop( novel_loader, return_std = True)
+
+        if params.save_iter != -1:    
+            model.eval()
+            acc_mean, acc_std = model.test_loop( novel_loader, return_std = True)
+        if last:
+            model.eval()
+            acc_mean, acc_std = last_model.test_loop( novel_loader, return_std = True)
+            print("-----------------------------")
+            print('Test Acc last model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
+            print("-----------------------------") 
+        if best:
+            model.eval()
+            acc_mean, acc_std = best_model.test_loop( novel_loader, return_std = True)
+            print("-----------------------------")
+            print('Test Acc best model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
+            print("-----------------------------") 
 
     else:
         novel_file = os.path.join( checkpoint_dir.replace("checkpoints","features"), split_str +".hdf5") #defaut split = novel, but you can also test base or val classes
