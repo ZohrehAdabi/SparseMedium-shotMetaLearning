@@ -147,7 +147,7 @@ if True:
     print("Average MSE: " + str(np.mean(mse_list)) + " +- " + str(np.std(mse_list)))
     print("-------------------")
 
-
+print(f'\n{id}\n')
 print("-------------------")
 print("Average MSE best model: " + str(np.mean(mse_list_best)) + " +- " + str(np.std(mse_list_best)))
 print("-------------------")

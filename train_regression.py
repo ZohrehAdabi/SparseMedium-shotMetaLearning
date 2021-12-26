@@ -135,10 +135,14 @@ elif params.method=='Sparse_DKT_Exact':
 
 
 elif params.method=='MAML':
+    id = f'_{params.lr_gp}_{params.lr_net}'
+    params.checkpoint_dir += id
     model = MAML_regression(bb, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
 
 elif params.method=='transfer':
+    id = f'_{params.lr_gp}_{params.lr_net}'
+    params.checkpoint_dir += id
     model = FeatureTransfer(bb, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
 
@@ -153,12 +157,12 @@ if params.method in ['DKT', 'DKT_New_Loss', 'Sparse_DKT_Nystrom', 'Sparse_DKT_Ny
     mll, _ = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer)
 
     print(Fore.GREEN,"-"*40, f'\nend of meta-train => MLL: {mll}\n', "-"*40, Fore.RESET)
-
+    print(f'\n{id}\n')
 else:
 
     mse, _ = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer)
 
     print(Fore.GREEN,"="*40, f'\nend of meta-train => MSE: {mse}\n', "="*40, Fore.RESET)
-
+    print(f'\n{id}\n')
 model.save_checkpoint(params.checkpoint_dir)
 
