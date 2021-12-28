@@ -232,11 +232,12 @@ def single_test(params):
         if best_modelfile is not None:
             tmp = torch.load(best_modelfile)
             if params.method in ['Sparse_DKT_binary_Nystrom', 'Sp_DKT_Bin_Nyst_NLoss']:
-                
+                best_epoch = tmp['epoch']
                 IP = torch.ones(100, 64).cuda()
                 tmp['state']['model.covar_module.inducing_points'] = IP
                 tmp['state']['mll.model.covar_module.inducing_points'] = IP
             if params.method in ['Sparse_DKT_Nystrom']:
+                best_epoch = tmp['epoch']
                 IP = torch.ones(100, 64).cuda()
                 for i in range(params.test_n_way):
                     tmp['state'][f'model.models.{i}.covar_module.inducing_points'] = IP
@@ -292,7 +293,7 @@ def single_test(params):
             print('Test Acc last model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
             print("-----------------------------") 
         if best:
-            print(f'\nBest odel \n')
+            print(f'\nBest model epoch {best_epoch}\n')
             best_model.eval()
             acc_mean, acc_std = best_model.test_loop( novel_loader, return_std = True)
             print("-----------------------------")
