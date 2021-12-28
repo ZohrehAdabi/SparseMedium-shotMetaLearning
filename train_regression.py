@@ -85,9 +85,12 @@ elif params.method=='Sparse_DKT_Nystrom':
         params.checkpoint_dir += '/'
         if not os.path.isdir(params.checkpoint_dir):
             os.makedirs(params.checkpoint_dir)
-        params.checkpoint_dir = params.checkpoint_dir +  f'random_{str(params.n_centers)}'
-        model = Sparse_DKT_regression_Nystrom(bb, f_rvm=False, random=True,  n_inducing_points=params.n_centers, video_path=video_path, 
+        id = f'random_{params.lr_gp}_{params.lr_net}_ip_{params.n_centers}'
+        params.checkpoint_dir = params.checkpoint_dir +  id
+        model = Sparse_DKT_regression_Nystrom(bb, f_rvm=False, random=True,  n_inducing_points=params.n_centers, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
+        model.init_summary(id=id)
+                            
     else:
        raise  ValueError('Unrecognised sparse method')
 
