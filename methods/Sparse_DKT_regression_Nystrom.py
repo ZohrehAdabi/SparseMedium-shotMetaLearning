@@ -390,14 +390,14 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                 ValueError()
 
             mse_list.append(float(mse))
-            mse_list_.append(float(mse_))
+            if self.f_rvm: mse_list_.append(float(mse_))
 
         if self.show_plots_pred:
             self.mw.finish()
         if self.show_plots_features:
             self.mw_feature.finish()
-        print(f'MSE (unnormed): {np.mean(mse_list_):.4f}')
-        print(f'Avg. SVs: {np.mean(num_sv_list):.2f}')
+        if self.f_rvm: print(f'MSE (unnormed): {np.mean(mse_list_):.4f}')
+        if self.f_rvm: print(f'Avg. SVs: {np.mean(num_sv_list):.2f}')
         return mse_list
 
     def train_loop_random(self, epoch, n_support, n_samples, optimizer):

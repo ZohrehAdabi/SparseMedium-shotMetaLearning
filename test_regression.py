@@ -68,6 +68,7 @@ elif params.method=='Sparse_DKT_Nystrom':
     
 
     elif params.sparse_method=='random':
+        params.checkpoint_dir += '/'
         id = f'random_{params.lr_gp}_{params.lr_net}_ip_{params.n_centers}'
         params.checkpoint_dir = params.checkpoint_dir +  id
         model = Sparse_DKT_regression_Nystrom(bb, f_rvm=False, random=True,  n_inducing_points=params.n_centers, video_path=params.checkpoint_dir , 
