@@ -465,7 +465,8 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
     def load_checkpoint(self, checkpoint):
     
         ckpt = torch.load(checkpoint)
- 
+        if 'epoch' in ckpt.keys():
+            print(f'\nBest model epoch {ckpt["epoch"]}\n')
         IP = torch.ones(self.model.covar_module.inducing_points.shape[0], 2916).cuda()
         ckpt['gp']['covar_module.inducing_points'] = IP
         self.model.load_state_dict(ckpt['gp'])
