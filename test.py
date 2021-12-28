@@ -231,13 +231,14 @@ def single_test(params):
 
         if best_modelfile is not None:
             tmp = torch.load(best_modelfile)
+            best_epoch = tmp['epoch']
             if params.method in ['Sparse_DKT_binary_Nystrom', 'Sp_DKT_Bin_Nyst_NLoss']:
-                best_epoch = tmp['epoch']
+                
                 IP = torch.ones(100, 64).cuda()
                 tmp['state']['model.covar_module.inducing_points'] = IP
                 tmp['state']['mll.model.covar_module.inducing_points'] = IP
             if params.method in ['Sparse_DKT_Nystrom']:
-                best_epoch = tmp['epoch']
+                
                 IP = torch.ones(100, 64).cuda()
                 for i in range(params.test_n_way):
                     tmp['state'][f'model.models.{i}.covar_module.inducing_points'] = IP
