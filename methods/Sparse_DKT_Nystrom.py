@@ -210,7 +210,7 @@ class Sparse_DKT_Nystrom(MetaTemplate):
                 single_model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
                 single_model.train()
 
-                if(single_model.covar_module.base_kernel.lengthscale is not None):
+                if(single_model.base_covar_module.base_kernel.lengthscale is not None):
                     lenghtscale+=single_model.base_covar_module.base_kernel.lengthscale.mean().cpu().detach().numpy().squeeze()
                 noise+=single_model.likelihood.noise.cpu().detach().numpy().squeeze().mean()
                 if(single_model.base_covar_module.outputscale is not None):
