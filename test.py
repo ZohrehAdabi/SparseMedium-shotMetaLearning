@@ -200,32 +200,48 @@ def single_test(params):
 
         if modelfile is not None:
             tmp = torch.load(modelfile)
-            if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_binary_Nystrom', 'Sp_DKT_Bin_Nyst_NLoss']:
+            if params.method in ['Sparse_DKT_binary_Nystrom', 'Sp_DKT_Bin_Nyst_NLoss']:
                 
                 IP = torch.ones(100, 64).cuda()
                 tmp['state']['model.covar_module.inducing_points'] = IP
                 tmp['state']['mll.model.covar_module.inducing_points'] = IP
+            if params.method in ['Sparse_DKT_Nystrom']:
+                IP = torch.ones(100, 64).cuda()
+                for i in range(params.test_n_way):
+                    tmp['state'][f'model.models.{i}.covar_module.inducing_points'] = IP
+                    tmp['state'][f'mll.mlls.{i}.model.covar_module.inducing_points'] = IP
+                    tmp['state'][f'mll.model.models.{i}.covar_module.inducing_points'] = IP
 
             model.load_state_dict(tmp['state'])
 
         if last_modelfile is not None:
             tmp = torch.load(last_modelfile)
-            if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_binary_Nystrom', 'Sp_DKT_Bin_Nyst_NLoss']:
+            if params.method in ['Sparse_DKT_binary_Nystrom', 'Sp_DKT_Bin_Nyst_NLoss']:
                 
                 IP = torch.ones(100, 64).cuda()
                 tmp['state']['model.covar_module.inducing_points'] = IP
                 tmp['state']['mll.model.covar_module.inducing_points'] = IP
-
+            if params.method in ['Sparse_DKT_Nystrom']:
+                IP = torch.ones(100, 64).cuda()
+                for i in range(params.test_n_way):
+                    tmp['state'][f'model.models.{i}.covar_module.inducing_points'] = IP
+                    tmp['state'][f'mll.mlls.{i}.model.covar_module.inducing_points'] = IP
+                    tmp['state'][f'mll.model.models.{i}.covar_module.inducing_points'] = IP
             last_model.load_state_dict(tmp['state'])
 
         if best_modelfile is not None:
             tmp = torch.load(best_modelfile)
-            if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_binary_Nystrom', 'Sp_DKT_Bin_Nyst_NLoss']:
+            if params.method in ['Sparse_DKT_binary_Nystrom', 'Sp_DKT_Bin_Nyst_NLoss']:
                 
                 IP = torch.ones(100, 64).cuda()
                 tmp['state']['model.covar_module.inducing_points'] = IP
                 tmp['state']['mll.model.covar_module.inducing_points'] = IP
-
+            if params.method in ['Sparse_DKT_Nystrom']:
+                IP = torch.ones(100, 64).cuda()
+                for i in range(params.test_n_way):
+                    tmp['state'][f'model.models.{i}.covar_module.inducing_points'] = IP
+                    tmp['state'][f'mll.mlls.{i}.model.covar_module.inducing_points'] = IP
+                    tmp['state'][f'mll.model.models.{i}.covar_module.inducing_points'] = IP
             best_model.load_state_dict(tmp['state'])
 
         else:
@@ -269,12 +285,14 @@ def single_test(params):
             model.eval()
             acc_mean, acc_std = model.test_loop( novel_loader, return_std = True)
         if last:
+            print(f'\nModel at last epoch {num}\n')
             last_model.eval()
             acc_mean, acc_std = last_model.test_loop( novel_loader, return_std = True)
             print("-----------------------------")
             print('Test Acc last model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
             print("-----------------------------") 
         if best:
+            print(f'\nBest odel \n')
             best_model.eval()
             acc_mean, acc_std = best_model.test_loop( novel_loader, return_std = True)
             print("-----------------------------")
