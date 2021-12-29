@@ -378,6 +378,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
 
         test_person = np.random.choice(np.arange(len(test_people)), size=test_count, replace=rep)
         for t in range(test_count):
+            self.test_i = t
             print(f'test #{t}')
             if self.f_rvm:
                 mse, mse_, num_sv = self.test_loop_fast_rvm(n_support, n_samples, test_person[t],  optimizer)
@@ -828,7 +829,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                     plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].spines['bottom'].set_linewidth(3) 
                     plots.ax[inducing_points.i_idx[r], inducing_points.j_idx[r]].set_xlabel(r+1, fontsize=10)          
 
-            plots.fig.savefig(f'{self.video_path}/test_person_{person}.png')      
+            plots.fig.savefig(f'{self.video_path}/test_{self.test_i}_person_{person}.png')      
         
         if self.show_plots_features:
             #features
