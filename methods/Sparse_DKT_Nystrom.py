@@ -394,6 +394,7 @@ class Sparse_DKT_Nystrom(MetaTemplate):
         z_train = self.feature_extractor.forward(x_train).detach() #[340, 64]
         if(self.normalize): z_train = F.normalize(z_train, p=2, dim=1)
         train_list = [z_train]*self.n_way
+        ip_count =[]
         for idx, single_model in enumerate(self.model.models):
 
             if self.dirichlet:
@@ -416,6 +417,7 @@ class Sparse_DKT_Nystrom(MetaTemplate):
                                                         config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
                                                         num_inducing_points=self.num_inducing_points, verbose=False, device=self.device)
             
+            ip_count.append(inducing_points.count)
             ip_values = inducing_points.z_values.cuda()
             single_model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
             single_model.covar_module._clear_cache()
@@ -461,27 +463,38 @@ class Sparse_DKT_Nystrom(MetaTemplate):
             y_pred = np.vstack(predictions_list).argmax(axis=0) #[model, classes]
             top1_correct = np.sum(y_pred == y_query)
             count_this = len(y_query)
-        return float(top1_correct), count_this, avg_loss/float(N+1e-10)
+            avg_ip_predicted_class = -1
+            if True:
+                s=0
+                for i in range(self.n_way):
+                    c = np.sum(y_pred==i)
+                    s += c * ip_count[i]
+                avg_ip_predicted_class = s / y_pred.shape[0]
+        return float(top1_correct), count_this, avg_loss/float(N+1e-10), avg_ip_predicted_class
 
     def test_loop(self, test_loader, record=None, return_std=False):
         print_freq = 10
         correct =0
         count = 0
         acc_all = []
+        avg_ip = []
         iter_num = len(test_loader)
         for i, (x,_) in enumerate(test_loader):
             self.n_query = x.size(1) - self.n_support
             if self.change_way:
                 self.n_way  = x.size(0)
-            correct_this, count_this, loss_value = self.correct(x)
+            correct_this, count_this, loss_value, avg_ip_predicted = self.correct(x)
+            avg_ip.append(avg_ip_predicted)
             acc_all.append(correct_this/ count_this*100)
             if(i % 10==0):
                 acc_mean = np.mean(np.asarray(acc_all))
-                print('Test | Batch {:d}/{:d} | Loss {:f} | Acc {:f}'.format(i, len(test_loader), loss_value, acc_mean))
+                ip_count_mean = np.mean(np.asarray(avg_ip))
+                print('Test | Batch {:d}/{:d} | Loss {:f} | Acc {:f} | Avg. IP count {:2f}'.format(i, len(test_loader), loss_value, acc_mean, ip_count_mean))
         acc_all  = np.asarray(acc_all)
         acc_mean = np.mean(acc_all)
         acc_std  = np.std(acc_all)
         print(Fore.LIGHTRED_EX,"="*30,  Fore.RESET)
+        print(f'Avg. IP count {np.mean(np.asarray(avg_ip)):2f}')
         print(Fore.YELLOW,'\n%d Test Acc = %4.2f%% +- %4.2f%%' %(iter_num,  acc_mean, 1.96* acc_std/np.sqrt(iter_num)), Fore.RESET)
         print(Fore.LIGHTRED_EX,"="*30,  Fore.RESET)
         if(self.writer is not None): self.writer.add_scalar('test_accuracy', acc_mean, self.iteration)
