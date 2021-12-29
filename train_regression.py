@@ -138,13 +138,13 @@ elif params.method=='Sparse_DKT_Exact':
 
 
 elif params.method=='MAML':
-    id = f'_{params.lr_gp}_{params.lr_net}'
+    id = f'_{params.lr_net}_loop_{params.inner_loop}_inner_lr_{params.inner_lr}'
     params.checkpoint_dir += id
-    model = MAML_regression(bb, video_path=params.checkpoint_dir, 
+    model = MAML_regression(bb, inner_loop=params.inner_loop, inner_lr=params.inner_lr, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
-
+    model.init_summary(id=id)
 elif params.method=='transfer':
-    id = f'_{params.lr_gp}_{params.lr_net}'
+    id = f'_{params.lr_net}'
     params.checkpoint_dir += id
     model = FeatureTransfer(bb, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
@@ -152,17 +152,18 @@ elif params.method=='transfer':
 else:
     ValueError('Unrecognised method')
 
-optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr': params.lr_gp}, #0.01
-                              {'params': model.feature_extractor.parameters(), 'lr': params.lr_net} #0.001
-                              ])
+
 if params.method in ['DKT', 'DKT_New_Loss', 'Sparse_DKT_Nystrom', 'Sparse_DKT_Nystrom_new_loss', 'Sparse_DKT_Exact']:
 
+    optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr': params.lr_gp}, #0.01
+                              {'params': model.feature_extractor.parameters(), 'lr': params.lr_net} #0.001
+                              ])
     mll, _ = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer)
 
     print(Fore.GREEN,"-"*40, f'\nend of meta-train => MLL: {mll}\n', "-"*40, Fore.RESET)
     print(f'\n{id}\n')
 else:
-
+    optimizer = optim.Adam([{'params':model.parameters(),'lr':params.lr_net}])
     mse, _ = model.train(params.stop_epoch, params.n_support, params.n_samples, optimizer)
 
     print(Fore.GREEN,"="*40, f'\nend of meta-train => MSE: {mse}\n', "="*40, Fore.RESET)

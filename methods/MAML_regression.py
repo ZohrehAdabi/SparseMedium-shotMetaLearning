@@ -50,7 +50,7 @@ class Linear_fw(nn.Linear): #used in MAML to forward input with fast weight
 
 
 class MAML_regression(nn.Module):
-    def __init__(self, backbone, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
+    def __init__(self, backbone, inner_loop=3, inner_lr=1e-3, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(MAML_regression, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
@@ -64,8 +64,8 @@ class MAML_regression(nn.Module):
             self.initialize_plot(video_path, training)
 
         self.n_task     = 4
-        self.task_update_num = 1
-        self.train_lr = 0.01
+        self.task_update_num = inner_loop
+        self.train_lr = inner_lr
         self.approx = False
         self.mse        = nn.MSELoss()
 
@@ -130,7 +130,7 @@ class MAML_regression(nn.Module):
              
             # print(split)
             shuffled_split = []
-            for _ in range(int(n_support/15)):
+            for _ in range(int(n_support//15)):
                 s = split.copy()
                 np.random.shuffle(s)
                 shuffled_split.extend(s)
@@ -193,7 +193,7 @@ class MAML_regression(nn.Module):
         split = np.array([True]*15 + [False]*3)
         # print(split)
         shuffled_split = []
-        for _ in range(int(n_support/15)):
+        for _ in range(int(n_support//15)):
             s = split.copy()
             np.random.shuffle(s)
             shuffled_split.extend(s)
@@ -260,14 +260,14 @@ class MAML_regression(nn.Module):
 
             if epoch%2==0:
                 print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
-                mse_list = []
+                val_mse_list = []
                 val_count = 10
                 rep = True if val_count > len(val_people) else False
                 val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
                 for t in range(val_count):
                     mse, mse_ = self.test_loop(n_support, n_samples, val_person[t],  optimizer)
                     val_mse_list.append(mse)
-                mse = np.mean(mse_list)
+                mse = np.mean(val_mse_list)
                 if best_mse >= mse:
                     best_mse = mse
                     model_name = self.best_path + '_best_model.tar'
@@ -278,8 +278,8 @@ class MAML_regression(nn.Module):
                     self.writer.add_scalar('MSE Val.', mse, epoch)
                 print(Fore.GREEN,"-"*30, Fore.RESET)
 
-            if(self.writer is not None): self.writer.add_scalar('Train MSE per epoch', mse, epoch)
-            print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => Train MSE: {mse}\n', "-"*30, Fore.RESET)
+            if(self.writer is not None): self.writer.add_scalar('Train MSE per epoch', train_mse, epoch)
+            print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => Train MSE: {train_mse}\n', "-"*30, Fore.RESET)
         
         train_mse = np.mean(train_mse_list)
         if self.show_plots_pred:

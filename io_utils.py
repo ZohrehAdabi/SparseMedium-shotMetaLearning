@@ -77,6 +77,8 @@ def parse_args_regression(script):
         parser.add_argument('--lr_gp', default=1e-3, type=float, help='Learning rate for GP and Neural Network')
         parser.add_argument('--lr_net', default=1e-3, type=float, help='Learning rate for Neural Network')
         parser.add_argument('--gamma', action='store_true', help='Delete data with low Gamma in FRVM algorithm') 
+        parser.add_argument('--inner_loop', default=3, type=int, help='Number of adaptation or inner loop in MAML') 
+        parser.add_argument('--inner_lr', default=1e-3, type=float, help='learning rate in adaptation or inner loop of MAML') 
         # parser.add_argument('--alpha', default=1e3, type=float, help='coefficient for mse loss')
         if script == 'train_regression':
             parser.add_argument('--start_epoch' , default=0, type=int, help ='Starting epoch')

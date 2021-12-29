@@ -473,8 +473,8 @@
             "program": "${workspaceFolder}/train_regression.py",
             "console": "integratedTerminal",
            "args": ["--method","MAML", "--n_samples", "72",  "--n_support", "60", "--stop_epoch", "100", "--seed","2",
-            "--lr_gp", "1e-1", "--lr_net", "1e-2"] 
-            //python train_regression.py  --method "MAML"  --n_samples 72 --n_support 60 --stop_epoch 100  --seed  2  --lr_gp  1e-2 --lr_net  1e-3
+             "--lr_net", "1e-2", "--inner_loop", "3", "--inner_lr", "1e-3"] 
+            //python train_regression.py  --method "MAML"  --n_samples 72 --n_support 60 --stop_epoch 100  --seed  2  --lr_net  1e-3 --inner_loop 3 --inner_lr 1e-3
         },
         {
             "name": "MAML: test_regression",

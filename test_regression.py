@@ -116,11 +116,15 @@ elif params.method=='Sparse_DKT_Exact':
     optimizer = None
 
 if params.method=='MAML':
-    model = MAML_regression(bb, video_path=params.checkpoint_dir, 
+    id = f'_{params.lr_net}_loop_{params.inner_loop}_inner_lr_{params.inner_lr}'
+    params.checkpoint_dir += id
+    model = MAML_regression(bb, inner_loop=params.inner_loop, inner_lr=params.inner_lr, video_path=params.checkpoint_dir, 
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features).cuda()
     optimizer = optim.Adam([{'params':model.parameters(),'lr':params.lr_net}])
 
 elif params.method=='transfer':
+    id = f'_{params.lr_net}'
+    params.checkpoint_dir += id
     model = FeatureTransfer(bb, video_path=params.checkpoint_dir, 
                             show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features).cuda()
                             
