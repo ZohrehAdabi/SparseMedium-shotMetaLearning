@@ -36,14 +36,14 @@ if params.dataset=='QMUL':
         bb           = backbone.Conv3_MAML().cuda()
 
 if params.method=='DKT':
-    id = f'_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+    id = f'_{params.lr_gp}_{params.lr_net}_{params.kernel_type}_seed_{params.seed}'
     params.checkpoint_dir += id
     model = DKT_regression(bb, kernel_type=params.kernel_type, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     model.init_summary(id=f'DKT_org_{id}')
 
 elif params.method=='DKT_New_Loss':
-    id = f'_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+    id = f'_{params.lr_gp}_{params.lr_net}_{params.kernel_type}_seed_{params.seed}'
     params.checkpoint_dir += id
     model = DKT_regression_New_Loss(bb, kernel_type=params.kernel_type, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
@@ -62,7 +62,7 @@ elif params.method=='Sparse_DKT_Nystrom':
         
         id =  f'FRVM_{params.config}_{params.align_thr}_{params.lr_gp}_{params.lr_net}'
         if params.gamma: id += '_gamma'
-        id += f'_{params.kernel_type}'
+        id += f'_{params.kernel_type}_seed_{params.seed}'
         params.checkpoint_dir = params.checkpoint_dir + id
 
         model = Sparse_DKT_regression_Nystrom(bb, kernel_type=params.kernel_type, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
@@ -85,7 +85,7 @@ elif params.method=='Sparse_DKT_Nystrom':
         params.checkpoint_dir += '/'
         if not os.path.isdir(params.checkpoint_dir):
             os.makedirs(params.checkpoint_dir)
-        id = f'random_{params.lr_gp}_{params.lr_net}_ip_{params.n_centers}'
+        id = f'random_{params.lr_gp}_{params.lr_net}_ip_{params.n_centers}_seed_{params.seed}'
         params.checkpoint_dir = params.checkpoint_dir +  id
         model = Sparse_DKT_regression_Nystrom(bb, f_rvm=False, random=True,  n_inducing_points=params.n_centers, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
@@ -107,7 +107,7 @@ elif params.method=='Sparse_DKT_Nystrom_new_loss':
         
         id =  f'Nystrom_new_loss_FRVM_{params.config}_{params.align_thr}_{params.lr_gp}_{params.lr_net}'
         if params.gamma: id += '_gamma'
-        id += f'_{params.kernel_type}'
+        id += f'_{params.kernel_type}_seed_{params.seed}'
         params.checkpoint_dir = params.checkpoint_dir + id
 
         model = Sparse_DKT_regression_Nystrom_new_loss(bb, kernel_type=params.kernel_type, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
@@ -128,7 +128,7 @@ elif params.method=='Sparse_DKT_Exact':
         
         id =  f'Exact_FRVM_{params.config}_{params.align_thr}_{params.lr_gp}_{params.lr_net}'
         if params.gamma: id += '_gamma'
-        id += f'_{params.kernel_type}'
+        id += f'_{params.kernel_type}_seed_{params.seed}'
         params.checkpoint_dir = params.checkpoint_dir + id
 
         model = Sparse_DKT_regression_Exact(bb, kernel_type=params.kernel_type, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
@@ -138,13 +138,14 @@ elif params.method=='Sparse_DKT_Exact':
 
 
 elif params.method=='MAML':
-    id = f'_{params.lr_net}_loop_{params.inner_loop}_inner_lr_{params.inner_lr}'
+    id = f'_{params.lr_net}_loop_{params.inner_loop}_inner_lr_{params.inner_lr}_seed_{params.seed}'
     params.checkpoint_dir += id
     model = MAML_regression(bb, inner_loop=params.inner_loop, inner_lr=params.inner_lr, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     model.init_summary(id=id)
+
 elif params.method=='transfer':
-    id = f'_{params.lr_net}'
+    id = f'_{params.lr_net}_seed_{params.seed}'
     params.checkpoint_dir += id
     model = FeatureTransfer(bb, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
