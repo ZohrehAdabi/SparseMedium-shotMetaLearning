@@ -200,9 +200,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
         if self.kernel_type=='spectral':
             self.model.base_covar_module.initialize_from_data_empspect(z_support, y_support)
-        self.model.eval()
-        self.feature_extractor.eval()
-        self.likelihood.eval()
+
 
         with torch.no_grad():
             z_query = self.feature_extractor(x_query).detach()
@@ -268,11 +266,13 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (Q kernel): {inducing_points.y[max_similar_index]}', Fore.RESET)
         #**************************************************************
         if (self.show_plots_pred or self.show_plots_features) and self.f_rvm:
-            embedded_z_support = TSNE(n_components=2).fit_transform(z_support.detach().cpu().numpy())
+            embedded_z_support = None
+            if self.show_plots_features:
+                embedded_z_support = TSNE(n_components=2).fit_transform(z_support.clone().detach().cpu().numpy())
             self.update_plots_test_fast_rvm(self.plots, x_support, y_support.detach().cpu().numpy(), 
                                             z_support.detach(), z_query.detach(), embedded_z_support,
                                             inducing_points, x_query, y_query.detach().cpu().numpy(), pred, 
-                                            max_similar_idx_x_s, max_similar_idx_x_ip, None, mse, test_person)
+                                            max_similar_idx_x_s, max_similar_idx_x_ip, None, np.copy(mse), test_person)
             if self.show_plots_pred:
                 self.plots.fig.canvas.draw()
                 self.plots.fig.canvas.flush_events()
@@ -632,10 +632,10 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                     # K = covar_module(X, X[active]).evaluate()
                     mu_m = (mu_m[index] / ss)
                     mu_m = mu_m.to(torch.float)
-                    y_pred = K @ mu_m
+                    y_pred_r = K @ mu_m
                     
-                    mse = self.mse(y_pred, target)
-                    print(f'FRVM MSE: {mse:0.4f}')
+                    mse_r = self.mse(y_pred_r, target)
+                    print(f'FRVM MSE: {mse_r:0.4f}')
             
 
         return IP(inducing_points, IP_index, num_IP, alpha, gamma, None, None, None, None)
@@ -831,7 +831,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
 
             plots.fig.savefig(f'{self.video_path}/test_{self.test_i}_person_{person}.png')      
         
-        if self.show_plots_features:
+        if self.show_plots_features and (embedded_z is not None):
             #features
             y = get_unnormalized_label(train_y) #((train_y + 1) * 60 / 2) + 60
             tilt = np.unique(y)
