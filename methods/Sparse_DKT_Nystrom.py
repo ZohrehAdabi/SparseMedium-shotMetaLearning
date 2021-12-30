@@ -442,7 +442,7 @@ class Sparse_DKT_Nystrom(MetaTemplate):
             optimizer.step()
             avg_loss = avg_loss+loss.item()
 
-        with torch.no_grad(), gpytorch.settings.num_likelihood_samples(32):
+        with torch.no_grad(): #, gpytorch.settings.num_likelihood_samples(32):
             self.model.eval()
             self.likelihood.eval()
             self.feature_extractor.eval()
@@ -450,7 +450,7 @@ class Sparse_DKT_Nystrom(MetaTemplate):
             if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
             z_query_list = [z_query]*len(y_query)
             if self.dirichlet:
-                    predictions = self.likelihood(*self.model(*z_query_list)) #return 2 * 20 MultiGaussian Distributions
+                predictions = self.likelihood(*self.model(*z_query_list)) #return 2 * 20 MultiGaussian Distributions
             else:
                 predictions = self.likelihood(*self.model(*z_query_list)) ##return n_way MultiGaussians
             
