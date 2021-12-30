@@ -430,7 +430,7 @@ class Sparse_DKT_Nystrom(MetaTemplate):
 
         self.model.train()
         self.likelihood.train()
-        self.feature_extractor.eval()
+        self.feature_extractor.train()
 
         avg_loss=0.0
         for i in range(0, N):
