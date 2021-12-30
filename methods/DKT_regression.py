@@ -224,7 +224,7 @@ class DKT_regression(nn.Module):
         for epoch in range(stop_epoch):
             mll = self.train_loop(epoch, n_support, n_samples, optimizer)
 
-            if epoch%2==0:
+            if epoch%1==0:
                 print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
                 mse_list = []
                 mse_unnorm_list = []
