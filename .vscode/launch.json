@@ -188,6 +188,30 @@
     // python test.py --method "Sparse_DKT_binary_Exact"  --sparse_method "FRVM" --dataset "CUB"  --train_n_way 5 --test_n_way 5 --n_shot 50  --n_query 10 --seed 1 --scale --config "010" --align_thr 1e-3  --lr_gp 1e-1 --lr_net 1e-3 --kernel_type "linear"  --train_aug
         },
         {
+            "name": "Sparse_DKT_binary_Nystrom [miniImagenet]: train",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/train.py",
+            "console": "integratedTerminal",
+            "args": ["--method","Sparse_DKT_binary_Nystrom", "--sparse_method", "FRVM", "--dataset", "miniImagenet", 
+            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "100",  "--n_query", "10",
+                "--seed","1", "--scale", "--config", "011", "--align_thr", "1e-3", "--lr_gp", "1e-3", "--lr_net", "1e-3",
+                "--kernel_type", "linear", "--train_aug", "--normalize"]  //--train_aug
+    // python train.py --method "Sparse_DKT_binary_Nystrom"  --sparse_method "FRVM" --dataset "miniImagenet"  --train_n_way 2 --test_n_way 2  --n_shot 50 --n_query 10 --seed 1 --scale --config "010" --align_thr 1e-3 --lr_gp  1e-2 --lr_net  1e-3 --kernel_type "linear" --train_aug
+        },     
+        {
+            "name": "Sparse_DKT_binary_Nystrom [miniImagenet]: test",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/test.py",
+            "console": "integratedTerminal",
+           "args": ["--method","Sparse_DKT_binary_Nystrom", "--sparse_method", "FRVM", "--dataset", "miniImagenet", 
+            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "100",  "--n_query", "10",
+              "--seed","1", "--scale", "--config", "011", "--align_thr", "1e-3", "--lr_gp", "1e-3", "--lr_net", "1e-3",
+              "--kernel_type", "linear", "--train_aug", "--normalize"]
+    // python test.py --method "Sparse_DKT_binary_Nystrom"  --sparse_method "FRVM" --dataset "miniImagenet"  --train_n_way 2 --test_n_way 2  --n_shot 50 --n_query 10 --seed 1 --scale --config "010" --align_thr 1e-3 --lr_gp  1e-2 --lr_net  1e-3 --kernel_type "linear" --train_aug
+        },
+        {
             "name": "Sparse_DKT_Nystrom [miniImagenet]: train",
             "type": "python",
             "request": "launch",
@@ -195,12 +219,10 @@
             "console": "integratedTerminal",
             "args": ["--method","Sparse_DKT_Nystrom", "--sparse_method", "FRVM", "--dataset", "miniImagenet", 
             "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "100",  "--n_query", "5",
-                "--seed","1", "--scale", "--config", "010", "--align_thr", "1e-3", "--lr_gp", "1e-1", "--lr_net", "1e-3",
-                "--kernel_type", "linear", "--train_aug"]  //--train_aug
+                "--seed","1", "--scale", "--config", "011", "--align_thr", "1e-3", "--lr_gp", "1e-3", "--lr_net", "1e-3",
+                "--kernel_type", "linear", "--train_aug", "--normalize"]  //--train_aug
     // python train.py --method "Sparse_DKT_Nystrom"  --sparse_method "FRVM" --dataset "miniImagenet"  --train_n_way 5 --test_n_way 5  --n_shot 50 --n_query 10 --seed 1 --scale --config "010" --align_thr 1e-3 --lr_gp  1e-2 --lr_net  1e-3 --kernel_type "linear" --train_aug
-        },
-         
-
+        },     
         {
             "name": "Sparse_DKT_Nystrom [miniImagenet]: test",
             "type": "python",

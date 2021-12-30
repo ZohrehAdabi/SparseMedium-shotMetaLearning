@@ -77,7 +77,10 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             time_string = strftime("%d%m%Y_%H%M", gmtime())
             if not os.path.isdir(path):
                 os.makedirs(path)
-            writer_path = path+ '/' + id #+'_old'#+ time_string
+            if dataset=='miniImagenet':
+                writer_path = path+ '/' + id[37:]
+            else:
+                writer_path = path+ '/' + id #+'_old'#+ time_string
             self.writer = SummaryWriter(log_dir=writer_path)
 
     def get_model_likelihood_mll(self, train_x=None, train_y=None):
@@ -176,6 +179,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
         #         #                              {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
         new_loss = True
         self.frvm_acc = []
+        
         for i, (x,_) in enumerate(train_loader):
     
             self.n_query = x.size(1) - self.n_support
@@ -233,7 +237,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                                                             config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
                                                             num_inducing_points=self.num_inducing_points, verbose=True, device=self.device)
                 self.frvm_acc.append(frvm_acc)
-
+                
             ip_values = inducing_points.z_values.cuda()
             # ip_values = z_train[inducing_points.index].cuda()
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
@@ -453,7 +457,8 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                                                         z_train, target, sparse_method=self.sparse_method, scale=self.scale,
                                                         config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
                                                         num_inducing_points=self.num_inducing_points, verbose=False, device=self.device)
-            self.frvm_acc.append(frvm_acc)  
+            self.frvm_acc.append(frvm_acc) 
+            # self.ip_count.append(inducing_points.count) 
             inducing_points = IP(inducing_points.z_values, inducing_points.index, inducing_points.count,
                                 inducing_points.alpha, inducing_points.gamma,  
                                 x_support[inducing_points.index], y_support[inducing_points.index], None, None)
@@ -525,6 +530,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
         iter_num = len(test_loader)
         self.show_plot = iter_num < 5
         self.frvm_acc = []
+        # self.ip_count = []
         for i, (x,_) in enumerate(test_loader):
             self.n_query = x.size(1) - self.n_support
             if self.change_way:

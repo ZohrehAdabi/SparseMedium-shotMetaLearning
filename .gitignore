@@ -245,3 +245,4 @@ Sparse_DKT_Nystrom_QMUL_Loss/
 methods/X2.mat
 Sparse_DKT_Nystrom_CUB_log/
 Sparse_DKT_Nystrom_omniglot_log/
+Sparse_DKT_binary_Nystrom_miniImagenet_log/
