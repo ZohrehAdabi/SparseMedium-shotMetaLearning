@@ -235,6 +235,9 @@ class DKT_binary(MetaTemplate):
                                 outputscale, lenghtscale, noise, loss.item(), 0, accuracy_query), Fore.RESET)
 
     def correct(self, x, N=0, laplace=False):
+        self.model.eval()
+        self.likelihood.eval()
+        self.feature_extractor.eval()
         ##Dividing input x in query and support set
         x_support = x[:,:self.n_support,:,:,:].contiguous().view(self.n_way * (self.n_support), *x.size()[2:]).cuda()
         y_support = torch.from_numpy(np.repeat(range(self.n_way), self.n_support)).cuda()
@@ -288,7 +291,7 @@ class DKT_binary(MetaTemplate):
 
         self.model.train()
         self.likelihood.train()
-        self.feature_extractor.eval()
+        self.feature_extractor.train()
 
         avg_loss=0.0
         for i in range(0, N):

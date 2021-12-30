@@ -395,6 +395,9 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
         return IP(inducing_points, IP_index, num_IP, alpha, gamma, None, None, None, None)
   
     def correct(self, x, i=0, N=0, laplace=False):
+        self.model.eval()
+        self.likelihood.eval()
+        self.feature_extractor.eval()
         ##Dividing input x in query and support set
         x_support = x[:,:self.n_support,:,:,:].contiguous().view(self.n_way * (self.n_support), *x.size()[2:]).cuda()
         y_support = torch.from_numpy(np.repeat(range(self.n_way), self.n_support)).cuda()
@@ -472,7 +475,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
 
         self.model.train()
         self.likelihood.train()
-        self.feature_extractor.eval()
+        self.feature_extractor.train()
 
         avg_loss=0.0
         for i in range(0, N):
