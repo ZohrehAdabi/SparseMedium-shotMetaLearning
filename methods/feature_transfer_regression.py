@@ -14,7 +14,7 @@ import torchvision.transforms as transforms
 from sklearn.manifold import TSNE
 import backbone
 from torch.autograd import Variable
-from data.qmul_loader import get_batch, train_people, test_people, get_unnormalized_label
+from data.qmul_loader import get_batch, train_people, val_people, test_people, get_unnormalized_label
 
 class Regressor(nn.Module):
     def __init__(self):
@@ -42,7 +42,7 @@ class FeatureTransfer(nn.Module):
         self.feature_extractor = backbone
         self.model = Regressor()
         self.criterion = nn.MSELoss()
-
+        
         self.video_path = video_path
         self.show_plots_pred = show_plots_pred
         self.show_plots_features = show_plots_features
@@ -50,6 +50,8 @@ class FeatureTransfer(nn.Module):
             self.initialize_plot(video_path, training)
 
     def train_loop(self, epoch, n_samples, optimizer):
+        self.feature_extractor.train()
+        self.model.train()
         batch, batch_labels = get_batch(train_people, n_samples)
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
         mse_list = []
@@ -61,7 +63,7 @@ class FeatureTransfer(nn.Module):
             loss.backward()
             optimizer.step()
 
-            if(epoch%2==0):
+            if(epoch%1==0):
                 print('[%02d] - Loss: %.3f' % (
                     epoch, loss.item()
                 ))
@@ -87,6 +89,26 @@ class FeatureTransfer(nn.Module):
         for epoch in range(stop_epoch):
             mse = self.train_loop(epoch, n_samples, optimizer)
             mse_list.append(mse)
+            if epoch%1==0:
+                print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
+                val_mse_list = []
+                val_count = 10
+                rep = True if val_count > len(val_people) else False
+                val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
+                for t in range(val_count):
+                    mse, mse_ = self.test_loop(n_support, n_samples, val_person[t],  optimizer)
+                    val_mse_list.append(mse)
+                mse = np.mean(val_mse_list)
+                if best_mse >= mse:
+                    best_mse = mse
+                    model_name = self.best_path + '_best_model.tar'
+                    self.save_best_checkpoint(epoch+1, best_mse, model_name)
+                    print(Fore.LIGHTRED_EX, f'Best MSE: {best_mse:.4f}', Fore.RESET)
+                print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => Val. MSE: {mse:.4f}, Best MSE: {best_mse:.4f}', Fore.RESET)
+                # if(self.writer is not None):
+                #     self.writer.add_scalar('MSE Val.', mse, epoch)
+                print(Fore.GREEN,"-"*30, Fore.RESET)
+
             print(Fore.LIGHTYELLOW_EX,"-"*30, f'\nend of epoch {epoch} => MSE: {mse}\n', "-"*30, Fore.RESET)
         
         mse = np.mean(mse_list)
@@ -99,8 +121,11 @@ class FeatureTransfer(nn.Module):
         return mse, mse_list
 
     def test_loop(self, n_support, n_samples, test_person, optimizer): # we need optimizer to take one gradient step
-        inputs, targets = get_batch(test_people, n_samples)
-
+        
+        if self.training: 
+            inputs, targets = get_batch(val_people, n_samples)
+        else:
+            inputs, targets = get_batch(test_people, n_samples)
         # support_ind = list(np.random.choice(list(range(19)), replace=False, size=n_support))
         # query_ind   = [i for i in range(19) if i not in support_ind]
 
@@ -110,7 +135,7 @@ class FeatureTransfer(nn.Module):
         split = np.array([True]*15 + [False]*3)
         # print(split)
         shuffled_split = []
-        for _ in range(int(n_support/15)):
+        for _ in range(int(n_support//15)):
             s = split.copy()
             np.random.shuffle(s)
             shuffled_split.extend(s)
@@ -122,7 +147,9 @@ class FeatureTransfer(nn.Module):
         x_query   = x_all[test_person, query_ind,:,:,:]
         y_query   = y_all[test_person, query_ind]
         #fine-tune
-        for k in range(3):
+        self.feature_extractor.train()
+        self.model.train()
+        for k in range(self.fine_tune):
             optimizer.zero_grad()
             z_support = self.feature_extractor(x_support).detach()
             output_support = self.model(z_support).squeeze()
@@ -163,10 +190,11 @@ class FeatureTransfer(nn.Module):
                 self.plots.fig_feature.canvas.draw()
                 self.plots.fig_feature.canvas.flush_events()
                 self.mw_feature.grab_frame()
-        return mse
+        return mse, mse_
 
-    def test(self, n_support, n_samples, optimizer, test_count=None):
+    def test(self, n_support, n_samples, optimizer, fine_tune=3, test_count=None):
 
+        self.fine_tune = fine_tune
         mse_list = []
         # choose a random test person
         rep = True if test_count > len(test_people) else False
@@ -176,7 +204,7 @@ class FeatureTransfer(nn.Module):
             print(f'test #{t}')
             weights_1 = self.feature_extractor.return_clones()
             weights_2 = self.model.return_clones()
-            mse = self.test_loop(n_support, n_samples, test_person[t],  optimizer)
+            mse, mse_ = self.test_loop(n_support, n_samples, test_person[t],  optimizer)
             self.feature_extractor.assign_clones(weights_1)
             self.model.assign_clones(weights_2)
             mse_list.append(float(mse))
@@ -189,6 +217,10 @@ class FeatureTransfer(nn.Module):
 
     def save_checkpoint(self, checkpoint):
         torch.save({'feature_extractor': self.feature_extractor.state_dict(), 'model':self.model.state_dict()}, checkpoint)
+    
+    def save_best_checkpoint(self, epoch, mse, checkpoint):
+        torch.save({'feature_extractor': self.feature_extractor.state_dict(), 
+                    'model':self.model.state_dict(), 'epoch': epoch, 'mse': mse}, checkpoint)
 
     def load_checkpoint(self, checkpoint):
         ckpt = torch.load(checkpoint)

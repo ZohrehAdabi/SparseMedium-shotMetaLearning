@@ -82,6 +82,7 @@ class MAML_regression(nn.Module):
 
 
     def set_forward(self, x, is_feature=False):
+        
         z = self.feature_extractor(x)
         pred = self.model(z)
         return pred.squeeze()
@@ -188,7 +189,11 @@ class MAML_regression(nn.Module):
         return np.mean(mse_list)
 
     def test_loop(self, n_support, n_samples, test_person, optimizer=None): # no optimizer needed for GP
-        inputs, targets = get_batch(test_people, n_samples)
+        
+        if self.training: 
+            inputs, targets = get_batch(val_people, n_samples)
+        else:
+            inputs, targets = get_batch(test_people, n_samples)
 
         split = np.array([True]*15 + [False]*3)
         # print(split)
@@ -258,7 +263,7 @@ class MAML_regression(nn.Module):
             train_mse = self.train_loop(epoch, n_support, n_samples, optimizer)
             train_mse_list.append(train_mse)
 
-            if epoch%2==0:
+            if epoch%1==0:
                 print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
                 val_mse_list = []
                 val_count = 10

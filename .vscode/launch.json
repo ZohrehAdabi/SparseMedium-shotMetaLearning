@@ -521,8 +521,8 @@
             "program": "${workspaceFolder}/train_regression.py",
             "console": "integratedTerminal",
            "args": ["--method","transfer", "--n_samples", "72", "--n_support", "60", "--stop_epoch", "100", "--seed","2",
-            "--lr_gp", "1e-1", "--lr_net", "1e-2"] 
-            //python train_regression.py  --method "transfer"  --n_samples 72 --n_support 60  --stop_epoch 100  --seed  2 --lr_gp  1e-2 --lr_net  1e-3
+             "--lr_net", "1e-2"] 
+            //python train_regression.py  --method "transfer"  --n_samples 72 --n_support 60  --stop_epoch 100  --seed  2  --lr_net  1e-3
         },
         {
             "name": "Transfer: test_regression",
@@ -531,8 +531,8 @@
             "program": "${workspaceFolder}/test_regression.py",
             "console": "integratedTerminal",
            "args": ["--method","transfer",  "--n_samples", "72", "--n_support", "60", "--n_test_epochs", "5", "--seed","2",
-            "--lr_gp", "1e-1", "--lr_net", "1e-2"]  
-            //python test_regression.py --method "transfer"  --n_samples 72 --n_support 60 --n_test_epochs 5   --seed  2 --lr_gp  1e-2 --lr_net  1e-3
+             "--lr_net", "1e-2"]  
+            //python test_regression.py --method "transfer"  --n_samples 72 --n_support 60 --n_test_epochs 5   --seed  2  --lr_net  1e-3
         }, 
 
         // {

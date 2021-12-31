@@ -163,11 +163,11 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         self.model.eval()
         self.likelihood.eval()
         self.feature_extractor.eval()
-        inputs, targets = get_batch(test_people, n_samples)
 
-        # support_ind = list(np.random.choice(list(range(n_samples)), replace=False, size=n_support))
-        # query_ind   = [i for i in range(n_samples) if i not in support_ind]
-
+        if self.training: 
+            inputs, targets = get_batch(val_people, n_samples)
+        else:
+            inputs, targets = get_batch(test_people, n_samples)
         x_all = inputs.cuda()
         y_all = targets.cuda()
 
@@ -461,8 +461,13 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         return np.mean(mll_list)
     
     def test_loop_random(self, n_support, n_samples, test_person, optimizer=None): # no optimizer needed for GP
-
-        inputs, targets = get_batch(test_people, n_samples)
+        self.model.eval()
+        self.feature_extractor.eval()
+        self.likelihood.eval()
+        if self.training: 
+            inputs, targets = get_batch(val_people, n_samples)
+        else:
+            inputs, targets = get_batch(test_people, n_samples)
 
         x_all = inputs.cuda()
         y_all = targets.cuda()
@@ -494,9 +499,6 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         self.model.covar_module._clear_cache()
         self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
 
-        self.model.eval()
-        self.feature_extractor.eval()
-        self.likelihood.eval()
 
         with torch.no_grad():
             z_query = self.feature_extractor(x_query).detach()

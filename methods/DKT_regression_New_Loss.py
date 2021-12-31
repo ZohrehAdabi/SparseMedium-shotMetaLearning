@@ -153,7 +153,14 @@ class DKT_regression_New_Loss(nn.Module):
         return np.mean(mll_list)
 
     def test_loop(self, n_support, n_samples, test_person, optimizer=None): # no optimizer needed for GP
-        inputs, targets = get_batch(test_people, n_samples)
+        
+        self.model.eval()
+        self.feature_extractor.eval()
+        self.likelihood.eval()
+        if self.training: 
+            inputs, targets = get_batch(val_people, n_samples)
+        else:
+            inputs, targets = get_batch(test_people, n_samples)
 
         split = np.array([True]*15 + [False]*3)
         # print(split)
@@ -183,10 +190,6 @@ class DKT_regression_New_Loss(nn.Module):
         # self.model.set_train_data(inputs=ip_values, targets=y_support[inducing_points.index], strict=False)
         #****
         self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
-
-        self.model.eval()
-        self.feature_extractor.eval()
-        self.likelihood.eval()
 
         with torch.no_grad():
             z_query = self.feature_extractor(x_query).detach()
