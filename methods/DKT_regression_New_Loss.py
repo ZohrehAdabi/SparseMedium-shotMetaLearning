@@ -39,6 +39,7 @@ class DKT_regression_New_Loss(nn.Module):
         self.feature_extractor = backbone
         self.kernel_type = kernel_type
         self.device = 'cuda'
+        self.training_ = training
         self.video_path = video_path
         self.best_path = video_path
         self.show_plots_pred = show_plots_pred
@@ -157,7 +158,7 @@ class DKT_regression_New_Loss(nn.Module):
         self.model.eval()
         self.feature_extractor.eval()
         self.likelihood.eval()
-        if self.training: 
+        if self.training_ : 
             inputs, targets = get_batch(val_people, n_samples)
         else:
             inputs, targets = get_batch(test_people, n_samples)

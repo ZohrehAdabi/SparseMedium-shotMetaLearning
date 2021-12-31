@@ -56,6 +56,7 @@ class MAML_regression(nn.Module):
         self.feature_extractor = backbone
         self.model = Linear_fw(2916, 1)
         self.device = 'cuda'
+        self.training_  = training
         self.video_path = video_path
         self.best_path = video_path
         self.show_plots_pred = show_plots_pred
@@ -190,7 +191,7 @@ class MAML_regression(nn.Module):
 
     def test_loop(self, n_support, n_samples, test_person, optimizer=None): # no optimizer needed for GP
         
-        if self.training: 
+        if self.training_ : 
             inputs, targets = get_batch(val_people, n_samples)
         else:
             inputs, targets = get_batch(test_people, n_samples)

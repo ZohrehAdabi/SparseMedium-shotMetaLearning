@@ -53,6 +53,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         self.gamma = gamma
         self.align_threshold = align_threshold
         self.f_rvm = f_rvm
+        self.training_ = training
         self.scale = scale
         self.random = random
         self.device = 'cuda'
@@ -164,7 +165,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         self.likelihood.eval()
         self.feature_extractor.eval()
 
-        if self.training: 
+        if self.training_ : 
             inputs, targets = get_batch(val_people, n_samples)
         else:
             inputs, targets = get_batch(test_people, n_samples)
@@ -464,7 +465,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         self.model.eval()
         self.feature_extractor.eval()
         self.likelihood.eval()
-        if self.training: 
+        if self.training_ : 
             inputs, targets = get_batch(val_people, n_samples)
         else:
             inputs, targets = get_batch(test_people, n_samples)

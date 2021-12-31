@@ -51,6 +51,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
         self.gamma = gamma
         self.align_threshold = align_threshold
         self.f_rvm = f_rvm
+        self.training_ = training
         self.random = random
         self.scale=scale
         self.device = 'cuda'
@@ -154,7 +155,10 @@ class Sparse_DKT_regression_Exact(nn.Module):
         self.model.eval()
         self.likelihood.eval()
         self.feature_extractor.eval()
-        inputs, targets = get_batch(test_people, n_samples)
+        if self.training_:
+            inputs, targets = get_batch(val_people, n_samples)
+        else:
+            inputs, targets = get_batch(test_people, n_samples)
 
         # support_ind = list(np.random.choice(list(range(n_samples)), replace=False, size=n_support))
         # query_ind   = [i for i in range(n_samples) if i not in support_ind]

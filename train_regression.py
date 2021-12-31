@@ -142,7 +142,7 @@ elif params.method=='MAML':
     params.checkpoint_dir += id
     model = MAML_regression(bb, inner_loop=params.inner_loop, inner_lr=params.inner_lr, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
-    model.init_summary(id=f'MAML_{id}')
+    model.init_summary(id=f'MAML{id}')
 
 elif params.method=='transfer':
     id = f'_{params.lr_net}_seed_{params.seed}'

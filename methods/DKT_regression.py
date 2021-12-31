@@ -38,6 +38,7 @@ class DKT_regression(nn.Module):
         ## GP parameters
         self.feature_extractor = backbone
         self.kernel_type = kernel_type
+        self.training_  = training
         self.device = 'cuda'
         self.video_path = video_path
         self.best_path = video_path
@@ -138,7 +139,7 @@ class DKT_regression(nn.Module):
         self.model.eval()
         self.feature_extractor.eval()
         self.likelihood.eval()
-        if self.training: 
+        if self.training_ : 
             inputs, targets = get_batch(val_people, n_samples)
         else:
             inputs, targets = get_batch(test_people, n_samples)

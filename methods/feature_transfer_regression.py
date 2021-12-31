@@ -42,7 +42,7 @@ class FeatureTransfer(nn.Module):
         self.feature_extractor = backbone
         self.model = Regressor()
         self.criterion = nn.MSELoss()
-        
+        self.training_  = training
         self.video_path = video_path
         self.show_plots_pred = show_plots_pred
         self.show_plots_features = show_plots_features
@@ -122,7 +122,7 @@ class FeatureTransfer(nn.Module):
 
     def test_loop(self, n_support, n_samples, test_person, optimizer): # we need optimizer to take one gradient step
         
-        if self.training: 
+        if self.training_ : 
             inputs, targets = get_batch(val_people, n_samples)
         else:
             inputs, targets = get_batch(test_people, n_samples)
