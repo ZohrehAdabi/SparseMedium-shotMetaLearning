@@ -88,6 +88,7 @@ def parse_args_regression(script):
         elif script == 'test_regression':
             parser.add_argument('--n_support', default=60, type=int, help='Number of points on trajectory to be given as support points')
             parser.add_argument('--n_test_epochs', default=1, type=int, help='{QMUL:How many test people? def=5| MSC44:How manytimes test on all test tasks def=1')
+            parser.add_argument('--repeat', default=1, type=int, help ='Repeat the test N times with different seeds and take the mean. The seeds range is [seed, seed+repeat]')
             parser.add_argument('--show_plots_pred', action='store_true', help='Show plots')
         return parser.parse_args()
 
