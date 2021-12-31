@@ -28,8 +28,13 @@ def get_person_at_curve(person, curve, prefix='filelists/QMUL/images/'):
     targets = []
 
     train_transforms = transforms.Compose([transforms.ToTensor()])
+    person_name = person
+    if person_name=='JonGrey':
+        person_name='OngEJGrey'
+    if person_name=='JeffNGrey':
+        person_name='JeffNGGrey'
     for pitch, angle in curve:
-        fname  = prefix + person + '/' + person[:-4] + '_' + num_to_str(pitch) + '_' + num_to_str(angle) +'.jpg'
+        fname  = prefix + person + '/' + person_name[:-4] + '_' + num_to_str(pitch) + '_' + num_to_str(angle) +'.jpg'
         img    = Image.open(fname).convert('RGB')
         img    = train_transforms(img)
 
