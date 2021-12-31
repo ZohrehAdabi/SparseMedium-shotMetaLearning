@@ -142,9 +142,10 @@ for sd in range(seed, seed+repeat):
     if os.path.isfile(params.checkpoint_dir+'_best_model.tar'):
         print(f'\nBest model\n{params.checkpoint_dir}_best_model.tar')
         model.load_checkpoint(params.checkpoint_dir +'_best_model.tar')
-
-        mse_list_best = model.test(params.n_support, params.n_samples, optimizer, params.n_test_epochs)
-
+        if params.method=='transfer':
+            mse_list_best = model.test(params.n_support, params.n_samples, optimizer, params.fine_tune, params.n_test_epochs)
+        else:
+            mse_list_best = model.test(params.n_support, params.n_samples, optimizer, params.n_test_epochs)
         print("-------------------")
         print("Average MSE: " + str(np.mean(mse_list_best)) + " +- " + str(np.std(mse_list_best)))
         print("-------------------")
@@ -152,7 +153,10 @@ for sd in range(seed, seed+repeat):
     if True:
         model.load_checkpoint(params.checkpoint_dir)
 
-        mse_list = model.test(params.n_support, params.n_samples, optimizer, params.n_test_epochs)
+        if params.method=='transfer':
+            mse_list = model.test(params.n_support, params.n_samples, optimizer, params.fine_tune, params.n_test_epochs)
+        else:
+            mse_list = model.test(params.n_support, params.n_samples, optimizer, params.n_test_epochs)
 
         print("-------------------")
         print("Average MSE: " + str(np.mean(mse_list)) + " +- " + str(np.std(mse_list)))
