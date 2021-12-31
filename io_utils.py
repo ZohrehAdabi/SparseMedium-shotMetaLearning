@@ -26,7 +26,7 @@ def parse_args(script):
     parser.add_argument('--n_shot'      , default=5, type=int,  help='number of labeled data in each class, same as n_support') #baseline and baseline++ only use this parameter in finetuning
     parser.add_argument('--n_query'     , default=2, type=int,  help='number of test labeled data in each class') 
     parser.add_argument('--train_aug'   , action='store_true',  help='perform data augmentation or not during training ') #still required for save_features.py and test.py to find the model path correctly
-    parser.add_argument('--config',    default='010', type=str, help='config for Fast RVM = {delete_priority|add_priority|align_test}')
+    parser.add_argument('--config',    default='011', type=str, help='config for Fast RVM = {delete_priority|add_priority|align_test}')
     parser.add_argument('--align_thr', default=1e-3, type=float, help='1e-3, larger value leads to more rejection and sparseness')
     parser.add_argument('--num_ip',    type=int, help='num inducing points for random and Kmeans')
     parser.add_argument('--sparse_method', default='FRVM', type=str, help='FRVM|KMeans|Random|augm_FRVM')
