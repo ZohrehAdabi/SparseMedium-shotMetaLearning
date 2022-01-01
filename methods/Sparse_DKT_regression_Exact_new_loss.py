@@ -31,7 +31,7 @@ from collections import namedtuple
 import torch.optim
 #Check if tensorboardx is installed
 try:
-    #tensorboard --logdir=./QMUL_Loss/ --host localhost --port 8091
+    #tensorboard --logdir=./Sparse_DKT_QMUL_Eaxct_Loss/ --host localhost --port 8091
     from tensorboardX import SummaryWriter
     IS_TBX_INSTALLED = True
 except ImportError:
@@ -55,6 +55,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
         self.training_ = training
         self.random = random
         self.scale=scale
+        self.normalize = False
         self.device = 'cuda'
         self.video_path = video_path
         self.best_path = video_path
@@ -126,7 +127,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
             y_query   = y_all[query_ind]
 
             z = self.feature_extractor(x_support)
-            # z = F.normalize(z, p=2, dim=1)
+            if self.normalize: z = F.normalize(z, p=2, dim=1)
             with torch.no_grad():
                 inducing_points = self.get_inducing_points(z, y_support, verbose=False)
            
@@ -138,6 +139,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
             self.model.set_train_data(inputs=ip_values, targets=ip_labels, strict=False)
 
             z_query = self.feature_extractor(x_query)
+            if self.normalize: z_query = F.normalize(z_query, p=2, dim=1)
             self.model.eval()
             predictions = self.model(z_query)
             self.model.train()
@@ -215,7 +217,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
         # induce_ind = list(np.random.choice(list(range(n_samples)), replace=False, size=self.num_induce_points))
         # induce_point = self.feature_extractor(x_support[induce_ind, :,:,:])
         z_support = self.feature_extractor(x_support).detach()
-        # z_support = F.normalize(z_support, p=2, dim=1)
+        if self.normalize: z_support = F.normalize(z_support, p=2, dim=1)
         with torch.no_grad():
             inducing_points = self.get_inducing_points(z_support, y_support, verbose=False)
         
@@ -230,7 +232,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
 
         with torch.no_grad():
             z_query = self.feature_extractor(x_query).detach()
-            # z_query = F.normalize(z_query, p=2, dim=1)
+            if self.normalize: z_query = F.normalize(z_query, p=2, dim=1)
             pred    = self.likelihood(self.model(z_query))
             lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
 

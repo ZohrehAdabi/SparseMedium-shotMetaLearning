@@ -31,7 +31,7 @@ from collections import namedtuple
 import torch.optim
 #Check if tensorboardx is installed
 try:
-    #tensorboard --logdir=./QMUL_Loss/ --host localhost --port 8091
+    #tensorboard --logdir=./Sparse_DKT_QMUL_Eaxct_Loss/ --host localhost --port 8091
     from tensorboardX import SummaryWriter
     IS_TBX_INSTALLED = True
 except ImportError:
