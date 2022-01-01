@@ -147,9 +147,9 @@ for sd in range(seed, seed+repeat):
         else:
             mse_list_best = model.test(params.n_support, params.n_samples, optimizer, params.n_test_epochs)
         print("-------------------")
-        print("Average MSE: " + str(np.mean(mse_list_best)) + " +- " + str(np.std(mse_list_best)))
+        print(f"Average MSE, seed {sd}: " + str(np.mean(mse_list_best)) + " +- " + str(np.std(mse_list_best)))
         print("-------------------")
-
+        accuracy_list.append(np.mean(mse_list_best))
     if True:
         model.load_checkpoint(params.checkpoint_dir)
 
@@ -159,7 +159,7 @@ for sd in range(seed, seed+repeat):
             mse_list = model.test(params.n_support, params.n_samples, optimizer, params.n_test_epochs)
 
         print("-------------------")
-        print("Average MSE: " + str(np.mean(mse_list)) + " +- " + str(np.std(mse_list)))
+        print(f"Average MSE, seed {sd}: " + str(np.mean(mse_list)) + " +- " + str(np.std(mse_list)))
         print("-------------------")
 
     print(f'\n{id}\n')
@@ -171,3 +171,6 @@ for sd in range(seed, seed+repeat):
     print("Average MSE last model: " + str(np.mean(mse_list)) + " +- " + str(np.std(mse_list)))
     print("-------------------")
 
+print("===================")
+print(f"Overall Test Acc [repeat {repeat}]: " + str(np.mean(accuracy_list)) + " +- " + str(np.std(accuracy_list)))
+print("===================")

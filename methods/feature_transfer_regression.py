@@ -44,6 +44,7 @@ class FeatureTransfer(nn.Module):
         self.criterion = nn.MSELoss()
         self.training_  = training
         self.video_path = video_path
+        self.best_path = video_path
         self.show_plots_pred = show_plots_pred
         self.show_plots_features = show_plots_features
         if self.show_plots_pred or self.show_plots_features:
@@ -86,6 +87,8 @@ class FeatureTransfer(nn.Module):
     def train(self, stop_epoch, n_support, n_samples, optimizer):
         
         mse_list = []
+        best_mse = 10e5
+        self.fine_tune = 3
         for epoch in range(stop_epoch):
             mse = self.train_loop(epoch, n_samples, optimizer)
             mse_list.append(mse)
