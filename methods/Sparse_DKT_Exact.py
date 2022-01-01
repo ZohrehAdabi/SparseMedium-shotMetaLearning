@@ -41,6 +41,7 @@ class Sparse_DKT_Exact(MetaTemplate):
         super(Sparse_DKT_Exact, self).__init__(model_func, n_way, n_support)
         self.num_inducing_points = num_inducing_points
         self.sparse_method = sparse_method
+        
         self.config = config
         self.align_threshold = align_threshold
         self.gamma = gamma

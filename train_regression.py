@@ -8,6 +8,7 @@ from io_utils import parse_args_regression, get_resume_file
 from methods.Sparse_DKT_regression_Nystrom import Sparse_DKT_regression_Nystrom
 from methods.Sparse_DKT_regression_Nystrom_new_loss import Sparse_DKT_regression_Nystrom_new_loss
 from methods.Sparse_DKT_regression_Exact import Sparse_DKT_regression_Exact
+from methods.Sparse_DKT_regression_Exact_new_loss import Sparse_DKT_regression_Exact_new_loss
 from methods.DKT_regression import DKT_regression
 from methods.DKT_regression_New_Loss import DKT_regression_New_Loss
 from methods.MAML_regression import     MAML_regression
@@ -132,6 +133,27 @@ elif params.method=='Sparse_DKT_Exact':
         params.checkpoint_dir = params.checkpoint_dir + id
 
         model = Sparse_DKT_regression_Exact(bb, kernel_type=params.kernel_type, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
+                            video_path=params.checkpoint_dir, 
+                            show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
+        model.init_summary(id=id)
+
+elif params.method=='Sparse_DKT_Exact_new_loss':
+    params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s' % (configs.save_dir, params.dataset, params.model, params.method, 
+                                                        params.sparse_method)
+    video_path = params.checkpoint_dir
+    
+    
+    if params.sparse_method=='FRVM':
+        params.checkpoint_dir += '/'
+        if not os.path.isdir(params.checkpoint_dir):
+            os.makedirs(params.checkpoint_dir)
+        
+        id =  f'Exact_new_loss_FRVM_{params.config}_{params.align_thr}_{params.lr_gp}_{params.lr_net}'
+        if params.gamma: id += '_gamma'
+        id += f'_{params.kernel_type}_seed_{params.seed}'
+        params.checkpoint_dir = params.checkpoint_dir + id
+
+        model = Sparse_DKT_regression_Exact_new_loss(bb, kernel_type=params.kernel_type, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
                             video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
         model.init_summary(id=id)

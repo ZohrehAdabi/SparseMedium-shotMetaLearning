@@ -40,10 +40,10 @@ except ImportError:
 
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx")
-class Sparse_DKT_regression_Exact(nn.Module):
-    def __init__(self, backbone, kernel_type, f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
+class Sparse_DKT_regression_Exact_new_loss(nn.Module):
+    def __init__(self, backbone, kernel_type='rbf', f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
-        super(Sparse_DKT_regression_Exact, self).__init__()
+        super(Sparse_DKT_regression_Exact_new_loss, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
         self.kernel_type = kernel_type
@@ -107,36 +107,63 @@ class Sparse_DKT_regression_Exact(nn.Module):
        
         for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
 
+            split = np.array([True]*15 + [False]*3)
+            # print(split)
+            shuffled_split = []
+            for _ in range(n_support//15):
+                s = split.copy()
+                np.random.shuffle(s)
+                shuffled_split.extend(s)
+            shuffled_split = np.array(shuffled_split)
+            support_ind = shuffled_split
+            query_ind = ~shuffled_split
+            x_all = inputs.cuda()
+            y_all = labels.cuda()
 
-            z = self.feature_extractor(inputs)
+            x_support = x_all[support_ind,:,:,:]
+            y_support = y_all[support_ind]
+            x_query   = x_all[query_ind,:,:,:]
+            y_query   = y_all[query_ind]
+
+            z = self.feature_extractor(x_support)
             # z = F.normalize(z, p=2, dim=1)
             with torch.no_grad():
-                inducing_points = self.get_inducing_points(z, labels, verbose=False)
+                inducing_points = self.get_inducing_points(z, y_support, verbose=False)
            
             ip_values = z[inducing_points.index]
-            ip_labels = labels[inducing_points.index]
+            ip_labels = y_support[inducing_points.index]
             # self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
             self.model.train()
             # NOTE 
             self.model.set_train_data(inputs=ip_values, targets=ip_labels, strict=False)
 
-            # z = self.feature_extractor(x_query)
-            predictions = self.model(ip_values)
-            loss = -self.mll(predictions, self.model.train_targets)
+            z_query = self.feature_extractor(x_query)
+            self.model.eval()
+            predictions = self.model(z_query)
+            self.model.train()
+            loss = -self.mll(predictions, y_query)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             mll_list.append(loss.item())
-            mse = self.mse(predictions.mean, ip_labels)
+            mse = self.mse(predictions.mean, y_query)
 
             self.iteration = itr+(epoch*len(batch_labels))
             if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)
 
-            if ((epoch%1==0) & (itr%2==0)):
-                print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
-                    itr, epoch, loss.item(), mse.item(),
-                    self.model.likelihood.noise.item()
-                ),Fore.RESET)
+            if self.kernel_type=='rbf':
+                if ((epoch%1==0) & (itr%2==0)):
+                    print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f outputscale: %.3f lengthscale: %.3f' % (
+                        itr, epoch, loss.item(), mse.item(),
+                        self.model.likelihood.noise.item(), self.model.base_covar_module.outputscale,
+                        self.model.base_covar_module.base_kernel.lengthscale
+                    ),Fore.RESET)
+            else:
+                if ((epoch%1==0) & (itr%2==0)):
+                    print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
+                        itr, epoch, loss.item(), mse.item(),
+                        self.model.likelihood.noise.item(), 
+                    ),Fore.RESET)
             
             if (self.show_plots_pred or self.show_plots_features) and  self.f_rvm:
                 embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
@@ -172,7 +199,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
         split = np.array([True]*15 + [False]*3)
         # print(split)
         shuffled_split = []
-        for _ in range(int(n_support/15)):
+        for _ in range(int(n_support//15)):
             s = split.copy()
             np.random.shuffle(s)
             shuffled_split.extend(s)

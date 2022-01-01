@@ -114,7 +114,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                 inducing_points = self.get_inducing_points(z, labels, verbose=False)
            
             ip_values = z[inducing_points.index]
-            self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
+            self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
             self.model.train()
             self.model.set_train_data(inputs=z, targets=labels, strict=False)
             if self.kernel_type=='spectral':
@@ -618,18 +618,15 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             kernel_matrix = kernel_matrix.to(torch.float64)
             target = targets.clone().to(torch.float64)
             active, alpha, gamma, beta, mu_m = Fast_RVM_regression(kernel_matrix, target, beta, N, self.config, self.align_threshold,
-                                                    False, eps, tol, max_itr, self.device, verbose)
+                                                    self.gamma, eps, tol, max_itr, self.device, verbose)
             
             index = np.argsort(active)
             active = active[index]
-            gamma = gamma[index]
+            gamma = gamma[index].to(torch.float)
             ss = scales[index]
             alpha = alpha[index] / ss
-            mu_m = (mu_m[index] / ss)
-            mu_m = mu_m.to(torch.float)
             inducing_points = inputs[active]
-            if self.gamma or True:
-                inducing_points = inducing_points * mu_m
+            
             num_IP = active.shape[0]
             IP_index = active
             with torch.no_grad():

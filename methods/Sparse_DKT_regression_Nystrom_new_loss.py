@@ -131,7 +131,7 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
                 inducing_points = self.get_inducing_points(z, y_support, verbose=False)
            
             ip_values = z[inducing_points.index]
-            self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
+            self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
             self.model.train()
             self.model.set_train_data(inputs=z, targets=y_support, strict=False)
 
@@ -219,7 +219,7 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
             inducing_points = self.get_inducing_points(z_support, y_support, verbose=False)
         
         ip_values = inducing_points.z_values.cuda()
-        self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
+        self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
         self.model.covar_module._clear_cache()
         self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
 
