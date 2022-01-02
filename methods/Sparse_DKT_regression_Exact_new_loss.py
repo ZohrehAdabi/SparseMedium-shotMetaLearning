@@ -138,17 +138,17 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
             # NOTE 
             self.model.set_train_data(inputs=ip_values, targets=ip_labels, strict=False)
 
-            z_query = self.feature_extractor(x_query)
+            z_query = self.feature_extractor(x_all)
             if self.normalize: z_query = F.normalize(z_query, p=2, dim=1)
             self.model.eval()
             predictions = self.model(z_query)
             self.model.train()
-            loss = -self.mll(predictions, y_query)
+            loss = -self.mll(predictions, y_all)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             mll_list.append(loss.item())
-            mse = self.mse(predictions.mean, y_query)
+            mse = self.mse(predictions.mean, y_all)
 
             self.iteration = itr+(epoch*len(batch_labels))
             if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)
