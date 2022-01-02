@@ -58,9 +58,10 @@ for sd in range(seed, seed+repeat):
             params.checkpoint_dir += '/'
             id =  f'FRVM_{params.config}_{params.align_thr}_{params.lr_gp}_{params.lr_net}'
             if params.gamma: id += '_gamma'
+            if params.normalize: id += '_norm'
             id += f'_{params.kernel_type}_seed_{sd}'
             params.checkpoint_dir = params.checkpoint_dir + id
-            model = Sparse_DKT_regression_Nystrom(bb, kernel_type=params.kernel_type, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
+            model = Sparse_DKT_regression_Nystrom(bb, kernel_type=params.kernel_type, normalize=params.normalize, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
                                 video_path=params.checkpoint_dir, 
                                 show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
         
@@ -76,8 +77,9 @@ for sd in range(seed, seed+repeat):
         elif params.sparse_method=='random':
             params.checkpoint_dir += '/'
             id = f'random_{params.lr_gp}_{params.lr_net}_ip_{params.n_centers}_seed_{sd}'
+            if params.normalize: id += '_norm'
             params.checkpoint_dir = params.checkpoint_dir +  id
-            model = Sparse_DKT_regression_Nystrom(bb, f_rvm=False, random=True,  n_inducing_points=params.n_centers, video_path=params.checkpoint_dir , 
+            model = Sparse_DKT_regression_Nystrom(bb, kernel_type=params.kernel_type, normalize=params.normalize, f_rvm=False, random=True,  n_inducing_points=params.n_centers, video_path=params.checkpoint_dir , 
                                 show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
         
         else:
@@ -131,9 +133,10 @@ for sd in range(seed, seed+repeat):
             params.checkpoint_dir += '/'
             id =  f'Exact_new_loss_FRVM_{params.config}_{params.align_thr}_{params.lr_gp}_{params.lr_net}'
             if params.gamma: id += '_gamma'
+            if params.normalize: id += '_norm'
             id += f'_{params.kernel_type}_seed_{sd}'
             params.checkpoint_dir = params.checkpoint_dir + id
-            model = Sparse_DKT_regression_Exact_new_loss(bb, kernel_type=params.kernel_type, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
+            model = Sparse_DKT_regression_Exact_new_loss(bb, kernel_type=params.kernel_type, normalize=params.normalize, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
                                 video_path=params.checkpoint_dir, 
                                 show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
         

@@ -41,7 +41,7 @@ except ImportError:
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx")
 class Sparse_DKT_regression_Exact_new_loss(nn.Module):
-    def __init__(self, backbone, kernel_type='rbf', f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
+    def __init__(self, backbone, kernel_type='rbf', normalize=False, f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_regression_Exact_new_loss, self).__init__()
         ## GP parameters
@@ -55,7 +55,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
         self.training_ = training
         self.random = random
         self.scale=scale
-        self.normalize = False
+        self.normalize = normalize
         self.device = 'cuda'
         self.video_path = video_path
         self.best_path = video_path
@@ -321,7 +321,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
          
             mll = self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
             
-            if epoch%2==0:
+            if epoch%1==0:
                 print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
                 mse_list = []
                 mse_unnorm_list = []
