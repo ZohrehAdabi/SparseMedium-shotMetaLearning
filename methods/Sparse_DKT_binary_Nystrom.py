@@ -478,7 +478,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
         self.feature_extractor.train()
 
         avg_loss=0.0
-        for i in range(0, N):
+        for j in range(0, N):
             ## Optimize
             optimizer.zero_grad()
             output = self.model(*self.model.train_inputs)

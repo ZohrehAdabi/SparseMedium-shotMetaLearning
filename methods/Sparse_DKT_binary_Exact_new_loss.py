@@ -447,7 +447,7 @@ class Sparse_DKT_binary_Exact_new_loss(MetaTemplate):
         self.feature_extractor.eval()
 
         avg_loss=0.0
-        for i in range(0, N):
+        for j in range(0, N):
             ## Optimize
             optimizer.zero_grad()
             output = self.model(*self.model.train_inputs)
@@ -480,12 +480,13 @@ class Sparse_DKT_binary_Exact_new_loss(MetaTemplate):
             top1_correct = np.sum(y_pred == y_query)
             count_this = len(y_query)
             acc = (top1_correct/ count_this)*100
-            print(Fore.RED,"="*50, Fore.RESET)
-            print(f'inducing_points count: {inducing_points.count}')
-            # print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha.cpu().numpy()}',Fore.RESET)
-            # print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma.cpu().numpy()}',Fore.RESET)
-            print(Fore.YELLOW, f'itr {i:3}, ACC: {acc:.2f}%', Fore.RESET)
-            print(Fore.RED,"-"*50, Fore.RESET)
+            if i%10==0:
+                print(Fore.RED,"="*50, Fore.RESET)
+                print(f'inducing_points count: {inducing_points.count}')
+                # print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha.cpu().numpy()}',Fore.RESET)
+                # print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma.cpu().numpy()}',Fore.RESET)
+                print(Fore.YELLOW, f'itr {i:3}, ACC: {acc:.2f}%', Fore.RESET)
+                print(Fore.RED,"-"*50, Fore.RESET)
             if self.show_plot:
                 self.plot_test(x_query, y_query, y_pred, inducing_points, i)
 

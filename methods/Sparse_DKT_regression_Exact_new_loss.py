@@ -316,7 +316,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
         mll_list = []
         best_mse = 10e5 #stop_epoch//2
         # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5, 50, 80], gamma=0.1)
-        
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.1)
         for epoch in range(stop_epoch):
          
             mll = self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
@@ -349,7 +349,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
             if(self.writer is not None): self.writer.add_scalar('MLL per epoch', mll, epoch)
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => MLL: {mll}\n', "-"*30, Fore.RESET)
 
-            # scheduler.step()
+            scheduler.step()
             # if (epoch) in [3]:
             #     optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.1
             # if (epoch) in [50, 80]:
@@ -468,7 +468,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
         # IP = torch.ones(self.num_induce_points, 2916).cuda()
         # ckpt['gp']['covar_module.inducing_points'] = IP
         if 'best' in checkpoint:
-            print(f'\nBest model at epoch {ckpt["epoch"]}')
+            print(f'\nBest model at epoch {ckpt["epoch"]}, MSE: {ckpt["mse"]}')
         self.model.load_state_dict(ckpt['gp'])
         self.likelihood.load_state_dict(ckpt['likelihood'])
         self.feature_extractor.load_state_dict(ckpt['net'])
