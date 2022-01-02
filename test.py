@@ -263,7 +263,7 @@ def single_test(params):
     else:
         split_str = split
     if params.method in ['maml', 'maml_approx', 'DKT', 'DKT_binary', 'DKT_binary_new_loss', 'Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 
-                            'Sparse_DKT_binary_Nystrom', 'Sp_DKT_Bin_Nyst_NLoss', 'Sparse_DKT_binary_Exact', 'Sp_DKT_Bin_Exact_NLosss']: #maml do not support testing with feature
+                            'Sparse_DKT_binary_Nystrom', 'Sp_DKT_Bin_Nyst_NLoss', 'Sparse_DKT_binary_Exact', 'Sp_DKT_Bin_Exact_NLoss']: #maml do not support testing with feature
         if 'Conv' in params.model:
             if params.dataset in ['omniglot', 'cross_char']:
                 image_size = 28
