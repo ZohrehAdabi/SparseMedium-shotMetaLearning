@@ -22,9 +22,10 @@ IP = namedtuple("inducing_points", "z_values index count alpha gamma")
 def rvm_ML(K, targets, alpha_m, ip_index):
         
         N = targets.shape[0]
+        targets = targets.to(torch.float64)
         targets[targets==-1]= 0
         targets_pseudo_linear	= 2 * targets - 1
-      
+        K = K.to(torch.float64)
         K_m = K[:, ip_index]
         LogOut	= (targets_pseudo_linear * 0.9 + 1) / 2
         # mu_m	=  K_m.pinverse() @ (torch.log(LogOut / (1 - LogOut))) #
