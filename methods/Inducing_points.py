@@ -15,9 +15,29 @@ import os
 from time import gmtime, strftime
 import random
 from colorama import Fore
-from methods.Fast_RVM import Fast_RVM
+from methods.Fast_RVM import Fast_RVM, posterior_mode
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma")
+
+def rvm_ML(K, targets, alpha_m, ip_index):
+        
+        N = targets.shape[0]
+        targets[targets==-1]= 0
+        targets_pseudo_linear	= 2 * targets - 1
+      
+        K_m = K[:, ip_index]
+        LogOut	= (targets_pseudo_linear * 0.9 + 1) / 2
+        # mu_m	=  K_m.pinverse() @ (torch.log(LogOut / (1 - LogOut))) #
+        mu_m = torch.linalg.lstsq(K_m, (torch.log(LogOut / (1 - LogOut)))).solution
+        mu_m = mu_m.to(torch.float64)
+        mu_m, U, beta, dataLikely, bad_Hess = posterior_mode(K_m, targets, alpha_m, mu_m, max_itr=25, device='cuda')
+        U_inv = torch.linalg.inv(U)
+     
+        logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
+        
+        logML			= dataLikely - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
+        return logML/N
+
 
 def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale,
                         config='000', align_threshold='0', gamma=False, 
@@ -84,7 +104,7 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
         inducing_points = inputs[active]
         gamma = gamma[index]
         ss = scales[index]
-        alpha = alpha[index] / ss
+        alpha = (alpha[index] / ss).to(torch.float)
         num_IP = active.shape[0]
         IP_index = active
 

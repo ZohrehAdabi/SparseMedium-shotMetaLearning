@@ -19,7 +19,7 @@ import random
 from colorama import Fore
 # from configs import kernel_type
 from methods.Fast_RVM import Fast_RVM
-from methods.Inducing_points import get_inducing_points
+from methods.Inducing_points import get_inducing_points, rvm_ML
 #Check if tensorboardx is installed
 try:
     #tensorboard --logdir=./Sparse_DKT_binary_Exact_CUB_log/ --host localhost --port 8090
@@ -206,6 +206,13 @@ class Sparse_DKT_binary_Exact_new_loss(MetaTemplate):
             ip_index = inducing_points.index
             ip_values = z_train[ip_index]
             ip_labels = target[ip_index]
+            
+            alpha_m = inducing_points.alpha
+            K = self.model.base_covar_module(z_train).evaluate()
+            if True:
+                scales	= torch.sqrt(torch.sum(K**2, axis=0))
+                K = K / scales
+            rvm_mll = rvm_ML(K, target, alpha_m, ip_index)
 
             if self.dirichlet:
                 ip_labels[ip_labels==-1] = 0
@@ -220,7 +227,7 @@ class Sparse_DKT_binary_Exact_new_loss(MetaTemplate):
 
             
             # self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
-            self.model.train()
+           
 
             if(self.model.base_covar_module.lengthscale is not None):
                 lenghtscale+=self.model.base_covar_module.lengthscale.mean().cpu().detach().numpy().squeeze()
@@ -228,7 +235,7 @@ class Sparse_DKT_binary_Exact_new_loss(MetaTemplate):
             if(self.model.base_covar_module.outputscale is not None):
                 outputscale+=self.model.base_covar_module.outputscale.cpu().detach().numpy().squeeze()
             
-
+           
             ## Optimize
             optimizer.zero_grad()
             #NOTE new_loss:
@@ -241,7 +248,7 @@ class Sparse_DKT_binary_Exact_new_loss(MetaTemplate):
                 transformed_targets = self.model.likelihood.transformed_targets
                 loss = -self.mll(output, transformed_targets).sum()
             else:
-                loss = -self.mll(output, target_all)
+                loss = -self.mll(output, target_all) -0.1 *  rvm_mll
             loss.backward()
             optimizer.step()
 

@@ -1,6 +1,7 @@
 ## Original packages
 # from torch._C import ShortTensor
-from numpy.core.defchararray import count
+from inspect import indentsize
+from numpy.core.defchararray import count, index
 import backbone
 import torch
 import torch.nn as nn
@@ -96,11 +97,14 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
 
     def set_forward_loss(self, x):
         pass
-    def rvm_ML(self, K_m, targets, alpha_m, beta):
+    def rvm_ML(self, K, targets, alpha_m, beta, ip_index):
         
         N = targets.shape[0]
-        K_mt = K_m.T @ targets
-        KK_mm = K_m.T @ K_m
+        Kt = K.T @ targets
+        KK = K.T @ K
+        K_m = K[:, ip_index]
+        KK_mm = KK[ip_index, :][:, ip_index]
+        K_mt = Kt[ip_index]
         A_m = torch.diag(alpha_m)
         H = A_m + beta * KK_mm
         U, info =  torch.linalg.cholesky_ex(H, upper=True)
@@ -134,7 +138,8 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             with torch.no_grad():
                 inducing_points = self.get_inducing_points(z, labels, verbose=False)
            
-            ip_values = z[inducing_points.index]
+            ip_index = inducing_points.index
+            ip_values = z[ip_index]
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
             self.model.train()
             self.model.set_train_data(inputs=z, targets=labels, strict=False)
@@ -143,14 +148,15 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
 
             sigma = self.model.likelihood.noise[0].clone().detach()
             alpha_m = inducing_points.alpha
-            K_m = self.model.base_covar_module(z, ip_values).evaluate()
+            
+            K = self.model.base_covar_module(z).evaluate()
             if True:
-                scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
-                K_m = K_m / scales
+                scales	= torch.sqrt(torch.sum(K**2, axis=0))
+                K = K / scales
         
-            rvm_mll = self.rvm_ML(K_m, labels, alpha_m, 1/sigma)
+            rvm_mll = self.rvm_ML(K, labels, alpha_m, 1/sigma, ip_index)
             predictions = self.model(z)
-            loss = -self.mll(predictions, self.model.train_targets) - 0.5 * rvm_mll
+            loss = -self.mll(predictions, self.model.train_targets) - 0.1 * rvm_mll
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()

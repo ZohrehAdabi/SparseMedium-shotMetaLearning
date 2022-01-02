@@ -297,9 +297,9 @@ def Statistics(K, K_m, mu_m, alpha_m, active_m, targets, N, device):
         U_inv	= torch.linalg.inv(U)
         Sigma_m	= U_inv @ U_inv.T
         #  Compute posterior-mean-based outputs and errors
-        K_mu_m = (K_m @ mu_m).squeeze()
-        y	= torch.sigmoid(K_mu_m)
-        e	= (targets-y)
+        # K_mu_m = (K_m @ mu_m).squeeze()
+        # y	= torch.sigmoid(K_mu_m)
+        # e	= (targets-y)
         logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
         if torch.isinf(dataLikely):
             logML			=  - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2

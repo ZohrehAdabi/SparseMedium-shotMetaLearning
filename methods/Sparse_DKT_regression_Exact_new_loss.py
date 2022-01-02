@@ -1,5 +1,6 @@
 ## Original packages
 # from torch._C import ShortTensor
+from inspect import indentsize
 from numpy.core.defchararray import count
 import backbone
 import torch
@@ -97,11 +98,14 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
 
     def set_forward_loss(self, x):
         pass
-    def rvm_ML(self, K_m, targets, alpha_m, beta):
+    def rvm_ML(self, K, targets, alpha_m, beta, ip_index):
         
         N = targets.shape[0]
-        K_mt = K_m.T @ targets
-        KK_mm = K_m.T @ K_m
+        Kt = K.T @ targets
+        KK = K.T @ K
+        K_m = K[:, ip_index]
+        KK_mm = KK[ip_index, :][:, ip_index]
+        K_mt = Kt[ip_index]
         A_m = torch.diag(alpha_m)
         H = A_m + beta * KK_mm
         U, info =  torch.linalg.cholesky_ex(H, upper=True)
@@ -158,16 +162,16 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
             sigma = self.model.likelihood.noise[0].clone().detach()
             
             alpha_m = inducing_points.alpha
-            K_m = self.model.base_covar_module(z, ip_values).evaluate()
+            K = self.model.base_covar_module(z).evaluate()
             if True:
-                scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+                scales	= torch.sqrt(torch.sum(K**2, axis=0))
                 # print(f'scale: {Scales}')
                 # scales[scales==0] = 1
-                K_m = K_m / scales
+                K = K / scales
             # C = sigma + K_m @ torch.linalg.inv(torch.diag(alpha_m)) @ K_m.T
             # C_inv = torch.linalg.inv(C)
             # rvm_mll = -1/2 * (torch.log(torch.linalg.det(C)+1e-8) + y_support @ C_inv @ y_support)
-            rvm_mll = self.rvm_ML(K_m, y_support, alpha_m, 1/sigma)
+            rvm_mll = self.rvm_ML(K, y_support, alpha_m, 1/sigma, ip_index)
             # self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
             # NOTE 
             self.model.set_train_data(inputs=ip_values, targets=ip_labels, strict=False)
@@ -177,7 +181,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
             self.model.eval()
             predictions = self.model(z_query)
             self.model.train()
-            loss = -self.mll(predictions, y_all) - 0.5 * rvm_mll
+            loss = -self.mll(predictions, y_all) - 0.1 * rvm_mll
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()

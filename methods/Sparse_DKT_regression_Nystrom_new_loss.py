@@ -98,6 +98,31 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
     def set_forward_loss(self, x):
         pass
 
+    def rvm_ML(self, K, targets, alpha_m, beta, ip_index):
+        
+        N = targets.shape[0]
+        Kt = K.T @ targets
+        KK = K.T @ K
+        K_m = K[:, ip_index]
+        KK_mm = KK[ip_index, :][:, ip_index]
+        K_mt = Kt[ip_index]
+        A_m = torch.diag(alpha_m)
+        H = A_m + beta * KK_mm
+        U, info =  torch.linalg.cholesky_ex(H, upper=True)
+        # if info>0:
+        #     print('pd_err of Hessian')
+        U_inv = torch.linalg.inv(U)
+        Sigma_m = U_inv @ U_inv.T      
+        mu_m = beta * (Sigma_m @ K_mt)
+        y_ = K_m @ mu_m  
+        e = (targets - y_)
+        ED = e.T @ e
+        dataLikely	= (N * torch.log(beta) - beta * ED)/2
+        logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
+        
+        logML			= dataLikely - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
+        return logML/N
+    
     def train_loop_fast_rvm(self, epoch, n_support, n_samples, optimizer):
         self.model.train()
         self.likelihood.train()
@@ -131,17 +156,26 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
             with torch.no_grad():
                 inducing_points = self.get_inducing_points(z, y_support, verbose=False)
            
-            ip_values = z[inducing_points.index]
+            ip_index = inducing_points.index
+            ip_values = z[ip_index]
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
-            self.model.train()
             self.model.set_train_data(inputs=z, targets=y_support, strict=False)
+
+            sigma = self.model.likelihood.noise[0].clone().detach()
+            
+            alpha_m = inducing_points.alpha
+            K = self.model.base_covar_module(z).evaluate()
+            if True:
+                scales	= torch.sqrt(torch.sum(K**2, axis=0))
+                K = K / scales
+            rvm_mll = self.rvm_ML(K, y_support, alpha_m, 1/sigma, ip_index)
 
             z_query = self.feature_extractor(x_query)
             if self.normalize: z_query = F.normalize(z_query, p=2, dim=1)
             self.model.eval()
             predictions = self.model(z_query)
             self.model.train()
-            loss = -self.mll(predictions, y_query)
+            loss = -self.mll(predictions, y_query) - 0.1 * rvm_mll
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -153,8 +187,8 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
 
             if self.kernel_type=='rbf':
                 if ((epoch%1==0) & (itr%2==0)):
-                    print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f outputscale: %.3f lengthscale: %.3f' % (
-                        itr, epoch, loss.item(), mse.item(),
+                    print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f RVM ML: %3f MSE: %.3f noise: %.3f outputscale: %.3f lengthscale: %.3f' % (
+                        itr, epoch, loss.item(), rvm_mll.item(), mse.item(),
                         self.model.likelihood.noise.item(), self.model.base_covar_module.outputscale,
                         self.model.base_covar_module.base_kernel.lengthscale
                     ),Fore.RESET)
@@ -470,7 +504,7 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
                     print(f'FRVM MSE: {mse:0.4f}')
             
 
-        return IP(inducing_points, IP_index, num_IP, alpha, gamma, None, None, None, None)
+        return IP(inducing_points, IP_index, num_IP, alpha.to(torch.float), gamma, None, None, None, None)
   
     def save_checkpoint(self, checkpoint):
         # save state
