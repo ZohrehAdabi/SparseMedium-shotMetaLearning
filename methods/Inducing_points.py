@@ -22,16 +22,15 @@ IP = namedtuple("inducing_points", "z_values index count alpha gamma")
 def rvm_ML(K, targets, alpha_m, ip_index):
         
         N = targets.shape[0]
-        targets = targets.to(torch.float64)
+       
         targets[targets==-1]= 0
         targets_pseudo_linear	= 2 * targets - 1
-        K = K.to(torch.float64)
         K_m = K[:, ip_index]
         LogOut	= (targets_pseudo_linear * 0.9 + 1) / 2
         # mu_m	=  K_m.pinverse() @ (torch.log(LogOut / (1 - LogOut))) #
         mu_m = torch.linalg.lstsq(K_m, (torch.log(LogOut / (1 - LogOut)))).solution
         mu_m = mu_m.to(torch.float64)
-        mu_m, U, beta, dataLikely, bad_Hess = posterior_mode(K_m, targets, alpha_m, mu_m, max_itr=25, device='cuda')
+        mu_m, U, beta, dataLikely, bad_Hess = posterior_mode(K_m, targets.to(torch.float64), alpha_m.to(torch.float64), mu_m, max_itr=25, device='cuda')
         U_inv = torch.linalg.inv(U)
      
         logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
