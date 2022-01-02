@@ -30,11 +30,11 @@ def rvm_ML(K, targets, alpha_m, ip_index):
         K_m = K[:, ip_index]
         LogOut	= (targets_pseudo_linear * 0.9 + 1) / 2
         # mu_m	=  K_m.pinverse() @ (torch.log(LogOut / (1 - LogOut))) #
-        with torch.no_grad:
+        with torch.no_grad():
             mu_m = torch.linalg.lstsq(K_m, (torch.log(LogOut / (1 - LogOut)))).solution
             mu_m = mu_m.to(torch.float64)
             mu_m, U, beta, dataLikely, bad_Hess = posterior_mode(K_m, targets, alpha_m, mu_m, max_itr=25, device='cuda')
-        K_mu_m = K_m @ mu_m.detach()
+        K_mu_m = K_m @ mu_m
         y	= torch.sigmoid(K_mu_m)
         dataLikely = (targets[targets==1].T @ torch.log(y[targets==1]+1e-12) + ((1-targets[targets==0]).T @ torch.log(1-y[targets==0]+1e-12)))
         logdetHOver2	= torch.sum(torch.log(torch.diag(U)))

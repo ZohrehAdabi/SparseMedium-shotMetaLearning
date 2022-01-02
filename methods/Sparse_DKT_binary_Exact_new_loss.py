@@ -303,11 +303,11 @@ class Sparse_DKT_binary_Exact_new_loss(MetaTemplate):
             if i % print_freq==0:
                 if(self.writer is not None): self.writer.add_histogram('z_support', z_support, self.iteration)
                 if self.dirichlet:
-                    print(Fore.LIGHTRED_EX,'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} || Loss {:f} | Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
-                        outputscale, lenghtscale,  loss.item(), 0, accuracy_query), Fore.RESET) #accuracy_support
+                    print(Fore.LIGHTRED_EX,'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} || Loss {:f} | RVM ML {:f} | Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
+                        outputscale, lenghtscale,  loss.item(), rvm_mll.item(), 0, accuracy_query), Fore.RESET) #accuracy_support
                 else:
-                    print(Fore.LIGHTRED_EX,'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} | Noise {:f} | Loss {:f} | Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
-                        outputscale, lenghtscale, noise, loss.item(), 0, accuracy_query), Fore.RESET)
+                    print(Fore.LIGHTRED_EX,'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} | Noise {:f} | Loss {:f}| RVM ML {:f}  | Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
+                        outputscale, lenghtscale, noise, loss.item(), rvm_mll.item(),  0, accuracy_query), Fore.RESET)
 
     def get_inducing_points(self, base_covar_module, inputs, targets, verbose=True):
 
