@@ -467,6 +467,8 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
  
         # IP = torch.ones(self.num_induce_points, 2916).cuda()
         # ckpt['gp']['covar_module.inducing_points'] = IP
+        if 'best' in checkpoint:
+            print(f'\nBest model at epoch {ckpt["epoch"]}')
         self.model.load_state_dict(ckpt['gp'])
         self.likelihood.load_state_dict(ckpt['likelihood'])
         self.feature_extractor.load_state_dict(ckpt['net'])
