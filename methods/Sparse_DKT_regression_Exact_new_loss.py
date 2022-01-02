@@ -97,6 +97,27 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
 
     def set_forward_loss(self, x):
         pass
+    def rvm_ML(self, K_m, targets, alpha_m, beta):
+        
+        N = targets.shape[0]
+        K_mt = K_m.T @ targets
+        KK_mm = K_m.T @ K_m
+        A_m = torch.diag(alpha_m)
+        H = A_m + beta * KK_mm
+        U, info =  torch.linalg.cholesky_ex(H, upper=True)
+        # if info>0:
+        #     print('pd_err of Hessian')
+        U_inv = torch.linalg.inv(U)
+        Sigma_m = U_inv @ U_inv.T      
+        mu_m = beta * (Sigma_m @ K_mt)
+        y_ = K_m @ mu_m  
+        e = (targets - y_)
+        ED = e.T @ e
+        dataLikely	= (N * torch.log(beta) - beta * ED)/2
+        logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
+        
+        logML			= dataLikely - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
+        return logML/N
 
     def train_loop_fast_rvm(self, epoch, n_support, n_samples, optimizer):
         self.model.train()
@@ -131,10 +152,23 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
             with torch.no_grad():
                 inducing_points = self.get_inducing_points(z, y_support, verbose=False)
            
-            ip_values = z[inducing_points.index]
-            ip_labels = y_support[inducing_points.index]
+            ip_index = inducing_points.index
+            ip_values = z[ip_index]
+            ip_labels = y_support[ip_index]
+            sigma = self.model.likelihood.noise[0].clone().detach()
+            
+            alpha_m = inducing_points.alpha
+            K_m = self.model.base_covar_module(z, ip_values).evaluate()
+            if True:
+                scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+                # print(f'scale: {Scales}')
+                # scales[scales==0] = 1
+                K_m = K_m / scales
+            # C = sigma + K_m @ torch.linalg.inv(torch.diag(alpha_m)) @ K_m.T
+            # C_inv = torch.linalg.inv(C)
+            # rvm_mll = -1/2 * (torch.log(torch.linalg.det(C)+1e-8) + y_support @ C_inv @ y_support)
+            rvm_mll = self.rvm_ML(K_m, y_support, alpha_m, 1/sigma)
             # self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
-            self.model.train()
             # NOTE 
             self.model.set_train_data(inputs=ip_values, targets=ip_labels, strict=False)
 
@@ -143,7 +177,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
             self.model.eval()
             predictions = self.model(z_query)
             self.model.train()
-            loss = -self.mll(predictions, y_all)
+            loss = -self.mll(predictions, y_all) - 0.5 * rvm_mll
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -155,8 +189,8 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
 
             if self.kernel_type=='rbf':
                 if ((epoch%1==0) & (itr%2==0)):
-                    print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f outputscale: %.3f lengthscale: %.3f' % (
-                        itr, epoch, loss.item(), mse.item(),
+                    print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f RVM ML: %3f  MSE: %.3f noise: %.3f outputscale: %.3f lengthscale: %.3f' % (
+                        itr, epoch, loss.item(), rvm_mll.item(), mse.item(),
                         self.model.likelihood.noise.item(), self.model.base_covar_module.outputscale,
                         self.model.base_covar_module.base_kernel.lengthscale
                     ),Fore.RESET)
@@ -414,10 +448,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
         beta = 1 /(sigma + eps)
         scale = self.scale
         covar_module = self.model.base_covar_module
-        # X = inputs.clone()
-        # m = X.mean(axis=0)
-        # X = (X- m) 
-        # X = F.normalize(X, p=2, dim=1)
+       
         kernel_matrix = covar_module(inputs).evaluate()
         # normalize kernel
         if scale:
@@ -452,7 +483,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
                 print(f'FRVM MSE: {mse:0.4f}')
         
 
-        return IP(inducing_points, IP_index, num_IP, alpha, gamma, None, None, None, None)
+        return IP(inducing_points, IP_index, num_IP, alpha.to(torch.float), gamma.to(torch.float), None, None, None, None)
   
     def save_checkpoint(self, checkpoint):
         # save state

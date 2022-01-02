@@ -349,7 +349,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
             # print(f'sigma2={1/beta:.4f}')
             # if verbose:
             # if active_m.shape[0] < 3:
-            print(f'Finished at {itr:3}, m= {active_m.shape[0]:3} sigma2= {1/beta:4.4f}')
+            print(f'Finished at {itr:3}, m= {active_m.shape[0]:3} sigma2= {1/beta:4.4f} logML= {logML.item():.5f}')
             # if count > 0:
             #     print(f'add: {add_count:3d} ({add_count/count:.1%}), delete: {del_count:3d} ({del_count/count:.1%}), recompute: {recomp_count:3d} ({recomp_count/count:.1%})')
             return active_m.cpu().numpy(), alpha_m, Gamma, beta, mu_m
