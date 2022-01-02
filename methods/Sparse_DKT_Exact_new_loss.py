@@ -1,19 +1,16 @@
 ## Original packages
-from torchvision.transforms.transforms import ColorJitter
 import backbone
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
 import numpy as np
+import os
 import torch.nn.functional as F
 from methods.meta_template import MetaTemplate
 from fast_pytorch_kmeans import KMeans as Fast_KMeans
 from collections import namedtuple
-import torchvision.transforms as transforms
-import matplotlib.pyplot as plt
 ## Our packages
 import gpytorch
-import os
 from time import gmtime, strftime
 import random
 from colorama import Fore
@@ -22,7 +19,7 @@ from methods.Fast_RVM import Fast_RVM
 from methods.Inducing_points import get_inducing_points
 #Check if tensorboardx is installed
 try:
-    #tensorboard --logdir=./Sparse_DKT_binary_Nystrom_new_loss_CUB_log/ --host localhost --port 8090
+    # tensorboard --logdir=./Sparse_DKT_log/ --host localhost --port 8089
     from tensorboardX import SummaryWriter
     IS_TBX_INSTALLED = True
 except ImportError:
@@ -37,13 +34,14 @@ except ImportError:
 # CUB + data augmentation
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=1 --train_aug
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=5 --train_aug
-IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j_idx")
-class Sparse_DKT_binary_Nystrom_new_loss(MetaTemplate):
-    def __init__(self, model_func, kernel_type, n_way, n_support, sparse_method='FRVM', num_inducing_points=None, normalize=False, 
-                        scale=False, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
-        super(Sparse_DKT_binary_Nystrom_new_loss, self).__init__(model_func, n_way, n_support)
+IP = namedtuple("inducing_points", "z_values index count x y i_idx j_idx")
+class Sparse_DKT_Exact(MetaTemplate):
+    def __init__(self, model_func, kernel_type, n_way, n_support, sparse_method, num_inducing_points=None, normalize=False, 
+                            scale=False, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
+        super(Sparse_DKT_Exact, self).__init__(model_func, n_way, n_support)
         self.num_inducing_points = num_inducing_points
         self.sparse_method = sparse_method
+        
         self.config = config
         self.align_threshold = align_threshold
         self.gamma = gamma
@@ -71,29 +69,33 @@ class Sparse_DKT_binary_Nystrom_new_loss(MetaTemplate):
     def init_summary(self, id, dataset):
         self.id = id
         if(IS_TBX_INSTALLED):
-            path = f'./Sparse_DKT_binary_Nystrom_new_loss_{dataset}_log'
+            path = f'./Sparse_DKT_Exact_{dataset}_log'
             time_string = strftime("%d%m%Y_%H%M", gmtime())
             if not os.path.isdir(path):
                 os.makedirs(path)
-            writer_path = path+ '/' + id #+'_old'#+ time_string
+            writer_path = path+ '/' + id #+'_'+ time_string
             self.writer = SummaryWriter(log_dir=writer_path)
 
-    def get_model_likelihood_mll(self, train_x=None, train_y=None):
-        if(train_x is None): train_x=torch.ones(100, 64).cuda()
-        if(train_y is None): train_y=torch.ones(100).cuda()
+    def get_model_likelihood_mll(self, train_x_list=None, train_y_list=None):
+        if(train_x_list is None): train_x_list=[torch.ones(100, 64).cuda()]*self.n_way
+        if(train_y_list is None): train_y_list=[torch.ones(100).cuda()]*self.n_way
+        model_list = list()
+        likelihood_list = list()
+        for train_x, train_y in zip(train_x_list, train_y_list):
+            
+            if self.dirichlet:
+                likelihood = gpytorch.likelihoods.DirichletClassificationLikelihood(targets=train_y.long(), learn_additional_noise=False)
+            else:
+                likelihood = gpytorch.likelihoods.GaussianLikelihood()
 
+            model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, dirichlet=self.dirichlet,
+                                 inducing_points=train_x, kernel=self.kernel_type)
+            model_list.append(model)
+            likelihood_list.append(model.likelihood)
+        self.model = gpytorch.models.IndependentModelList(*model_list).cuda()
+        self.likelihood = gpytorch.likelihoods.LikelihoodList(*likelihood_list).cuda()
+        self.mll = gpytorch.mlls.SumMarginalLogLikelihood(self.likelihood, self.model).cuda()
 
-        if self.dirichlet:
-            likelihood = gpytorch.likelihoods.DirichletClassificationLikelihood(targets=train_y.long(), learn_additional_noise=False)
-        else:
-            likelihood = gpytorch.likelihoods.GaussianLikelihood()
-                
-        model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, dirichlet=self.dirichlet,
-                                    kernel=self.kernel_type, inducing_points=train_x)
-
-        self.model      = model.cuda()
-        self.likelihood = likelihood.cuda()
-        self.mll        = gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self.model).cuda()
         return self.model, self.likelihood, self.mll
 
     def set_forward(self, x, is_feature=False):
@@ -143,17 +145,14 @@ class Sparse_DKT_binary_Nystrom_new_loss(MetaTemplate):
         max_pred[index] = -np.inf
         return max_pred
 
-    def train_loop(self, epoch, train_loader, optimizer, print_freq=5):
+    def train_loop(self, epoch, train_loader, optimizer, print_freq=10):
         # if self.dirichlet:
         #     optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
         #                               {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
         # else:
-        #     optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
-        #         #                              {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
-        new_loss = True
-        self.frvm_acc = []
+        # optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
+        #                             {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
         for i, (x,_) in enumerate(train_loader):
-    
             self.n_query = x.size(1) - self.n_support
             if self.change_way: self.n_way  = x.size(0)
             x_all = x.contiguous().view(self.n_way * (self.n_support + self.n_query), *x.size()[2:]).cuda()
@@ -165,86 +164,96 @@ class Sparse_DKT_binary_Nystrom_new_loss(MetaTemplate):
             x_train = x_all
             y_train = y_all
 
+            target_list_all = list()
+            samples_per_model = int(len(y_train) / self.n_way) #25 / 5 = 5
+            for way in range(self.n_way):
+                target = torch.ones(len(y_train), dtype=torch.float32) * -1 
+                # target = torch.zeros(len(y_train), dtype=torch.float32) 
+                start_index = way * samples_per_model
+                stop_index = start_index+samples_per_model
+                target[start_index:stop_index] = 1.0
+                target_list_all.append(target.cuda())
             
-            # NOTE new_loss:
-            samples_per_model = int(len(y_query) / self.n_way) #25 / 5 = 5
-            target_query = torch.ones(len(y_query), dtype=torch.float32) * -1 
-            start_index = 0
-            stop_index = start_index+samples_per_model
-            target_query[start_index:stop_index] = 1.0
-            target_query = target_query.to(self.device)
-            
+            target_list = list()
             samples_per_model = int(len(y_support) / self.n_way) #25 / 5 = 5
-            target = torch.ones(len(y_support), dtype=torch.float32) * -1 
-            # target = torch.zeros(len(y_train), dtype=torch.float32) 
-            start_index = 0
-            stop_index = start_index+samples_per_model
-            target[start_index:stop_index] = 1.0
-            target = target.to(self.device)
+            for way in range(self.n_way):
+                target = torch.ones(len(y_support), dtype=torch.float32) * -1 
+                # target = torch.zeros(len(y_train), dtype=torch.float32) 
+                start_index = way * samples_per_model
+                stop_index = start_index+samples_per_model
+                target[start_index:stop_index] = 1.0
+                target_list.append(target.cuda())
+            
+            target_list_query = list()
+            samples_per_model = int(len(y_query) / self.n_way) #25 / 5 = 5
+            for way in range(self.n_way):
+                target = torch.ones(len(y_query), dtype=torch.float32) * -1 
+                # target = torch.zeros(len(y_train), dtype=torch.float32) 
+                start_index = way * samples_per_model
+                stop_index = start_index+samples_per_model
+                target[start_index:stop_index] = 1.0
+                target_list_query.append(target.cuda())
 
             self.model.train()
             self.likelihood.train()
             self.feature_extractor.train()
-            #NOTE new_loss:
-            z_train = self.feature_extractor.forward(x_support)
-                # z_train = self.feature_extractor.forward(x_train)
+            z_train = self.feature_extractor.forward(x_train)
             if(self.normalize): z_train = F.normalize(z_train, p=2, dim=1)
-            # z_train_norm = F.normalize(z_train, p=2, dim=1)
+
             # train_list = [z_train]*self.n_way
             lenghtscale = 0.0
             noise = 0.0
             outputscale = 0.0
-
-            if self.dirichlet:
-                target[target==-1] = 0
-                self.model.likelihood.targets = target.long()
-                sigma2_labels, transformed_targets, num_classes = self.model.likelihood._prepare_targets(self.model.likelihood.targets, 
-                                        alpha_epsilon=self.model.likelihood.alpha_epsilon, dtype=torch.float)
-                self.model.likelihood.transformed_targets = transformed_targets.transpose(-2, -1)
-                self.model.likelihood.noise.data = sigma2_labels
-                self.model.set_train_data(inputs=z_train, targets=self.model.likelihood.transformed_targets, strict=False)
-            else: 
-                self.model.set_train_data(inputs=z_train, targets=target, strict=False)
-
-            with torch.no_grad():
-                inducing_points, frvm_acc = get_inducing_points(self.model.base_covar_module, #.base_kernel,
-                                                            z_train, target, sparse_method=self.sparse_method, scale=self.scale,
+            print(Fore.LIGHTMAGENTA_EX, f'epoch:{epoch+1}', Fore.RESET)
+            for idx, single_model in enumerate(self.model.models):
+                print(Fore.LIGHTMAGENTA_EX, f'model:{idx+1}', Fore.RESET)
+                with torch.no_grad():
+                    # inducing_points = self.get_inducing_points(single_model.base_covar_module, #.base_kernel,
+                    #                                             z_train, target_list[idx], verbose=False)
+                    inducing_points, frvm_acc = get_inducing_points(single_model.base_covar_module, #.base_kernel,
+                                                            z_train, target_list[idx], sparse_method=self.sparse_method, scale=self.scale,
                                                             config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
                                                             num_inducing_points=self.num_inducing_points, verbose=True, device=self.device)
-                self.frvm_acc.append(frvm_acc)
-        
-            ip_index = inducing_points.index
-            ip_values = z_train[ip_index]
-            self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
-            self.model.train()
+                ip_index = inducing_points.index 
+                ip_values = z_train[ip_index]
+                ip_labels = target_list[idx][ip_index]
+                if self.dirichlet:
+                    # targets = target_list[idx]
+                    targets = ip_labels
+                    targets[targets==-1] = 0
+                    single_model.likelihood.targets = targets.long()
+                    sigma2_labels, transformed_targets, num_classes = single_model.likelihood._prepare_targets(single_model.likelihood.targets, 
+                                            alpha_epsilon=single_model.likelihood.alpha_epsilon, dtype=torch.float)
+                    single_model.likelihood.transformed_targets = transformed_targets.transpose(-2, -1)
+                    single_model.likelihood.noise.data = sigma2_labels
+                    single_model.set_train_data(inputs=ip_values, targets=single_model.likelihood.transformed_targets, strict=False)
+                else: 
+                    single_model.set_train_data(inputs=ip_values, targets=ip_labels, strict=False)
 
-            if(self.model.covar_module.base_kernel.lengthscale is not None):
-                lenghtscale+=self.model.base_covar_module.base_kernel.lengthscale.mean().cpu().detach().numpy().squeeze()
-            noise+=self.model.likelihood.noise.cpu().detach().numpy().squeeze().mean()
-            if(self.model.base_covar_module.outputscale is not None):
-                outputscale+=self.model.base_covar_module.outputscale.cpu().detach().numpy().squeeze()
+                single_model.train()
+
+                if(single_model.base_covar_module.lengthscale is not None):
+                    lenghtscale+=single_model.base_covar_module.lengthscale.mean().cpu().detach().numpy().squeeze()
+                noise+=single_model.likelihood.noise.cpu().detach().numpy().squeeze().mean()
+                if(single_model.base_covar_module.outputscale is not None):
+                    outputscale+=single_model.base_covar_module.outputscale.cpu().detach().numpy().squeeze()
             
+            if(single_model.base_covar_module.lengthscale is not None): lenghtscale /= float(len(self.model.models))
+            noise /= float(len(self.model.models))
+            if(single_model.base_covar_module.outputscale is not None): outputscale /= float(len(self.model.models))
 
             ## Optimize
             optimizer.zero_grad()
-            #NOTE new_loss:
-            z_query = self.feature_extractor.forward(x_query)
+            z_query = self.feature_extractor.forward(x_all)
             if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
             self.model.eval()
             output = self.model(z_query)
             self.model.train()
             if self.dirichlet:
-                transformed_targets = self.model.likelihood.transformed_targets
+                transformed_targets = [model.likelihood.transformed_targets for model in self.model.models]
                 loss = -self.mll(output, transformed_targets).sum()
             else:
-                loss = -self.mll(output, target_query)
-            # else:
-            #     output = self.model(*self.model.train_inputs)
-            #     if self.dirichlet:
-            #         transformed_targets = self.model.likelihood.transformed_targets
-            #         loss = -self.mll(output, transformed_targets).sum()
-            #     else:
-            #         loss = -self.mll(output, self.model.train_targets)
+                loss = -self.mll(output, target_list_all)
             loss.backward()
             optimizer.step()
 
@@ -256,44 +265,46 @@ class Sparse_DKT_binary_Nystrom_new_loss(MetaTemplate):
                 self.model.eval()
                 self.likelihood.eval()
                 self.feature_extractor.eval()
-                z_support = self.feature_extractor(x_support).detach()
+                z_support = self.feature_extractor.forward(x_support).detach()
                 if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1)
-                ## z_support_list = [z_support]*len(y_support)
+                # z_support_list = [z_support]*len(y_support)
 
                 # if self.dirichlet:
-                #     prediction = self.likelihood(self.model(z_support)) #return 20 MultiGaussian Distributions
+                #     predictions = self.likelihood(*self.model(*z_support_list)) #return 2 * 20 MultiGaussian Distributions
                 # else:
-                #     prediction = self.likelihood(self.model(z_support) #return 20 MultiGaussian Distributions
-               
+                #     predictions = self.likelihood(*self.model(*z_support_list)) #return 20 MultiGaussian Distributions
+                # predictions_list = list()
+                
                 # if self.dirichlet:
-                #     
-                #    max_pred = (prediction.mean[0] > prediction.mean[1]).to(int)
-                #    y_pred = max_pred.cpu().detach().numpy()
-                # else: 
-                #    pred = torch.sigmoid(prediction.mean)
-                #    y_pred = (pred < 0.5).to(int)
-                #    y_pred = y_pred.cpu().detach().numpy()
+                #     for dirichlet in predictions:
 
+                #         max_pred = self.pred_result(dirichlet.mean)
+                #         predictions_list.append(max_pred.cpu().detach().numpy())
+                # else:
+                #     for gaussian in predictions:
+                #         predictions_list.append(torch.sigmoid(gaussian.mean).cpu().detach().numpy())
+
+                # y_pred = np.vstack(predictions_list).argmax(axis=0) #[model, classes]
                 # accuracy_support = (np.sum(y_pred==y_support) / float(len(y_support))) * 100.0
                 # if(self.writer is not None): self.writer.add_scalar('GP_support_accuracy', accuracy_support, self.iteration)
-                z_query = self.feature_extractor(x_query).detach()
+                z_query = self.feature_extractor.forward(x_query).detach()
                 if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
-                
-                
+                z_query_list = [z_query]*len(y_query)
                 if self.dirichlet:
-                    prediction = self.likelihood(self.model(z_query)) 
+                    predictions = self.likelihood(*self.model(*z_query_list)) #return 2 * 20 MultiGaussian Distributions
                 else:
-                    prediction = self.likelihood(self.model(z_query))
-               
+                    predictions = self.likelihood(*self.model(*z_query_list)) #return 20 MultiGaussian Distributions
+                predictions_list = list()
                 if self.dirichlet:
-                    
-                   max_pred = (prediction.mean[0] > prediction.mean[1]).to(int)
-                   y_pred = max_pred.cpu().detach().numpy()
-                else: 
-                   pred = torch.sigmoid(prediction.mean)
-                   y_pred = (pred < 0.5).to(int)
-                   y_pred = y_pred.cpu().detach().numpy()
+                    for dirichlet in predictions:
+          
+                        max_pred = self.pred_result(dirichlet.mean)
+                        predictions_list.append(max_pred.cpu().detach().numpy())
+                else:
+                    for gaussian in predictions:
+                        predictions_list.append(torch.sigmoid(gaussian.mean).cpu().detach().numpy())
 
+                y_pred = np.vstack(predictions_list).argmax(axis=0) #[model, classes]
                 accuracy_query = (np.sum(y_pred==y_query) / float(len(y_query))) * 100.0
                 if(self.writer is not None): self.writer.add_scalar('GP_query_accuracy', accuracy_query, self.iteration)
 
@@ -326,18 +337,17 @@ class Sparse_DKT_binary_Nystrom_new_loss(MetaTemplate):
         else:
             # with sigma and updating sigma converges to more sparse solution
             N   = inputs.shape[0]
-            tol = 1e-6
+            tol = 1e-4
             eps = torch.finfo(torch.float32).eps
             max_itr = 1000
             
-            scale = True
+            scale = self.scale
             # X = inputs.clone()
             # m = X.mean(axis=0)
             # s = X.std(axis=0)
-            # X = (X- m) / s 
+            # X = (X- m) / s
             kernel_matrix = base_covar_module(inputs).evaluate()
             # normalize kernel
-            scales = torch.ones(kernel_matrix.shape[1]).to(self.device)
             if scale:
                 scales	= torch.sqrt(torch.sum(kernel_matrix**2, axis=0))
                 # print(f'scale: {Scales}')
@@ -345,38 +355,31 @@ class Sparse_DKT_binary_Nystrom_new_loss(MetaTemplate):
                 kernel_matrix = kernel_matrix / scales
 
             kernel_matrix = kernel_matrix.to(torch.float64)
-            # targets[targets==-1]= 0
-            target = targets.clone().to(torch.float64)
-            active, alpha, gamma, beta, mu_m = Fast_RVM(kernel_matrix, target, N, self.config, self.align_threshold, self.gamma,
+            target = targets.to(torch.float64)
+            active, alpha, Gamma, beta, mu_m = Fast_RVM(kernel_matrix, target, N, self.config, self.align_threshold, self.gamma,
                                                     eps, tol, max_itr, self.device, verbose)
 
             index = np.argsort(active)
             active = active[index]
             inducing_points = inputs[active]
-            gamma = gamma[index]
-            ss = scales[index]
-            alpha = alpha[index] / ss
             num_IP = active.shape[0]
             IP_index = active
-
             if True:
                 ss = scales[index]
                 K = base_covar_module(inputs, inducing_points).evaluate()
                 mu_m = mu_m[index] / ss
                 mu_m = mu_m.to(torch.float)
                 y_pred = K @ mu_m
+                # targets[targets==-1]= 0
                 y_pred = torch.sigmoid(y_pred)
                 y_pred = (y_pred > 0.5).to(int)
-                
-                acc = (torch.sum(y_pred==target) / N) * 100
+                acc = (torch.sum(y_pred==target) / N) * 100 # targets is zero and one (after FRVM)
                 if verbose:
                     print(f'FRVM ACC: {(acc):.2f}%')
-                
-                self.frvm_acc.append(acc.item())
 
-        return IP(inducing_points, IP_index, num_IP, alpha, gamma, None, None, None, None)
+        return IP(inducing_points, IP_index, num_IP, None, None, None, None)
   
-    def correct(self, x, i=0, N=0, laplace=False):
+    def correct(self, x, N=0, laplace=False):
         ##Dividing input x in query and support set
         x_support = x[:,:self.n_support,:,:,:].contiguous().view(self.n_way * (self.n_support), *x.size()[2:]).cuda()
         y_support = torch.from_numpy(np.repeat(range(self.n_way), self.n_support)).cuda()
@@ -404,43 +407,48 @@ class Sparse_DKT_binary_Nystrom_new_loss(MetaTemplate):
         x_train = x_support
         y_train = y_support
 
-        samples_per_model = int(len(y_train) / self.n_way) #25 / 5 = 5
-        target = torch.ones(len(y_train), dtype=torch.float32) * -1 
-        # target = torch.zeros(len(y_train), dtype=torch.float32) 
-        start_index = 0
-        stop_index = start_index+samples_per_model
-        target[start_index:stop_index] = 1.0
-        target = target.cuda()
+        target_list = list()
+        samples_per_model = int(len(y_train) / self.n_way)
+        for way in range(self.n_way):
+            target = torch.ones(len(y_train), dtype=torch.float32) * -1.0
+            # target = torch.zeros(len(y_train), dtype=torch.float32) 
+            start_index = way * samples_per_model
+            stop_index = start_index+samples_per_model
+            target[start_index:stop_index] = 1.0
+            target_list.append(target.cuda())
 
         z_train = self.feature_extractor.forward(x_train).detach() #[340, 64]
         if(self.normalize): z_train = F.normalize(z_train, p=2, dim=1)
-        # z_train_norm = F.normalize(z_train, p=2, dim=1)
-        
-        if self.dirichlet:
-                target[target==-1] = 0
-                self.model.likelihood.targets = target.long()
-                sigma2_labels, transformed_targets, num_classes = self.model.likelihood._prepare_targets(self.model.likelihood.targets, 
-                                        alpha_epsilon=self.model.likelihood.alpha_epsilon, dtype=torch.float)
-                self.model.likelihood.transformed_targets = transformed_targets.transpose(-2, -1)
-                self.model.likelihood.noise.data = sigma2_labels
-                self.model.set_train_data(inputs=z_train, targets=self.model.likelihood.transformed_targets, strict=False)
-        else: 
-            self.model.set_train_data(inputs=z_train, targets=target, strict=False)
+        train_list = [z_train]*self.n_way
+        for idx, single_model in enumerate(self.model.models):
 
-        with torch.no_grad():
-            inducing_points, frvm_acc = get_inducing_points(self.model.base_covar_module, #.base_kernel,
-                                                        z_train, target, sparse_method=self.sparse_method, scale=self.scale,
+            with torch.no_grad():
+                # inducing_points = self.get_inducing_points(single_model.base_covar_module, #.base_kernel,
+                #                                             z_train, target_list[idx], verbose=False)
+                inducing_points, frvm_acc = get_inducing_points(single_model.base_covar_module, #.base_kernel,
+                                                        z_train, target_list[idx], sparse_method=self.sparse_method, scale=self.scale,
                                                         config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
                                                         num_inducing_points=self.num_inducing_points, verbose=False, device=self.device)
-            self.frvm_acc.append(frvm_acc)
-            inducing_points = IP(inducing_points.z_values, inducing_points.index, inducing_points.count,
-                                inducing_points.alpha, inducing_points.gamma,  
-                                x_support[inducing_points.index], y_support[inducing_points.index], None, None)
-        
-        ip_values = inducing_points.z_values.cuda()
-        # ip_values = z_train[inducing_points.index].cuda()
-        self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
-        self.model.covar_module._clear_cache()
+            ip_index = inducing_points.index 
+            ip_values = z_train[ip_index]
+            ip_labels = target_list[idx][ip_index]
+            if self.dirichlet:
+                # targets = target_list[idx]
+                targets = ip_labels
+                targets[targets==-1] = 0
+                single_model.likelihood.targets = targets.long()
+                sigma2_labels, transformed_targets, _ = single_model.likelihood._prepare_targets(single_model.likelihood.targets, 
+                                        alpha_epsilon=single_model.likelihood.alpha_epsilon, dtype=torch.float)
+                single_model.likelihood.transformed_targets = transformed_targets.transpose(-2, -1)
+                single_model.likelihood.noise.data = sigma2_labels
+                single_model.set_train_data(inputs=ip_values, targets=single_model.likelihood.transformed_targets, strict=False)
+            else: 
+                single_model.set_train_data(inputs=ip_values, targets=ip_labels, strict=False)
+            
+            
+            
+            
+            # single_model.set_train_data(inputs=z_train, targets=target_list[idx], strict=False)
 
         optimizer = torch.optim.Adam([{'params': self.model.parameters()}], lr=1e-3)
 
@@ -464,129 +472,50 @@ class Sparse_DKT_binary_Nystrom_new_loss(MetaTemplate):
             self.feature_extractor.eval()
             z_query = self.feature_extractor.forward(x_query).detach()
             if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
-            # z_query_list = [z_query]*len(y_query)
+            z_query_list = [z_query]*len(y_query)
             if self.dirichlet:
-                prediction = self.likelihood(self.model(z_query)) #return 2 * 20 MultiGaussian Distributions
+                    predictions = self.likelihood(*self.model(*z_query_list)) #return 2 * 20 MultiGaussian Distributions
             else:
-                prediction = self.likelihood(self.model(z_query)) ##return n_way MultiGaussians
+                predictions = self.likelihood(*self.model(*z_query_list)) ##return n_way MultiGaussians
             
+            predictions_list = list()
             if self.dirichlet:
-                    
-                   max_pred = (prediction.mean[0] > prediction.mean[1]).to(int)
-                   y_pred = max_pred.cpu().detach().numpy()
-            else: 
-                pred = torch.sigmoid(prediction.mean)
-                y_pred = (pred < 0.5).to(int)
-                y_pred = y_pred.cpu().detach().numpy()
-
+                    for dirichlet in predictions:
+                        max_pred = self.pred_result(dirichlet.mean)
+                        predictions_list.append(max_pred.cpu().detach().numpy())
+            else:
+                for gaussian in predictions:
+                    predictions_list.append(torch.sigmoid(gaussian.mean).cpu().detach().numpy())
+            
+            y_pred = np.vstack(predictions_list).argmax(axis=0) #[model, classes]
             top1_correct = np.sum(y_pred == y_query)
             count_this = len(y_query)
-            acc = (top1_correct/ count_this)*100
-            if i%10==0:
-                # print(Fore.RED,"-"*25, Fore.RESET)
-                print(f'inducing_points count: {inducing_points.count}')
-                # print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha.cpu().numpy()}',Fore.RESET)
-                # print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma.cpu().numpy()}',Fore.RESET)
-                print(Fore.YELLOW, f'itr {i:3}, ACC: {acc:.2f}%', Fore.RESET)
-                print(Fore.RED,"="*50, Fore.RESET)
-            if self.show_plot:
-                self.plot_test(x_query, y_query, y_pred, inducing_points, i)
-
-
-        return float(top1_correct), count_this, avg_loss/float(N+1e-10), inducing_points.count
+        return float(top1_correct), count_this, avg_loss/float(N+1e-10)
 
     def test_loop(self, test_loader, record=None, return_std=False):
         print_freq = 10
         correct =0
         count = 0
         acc_all = []
-        num_sv_list = []
         iter_num = len(test_loader)
-        self.show_plot = iter_num < 5
-        self.frvm_acc = []
         for i, (x,_) in enumerate(test_loader):
             self.n_query = x.size(1) - self.n_support
             if self.change_way:
                 self.n_way  = x.size(0)
-            correct_this, count_this, loss_value, num_sv = self.correct(x, i)
+            correct_this, count_this, loss_value = self.correct(x)
             acc_all.append(correct_this/ count_this*100)
-            num_sv_list.append(num_sv)
             if(i % 10==0):
                 acc_mean = np.mean(np.asarray(acc_all))
                 print('Test | Batch {:d}/{:d} | Loss {:f} | Acc {:f}'.format(i, len(test_loader), loss_value, acc_mean))
         acc_all  = np.asarray(acc_all)
         acc_mean = np.mean(acc_all)
         acc_std  = np.std(acc_all)
-        mean_num_sv = np.mean(num_sv)
-        print(Fore.LIGHTRED_EX,"="*30, Fore.RESET)
-        print(f'Avg. FRVM ACC: {np.mean(self.frvm_acc):4.2f}%, Avg. SVs {mean_num_sv:.2f}', Fore.RESET)
-        print(Fore.YELLOW,'%d Test Acc = %4.2f%% +- %4.2f%%' %(iter_num,  acc_mean, 1.96* acc_std/np.sqrt(iter_num)), Fore.RESET)
-        print(Fore.LIGHTRED_EX,"="*30, Fore.RESET)
+        print(Fore.LIGHTRED_EX,"="*30)
+        print(Fore.YELLOW,'\n%d Test Acc = %4.2f%% +- %4.2f%%' %(iter_num,  acc_mean, 1.96* acc_std/np.sqrt(iter_num)), Fore.RESET)
+        print(Fore.LIGHTRED_EX,"="*30)
         if(self.writer is not None): self.writer.add_scalar('test_accuracy', acc_mean, self.iteration)
-        if(self.writer is not None): self.writer.add_scalar('Avg. SVs', mean_num_sv, self.iteration)
         if(return_std): return acc_mean, acc_std
         else: return acc_mean
-
-    
-    def plot_test(self, x_query, y_query, y_pred, inducing_points, k):
-        def clear_ax(ax):
-            ax.clear()
-            ax.set_xticks([])
-            ax.set_xticklabels([])
-            ax.set_yticks([])
-            ax.set_yticklabels([])
-            ax.set_aspect('equal')
-            return ax
-        fig: plt.Figure = plt.figure(1, figsize=(8, 4), tight_layout=True, dpi=125)
-        
-        r = 3
-        c = 5
-        i = 1
-        if y_query.shape[0] >10:
-            x_q       = torch.vstack([x_query[0:5], x_query[10:15]])
-            y_q       = np.hstack([y_query[0:5], y_query[10:15]])
-            y_pred_   = np.hstack([y_pred[0:5], y_pred[10:15]])
-        else:
-            x_q     = x_query    
-            y_q     = y_query
-            y_pred_ = y_pred
-        for i in range(10):
-            x = self.denormalize(x_q[i])
-            y = y_q[i]
-            y_p = y_pred_[i]
-            ax: plt.Axes = fig.add_subplot(r, c, i+1)
-            ax = clear_ax(ax)
-            img = transforms.ToPILImage()(x.cpu()).convert("RGB")
-            ax.imshow(img)
-            ax.set_title(f'pred: {y_p:.0f}, real: {y:.0f}')
-        inducing_x, inducing_y = inducing_points.x, inducing_points.y
-        j = 5
-        if j > inducing_y.shape[0]: j = inducing_y.shape[0]
-        for i in range(j):
-            x = self.denormalize(inducing_x[i].squeeze())
-            y = inducing_y[i]
-            ax: plt.Axes = fig.add_subplot(r, c, i+11)
-            ax = clear_ax(ax)
-            img = transforms.ToPILImage()(x.cpu()).convert("RGB")
-            ax.imshow(img)
-            ax.set_title(f'{y:.0f}')
-            
-        os.makedirs('./save_img', exist_ok=True)
-        fig.savefig(f'./save_img/test_images_{k}.png')
-
-        
-
-    def denormalize(self, tensor):
-        means = [0.485, 0.456, 0.406]
-        stds = [0.229, 0.224, 0.225]
-
-        denormalized = tensor.clone()
-
-        for channel, mean, std in zip(denormalized, means, stds):
-            channel.mul_(std).add_(mean)
-
-        return denormalized
-
 
     def get_logits(self, x):
         self.n_query = x.size(1) - self.n_support
@@ -656,7 +585,7 @@ class ExactGPLayer(gpytorch.models.ExactGP):
             #     )
             # else:
             self.base_covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.LinearKernel())
-            # self.base_covar_module.outputscale = 0.5
+            
         ## RBF kernel
         elif(kernel=='rbf' or kernel=='RBF'):
             self.base_covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
@@ -678,11 +607,11 @@ class ExactGPLayer(gpytorch.models.ExactGP):
             raise ValueError("[ERROR] the kernel '" + str(kernel) + "' is not supported!")
 
 
-        self.covar_module = gpytorch.kernels.InducingPointKernel(self.base_covar_module,
-                                         inducing_points=inducing_points, likelihood=likelihood)
+        # self.covar_module = gpytorch.kernels.InducingPointKernel(self.base_covar_module,
+        #                                  inducing_points=inducing_points, likelihood=likelihood)
 
 
     def forward(self, x):
         mean_x = self.mean_module(x)
-        covar_x = self.covar_module(x)
+        covar_x = self.base_covar_module(x)
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
