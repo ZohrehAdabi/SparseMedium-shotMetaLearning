@@ -150,7 +150,7 @@ if __name__ == '__main__':
         elif params.method == 'baseline++':
             model = BaselineTrain(model_dict[params.model], params.num_classes, loss_type='dist')
 
-    elif params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sp_DKT_Bin_Nyst_NLoss', 'Sparse_DKT_binary_Exact', 'Sp_DKT_Bin_Exact_NLoss' 
+    elif params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sp_DKT_Bin_Nyst_NLoss', 'Sparse_DKT_binary_Exact', 'Sp_DKT_Bin_Exact_NLoss', 
                             'DKT', 'DKT_binary', 'DKT_binary_new_loss', 'protonet', 
                         'matchingnet', 'relationnet', 'relationnet_softmax', 'maml', 'maml_approx']:
         # for fewshot setting
@@ -358,6 +358,7 @@ if __name__ == '__main__':
                 model.n_task = 32
                 model.task_update_num = 1
                 model.train_lr = 0.1
+    
     else:
         raise ValueError('Unknown method')
 
