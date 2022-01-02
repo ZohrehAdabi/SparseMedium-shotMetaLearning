@@ -32,7 +32,7 @@ from collections import namedtuple
 import torch.optim
 #Check if tensorboardx is installed
 try:
-    #tensorboard --logdir=./QMUL_Loss/ --host localhost --port 8091
+    #tensorboard --logdir=./Sparse_DKT_QMUL_Nystrom_Loss/ --host localhost --port 8091
     from tensorboardX import SummaryWriter
     IS_TBX_INSTALLED = True
 except ImportError:
@@ -42,13 +42,13 @@ except ImportError:
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx")
 class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
-    def __init__(self, backbone, kernel_type='rbf', f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
+    def __init__(self, backbone, kernel_type='rbf', normalize=False, f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_regression_Nystrom_new_loss, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
         self.kernel_type = kernel_type
-        self.normalize = True
+        self.normalize = normalize
         self.num_induce_points = n_inducing_points
         self.config = config
         self.gamma = gamma
@@ -74,8 +74,9 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
         likelihood = gpytorch.likelihoods.GaussianLikelihood()
         likelihood.noise = 0.1
         model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel=self.kernel_type, induce_point=train_x)
-        model.base_covar_module.outputscale = 0.1
-        model.base_covar_module.base_kernel.lengthscale = 0.1
+        if self.kernel_type=='rbf':
+            model.base_covar_module.outputscale = 0.1
+            model.base_covar_module.base_kernel.lengthscale = 0.1
         self.model      = model.cuda()
         self.likelihood = likelihood.cuda()
         self.mll        = gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self.model).cuda()
@@ -320,7 +321,7 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
                 mll = self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
 
                 
-                if epoch%2==0:
+                if epoch%1==0:
                     print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
                     mse_list = []
                     mse_unnorm_list = []
