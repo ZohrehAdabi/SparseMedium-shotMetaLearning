@@ -85,6 +85,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
         return self.model, self.likelihood, self.mll
     
     def init_summary(self, id):
+        self.id = id
         if(IS_TBX_INSTALLED):
             path = './Sparse_DKT_QMUL_Eaxct_Loss'
             time_string = strftime("%d%m%Y_%H%M", gmtime())
