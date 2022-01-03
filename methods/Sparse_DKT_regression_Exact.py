@@ -445,8 +445,8 @@ class Sparse_DKT_regression_Exact(nn.Module):
         index = np.argsort(active)
         active = active[index]
         gamma = gamma[index]
-        ss = scales[index]
-        alpha = alpha[index] / ss
+        ss = scales[active]
+        alpha = alpha[index] #/ ss**2
         inducing_points = inputs[active]
         num_IP = active.shape[0]
         IP_index = active

@@ -129,7 +129,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         batch, batch_labels = get_batch(train_people, n_samples)
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
         mll_list = []
-        l = 0.01
+        l = 0.1
         for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
 
             
@@ -654,8 +654,8 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             index = np.argsort(active)
             active = active[index]
             gamma = gamma[index].to(torch.float)
-            ss = scales[index]
-            alpha = alpha[index] / ss
+            ss = scales[active]
+            alpha = alpha[index] #/ ss**2
             inducing_points = inputs[active]
             
             num_IP = active.shape[0]
