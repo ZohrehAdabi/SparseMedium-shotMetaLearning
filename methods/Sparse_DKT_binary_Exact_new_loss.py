@@ -151,6 +151,7 @@ class Sparse_DKT_binary_Exact_new_loss(MetaTemplate):
         #     optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
         #         #                              {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
         self.frvm_acc = []
+        l = 0.1
         for i, (x,_) in enumerate(train_loader):
             self.n_query = x.size(1) - self.n_support
             if self.change_way: self.n_way  = x.size(0)
@@ -249,7 +250,7 @@ class Sparse_DKT_binary_Exact_new_loss(MetaTemplate):
                 transformed_targets = self.model.likelihood.transformed_targets
                 loss = -self.mll(output, transformed_targets).sum()
             else:
-                loss = -self.mll(output, target_all) -0.1 *  rvm_mll
+                loss = - (1-l) * self.mll(output, target_all) - l *  rvm_mll
             loss.backward()
             optimizer.step()
 

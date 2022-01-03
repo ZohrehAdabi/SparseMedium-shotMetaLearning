@@ -129,7 +129,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         batch, batch_labels = get_batch(train_people, n_samples)
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
         mll_list = []
-       
+        l = 0.5
         for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
 
             
@@ -156,7 +156,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         
             rvm_mll = self.rvm_ML(K, labels, alpha_m, 1/sigma, ip_index)
             predictions = self.model(z)
-            loss = - 0.001 * self.mll(predictions, self.model.train_targets) - 1.0 * rvm_mll
+            loss = - (1-l) * self.mll(predictions, self.model.train_targets) - l * rvm_mll
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()

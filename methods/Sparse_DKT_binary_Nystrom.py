@@ -20,7 +20,7 @@ import random
 from colorama import Fore
 from configs import kernel_type
 from methods.Fast_RVM import Fast_RVM
-from methods.Inducing_points import get_inducing_points
+from methods.Inducing_points import get_inducing_points, rvm_ML
 #Check if tensorboardx is installed
 try:
     #tensorboard --logdir=./Sparse_DKT_binary_Nystrom_CUB_log/ --host localhost --port 8090
@@ -178,6 +178,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
         #     optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
         #         #                              {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
         new_loss = True
+        l = 0.1
         self.frvm_acc = []
         
         for i, (x,_) in enumerate(train_loader):
@@ -238,10 +239,17 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                                                             num_inducing_points=self.num_inducing_points, verbose=True, device=self.device)
                 self.frvm_acc.append(frvm_acc)
                 
-            ip_values = inducing_points.z_values.cuda()
+            ip_index = inducing_points.index
+            ip_values = z_train[ip_index]
             # ip_values = z_train[inducing_points.index].cuda()
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
-            self.model.train()
+            
+            alpha_m = inducing_points.alpha
+            K = self.model.base_covar_module(z_train).evaluate()
+            if True:
+                scales	= torch.sqrt(torch.sum(K**2, axis=0))
+                K = K / scales
+            rvm_mll = rvm_ML(K, target, alpha_m, ip_index)
 
             if(self.model.covar_module.base_kernel.lengthscale is not None):
                 lenghtscale+=self.model.base_covar_module.base_kernel.lengthscale.mean().cpu().detach().numpy().squeeze()
@@ -258,7 +266,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                 transformed_targets = self.model.likelihood.transformed_targets
                 loss = -self.mll(output, transformed_targets).sum()
             else:
-                loss = -self.mll(output, self.model.train_targets)
+                loss = - (1-l) * self.mll(output, self.model.train_targets) - l * rvm_ML
             loss.backward()
             optimizer.step()
 
