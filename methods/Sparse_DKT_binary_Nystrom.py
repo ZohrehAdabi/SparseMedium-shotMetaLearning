@@ -266,7 +266,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                 transformed_targets = self.model.likelihood.transformed_targets
                 loss = -self.mll(output, transformed_targets).sum()
             else:
-                loss = - (1-l) * self.mll(output, self.model.train_targets) - l * rvm_ML
+                loss = - (1-l) * self.mll(output, self.model.train_targets) - l * rvm_mll
             loss.backward()
             optimizer.step()
 
