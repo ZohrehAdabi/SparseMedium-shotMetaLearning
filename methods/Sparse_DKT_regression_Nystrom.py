@@ -129,7 +129,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         batch, batch_labels = get_batch(train_people, n_samples)
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
         mll_list = []
-        l = 0.5
+        l = 0.01
         for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
 
             
@@ -154,9 +154,9 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                 scales	= torch.sqrt(torch.sum(K**2, axis=0))
                 K = K / scales
         
-            rvm_mll = self.rvm_ML(K, labels, alpha_m, 1/sigma, ip_index)
+            rvm_mll = self.rvm_ML(K, labels.detach(), alpha_m.detach(), 1/sigma.detach(), ip_index)
             predictions = self.model(z)
-            loss = - (1-l) * self.mll(predictions, self.model.train_targets) - l * rvm_mll
+            loss = - self.mll(predictions, self.model.train_targets) - l * rvm_mll
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -638,10 +638,6 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             beta = 1 /(sigma + eps)
             scale = self.scale
             covar_module = self.model.base_covar_module
-            # X = inputs.clone()
-            # m = X.mean(axis=0)
-            # X = (X- m) 
-            # X = F.normalize(X, p=2, dim=1)
             kernel_matrix = covar_module(inputs).evaluate()
             # normalize kernel
             if scale:

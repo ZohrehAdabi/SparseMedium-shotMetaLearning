@@ -54,7 +54,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
     # Sigma_m = torch.inverse(A_m + beta * KK_mm)
     
 
-    Sigma_m, mu_m, S, Q, s, q, beta, beta_KK_m, logML, Gamma = Statistics(K, K_m, mu_m, alpha_m, active_m, targets, N, device)
+    Sigma_m, mu_m, S, Q, s, q, beta, beta_KK_m, logML, Gamma, U = Statistics(K, K_m, mu_m, alpha_m, active_m, targets, N, device)
 
     delete_priority = config[0]=="1"
     add_priority    = config[1]=="1"
@@ -254,7 +254,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
         # UPDATE STATISTICS
         if update_required:
             count += 1
-            Sigma_m, mu_m, S, Q, s, q, beta, beta_KK_m, new_logML, Gamma = Statistics(K, K_m, mu_m, alpha_m, active_m, targets, N, device)
+            Sigma_m, mu_m, S, Q, s, q, beta, beta_KK_m, new_logML, Gamma, U = Statistics(K, K_m, mu_m, alpha_m, active_m, targets, N, device)
             deltaLogMarginal	= new_logML - logML
             
             logML = logML + deltaLogMarginal
@@ -269,7 +269,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
             # print(f'elapsed time: {toc-tic}')
             # if count > 0:
             #     print(f'add: {add_count:3d} ({add_count/count:.1%}), delete: {del_count:3d} ({del_count/count:.1%}), recompute: {recomp_count:3d} ({recomp_count/count:.1%})')
-            return active_m.cpu().numpy(), alpha_m, Gamma, beta, mu_m
+            return active_m.cpu().numpy(), alpha_m, Gamma, beta, mu_m, U
 
         if ((itr+1)%25==0) and False:
             print(f'#{itr+1:3},     m={active_m.shape[0]}, selected_action= {selected_action.item():.0f}, logML= {logML.item()/N:.5f}')
@@ -283,7 +283,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
     #     print(f'add: {add_count:3d} ({add_count/count:.1%}), delete: {del_count:3d} ({del_count/count:.1%}), recompute: {recomp_count:3d} ({recomp_count/count:.1%})')
 
 
-    return active_m.cpu().numpy(), alpha_m, Gamma, beta, mu_m 
+    return active_m.cpu().numpy(), alpha_m, Gamma, beta, mu_m, U 
 
 
 def Statistics(K, K_m, mu_m, alpha_m, active_m, targets, N, device):
@@ -326,7 +326,7 @@ def Statistics(K, K_m, mu_m, alpha_m, active_m, targets, N, device):
         q[active_m] = alpha_m * Q[active_m] / (alpha_m - S_active)
 
         
-        return Sigma_m, mu_m, S, Q, s, q, beta, beta_KK_m, logML, Gamma  
+        return Sigma_m, mu_m, S, Q, s, q, beta, beta_KK_m, logML, Gamma, U  
 
 def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
 

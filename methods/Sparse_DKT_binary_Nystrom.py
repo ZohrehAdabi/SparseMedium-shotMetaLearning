@@ -245,11 +245,13 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
             
             alpha_m = inducing_points.alpha
+            mu_m = inducing_points.mu
+            U = inducing_points.U
             K = self.model.base_covar_module(z_train).evaluate()
             if True:
                 scales	= torch.sqrt(torch.sum(K**2, axis=0))
                 K = K / scales
-            rvm_mll = rvm_ML(K, target, alpha_m, ip_index)
+            rvm_mll = rvm_ML(K, target, alpha_m, mu_m, U, ip_index)
 
             if(self.model.covar_module.base_kernel.lengthscale is not None):
                 lenghtscale+=self.model.base_covar_module.base_kernel.lengthscale.mean().cpu().detach().numpy().squeeze()

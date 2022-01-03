@@ -17,9 +17,9 @@ import random
 from colorama import Fore
 from methods.Fast_RVM import Fast_RVM, posterior_mode
 
-IP = namedtuple("inducing_points", "z_values index count alpha gamma")
+IP = namedtuple("inducing_points", "z_values index count alpha gamma mu U")
 
-def rvm_ML(K, targets, alpha_m, ip_index):
+def rvm_ML(K, targets, alpha_m, mu_m, U, ip_index):
         
         N = targets.shape[0]
         alpha_m = alpha_m.to(torch.float64)
@@ -30,10 +30,10 @@ def rvm_ML(K, targets, alpha_m, ip_index):
         K_m = K[:, ip_index]
         LogOut	= (targets_pseudo_linear * 0.9 + 1) / 2
         # mu_m	=  K_m.pinverse() @ (torch.log(LogOut / (1 - LogOut))) #
-        with torch.no_grad():
-            mu_m = torch.linalg.lstsq(K_m, (torch.log(LogOut / (1 - LogOut)))).solution
-            mu_m = mu_m.to(torch.float64)
-            mu_m, U, beta, dataLikely, bad_Hess = posterior_mode(K_m, targets, alpha_m, mu_m, max_itr=25, device='cuda')
+        # with torch.no_grad():
+        #     mu_m = torch.linalg.lstsq(K_m, (torch.log(LogOut / (1 - LogOut)))).solution
+        #     mu_m = mu_m.to(torch.float64)
+        #     mu_m, U, beta, dataLikely, bad_Hess = posterior_mode(K_m, targets, alpha_m, mu_m, max_itr=25, device='cuda')
         K_mu_m = K_m @ mu_m
         y	= torch.sigmoid(K_mu_m)
         dataLikely = (targets[targets==1].T @ torch.log(y[targets==1]+1e-12) + ((1-targets[targets==0]).T @ torch.log(1-y[targets==0]+1e-12)))
@@ -50,6 +50,8 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
         
     IP_index = np.array([])
     acc = None
+    mu_m = None
+    U = None
     if sparse_method=='Random':
         if num_inducing_points is not None:
             num_IP = num_inducing_points
@@ -100,24 +102,25 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
         kernel_matrix = kernel_matrix.to(torch.float64)
         # targets[targets==-1]= 0
         target = targets.clone().to(torch.float64)
-        active, alpha, gamma, beta, mu_m = Fast_RVM(kernel_matrix, target, N, config, align_threshold, gamma,
+        active, alpha, gamma, beta, mu_m, U = Fast_RVM(kernel_matrix, target, N, config, align_threshold, gamma,
                                                 eps, tol, max_itr, device, verbose)
 
         index = np.argsort(active)
         active = active[index]
         inducing_points = inputs[active]
         gamma = gamma[index]
-        ss = scales[index]
-        alpha = (alpha[index] / ss).to(torch.float)
+        mu_m = mu_m[index]
+        ss = scales[active]
+        alpha = alpha[index] #/ ss**2
         num_IP = active.shape[0]
         IP_index = active
 
         if True:
             ss = scales[index]
             K = base_covar_module(inputs, inducing_points).evaluate()
-            mu_m = mu_m[index] / ss
-            mu_m = mu_m.to(torch.float)
-            y_pred = K @ mu_m
+            mu_r = mu_m / ss
+            mu_r = mu_r.to(torch.float)
+            y_pred = K @ mu_r
             y_pred = torch.sigmoid(y_pred)
             y_pred = (y_pred > 0.5).to(int)
             
@@ -146,15 +149,16 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
         kernel_matrix = kernel_matrix.to(torch.float64)
         # targets[targets==-1]= 0
         target = targets.clone().to(torch.float64)
-        active, alpha, gamma, beta, mu_m = Fast_RVM(kernel_matrix, target, N, config, align_threshold, gamma,
+        active, alpha, gamma, beta, mu_m, U = Fast_RVM(kernel_matrix, target, N, config, align_threshold, gamma,
                                                 eps, tol, max_itr, device, verbose)
 
         index = np.argsort(active)
         active = active[index]
         inducing_points = inputs[active]
         gamma = gamma[index]
-        ss = scales[index]
-        alpha = alpha[index] / ss
+        mu_m = mu_m[index]
+        ss = scales[active]
+        alpha = alpha[index] #/ ss**2
         num_IP = active.shape[0]
         IP_index = active
         y_ip = target[active]
@@ -163,9 +167,9 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
         if True:
             ss = scales[index]
             K = base_covar_module(inputs, inducing_points).evaluate()
-            mu_m = mu_m[index] / ss
-            mu_m = mu_m.to(torch.float)
-            y_pred = K @ mu_m
+            mu_r = mu_m / ss
+            mu_r = mu_r.to(torch.float)
+            y_pred = K @ mu_r
             y_pred = torch.sigmoid(y_pred)
             y_pred = (y_pred > 0.5).to(int)
             
@@ -214,15 +218,16 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
         kernel_matrix = kernel_matrix.to(torch.float64)
         # targets[targets==-1]= 0
         target = targets.clone().to(torch.float64)
-        active, alpha, gamma, beta, mu_m = Fast_RVM(kernel_matrix, target, N, config, align_threshold, gamma,
+        active, alpha, gamma, beta, mu_m, U = Fast_RVM(kernel_matrix, target, N, config, align_threshold, gamma,
                                                 eps, tol, max_itr, device, verbose)
 
         index = np.argsort(active)
         active = active[index]
         inducing_points = inputs[active]
         gamma = gamma[index]
-        ss = scales[index]
-        alpha = alpha[index] / ss
+        mu_m = mu_m[index]
+        ss = scales[active]
+        alpha = alpha[index] #/ ss**2
         num_IP = active.shape[0]
         IP_index = active
         y_ip = target[active]
@@ -231,9 +236,9 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
         if True:
             ss = scales[index]
             K = base_covar_module(inputs, inducing_points).evaluate()
-            mu_m = mu_m[index] / ss
-            mu_m = mu_m.to(torch.float)
-            y_pred = K @ mu_m
+            mu_r = mu_m / ss
+            mu_r = mu_r.to(torch.float)
+            y_pred = K @ mu_r
             y_pred = torch.sigmoid(y_pred)
             y_pred = (y_pred > 0.5).to(int)
             
@@ -264,6 +269,6 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
     else:
         print(f'No method')
 
-    return IP(inducing_points, IP_index, num_IP, alpha, gamma), acc
+    return IP(inducing_points, IP_index, num_IP, alpha, gamma, mu_m, U), acc
   
  
