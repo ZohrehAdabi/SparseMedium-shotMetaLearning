@@ -475,7 +475,8 @@ class Sparse_DKT_regression_Exact(nn.Module):
     def load_checkpoint(self, checkpoint):
     
         ckpt = torch.load(checkpoint)
- 
+        if 'best' in checkpoint:
+            print(f'\nBest model at epoch {ckpt["epoch"]}, MSE: {ckpt["mse"]}')
         # IP = torch.ones(self.num_induce_points, 2916).cuda()
         # ckpt['gp']['covar_module.inducing_points'] = IP
         self.model.load_state_dict(ckpt['gp'])

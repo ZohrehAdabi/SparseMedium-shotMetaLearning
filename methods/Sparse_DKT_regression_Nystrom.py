@@ -27,7 +27,7 @@ from methods.Fast_RVM_regression import Fast_RVM_regression
 
 from statistics import mean
 from data.qmul_loader import get_batch, train_people, val_people, test_people, get_unnormalized_label
-from configs import kernel_type
+# from configs import kernel_type
 from collections import namedtuple
 import torch.optim
 #Check if tensorboardx is installed
@@ -146,7 +146,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             if self.kernel_type=='spectral':
                 self.model.base_covar_module.initialize_from_data_empspect(z, labels)
 
-            sigma = self.model.likelihood.noise[0].clone().detach()
+            sigma = self.model.likelihood.noise[0].clone()
             alpha_m = inducing_points.alpha
             
             K = self.model.base_covar_module(z).evaluate()
@@ -156,7 +156,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         
             rvm_mll = self.rvm_ML(K, labels, alpha_m, 1/sigma, ip_index)
             predictions = self.model(z)
-            loss = -self.mll(predictions, self.model.train_targets) - 0.1 * rvm_mll
+            loss = - 0.001 * self.mll(predictions, self.model.train_targets) - 1.0 * rvm_mll
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -697,8 +697,8 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
     def load_checkpoint(self, checkpoint):
     
         ckpt = torch.load(checkpoint)
-        if 'epoch' in ckpt.keys():
-            print(f'\nBest model epoch {ckpt["epoch"]}\n')
+        if 'best' in checkpoint:
+            print(f'\nBest model at epoch {ckpt["epoch"]}, MSE: {ckpt["mse"]}')
         IP = torch.ones(self.model.covar_module.inducing_points.shape[0], 2916).cuda()
         ckpt['gp']['covar_module.inducing_points'] = IP
         self.model.load_state_dict(ckpt['gp'])

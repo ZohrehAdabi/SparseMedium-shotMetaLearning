@@ -40,12 +40,14 @@ except ImportError:
 
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx")
-class Sparse_DKT_regression_rvm_new(nn.Module):
-    def __init__(self, backbone, f_rvm=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
+class Sparse_DKT_regression_rvm(nn.Module):
+    def __init__(self, backbone, kernel_type='rbf', normalize=False, f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
-        super(Sparse_DKT_regression_rvm_new, self).__init__()
+        super(Sparse_DKT_regression_rvm, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
+        self.kernel_type = kernel_type
+        self.normalize = normalize
         self.num_induce_points = n_inducing_points
         self.config = config
         self.gamma = gamma
@@ -68,7 +70,7 @@ class Sparse_DKT_regression_rvm_new(nn.Module):
 
         likelihood = gpytorch.likelihoods.GaussianLikelihood()
         likelihood.noise = 0.1
-        model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel='rbf', induce_point=train_x)
+        model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel=self.kernel_type, induce_point=train_x)
 
         self.model      = model.cuda()
         self.likelihood = likelihood.cuda()
@@ -91,6 +93,31 @@ class Sparse_DKT_regression_rvm_new(nn.Module):
     def set_forward_loss(self, x):
         pass
 
+    def rvm_ML(self, K, targets, alpha_m, beta, ip_index):
+        
+        N = targets.shape[0]
+        Kt = K.T @ targets
+        KK = K.T @ K
+        K_m = K[:, ip_index]
+        KK_mm = KK[ip_index, :][:, ip_index]
+        K_mt = Kt[ip_index]
+        A_m = torch.diag(alpha_m)
+        H = A_m + beta * KK_mm
+        U, info =  torch.linalg.cholesky_ex(H, upper=True)
+        # if info>0:
+        #     print('pd_err of Hessian')
+        U_inv = torch.linalg.inv(U)
+        Sigma_m = U_inv @ U_inv.T      
+        mu_m = beta * (Sigma_m @ K_mt)
+        y_ = K_m @ mu_m  
+        e = (targets - y_)
+        ED = e.T @ e
+        dataLikely	= (N * torch.log(beta) - beta * ED)/2
+        logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
+        
+        logML			= dataLikely - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
+        return logML/N
+
     def train_loop_fast_rvm(self, epoch, n_support, n_samples, optimizer):
         self.model.train()
         self.likelihood.train()
@@ -103,20 +130,29 @@ class Sparse_DKT_regression_rvm_new(nn.Module):
 
 
             z = self.feature_extractor(inputs)
-            # z = F.normalize(z, p=2, dim=1)
+            if self.normalize: z = F.normalize(z, p=2, dim=1)
             with torch.no_grad():
                 inducing_points = self.get_inducing_points(z, labels, verbose=False)
-           
-            ip_values = z[inducing_points.index]
+            ip_index = inducing_points.index
+            ip_values = z[ip_index]
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
             self.model.train()
             # NOTE 
-            alpha = inducing_points.alpha.cuda()
-            root_alpha = torch.sqrt(alpha)
-            inv_root_alpha = 1 / root_alpha
-            A = torch.eye(alpha.shape[0]).cuda()  * inv_root_alpha.to(torch.float)
-            self.model.covar_module.A = nn.Parameter(A.cuda(), requires_grad=False)
-            # NOTE 
+            # alpha = inducing_points.alpha.cuda()
+            # root_alpha = torch.sqrt(alpha)
+            # inv_root_alpha = 1 / root_alpha
+            # A = torch.eye(alpha.shape[0]).cuda()  * inv_root_alpha.to(torch.float)
+            # self.model.covar_module.A = nn.Parameter(A.cuda(), requires_grad=False)
+            sigma = self.model.likelihood.noise[0].clone()
+            alpha_m = inducing_points.alpha
+            
+            K = self.model.base_covar_module(z).evaluate()
+            if True:
+                scales	= torch.sqrt(torch.sum(K**2, axis=0))
+                K = K / scales
+        
+            rvm_mll = self.rvm_ML(K, labels, alpha_m, 1/sigma, ip_index)
+            #  
             # self.model.set_train_data(inputs=ip_values, targets=labels[inducing_points.index], strict=False)
             self.model.set_train_data(inputs=z, targets=labels, strict=False)
 
@@ -187,7 +223,7 @@ class Sparse_DKT_regression_rvm_new(nn.Module):
         # induce_ind = list(np.random.choice(list(range(n_samples)), replace=False, size=self.num_induce_points))
         # induce_point = self.feature_extractor(x_support[induce_ind, :,:,:])
         z_support = self.feature_extractor(x_support).detach()
-        # z_support = F.normalize(z_support, p=2, dim=1)
+        if self.normalize: z_support = F.normalize(z_support, p=2, dim=1)
         with torch.no_grad():
             inducing_points = self.get_inducing_points(z_support, y_support, verbose=False)
         
@@ -195,11 +231,11 @@ class Sparse_DKT_regression_rvm_new(nn.Module):
         self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
         self.model.covar_module._clear_cache()
 
-        alpha = inducing_points.alpha.cuda()
-        root_alpha = torch.sqrt(alpha)
-        inv_root_alpha = 1 / root_alpha
-        A = torch.eye(alpha.shape[0]).cuda()  * inv_root_alpha.to(torch.float)
-        self.model.covar_module.A = nn.Parameter(A.cuda(), requires_grad=False)
+        # alpha = inducing_points.alpha.cuda()
+        # root_alpha = torch.sqrt(alpha)
+        # inv_root_alpha = 1 / root_alpha
+        # A = torch.eye(alpha.shape[0]).cuda()  * inv_root_alpha.to(torch.float)
+        # self.model.covar_module.A = nn.Parameter(A.cuda(), requires_grad=False)
         # self.model.set_train_data(inputs=ip_values, targets=y_support[inducing_points.index], strict=False)
         self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
         self.model.eval()
@@ -208,7 +244,7 @@ class Sparse_DKT_regression_rvm_new(nn.Module):
 
         with torch.no_grad():
             z_query = self.feature_extractor(x_query).detach()
-            # z_query = F.normalize(z_query, p=2, dim=1)
+            if self.normalize: z_query = F.normalize(z_query, p=2, dim=1)
             pred    = self.likelihood(self.model(z_query))
             lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
 
@@ -381,15 +417,10 @@ class Sparse_DKT_regression_rvm_new(nn.Module):
         # sigma = torch.tensor([torch.var(targets) * 0.1]) #sigma^2
         sigma = sigma.to(self.device)
         beta = 1 /(sigma + eps)
-        scale = True
         covar_module = self.model.base_covar_module
-        # X = inputs.clone()
-        # m = X.mean(axis=0)
-        # X = (X- m) 
-        # X = F.normalize(X, p=2, dim=1)
         kernel_matrix = covar_module(inputs).evaluate()
         # normalize kernel
-        if scale:
+        if self.scale:
             scales	= torch.sqrt(torch.sum(kernel_matrix**2, axis=0))
             # print(f'scale: {Scales}')
             scales[scales==0] = 1
@@ -412,7 +443,6 @@ class Sparse_DKT_regression_rvm_new(nn.Module):
             if True:
                 
                 K = covar_module(inputs, inducing_points).evaluate()
-                # K = covar_module(X, X[active]).evaluate()
                 mu_m = (mu_m[index] / ss)
                 mu_m = mu_m.to(torch.float)
                 y_pred = K @ mu_m
@@ -421,7 +451,7 @@ class Sparse_DKT_regression_rvm_new(nn.Module):
                 print(f'FRVM MSE: {mse:0.4f}')
         
 
-        return IP(inducing_points, IP_index, num_IP, alpha, gamma, None, None, None, None)
+        return IP(inducing_points, IP_index, num_IP, alpha.to(torch.float), gamma, None, None, None, None)
   
     def save_checkpoint(self, checkpoint):
         # save state
@@ -433,7 +463,8 @@ class Sparse_DKT_regression_rvm_new(nn.Module):
     def load_checkpoint(self, checkpoint):
     
         ckpt = torch.load(checkpoint)
- 
+        if 'best' in checkpoint:
+            print(f'\nBest model at epoch {ckpt["epoch"]}, MSE: {ckpt["mse"]}')
         IP = torch.ones(self.num_induce_points, 2916).cuda()
         ckpt['gp']['covar_module.inducing_points'] = IP
         self.model.load_state_dict(ckpt['gp'])
