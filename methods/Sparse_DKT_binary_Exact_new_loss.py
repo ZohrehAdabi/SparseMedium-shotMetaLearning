@@ -208,13 +208,14 @@ class Sparse_DKT_binary_Exact_new_loss(MetaTemplate):
             ip_index = inducing_points.index
             ip_values = z_train[ip_index]
             ip_labels = target[ip_index]
-            
+            mu_m = inducing_points.mu
+            U = inducing_points.U
             alpha_m = inducing_points.alpha
             K = self.model.base_covar_module(z_train).evaluate()
             if True:
                 scales	= torch.sqrt(torch.sum(K**2, axis=0))
                 K = K / scales
-            rvm_mll = rvm_ML(K, target, alpha_m, ip_index)
+            rvm_mll = rvm_ML(K, target, alpha_m, mu_m, U, ip_index)
 
             if self.dirichlet:
                 ip_labels[ip_labels==-1] = 0

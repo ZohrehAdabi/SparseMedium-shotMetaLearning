@@ -154,7 +154,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                 scales	= torch.sqrt(torch.sum(K**2, axis=0))
                 K = K / scales
         
-            rvm_mll = self.rvm_ML(K, labels.detach(), alpha_m.detach(), 1/sigma.detach(), ip_index)
+            rvm_mll = self.rvm_ML(K, labels, alpha_m, 1/sigma, ip_index)
             predictions = self.model(z)
             loss = - self.mll(predictions, self.model.train_targets) - l * rvm_mll
             optimizer.zero_grad()
