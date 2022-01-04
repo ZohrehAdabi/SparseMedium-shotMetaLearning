@@ -39,7 +39,6 @@ except ImportError:
     IS_TBX_INSTALLED = False
     print('[WARNING] install tensorboardX to record simulation logs.')
 
-
 IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx")
 class Sparse_DKT_regression_Exact_new_loss(nn.Module):
     def __init__(self, backbone, kernel_type='rbf', normalize=False, f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
@@ -131,7 +130,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
         batch, batch_labels = get_batch(train_people, n_samples)
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
         mll_list = []
-       
+        l = 0.1
         for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
 
             split = np.array([True]*15 + [False]*3)
@@ -155,12 +154,12 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
             z = self.feature_extractor(x_all)
             if self.normalize: z = F.normalize(z, p=2, dim=1)
             with torch.no_grad():
-                inducing_points = self.get_inducing_points(z, y_all, verbose=False)
+                inducing_points = self.get_inducing_points(z, y_all, verbose=False) #y_support
            
             ip_index = inducing_points.index
             ip_values = z[ip_index]
-            ip_labels = y_support[ip_index]
-            sigma = self.model.likelihood.noise[0].clone()
+            ip_labels = y_all[ip_index]  #  y_support[ip_index] 
+            sigma = self.model.likelihood.noise[0]
             
             alpha_m = inducing_points.alpha
             K = self.model.base_covar_module(z).evaluate()
@@ -172,8 +171,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
             # C = sigma + K_m @ torch.linalg.inv(torch.diag(alpha_m)) @ K_m.T
             # C_inv = torch.linalg.inv(C)
             # rvm_mll = -1/2 * (torch.log(torch.linalg.det(C)+1e-8) + y_support @ C_inv @ y_support)
-            rvm_mll = self.rvm_ML(K, y_support, alpha_m, 1/sigma, ip_index)
-            # self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
+            rvm_mll = self.rvm_ML(K, y_all, alpha_m, 1/sigma, ip_index)  #y_support
             # NOTE 
             self.model.set_train_data(inputs=ip_values, targets=ip_labels, strict=False)
 
@@ -182,7 +180,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
             self.model.eval()
             predictions = self.model(z_query)
             self.model.train()
-            loss = -self.mll(predictions, y_all) - 0.1 * rvm_mll
+            loss = -self.mll(predictions, y_all) - l * rvm_mll
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()

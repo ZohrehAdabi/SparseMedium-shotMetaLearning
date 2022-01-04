@@ -1,6 +1,7 @@
 ## Original packages
 # from torch._C import ShortTensor
 from inspect import indentsize
+from gpytorch.kernels import kernel
 from numpy.core.defchararray import count, index
 import backbone
 import torch
@@ -40,7 +41,7 @@ except ImportError:
     print('[WARNING] install tensorboardX to record simulation logs.')
 
 
-IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx")
+IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j_idx")
 class Sparse_DKT_regression_Nystrom(nn.Module):
     def __init__(self, backbone, kernel_type='rbf', normalize=False, f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
@@ -97,6 +98,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
 
     def set_forward_loss(self, x):
         pass
+    
     def rvm_ML(self, K, targets, alpha_m, beta, ip_index):
         
         N = targets.shape[0]
@@ -129,14 +131,14 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         batch, batch_labels = get_batch(train_people, n_samples)
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
         mll_list = []
-        l = 0.1
+        l = 0.01
         for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
 
             
             z = self.feature_extractor(inputs)
             if(self.normalize): z = F.normalize(z, p=2, dim=1)
             with torch.no_grad():
-                inducing_points = self.get_inducing_points(z, labels, verbose=False)
+                inducing_points, beta = self.get_inducing_points(z, labels, verbose=False)
            
             ip_index = inducing_points.index
             ip_values = z[ip_index]
@@ -146,7 +148,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             if self.kernel_type=='spectral':
                 self.model.base_covar_module.initialize_from_data_empspect(z, labels)
 
-            sigma = self.model.likelihood.noise[0].clone().detach()
+            sigma = self.model.likelihood.noise[0].clone()
             alpha_m = inducing_points.alpha
             
             K = self.model.base_covar_module(z).evaluate()
@@ -156,7 +158,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         
             rvm_mll = self.rvm_ML(K, labels, alpha_m, 1/sigma, ip_index)
             predictions = self.model(z)
-            loss = - (1-l )*self.mll(predictions, self.model.train_targets) - l * rvm_mll
+            loss = - (1-l) * self.mll(predictions, self.model.train_targets) - l * rvm_mll
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -228,7 +230,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         z_support = self.feature_extractor(x_support).detach()
         if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1) 
         with torch.no_grad():
-            inducing_points = self.get_inducing_points(z_support, y_support, verbose=False)
+            inducing_points, beta = self.get_inducing_points(z_support, y_support, verbose=False)
         
         ip_values = inducing_points.z_values.cuda()
         self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
@@ -326,7 +328,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         mll_list = []
         best_mse = 10e5 #stop_epoch//2
         # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5, 50, 80], gamma=0.1)
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=200, gamma=0.1)
         for epoch in range(stop_epoch):
             
             if  self.f_rvm:
@@ -389,7 +391,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch+1} => MLL: {mll}\n', "-"*30, Fore.RESET)
 
             scheduler.step()
-            # if (epoch) in [3]:
+            # if (epoch) in [40]:
             #     optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.1
             # if (epoch) in [50, 80]:
             #     optimizer.param_groups[1]['lr'] = optimizer.param_groups[1]['lr'] * 0.1
@@ -636,11 +638,11 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             # sigma = torch.tensor([torch.var(targets) * 0.1]) #sigma^2
             sigma = sigma.to(self.device)
             beta = 1 /(sigma + eps)
-            scale = self.scale
             covar_module = self.model.base_covar_module
             kernel_matrix = covar_module(inputs).evaluate()
             # normalize kernel
-            if scale:
+            scales = torch.ones(kernel_matrix.shape[0]).to(self.device)
+            if self.scale:
                 scales	= torch.sqrt(torch.sum(kernel_matrix**2, axis=0))
                 # print(f'scale: {Scales}')
                 scales[scales==0] = 1
@@ -673,7 +675,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                     print(f'FRVM MSE: {mse_r:0.4f}')
             
 
-        return IP(inducing_points, IP_index, num_IP, alpha.to(torch.float), gamma, None, None, None, None)
+        return IP(inducing_points, IP_index, num_IP, alpha.to(torch.float), gamma, None, None, None, None), beta
   
     def save_checkpoint(self, checkpoint):
         # save state
