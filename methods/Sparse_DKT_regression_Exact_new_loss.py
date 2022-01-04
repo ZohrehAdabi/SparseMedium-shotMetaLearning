@@ -152,15 +152,15 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
             x_query   = x_all[query_ind,:,:,:]
             y_query   = y_all[query_ind]
 
-            z = self.feature_extractor(x_support)
+            z = self.feature_extractor(x_all)
             if self.normalize: z = F.normalize(z, p=2, dim=1)
             with torch.no_grad():
-                inducing_points = self.get_inducing_points(z, y_support, verbose=False)
+                inducing_points = self.get_inducing_points(z, y_all, verbose=False)
            
             ip_index = inducing_points.index
             ip_values = z[ip_index]
             ip_labels = y_support[ip_index]
-            sigma = self.model.likelihood.noise[0].clone().detach()
+            sigma = self.model.likelihood.noise[0].clone()
             
             alpha_m = inducing_points.alpha
             K = self.model.base_covar_module(z).evaluate()

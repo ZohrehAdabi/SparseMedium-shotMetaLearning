@@ -33,11 +33,12 @@ except ImportError:
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx") #for test 
 class DKT_regression(nn.Module):
-    def __init__(self, backbone, kernel_type='rbf', video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
+    def __init__(self, backbone, kernel_type='rbf', normalize=False, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(DKT_regression, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
         self.kernel_type = kernel_type
+        self.normalize = normalize
         self.training_  = training
         self.device = 'cuda'
         self.video_path = video_path
@@ -92,6 +93,7 @@ class DKT_regression(nn.Module):
         for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
             optimizer.zero_grad()
             z = self.feature_extractor(inputs)
+            if self.normalize: z = F.normalize(z, p=2, dim=1)
 
             self.model.set_train_data(inputs=z, targets=labels, strict=False)
             if self.kernel_type=='spectral':
@@ -164,6 +166,7 @@ class DKT_regression(nn.Module):
 
     
         z_support = self.feature_extractor(x_support).detach()
+        if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1)
         #NOTE for test 
         # with torch.no_grad():
         #     inducing_points = self.get_inducing_points(z_support, y_support, verbose=False)
@@ -178,6 +181,7 @@ class DKT_regression(nn.Module):
 
         with torch.no_grad():
             z_query = self.feature_extractor(x_query).detach()
+            if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
             pred    = self.likelihood(self.model(z_query))
             lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
 

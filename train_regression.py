@@ -38,8 +38,9 @@ if params.dataset=='QMUL':
 
 if params.method=='DKT':
     id = f'_{params.lr_gp}_{params.lr_net}_{params.kernel_type}_seed_{params.seed}'
+    if params.normalize: id += '_norm'
     params.checkpoint_dir += id
-    model = DKT_regression(bb, kernel_type=params.kernel_type, video_path=params.checkpoint_dir, 
+    model = DKT_regression(bb, kernel_type=params.kernel_type, normalize=params.normalize, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     model.init_summary(id=f'DKT_org_{id}')
 

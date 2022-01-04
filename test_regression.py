@@ -36,8 +36,9 @@ for sd in range(seed, seed+repeat):
 
     if params.method=='DKT':
         id = f'_{params.lr_gp}_{params.lr_net}_{params.kernel_type}_seed_{sd}'
+        if params.normalize: id += '_norm'
         params.checkpoint_dir += id
-        model = DKT_regression(bb, kernel_type=params.kernel_type, video_path=params.checkpoint_dir, 
+        model = DKT_regression(bb, kernel_type=params.kernel_type, normalize=params.normalize, video_path=params.checkpoint_dir, 
                                 show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features).cuda()
         optimizer = None
 
