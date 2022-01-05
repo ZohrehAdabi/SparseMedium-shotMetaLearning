@@ -167,6 +167,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             if True:
                 scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
                 # K_m = K_m / scales
+                # alpha_m = alpha_m / (scales**2)
                 mu_m = mu_m / scales
             rvm_mll, rvm_mse = self.rvm_ML(K_m, labels, alpha_m, mu_m, U, beta)
             predictions = self.model(z)
@@ -420,7 +421,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             # if (epoch) in [50, 80]:
             #     optimizer.param_groups[1]['lr'] = optimizer.param_groups[1]['lr'] * 0.1
 
-        print(Fore.CYAN,"-"*30, f'\nBest Val MAE {best_mse:4f} at epoch {best_epoch}\n', "-"*30, Fore.RESET)
+        print(Fore.CYAN,"-"*30, f'\nBest Val MSE {best_mse:4f} at epoch {best_epoch}\n', "-"*30, Fore.RESET)
         mll = np.mean(mll_list)
 
         
