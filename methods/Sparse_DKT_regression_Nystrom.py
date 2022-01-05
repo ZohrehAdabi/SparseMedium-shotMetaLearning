@@ -172,7 +172,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             predictions = self.model(z)
             mll = self.mll(predictions, self.model.train_targets)
             # loss = -(1-l) * mll  - l * rvm_mll 
-            loss = - mll  + 10 * rvm_mse
+            loss = - mll  + 100 * rvm_mse
             # loss = -(1-l) * mll  - l * rvm_mll + 10 * rvm_mse
             optimizer.zero_grad()
             loss.backward()
@@ -181,7 +181,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             mse = self.mse(predictions.mean, labels)
 
             self.iteration = itr+(epoch*len(batch_labels))
-            if(self.writer is not None): self.writer.add_scalar('MLL + RVM MLL', loss.item(), self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('MLL + RVM MLL (Loss)', loss.item(), self.iteration)
             if(self.writer is not None): self.writer.add_scalar('MLL', -mll.item(), self.iteration)
             if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll.item(), self.iteration)
             if(self.writer is not None): self.writer.add_scalar('RVM MSE', rvm_mse.item(), self.iteration)

@@ -109,9 +109,9 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
         active = active[index]
         inducing_points = inputs[active]
         gamma = gamma[index]
-        mu_m = mu_m[index]
         ss = scales[active]
         alpha = alpha[index] #/ ss**2
+        mu_m = mu_m[index] #/ss
         num_IP = active.shape[0]
         IP_index = active
 
@@ -156,9 +156,10 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
         active = active[index]
         inducing_points = inputs[active]
         gamma = gamma[index]
-        mu_m = mu_m[index]
+
         ss = scales[active]
         alpha = alpha[index] #/ ss**2
+        mu_m = mu_m[index] #/ss
         num_IP = active.shape[0]
         IP_index = active
         y_ip = target[active]
@@ -225,9 +226,9 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
         active = active[index]
         inducing_points = inputs[active]
         gamma = gamma[index]
-        mu_m = mu_m[index]
         ss = scales[active]
         alpha = alpha[index] #/ ss**2
+        mu_m = mu_m[index] #/ss
         num_IP = active.shape[0]
         IP_index = active
         y_ip = target[active]
