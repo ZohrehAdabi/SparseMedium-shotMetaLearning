@@ -181,10 +181,10 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             mse = self.mse(predictions.mean, labels)
 
             self.iteration = itr+(epoch*len(batch_labels))
-            if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)
-            if(self.writer is not None): self.writer.add_scalar('MLL + RVM MLL', -rvm_mll.item(), self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('MLL + RVM MLL', loss.item(), self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('MLL', -mll.item(), self.iteration)
             if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll.item(), self.iteration)
-            if(self.writer is not None): self.writer.add_scalar('RVM MLL', rvm_mse.item(), self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('RVM MSE', rvm_mse.item(), self.iteration)
             if self.kernel_type=='rbf':
                 if ((epoch%1==0) & (itr%2==0)):
                     print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.4f RVM ML: %.4f  MSE: %.3f noise: %.4f outputscale: %.3f lengthscale: %.3f' % (
