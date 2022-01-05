@@ -125,15 +125,15 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         logML			= dataLikely - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
 
         # NOTE new loss for rvm
-        S = torch.ones(N).to(self.device) *1/beta
+        # S = torch.ones(N).to(self.device) *1/beta
         # K_star_Sigma = torch.diag(K_star_m @ Sigma_m @ K_star_m.T)
         # Sigma_star = torch.diag(S) + torch.diag(K_star_Sigma)
-        K_star_Sigma = K_star_m @ Sigma_m @ K_star_m.T
-        Sigma_star = torch.diag(S) + K_star_Sigma
+        # K_star_Sigma = K_star_m @ Sigma_m @ K_star_m.T
+        # Sigma_star = torch.diag(S) + K_star_Sigma
 
-        new_loss =-1/2 *((e) @ torch.linalg.inv(Sigma_star) @ (e) + torch.log(torch.linalg.det(Sigma_star)+1e-10))
+        # new_loss =-1/2 *((e) @ torch.linalg.inv(Sigma_star) @ (e) + torch.log(torch.linalg.det(Sigma_star)+1e-10))
 
-        return new_loss/N
+        return logML/N
 
     def train_loop_fast_rvm(self, epoch, n_support, n_samples, optimizer):
         self.model.train()
