@@ -346,7 +346,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         mll_list = []
         best_mse = 10e5 #stop_epoch//2
         # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5, 50, 80], gamma=0.1)
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.1)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=300, gamma=0.1)
         for epoch in range(stop_epoch):
             
             if  self.f_rvm:
