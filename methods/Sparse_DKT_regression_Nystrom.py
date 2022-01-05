@@ -345,6 +345,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
 
         mll_list = []
         best_mse = 10e5 #stop_epoch//2
+        best_epoch = 0
         # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5, 50, 80], gamma=0.1)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=300, gamma=0.1)
         for epoch in range(stop_epoch):
@@ -368,6 +369,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                     mse_ = np.mean(mse_unnorm_list)
                     if best_mse >= mse:
                         best_mse = mse
+                        best_epoch = epoch
                         model_name = self.best_path + '_best_model.tar'
                         self.save_best_checkpoint(epoch+1, best_mse, model_name)
                         print(Fore.LIGHTRED_EX, f'Best MSE: {best_mse:.4f}', Fore.RESET)
@@ -376,6 +378,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                         self.writer.add_scalar('MSE (norm) Val.', mse, epoch)
                         # self.writer.add_scalar('MSE Val.', mse_, epoch)
                 print(Fore.GREEN,"-"*30, Fore.RESET)
+            
             elif self.random:
                 mll = self.train_loop_random(epoch, n_support, n_samples, optimizer)
                 if epoch%1==0:
@@ -392,6 +395,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                     
                     if best_mse >= mse:
                         best_mse = mse
+                        best_epoch = epoch
                         model_name = self.best_path + '_best_model.tar'
                         self.save_best_checkpoint(epoch+1, best_mse, model_name)
                         print(Fore.LIGHTRED_EX, f'Best MSE: {best_mse:.4f}', Fore.RESET)
@@ -400,13 +404,15 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                         self.writer.add_scalar('MSE (norm) Val.', mse, epoch)
                        
                 print(Fore.GREEN,"-"*30, Fore.RESET)
+            
             elif  not self.f_rvm:
                 mll = self.train_loop_kmeans(epoch, n_support, n_samples, optimizer)
             else:
                 ValueError("Error")
+            
             mll_list.append(mll)
             if(self.writer is not None): self.writer.add_scalar('MLL per epoch', mll, epoch)
-            print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch+1} => MLL: {mll}\n', "-"*30, Fore.RESET)
+            print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch+1} => MLL: {mll}\nBest Val MAE {best_mse} at epoch {best_epoch}', "-"*30, Fore.RESET)
 
             scheduler.step()
             # if (epoch) in [40]:
