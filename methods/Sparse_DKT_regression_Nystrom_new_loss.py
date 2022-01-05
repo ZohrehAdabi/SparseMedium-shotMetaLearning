@@ -139,7 +139,7 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
         batch, batch_labels = get_batch(train_people, n_samples)
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
         mll_list = []
-       
+        l = 0.1
         for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
 
             split = np.array([True]*15 + [False]*3)
@@ -187,7 +187,7 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
             self.model.eval()
             predictions = self.model(z_query)
             self.model.train()
-            loss = -self.mll(predictions, y_query) - 0.1 * rvm_mll
+            loss = - (1-l) * self.mll(predictions, y_query) - l * rvm_mll
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -196,6 +196,7 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
 
             self.iteration = itr+(epoch*len(batch_labels))
             if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll.item(), self.iteration)
 
             if self.kernel_type=='rbf':
                 if ((epoch%1==0) & (itr%2==0)):
@@ -497,6 +498,7 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
             gamma = gamma[index]
             ss = scales[active]
             alpha = alpha[index] #/ ss**2
+            mu_m = mu_m[index] #/ ss
             inducing_points = inputs[active]
             num_IP = active.shape[0]
             IP_index = active
@@ -505,15 +507,15 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
                     
                     K = covar_module(inputs, inducing_points).evaluate()
                     # K = covar_module(X, X[active]).evaluate()
-                    mu_m = (mu_m[index] / ss)
-                    mu_m = mu_m.to(torch.float)
+                    
+                    mu_r = mu_m.to(torch.float) / ss
                     y_pred = K @ mu_m
                     
                     mse = self.mse(y_pred, target)
                     print(f'FRVM MSE: {mse:0.4f}')
             
 
-        return IP(inducing_points, IP_index, num_IP, alpha.to(torch.float), gamma, None, None, None, None), beta, mu_m, U
+        return IP(inducing_points, IP_index, num_IP, alpha.to(torch.float), gamma, None, None, None, None), beta, mu_m.to(torch.float), U
   
     def save_checkpoint(self, checkpoint):
         # save state

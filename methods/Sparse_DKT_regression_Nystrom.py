@@ -141,7 +141,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         batch, batch_labels = get_batch(train_people, n_samples)
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
         mll_list = []
-        l = 0.5
+        l = 0.1
         for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
 
             
@@ -169,7 +169,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         
             rvm_mll = self.rvm_ML(K_m, labels, alpha_m, mu_m, U, beta)
             predictions = self.model(z)
-            loss = - (1-l) * self.mll(predictions, self.model.train_targets) - l * rvm_mll
+            loss = -  self.mll(predictions, self.model.train_targets) - l * rvm_mll
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -178,6 +178,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
 
             self.iteration = itr+(epoch*len(batch_labels))
             if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll.item(), self.iteration)
             if self.kernel_type=='rbf':
                 if ((epoch%1==0) & (itr%2==0)):
                     print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f RVM ML: %.3f  MSE: %.3f noise: %.3f outputscale: %.3f lengthscale: %.3f' % (
@@ -367,7 +368,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                     print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE (norm): {mse:.4f}, MSE: {mse_:.4f} Best MSE: {best_mse:.4f}', Fore.RESET)
                     if(self.writer is not None):
                         self.writer.add_scalar('MSE (norm) Val.', mse, epoch)
-                        self.writer.add_scalar('MSE Val.', mse_, epoch)
+                        # self.writer.add_scalar('MSE Val.', mse_, epoch)
                 print(Fore.GREEN,"-"*30, Fore.RESET)
             elif self.random:
                 mll = self.train_loop_random(epoch, n_support, n_samples, optimizer)
