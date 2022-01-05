@@ -91,7 +91,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             if not os.path.isdir('./Sparse_DKT_Nystrom_QMUL_Loss'):
                 os.makedirs('./Sparse_DKT_Nystrom_QMUL_Loss')
             writer_path = './Sparse_DKT_Nystrom_QMUL_Loss/' + id #+'_'+ time_string
-            self.writer = SummaryWriter(log_dir=writer_path)
+            self.writer = SummaryWriter(log_dir=writer_path, flush_secs=10)
 
     def set_forward(self, x, is_feature=False):
         pass
@@ -99,22 +99,23 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
     def set_forward_loss(self, x):
         pass
     
-    def rvm_ML(self, K, K_star_m, targets, alpha_m, beta, ip_index):
+    def rvm_ML(self, K, K_star_m, targets, alpha_m, mu_m, U, beta1, beta2, ip_index):
         
         N = targets.shape[0]
-        Kt = K.T @ targets
-        KK = K.T @ K
+        beta = beta2
+        # Kt = K.T @ targets
+        # KK = K.T @ K
         K_m = K[:, ip_index]
-        KK_mm = KK[ip_index, :][:, ip_index]
-        K_mt = Kt[ip_index]
-        A_m = torch.diag(alpha_m)
-        H = A_m + beta * KK_mm
-        U, info =  torch.linalg.cholesky_ex(H, upper=True)
+        # KK_mm = KK[ip_index, :][:, ip_index]
+        # K_mt = Kt[ip_index]
+        # A_m = torch.diag(alpha_m)
+        # H = A_m + beta * KK_mm
+        # U, info =  torch.linalg.cholesky_ex(H, upper=True)
         # if info>0:
         #     print('pd_err of Hessian')
         U_inv = torch.linalg.inv(U)
         Sigma_m = U_inv @ U_inv.T      
-        mu_m = beta * (Sigma_m @ K_mt)
+        # mu_m = beta * (Sigma_m @ K_mt)
         y_ = K_m @ mu_m  
         e = (targets - y_)
         ED = e.T @ e
@@ -125,7 +126,10 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
 
         # NOTE new loss for rvm
         S = torch.ones(N).to(self.device) *1/beta
-        Sigma_star = torch.diag(S) + K_star_m @ Sigma_m @ K_star_m.T
+        # K_star_Sigma = torch.diag(K_star_m @ Sigma_m @ K_star_m.T)
+        # Sigma_star = torch.diag(S) + torch.diag(K_star_Sigma)
+        K_star_Sigma = K_star_m @ Sigma_m @ K_star_m.T
+        Sigma_star = torch.diag(S) + K_star_Sigma
 
         new_loss =-1/2 *((e) @ torch.linalg.inv(Sigma_star) @ (e) + torch.log(torch.linalg.det(Sigma_star)+1e-10))
 
@@ -138,14 +142,14 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         batch, batch_labels = get_batch(train_people, n_samples)
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
         mll_list = []
-        l = 0.01
+        l = 0.1
         for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
 
             
             z = self.feature_extractor(inputs)
             if(self.normalize): z = F.normalize(z, p=2, dim=1)
             with torch.no_grad():
-                inducing_points, beta = self.get_inducing_points(z, labels, verbose=False)
+                inducing_points, beta, mu_m, U = self.get_inducing_points(z, labels, verbose=False)
            
             ip_index = inducing_points.index
             ip_values = z[ip_index]
@@ -160,11 +164,11 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             
             K = self.model.base_covar_module(z).evaluate()
             K_star = self.model.base_covar_module(z, ip_values).evaluate()
-            if True:
+            if False:
                 scales	= torch.sqrt(torch.sum(K**2, axis=0))
                 K = K / scales
         
-            rvm_mll = self.rvm_ML(K, K_star, labels, alpha_m, 1/sigma, ip_index)
+            rvm_mll = self.rvm_ML(K, K_star, labels, alpha_m, mu_m, U, 1/sigma, beta, ip_index)
             predictions = self.model(z)
             loss = - (1-l) * self.mll(predictions, self.model.train_targets) - l * rvm_mll
             optimizer.zero_grad()
@@ -238,7 +242,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         z_support = self.feature_extractor(x_support).detach()
         if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1) 
         with torch.no_grad():
-            inducing_points, beta = self.get_inducing_points(z_support, y_support, verbose=False)
+            inducing_points, beta, mu, U = self.get_inducing_points(z_support, y_support, verbose=False)
         
         ip_values = inducing_points.z_values.cuda()
         self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
@@ -336,7 +340,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         mll_list = []
         best_mse = 10e5 #stop_epoch//2
         # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5, 50, 80], gamma=0.1)
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=200, gamma=0.1)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.1)
         for epoch in range(stop_epoch):
             
             if  self.f_rvm:
@@ -665,7 +669,8 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             active = active[index]
             gamma = gamma[index].to(torch.float)
             ss = scales[active]
-            alpha = alpha[index] #/ ss**2
+            alpha = alpha[index] / ss**2
+            mu_m = (mu_m[index] / ss)
             inducing_points = inputs[active]
             
             num_IP = active.shape[0]
@@ -675,15 +680,15 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                     
                     K = covar_module(inputs, inducing_points).evaluate()
                     # K = covar_module(X, X[active]).evaluate()
-                    mu_m = (mu_m[index] / ss)
-                    mu_m = mu_m.to(torch.float)
-                    y_pred_r = K @ mu_m
+                    
+                    mu_r = mu_m.to(torch.float)
+                    y_pred_r = K @ mu_r
                     
                     mse_r = self.mse(y_pred_r, target)
                     print(f'FRVM MSE: {mse_r:0.4f}')
             
 
-        return IP(inducing_points, IP_index, num_IP, alpha.to(torch.float), gamma, None, None, None, None), beta
+        return IP(inducing_points, IP_index, num_IP, alpha.to(torch.float), gamma, None, None, None, None), beta, mu_m, U
   
     def save_checkpoint(self, checkpoint):
         # save state

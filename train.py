@@ -364,7 +364,7 @@ if __name__ == '__main__':
 
     model = model.cuda()
 
-    params.checkpoint_dir = '%s/checkpoints/%s/%s_%s' % (configs.save_dir, params.dataset, params.model, params.method)
+    params.checkpoint_dir = '%s/checkpoints/%s/%s_%s_seed_%s' % (configs.save_dir, params.dataset, params.model, params.method, params.seed)
     # if params.train_aug:
     #     params.checkpoint_dir += '_aug'
     if not params.method in ['baseline', 'baseline++']:
