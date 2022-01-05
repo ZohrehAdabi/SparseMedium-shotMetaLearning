@@ -132,7 +132,8 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
 
         # new_loss =-1/2 *((e) @ torch.linalg.inv(Sigma_star) @ (e) + torch.log(torch.linalg.det(Sigma_star)+1e-10))
 
-        return logML/N
+        # return logML/N
+        return ED/N, logML
 
     def train_loop_fast_rvm(self, epoch, n_support, n_samples, optimizer):
         self.model.train()
@@ -165,11 +166,14 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             # K_star = self.model.base_covar_module(z, ip_values).evaluate()
             if True:
                 scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
-                K_m = K_m / scales
-        
-            rvm_mll = self.rvm_ML(K_m, labels, alpha_m, mu_m, U, beta)
+                # K_m = K_m / scales
+                mu_m = mu_m / scales
+            rvm_mll, rvm_mse = self.rvm_ML(K_m, labels, alpha_m, mu_m, U, beta)
             predictions = self.model(z)
-            loss = -  self.mll(predictions, self.model.train_targets) - l * rvm_mll
+            mll = self.mll(predictions, self.model.train_targets)
+            # loss = -(1-l) * mll  - l * rvm_mll 
+            loss = - mll  + 10 * rvm_mse
+            # loss = -(1-l) * mll  - l * rvm_mll + 10 * rvm_mse
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -178,10 +182,12 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
 
             self.iteration = itr+(epoch*len(batch_labels))
             if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('MLL + RVM MLL', -rvm_mll.item(), self.iteration)
             if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll.item(), self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('RVM MLL', rvm_mse.item(), self.iteration)
             if self.kernel_type=='rbf':
                 if ((epoch%1==0) & (itr%2==0)):
-                    print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f RVM ML: %.3f  MSE: %.3f noise: %.3f outputscale: %.3f lengthscale: %.3f' % (
+                    print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.4f RVM ML: %.4f  MSE: %.3f noise: %.4f outputscale: %.3f lengthscale: %.3f' % (
                         itr, epoch, loss.item(), rvm_mll.item(), mse.item(),
                         self.model.likelihood.noise.item(), self.model.base_covar_module.outputscale,
                         self.model.base_covar_module.base_kernel.lengthscale
