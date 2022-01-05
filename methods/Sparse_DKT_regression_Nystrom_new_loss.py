@@ -509,7 +509,7 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
                     # K = covar_module(X, X[active]).evaluate()
                     
                     mu_r = mu_m.to(torch.float) / ss
-                    y_pred = K @ mu_m
+                    y_pred = K @ mu_r
                     
                     mse = self.mse(y_pred, target)
                     print(f'FRVM MSE: {mse:0.4f}')
