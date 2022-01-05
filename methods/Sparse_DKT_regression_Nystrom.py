@@ -75,9 +75,9 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         likelihood = gpytorch.likelihoods.GaussianLikelihood()
         likelihood.noise = 0.1
         model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel=self.kernel_type, induce_point=train_x)
-        # if self.kernel_type=='rbf':
-        #     model.base_covar_module.outputscale = 0.1
-        #     model.base_covar_module.base_kernel.lengthscale = 0.1
+        if self.kernel_type=='rbf':
+            model.base_covar_module.outputscale = 0.1
+            model.base_covar_module.base_kernel.lengthscale = 0.1
         self.model      = model.cuda()
         self.likelihood = likelihood.cuda()
         self.mll        = gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self.model).cuda()
@@ -172,8 +172,8 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             predictions = self.model(z)
             mll = self.mll(predictions, self.model.train_targets)
             # loss = -(1-l) * mll  - l * rvm_mll 
-            loss = - mll  + 100 * rvm_mse
-            # loss = -(1-l) * mll  - l * rvm_mll + 10 * rvm_mse
+            # loss =  - 10 * mll + 1000 * rvm_mse
+            loss = -(1-l) * mll  - l * rvm_mll + 100 * rvm_mse
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
