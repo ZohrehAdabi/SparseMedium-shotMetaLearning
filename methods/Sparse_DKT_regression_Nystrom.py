@@ -133,7 +133,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         # new_loss =-1/2 *((e) @ torch.linalg.inv(Sigma_star) @ (e) + torch.log(torch.linalg.det(Sigma_star)+1e-10))
 
         # return logML/N
-        return ED/N, logML
+        return logML/N, ED/N
 
     def train_loop_fast_rvm(self, epoch, n_support, n_samples, optimizer):
         self.model.train()
