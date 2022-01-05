@@ -263,7 +263,7 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
         z_support = self.feature_extractor(x_support).detach()
         if self.normalize: z_support = F.normalize(z_support, p=2, dim=1)
         with torch.no_grad():
-            inducing_points = self.get_inducing_points(z_support, y_support, verbose=False)
+            inducing_points, beta, mu_m, U = self.get_inducing_points(z_support, y_support, verbose=False)
         
         ip_values = inducing_points.z_values.cuda()
         self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
