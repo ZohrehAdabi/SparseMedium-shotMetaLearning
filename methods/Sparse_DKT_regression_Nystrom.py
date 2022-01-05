@@ -99,13 +99,12 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
     def set_forward_loss(self, x):
         pass
     
-    def rvm_ML(self, K, K_star_m, targets, alpha_m, mu_m, U, beta1, beta2, ip_index):
+    def rvm_ML(self, K_m, targets, alpha_m, mu_m, U, beta):
         
         N = targets.shape[0]
-        beta = beta2
         # Kt = K.T @ targets
         # KK = K.T @ K
-        K_m = K[:, ip_index]
+        # K_m = K[:, ip_index]
         # KK_mm = KK[ip_index, :][:, ip_index]
         # K_mt = Kt[ip_index]
         # A_m = torch.diag(alpha_m)
@@ -113,8 +112,8 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         # U, info =  torch.linalg.cholesky_ex(H, upper=True)
         # if info>0:
         #     print('pd_err of Hessian')
-        U_inv = torch.linalg.inv(U)
-        Sigma_m = U_inv @ U_inv.T      
+        # U_inv = torch.linalg.inv(U)
+        # Sigma_m = U_inv @ U_inv.T      
         # mu_m = beta * (Sigma_m @ K_mt)
         y_ = K_m @ mu_m  
         e = (targets - y_)
@@ -142,7 +141,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         batch, batch_labels = get_batch(train_people, n_samples)
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
         mll_list = []
-        l = 0.1
+        l = 0.01
         for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
 
             
@@ -159,16 +158,16 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             if self.kernel_type=='spectral':
                 self.model.base_covar_module.initialize_from_data_empspect(z, labels)
 
-            sigma = self.model.likelihood.noise[0].clone()
+            # sigma = self.model.likelihood.noise[0].clone()
             alpha_m = inducing_points.alpha
             
-            K = self.model.base_covar_module(z).evaluate()
-            K_star = self.model.base_covar_module(z, ip_values).evaluate()
-            if False:
-                scales	= torch.sqrt(torch.sum(K**2, axis=0))
-                K = K / scales
+            K_m = self.model.base_covar_module(z, ip_values).evaluate()
+            # K_star = self.model.base_covar_module(z, ip_values).evaluate()
+            if True:
+                scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+                K_m = K_m / scales
         
-            rvm_mll = self.rvm_ML(K, K_star, labels, alpha_m, mu_m, U, 1/sigma, beta, ip_index)
+            rvm_mll = self.rvm_ML(K_m, labels, alpha_m, mu_m, U, beta)
             predictions = self.model(z)
             loss = - (1-l) * self.mll(predictions, self.model.train_targets) - l * rvm_mll
             optimizer.zero_grad()
@@ -669,8 +668,8 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             active = active[index]
             gamma = gamma[index].to(torch.float)
             ss = scales[active]
-            alpha = alpha[index] / ss**2
-            mu_m = (mu_m[index] / ss)
+            alpha = alpha[index] #/ ss**2
+            mu_m = mu_m[index] #/ ss
             inducing_points = inputs[active]
             
             num_IP = active.shape[0]
@@ -681,14 +680,14 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                     K = covar_module(inputs, inducing_points).evaluate()
                     # K = covar_module(X, X[active]).evaluate()
                     
-                    mu_r = mu_m.to(torch.float)
+                    mu_r = mu_m.to(torch.float) /ss
                     y_pred_r = K @ mu_r
                     
                     mse_r = self.mse(y_pred_r, target)
                     print(f'FRVM MSE: {mse_r:0.4f}')
             
 
-        return IP(inducing_points, IP_index, num_IP, alpha.to(torch.float), gamma, None, None, None, None), beta, mu_m, U
+        return IP(inducing_points, IP_index, num_IP, alpha.to(torch.float), gamma, None, None, None, None), beta, mu_m.to(torch.float), U
   
     def save_checkpoint(self, checkpoint):
         # save state

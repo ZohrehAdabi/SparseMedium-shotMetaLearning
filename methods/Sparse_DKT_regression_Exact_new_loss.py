@@ -98,22 +98,22 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
 
     def set_forward_loss(self, x):
         pass
-    def rvm_ML(self, K, K_star_m, targets, alpha_m, beta, ip_index):
+    def rvm_ML(self, K_m, K_star_m, targets, alpha_m, mu_m, U, beta,):
         
         N = targets.shape[0]
-        Kt = K.T @ targets
-        KK = K.T @ K
-        K_m = K[:, ip_index]
-        KK_mm = KK[ip_index, :][:, ip_index]
-        K_mt = Kt[ip_index]
-        A_m = torch.diag(alpha_m)
-        H = A_m + beta * KK_mm
-        U, info =  torch.linalg.cholesky_ex(H, upper=True)
+        # Kt = K.T @ targets
+        # KK = K.T @ K
+        # K_m = K[:, ip_index]
+        # KK_mm = KK[ip_index, :][:, ip_index]
+        # K_mt = Kt[ip_index]
+        # A_m = torch.diag(alpha_m)
+        # H = A_m + beta * KK_mm
+        # U, info =  torch.linalg.cholesky_ex(H, upper=True)
         # if info>0:
         #     print('pd_err of Hessian')
         U_inv = torch.linalg.inv(U)
         Sigma_m = U_inv @ U_inv.T      
-        mu_m = beta * (Sigma_m @ K_mt)
+        # mu_m = beta * (Sigma_m @ K_mt)
         y_ = K_m @ mu_m  
         e = (targets - y_)
         ED = e.T @ e
@@ -161,7 +161,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
             z = self.feature_extractor(x_all)
             if self.normalize: z = F.normalize(z, p=2, dim=1)
             with torch.no_grad():
-                inducing_points = self.get_inducing_points(z, y_all, verbose=False) #y_support
+                inducing_points, beta, mu_m, U = self.get_inducing_points(z, y_all, verbose=False) #y_support
            
             ip_index = inducing_points.index
             ip_values = z[ip_index]
@@ -169,14 +169,14 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
             sigma = self.model.likelihood.noise[0]
             
             alpha_m = inducing_points.alpha
-            K = self.model.base_covar_module(z).evaluate()
+            K_m = self.model.base_covar_module(z).evaluate()
             K_star = self.model.base_covar_module(z, ip_values).evaluate()
             if True:
-                scales	= torch.sqrt(torch.sum(K**2, axis=0))
-                # print(f'scale: {Scales}')
-                # scales[scales==0] = 1
-                K = K / scales
-            rvm_mll = self.rvm_ML(K, K_star, y_all, alpha_m, 1/sigma, ip_index)  #y_support
+                scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+                K_m = K_m / scales
+                scales	= torch.sqrt(torch.sum(K_star**2, axis=0))
+                K_star = K_star / scales
+            rvm_mll = self.rvm_ML(K_m, K_star, y_all, alpha_m, mu_m, U, beta)  #y_support
             # NOTE 
             self.model.set_train_data(inputs=ip_values, targets=ip_labels, strict=False)
 
@@ -475,6 +475,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
         gamma = gamma[index]
         ss = scales[active]
         alpha = alpha[index] #/ ss**2
+        mu_m = mu_m[index] #/ ss
         inducing_points = inputs[active]
         num_IP = active.shape[0]
         IP_index = active
@@ -483,15 +484,15 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
                 
                 K = covar_module(inputs, inducing_points).evaluate()
                 # K = covar_module(X, X[active]).evaluate()
-                mu_m = (mu_m[index] / ss)
-                mu_m = mu_m.to(torch.float)
-                y_pred = K @ mu_m
+                
+                mu_r = mu_m.to(torch.float) / ss
+                y_pred = K @ mu_r
                 
                 mse = self.mse(y_pred, target)
                 print(f'FRVM MSE: {mse:0.4f}')
         
 
-        return IP(inducing_points, IP_index, num_IP, alpha.to(torch.float), gamma.to(torch.float), None, None, None, None)
+        return IP(inducing_points, IP_index, num_IP, alpha.to(torch.float), gamma.to(torch.float), None, None, None, None), beta, mu_m.to(torch.float), U
   
     def save_checkpoint(self, checkpoint):
         # save state

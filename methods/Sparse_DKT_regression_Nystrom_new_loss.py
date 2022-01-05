@@ -98,12 +98,12 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
     def set_forward_loss(self, x):
         pass
 
-    def rvm_ML(self, K, K_star_m, y, y_test, alpha_m, mu_m, U, beta, ip_index):
+    def rvm_ML(self, K_m, K_star_m, y, y_test, alpha_m, mu_m, U, beta):
         
         N = y.shape[0]
         # Kt = K.T @ y
         # KK = K.T @ K
-        K_m = K[:, ip_index]
+        # K_m = K[:, ip_index]
         # KK_mm = KK[ip_index, :][:, ip_index]
         # K_mt = Kt[ip_index]
         # A_m = torch.diag(alpha_m)
@@ -170,18 +170,20 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
             self.model.set_train_data(inputs=z, targets=y_support, strict=False)
 
-            sigma = self.model.likelihood.noise[0].clone().detach()
+            # sigma = self.model.likelihood.noise[0].clone().detach()
             
             alpha_m = inducing_points.alpha
-            K = self.model.base_covar_module(z).evaluate()
-            if True:
-                scales	= torch.sqrt(torch.sum(K**2, axis=0))
-                K = K / scales
-           
+            
             z_query = self.feature_extractor(x_query)
             if self.normalize: z_query = F.normalize(z_query, p=2, dim=1)
             K_star = self.model.base_covar_module(z_query, ip_values).evaluate()
-            rvm_mll = self.rvm_ML(K, K_star, y_support, y_query, alpha_m, mu_m, U, 1/sigma, ip_index)
+            K_m = self.model.base_covar_module(z, ip_values).evaluate()
+            if True:
+                scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+                K_m = K_m / scales
+                scales	= torch.sqrt(torch.sum(K_star**2, axis=0))
+                K_star = K_star / scales
+            rvm_mll = self.rvm_ML(K_m, K_star, y_support, y_query, alpha_m, mu_m, U, beta)
             self.model.eval()
             predictions = self.model(z_query)
             self.model.train()
