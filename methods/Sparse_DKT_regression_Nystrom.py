@@ -420,7 +420,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             # if (epoch) in [50, 80]:
             #     optimizer.param_groups[1]['lr'] = optimizer.param_groups[1]['lr'] * 0.1
 
-
+        print(Fore.CYAN,"-"*30, f'\nBest Val MAE {best_mse:4f} at epoch {best_epoch}\n', "-"*30, Fore.RESET)
         mll = np.mean(mll_list)
 
         
