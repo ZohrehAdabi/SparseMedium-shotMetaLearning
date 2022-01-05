@@ -126,7 +126,8 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
         y_ = K_star_m @ mu_m  
         e = (y_test - y_)
         ED = e.T @ e
-        Sigma_star = 1/beta + K_star_m @ Sigma_m @ K_star_m.T
+        S = torch.ones(N).to(self.device) *1/beta
+        Sigma_star = torch.diag(S) + K_star_m @ Sigma_m @ K_star_m.T
         new_loss =-1/2 *((e) @ torch.linalg.inv(Sigma_star) @ (e) + torch.log(torch.linalg.det(Sigma_star)+1e-10))
 
         return new_loss/N
