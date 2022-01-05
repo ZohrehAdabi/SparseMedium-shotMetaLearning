@@ -99,7 +99,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
     def set_forward_loss(self, x):
         pass
     
-    def rvm_ML(self, K, targets, alpha_m, beta, ip_index):
+    def rvm_ML(self, K, K_star_m, targets, alpha_m, beta, ip_index):
         
         N = targets.shape[0]
         Kt = K.T @ targets
@@ -122,7 +122,12 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
         
         logML			= dataLikely - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
-        return logML/N
+
+        # NOTE new loss for rvm
+        Sigma_star = 1/beta + K_star_m @ Sigma_m @ K_star_m.T
+        new_loss =-1/2 *((e) @ torch.linalg.inv(Sigma_star) @ (e) + torch.log(torch.linalg.det(Sigma_star)+1e-10))
+
+        return new_loss/N
 
     def train_loop_fast_rvm(self, epoch, n_support, n_samples, optimizer):
         self.model.train()
@@ -152,11 +157,12 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             alpha_m = inducing_points.alpha
             
             K = self.model.base_covar_module(z).evaluate()
+            K_star = self.model.base_covar_module(z, ip_values).evaluate()
             if True:
                 scales	= torch.sqrt(torch.sum(K**2, axis=0))
                 K = K / scales
         
-            rvm_mll = self.rvm_ML(K, labels, alpha_m, 1/sigma, ip_index)
+            rvm_mll = self.rvm_ML(K, K_star, labels, alpha_m, 1/sigma, ip_index)
             predictions = self.model(z)
             loss = - (1-l) * self.mll(predictions, self.model.train_targets) - l * rvm_mll
             optimizer.zero_grad()
@@ -650,7 +656,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
 
             kernel_matrix = kernel_matrix.to(torch.float64)
             target = targets.clone().to(torch.float64)
-            active, alpha, gamma, beta, mu_m = Fast_RVM_regression(kernel_matrix, target, beta, N, self.config, self.align_threshold,
+            active, alpha, gamma, beta, mu_m, U = Fast_RVM_regression(kernel_matrix, target, beta, N, self.config, self.align_threshold,
                                                     self.gamma, eps, tol, max_itr, self.device, verbose)
             
             index = np.argsort(active)

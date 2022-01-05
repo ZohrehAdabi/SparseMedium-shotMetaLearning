@@ -98,7 +98,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
 
     def set_forward_loss(self, x):
         pass
-    def rvm_ML(self, K, targets, alpha_m, beta, ip_index):
+    def rvm_ML(self, K, K_star_m, targets, alpha_m, beta, ip_index):
         
         N = targets.shape[0]
         Kt = K.T @ targets
@@ -121,7 +121,12 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
         logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
         
         logML			= dataLikely - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
-        return logML/N
+
+        # NOTE new loss for rvm
+        Sigma_star = 1/beta + K_star_m @ Sigma_m @ K_star_m.T
+        new_loss =-1/2 *((e) @ torch.linalg.inv(Sigma_star) @ (e) + torch.log(torch.linalg.det(Sigma_star)+1e-10))
+
+        return new_loss/N
 
     def train_loop_fast_rvm(self, epoch, n_support, n_samples, optimizer):
         self.model.train()
@@ -163,15 +168,13 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
             
             alpha_m = inducing_points.alpha
             K = self.model.base_covar_module(z).evaluate()
+            K_star = self.model.base_covar_module(z, ip_values).evaluate()
             if True:
                 scales	= torch.sqrt(torch.sum(K**2, axis=0))
                 # print(f'scale: {Scales}')
                 # scales[scales==0] = 1
                 K = K / scales
-            # C = sigma + K_m @ torch.linalg.inv(torch.diag(alpha_m)) @ K_m.T
-            # C_inv = torch.linalg.inv(C)
-            # rvm_mll = -1/2 * (torch.log(torch.linalg.det(C)+1e-8) + y_support @ C_inv @ y_support)
-            rvm_mll = self.rvm_ML(K, y_all, alpha_m, 1/sigma, ip_index)  #y_support
+            rvm_mll = self.rvm_ML(K, K_star, y_all, alpha_m, 1/sigma, ip_index)  #y_support
             # NOTE 
             self.model.set_train_data(inputs=ip_values, targets=ip_labels, strict=False)
 
@@ -462,7 +465,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
 
         kernel_matrix = kernel_matrix.to(torch.float64)
         target = targets.clone().to(torch.float64)
-        active, alpha, gamma, beta, mu_m = Fast_RVM_regression(kernel_matrix, target, beta, N, self.config, self.align_threshold,
+        active, alpha, gamma, beta, mu_m, U = Fast_RVM_regression(kernel_matrix, target, beta, N, self.config, self.align_threshold,
                                                 self.gamma, eps, tol, max_itr, self.device, verbose)
         
         index = np.argsort(active)
