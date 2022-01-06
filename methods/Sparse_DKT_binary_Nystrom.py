@@ -268,12 +268,15 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                 transformed_targets = self.model.likelihood.transformed_targets
                 loss = -self.mll(output, transformed_targets).sum()
             else:
-                loss = - (1-l) * self.mll(output, self.model.train_targets) - l * rvm_mll
+                mll = self.mll(output, self.model.train_targets)
+                loss = - mll - rvm_mll
             loss.backward()
             optimizer.step()
 
             self.iteration = i+(epoch*len(train_loader))
-            if(self.writer is not None): self.writer.add_scalar('loss', loss, self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('Loss', loss, self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('MLL', -mll, self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll, self.iteration)
 
             #Eval on the query (validation set)
             with torch.no_grad():
@@ -324,11 +327,11 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             if i % print_freq==0:
                 if(self.writer is not None): self.writer.add_histogram('z_support', z_support, self.iteration)
                 if self.dirichlet:
-                    print(Fore.LIGHTRED_EX,'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} || Loss {:f} | RVM ML {:f}| Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
-                        outputscale, lenghtscale,  loss.item(), rvm_mll.item(),  0, accuracy_query), Fore.RESET) #accuracy_support
+                    print(Fore.LIGHTRED_EX,'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} || Loss {:f} | MLL {:f} | RVM ML {:f}| Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
+                        outputscale, lenghtscale,  loss.item(), -mll.item(), -rvm_mll.item(),  0, accuracy_query), Fore.RESET) #accuracy_support
                 else:
-                    print(Fore.LIGHTRED_EX,'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} | Noise {:f} | Loss {:f} | RVM ML {:f} | Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
-                        outputscale, lenghtscale, noise, loss.item(), rvm_mll.item(),0, accuracy_query), Fore.RESET)
+                    print(Fore.LIGHTRED_EX,'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} | Noise {:f} | Loss {:f} | MLL {:f} | RVM ML {:f} | Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
+                        outputscale, lenghtscale, noise, loss.item(), -mll.item(), -rvm_mll.item(),0, accuracy_query), Fore.RESET)
 
     def get_inducing_points(self, base_covar_module, inputs, targets, verbose=True):
 
