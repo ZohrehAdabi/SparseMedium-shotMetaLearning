@@ -102,31 +102,32 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
     def rvm_ML(self, K_m, targets, alpha_m, mu_m, U, beta):
         
         N = targets.shape[0]
-        K_m = K_m.to(torch.float64)
-        # Kt = K.T @ targets
-        # KK = K.T @ K
-        # K_m = K[:, ip_index]
-        # KK_mm = KK[ip_index, :][:, ip_index]
-        # K_mt = Kt[ip_index]
-        # A_m = torch.diag(alpha_m)
-        # H = A_m + beta * KK_mm
-        # U, info =  torch.linalg.cholesky_ex(H, upper=True)
+        targets = targets.to(torch.float64)
+        K_mt = targets @ K_m
+        A_m = torch.diag(alpha_m)
+        H = A_m + beta * K_m.T @ K_m
+        U, info =  torch.linalg.cholesky_ex(H, upper=True)
         # if info>0:
         #     print('pd_err of Hessian')
         U_inv = torch.linalg.inv(U)
         Sigma_m = U_inv @ U_inv.T      
-        # mu_m = beta * (Sigma_m @ K_mt)
+        mu_m = beta * (Sigma_m @ K_mt)
         y_ = K_m @ mu_m  
         e = (targets - y_)
         ED = e.T @ e
+        # DiagC	= torch.sum(U_inv**2, axis=1)
+        # Gamma	= 1 - alpha_m * DiagC
+        # beta	= (N - torch.sum(Gamma))/ED
         # dataLikely	= (N * torch.log(beta) - beta * ED)/2
-        # logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
+        logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
+        
         # 2001-JMLR-SparseBayesianLearningandtheRelevanceVectorMachine in Appendix:
         # C = sigma * I + K_m @ A_m @ K_m.T  ,  log|C| = - log|Sigma_m| - N * log(beta) - log|A_m|
-        # t.T @ C^-1 @ t = beta * || t - K_m @ mu_m ||**2 + mu_m.T @ A_m @ mu_m 
-        # log p(t) = -1/2 (log|C| + t.T @ C^-1 @ t ) + const
+        # t.T @ C^-1 @ t = beta * ||t - K_m @ mu_m||**2 + mu_m.T @ A_m @ mu_m 
+        # log p(t) = -1/2 (log|C| + t.T @ C^-1 @ t ) + const 
+        logML = -1/2 * (beta * ED + (mu_m**2) @ alpha_m + 2*logdetHOver2 )  #+ N * torch.log(beta)
         # logML			= dataLikely - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
-        logML = -1/2 * beta * ED
+        # logML = -1/2 * beta * ED
     
         # NOTE new loss for rvm
         # S = torch.ones(N).to(self.device) *1/beta
