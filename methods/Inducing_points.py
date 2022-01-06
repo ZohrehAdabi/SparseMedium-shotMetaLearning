@@ -19,23 +19,28 @@ from methods.Fast_RVM import Fast_RVM, posterior_mode
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma mu U")
 
-def rvm_ML(K, targets, alpha_m, mu_m, U, ip_index):
+def rvm_ML(K_m, targets, alpha_m, mu_m, U):
         
         N = targets.shape[0]
         alpha_m = alpha_m.to(torch.float64)
         targets = targets.to(torch.float64)
         targets[targets==-1]= 0
         targets_pseudo_linear	= 2 * targets - 1
-        K = K.to(torch.float64)
-        K_m = K[:, ip_index]
+        K_m = K_m.to(torch.float64)
         LogOut	= (targets_pseudo_linear * 0.9 + 1) / 2
         # mu_m	=  K_m.pinverse() @ (torch.log(LogOut / (1 - LogOut))) #
-        with torch.no_grad():
-            mu_m = torch.linalg.lstsq(K_m, (torch.log(LogOut / (1 - LogOut)))).solution
-            mu_m = mu_m.to(torch.float64)
-        mu_m, U, beta, dataLikely, bad_Hess = posterior_mode(K_m, targets, alpha_m, mu_m, max_itr=25, device='cuda')
+        # with torch.no_grad():
+            # mu_m = torch.linalg.lstsq(K_m, (torch.log(LogOut / (1 - LogOut)))).solution
+            # mu_m = mu_m.to(torch.float64)
+            # mu_m, U, beta, dataLikely, bad_Hess = posterior_mode(K_m, targets, alpha_m, mu_m, max_itr=25, device='cuda')
+       
         K_mu_m = K_m @ mu_m
         y	= torch.sigmoid(K_mu_m)
+        beta	= y * (1-y)
+        #   Compute the Hessian
+        beta_K_m	= (torch.diag(beta) @ K_m) 
+        H			= (K_m.T @ beta_K_m + torch.diag(alpha_m))
+        U, info =  torch.linalg.cholesky_ex(H, upper=True)
         dataLikely = (targets[targets==1].T @ torch.log(y[targets==1]+1e-12) + ((1-targets[targets==0]).T @ torch.log(1-y[targets==0]+1e-12)))
         logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
         
