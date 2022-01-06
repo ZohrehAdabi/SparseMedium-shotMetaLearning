@@ -25,9 +25,9 @@ def rvm_ML(K_m, targets, alpha_m, mu_m, U):
         alpha_m = alpha_m.to(torch.float64)
         targets = targets.to(torch.float64)
         targets[targets==-1]= 0
-        targets_pseudo_linear	= 2 * targets - 1
+        # targets_pseudo_linear	= 2 * targets - 1
         K_m = K_m.to(torch.float64)
-        LogOut	= (targets_pseudo_linear * 0.9 + 1) / 2
+        # LogOut	= (targets_pseudo_linear * 0.9 + 1) / 2
         # mu_m	=  K_m.pinverse() @ (torch.log(LogOut / (1 - LogOut))) #
         # with torch.no_grad():
             # mu_m = torch.linalg.lstsq(K_m, (torch.log(LogOut / (1 - LogOut)))).solution
