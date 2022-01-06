@@ -309,17 +309,17 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
             q[active_m] = tmp * Q[active_m]
             Sigma_m = Sigma_new
             #quantity Gamma_i measures how well the corresponding parameter mu_i is determined by the data
-            gamma_new = 1 - alpha_m * torch.diag(Sigma_m)
-            if (gamma_new > 1).any():
-                if (selected_action==-1):
-                    mask = torch.ones(Gamma.numel(), dtype=torch.bool)
-                    mask[j] = False 
-                    Gamma = Gamma[mask]
-                else: 
-                    gamma_new[gamma_new>1] = 1
-                    Gamma = gamma_new
-            else:
-                Gamma = gamma_new
+            Gamma = 1 - alpha_m * torch.diag(Sigma_m)
+            # if (gamma_new > 1).any():
+            #     if (selected_action==-1):
+            #         mask = torch.ones(Gamma.numel(), dtype=torch.bool)
+            #         mask[j] = False 
+            #         Gamma = Gamma[mask]
+            #     else: 
+            #         gamma_new[gamma_new>1] = 1
+            #         Gamma = gamma_new
+            # else:
+            #     Gamma = gamma_new
             logML = logML + deltaLogMarginal
             logMarginalLog.append(logML.item())
             beta_KK_m = beta * KK_m
