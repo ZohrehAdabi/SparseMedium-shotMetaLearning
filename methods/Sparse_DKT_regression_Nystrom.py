@@ -119,13 +119,13 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         y_ = K_m @ mu_m  
         e = (targets - y_)
         ED = e.T @ e
-        dataLikely	= (N * torch.log(beta) - beta * ED)/2
-        logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
+        # dataLikely	= (N * torch.log(beta) - beta * ED)/2
+        # logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
         # 2001-JMLR-SparseBayesianLearningandtheRelevanceVectorMachine in Appendix:
         # C = sigma * I + K_m @ A_m @ K_m.T  ,  log|C| = - log|Sigma_m| - N * log(beta) - log|A_m|
         # t.T @ C^-1 @ t = beta * || t - K_m @ mu_m ||**2 + mu_m.T @ A_m @ mu_m 
         # log p(t) = -1/2 (log|C| + t.T @ C^-1 @ t ) + const
-        logML			= dataLikely - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
+        # logML			= dataLikely - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
         logML = -1/2 * beta * ED
     
         # NOTE new loss for rvm
