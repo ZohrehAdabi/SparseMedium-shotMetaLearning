@@ -148,7 +148,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         batch, batch_labels = get_batch(train_people, n_samples)
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
         mll_list = []
-        l = 0.5
+        l = 0.9
         for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
 
             
