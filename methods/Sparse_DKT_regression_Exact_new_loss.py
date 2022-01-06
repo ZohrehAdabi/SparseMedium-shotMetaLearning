@@ -98,37 +98,47 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
 
     def set_forward_loss(self, x):
         pass
-    def rvm_ML(self, K_m, K_star_m, targets, alpha_m, mu_m, U, beta,):
+    def rvm_ML(self, K_m, targets, alpha_m, mu_m, U, beta):
         
         N = targets.shape[0]
-        # Kt = K.T @ targets
-        # KK = K.T @ K
-        # K_m = K[:, ip_index]
-        # KK_mm = KK[ip_index, :][:, ip_index]
-        # K_mt = Kt[ip_index]
-        # A_m = torch.diag(alpha_m)
-        # H = A_m + beta * KK_mm
-        # U, info =  torch.linalg.cholesky_ex(H, upper=True)
+        targets = targets.to(torch.float64)
+        K_mt = targets @ K_m
+        A_m = torch.diag(alpha_m)
+        H = A_m + beta * K_m.T @ K_m
+        U, info =  torch.linalg.cholesky_ex(H, upper=True)
         # if info>0:
         #     print('pd_err of Hessian')
         U_inv = torch.linalg.inv(U)
         Sigma_m = U_inv @ U_inv.T      
-        # mu_m = beta * (Sigma_m @ K_mt)
+        mu_m = beta * (Sigma_m @ K_mt)
         y_ = K_m @ mu_m  
         e = (targets - y_)
         ED = e.T @ e
-        dataLikely	= (N * torch.log(beta) - beta * ED)/2
+        # DiagC	= torch.sum(U_inv**2, axis=1)
+        # Gamma	= 1 - alpha_m * DiagC
+        # beta	= (N - torch.sum(Gamma))/ED
+        # dataLikely	= (N * torch.log(beta) - beta * ED)/2
         logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
         
-        logML			= dataLikely - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
-
+        # 2001-JMLR-SparseBayesianLearningandtheRelevanceVectorMachine in Appendix:
+        # C = sigma * I + K_m @ A_m @ K_m.T  ,  log|C| = - log|Sigma_m| - N * log(beta) - log|A_m|
+        # t.T @ C^-1 @ t = beta * ||t - K_m @ mu_m||**2 + mu_m.T @ A_m @ mu_m 
+        # log p(t) = -1/2 (log|C| + t.T @ C^-1 @ t ) + const 
+        logML = -1/2 * (beta * ED + (mu_m**2) @ alpha_m + 2*logdetHOver2 )  #+ N * torch.log(beta)
+        # logML			= dataLikely - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
+        # logML = -1/2 * beta * ED
+    
         # NOTE new loss for rvm
-        S = torch.ones(N).to(self.device) *1/beta
-        Sigma_star = torch.diag(S) + K_star_m @ Sigma_m @ K_star_m.T
+        # S = torch.ones(N).to(self.device) *1/beta
+        # K_star_Sigma = torch.diag(K_star_m @ Sigma_m @ K_star_m.T)
+        # Sigma_star = torch.diag(S) + torch.diag(K_star_Sigma)
+        # K_star_Sigma = K_star_m @ Sigma_m @ K_star_m.T
+        # Sigma_star = torch.diag(S) + K_star_Sigma
 
-        new_loss =-1/2 *((e) @ torch.linalg.inv(Sigma_star) @ (e) + torch.log(torch.linalg.det(Sigma_star)+1e-10))
+        # new_loss =-1/2 *((e) @ torch.linalg.inv(Sigma_star) @ (e) + torch.log(torch.linalg.det(Sigma_star)+1e-10))
 
-        return new_loss/N
+        # return logML/N
+        return logML/N, ED/N
 
     def train_loop_fast_rvm(self, epoch, n_support, n_samples, optimizer):
         self.model.train()
@@ -169,14 +179,16 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
             sigma = self.model.likelihood.noise[0]
             
             alpha_m = inducing_points.alpha
-            K_m = self.model.base_covar_module(z).evaluate()
-            K_star = self.model.base_covar_module(z, ip_values).evaluate()
+            K_m = self.model.base_covar_module(z, ip_values).evaluate()
+            K_m = K_m.to(torch.float64)
+            # K_star = self.model.base_covar_module(z, ip_values).evaluate()
             if True:
                 scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
                 K_m = K_m / scales
-                scales	= torch.sqrt(torch.sum(K_star**2, axis=0))
-                K_star = K_star / scales
-            rvm_mll = self.rvm_ML(K_m, K_star, y_all, alpha_m, mu_m, U, beta)  #y_support
+                # scales	= torch.sqrt(torch.sum(K_star**2, axis=0))
+                # K_star = K_star / scales
+            # rvm_mll = self.rvm_ML(K_m, K_star, y_all, alpha_m, mu_m, U, beta)  #y_support
+            rvm_mll, rvm_mse = self.rvm_ML(K_m, labels, alpha_m, mu_m, U, beta)
             # NOTE 
             self.model.set_train_data(inputs=ip_values, targets=ip_labels, strict=False)
 
@@ -185,7 +197,8 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
             self.model.eval()
             predictions = self.model(z_query)
             self.model.train()
-            loss = -self.mll(predictions, y_all) - l * rvm_mll
+            mll = self.mll(predictions, y_all)
+            loss = - (1-l)* mll - l * rvm_mll
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -193,12 +206,14 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
             mse = self.mse(predictions.mean, y_all)
 
             self.iteration = itr+(epoch*len(batch_labels))
-            if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)
-
+            if(self.writer is not None): self.writer.add_scalar('MLL + RVM MLL (Loss)', loss.item(), self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('MLL', -mll.item(), self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll.item(), self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('RVM MSE', rvm_mse.item(), self.iteration)
             if self.kernel_type=='rbf':
                 if ((epoch%1==0) & (itr%2==0)):
-                    print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f RVM ML: %3f  MSE: %.3f noise: %.3f outputscale: %.3f lengthscale: %.3f' % (
-                        itr, epoch, loss.item(), rvm_mll.item(), mse.item(),
+                    print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.4f ML %.4f RVM ML: %.4f RVM MSE: %.4f  MSE: %.3f noise: %.4f outputscale: %.3f lengthscale: %.3f' % (
+                        itr, epoch, loss.item(), -mll.item(), -rvm_mll.item(), rvm_mse.item(), mse.item(),
                         self.model.likelihood.noise.item(), self.model.base_covar_module.outputscale,
                         self.model.base_covar_module.base_kernel.lengthscale
                     ),Fore.RESET)
@@ -384,7 +399,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
                 print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE (norm): {mse:.4f}, MSE: {mse_:.4f} Best MSE: {best_mse:.4f}', Fore.RESET)
                 if(self.writer is not None):
                     self.writer.add_scalar('MSE (norm) Val.', mse, epoch)
-                    self.writer.add_scalar('MSE Val.', mse_, epoch)
+                    # self.writer.add_scalar('MSE Val.', mse_, epoch)
                 print(Fore.GREEN,"-"*30, Fore.RESET)
 
             mll_list.append(mll)
@@ -492,7 +507,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
                 print(f'FRVM MSE: {mse:0.4f}')
         
 
-        return IP(inducing_points, IP_index, num_IP, alpha.to(torch.float), gamma.to(torch.float), None, None, None, None), beta, mu_m.to(torch.float), U
+        return IP(inducing_points, IP_index, num_IP, alpha.to(torch.float64), gamma.to(torch.float), None, None, None, None), beta, mu_m.to(torch.float64), U
   
     def save_checkpoint(self, checkpoint):
         # save state
