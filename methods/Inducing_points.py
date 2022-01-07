@@ -44,7 +44,7 @@ def rvm_ML(K_m, targets, alpha_m, mu_m, U):
         dataLikely = (targets[targets==1].T @ torch.log(y[targets==1]+1e-12) + ((1-targets[targets==0]).T @ torch.log(1-y[targets==0]+1e-12)))
         logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
         
-        logML			= dataLikely - (mu_m**2) @ alpha_m /2  - logdetHOver2  #+ torch.sum(torch.log(alpha_m))/2
+        logML			= dataLikely - logdetHOver2  #- (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2
         return logML/N
 
 

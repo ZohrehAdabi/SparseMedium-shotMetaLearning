@@ -27,6 +27,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
     targets = targets.to(device)
     K = K.to(device)
     targets_pseudo_linear	= 2 * targets - 1
+    # targets_pseudo_linear	= targets 
     # KK = K.T @ K  # all K_j @ K_i
     Kt = K.T @ targets_pseudo_linear
     start_k = torch.argmax(abs(Kt)) #torch.argmax(kt_k)
@@ -84,7 +85,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
         # RECOMPUTE: must be a POSITIVE 'factor' and already IN the model
         idx                 = active_factor > 1e-12
         recompute           = active_m[idx]
-        alpha_prim          =  s[recompute]**2 / (Factor[recompute]+1e-10)
+        alpha_prim          =  s[recompute]**2 / (Factor[recompute])
         delta_alpha         = (1/(alpha_prim) - 1/(alpha_m[idx]))
         d_alpha_S           = delta_alpha * S[recompute] + 1 
         deltaML[recompute]  = ((delta_alpha * Q[recompute]**2) / (d_alpha_S) - torch.log(d_alpha_S))
@@ -108,7 +109,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
         add = torch.where(good_factor)[0]
         anyToAdd = len(add) > 0
         if anyToAdd:
-            Q_S             = Q[add]**2 / (S[add] +1e-10)
+            Q_S             = Q[add]**2 / (S[add] +1e-12)
             deltaML[add]    = (Q_S - 1 - torch.log(Q_S))
             action[add]     = 1
             
@@ -310,7 +311,7 @@ def Statistics(K, K_m, mu_m, alpha_m, active_m, targets, N, device):
         Gamma	= 1 - alpha_m * DiagC
         # COMPUTE THE Q & S VALUES
         # KK_Sigma_m = KK_m @ Sigma_m
-        M = active_m.shape[0]
+        # M = active_m.shape[0]
         beta_KK_m = K.T @  (torch.diag(beta) @ K_m) #(K_m * (beta.repeat([1, M])))
         # Q: "quality" factor - related to how well the basis function contributes
         # to reducing the error
@@ -350,7 +351,8 @@ def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
             # Any y=0 or y=1 cases must now be accompanied by appropriate
             # output=0 or output=1 values, so can be excluded.
         # data_error	= -(targets[~y0].T @ torch.log(y[~y0]+1e-12) + ((1-targets[~y1]).T @ torch.log(1-y[~y1]+1e-12)))
-        data_error = -(targets[targets==1].T @ torch.log(y[targets==1]+1e-12) + ((1-targets[targets==0]).T @ torch.log(1-y[targets==0]+1e-12)))
+        data_error = -((targets[targets==1]).T @ torch.log(y[targets==1]+1e-12) + ((1-targets[targets==0]).T @ torch.log(1-y[targets==0]+1e-12)))
+        # data_error = -(1/2*(1+targets[targets==1]).T @ torch.log(y[targets==1]+1e-12) + (1/2*(1-targets[targets==-1]).T @ torch.log(1-y[targets==-1]+1e-12)))
         # data_error	= -(targets[~y0].T @ torch.log(y[~y0]) + ((1-targets[~y1]).T @ torch.log(1-y[~y1])))
         
         return y, data_error
@@ -374,7 +376,7 @@ def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
         g	= K_m.T @ e - (alpha_m * mu_m)
         #  Compute the likelihood-dependent analogue of the noise precision.
         #  NB: Beta now a vector.
-        beta	= y * (1-y)
+        beta	= 2* y * (1-y)
         # beta = beta.unsqueeze(1)
         #   Compute the Hessian
         beta_K_m	= (torch.diag(beta) @ K_m)  #K_m * (beta.unsqueeze(1).repeat([1, alpha_m.shape[0]]))
@@ -605,10 +607,11 @@ if __name__=='__main__':
 
     config = "011"
     align_thr = 1e-3
-    gamma = True
+    gamma = False
     # scale = torch.sqrt(torch.sum(K) / N ** 2)
     # K = K / scale                                 K, targets, N, config, align_thr
-    active_m, alpha_m, gamma_m, beta, mu_m = Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, device='cpu')
+    target = targets.clone()
+    active_m, alpha_m, gamma_m, beta, mu_m, U = Fast_RVM(K, target, N, config, align_thr, gamma, eps, tol, device='cpu')
     print(f'relevant index \n {active_m}')
     print(f'relevant alpha \n {alpha_m}')
     print(f'relevant Gamma \n {gamma_m}')
@@ -620,7 +623,7 @@ if __name__=='__main__':
     alpha_m = alpha_m[index] / ss.pow(2)
     mu_m = mu_m[index] / ss
     
-    plot_result(inputs[active_m], inputs, targets, covar_module, kernel_matrix[:, active_m], N, mu_m, active_m)
+    plot_result(inputs[active_m], inputs, target, covar_module, kernel_matrix[:, active_m], N, mu_m, active_m)
 
 
 
