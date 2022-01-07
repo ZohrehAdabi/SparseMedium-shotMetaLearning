@@ -424,7 +424,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch+1} => MLL: {mll}\n', "-"*30, Fore.RESET)
 
             scheduler.step()
-            if (epoch) in [200]:
+            if (epoch) in [100]:
                 optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.1 #gp
             # if (epoch) in [50, 80]:
             #     optimizer.param_groups[1]['lr'] = optimizer.param_groups[1]['lr'] * 0.1
