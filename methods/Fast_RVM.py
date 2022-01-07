@@ -75,7 +75,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
         # 'Relevance Factor' (q^2-s) values for basis functions in model
         Factor = q*q - s 
         if (Factor<0).all():
-            print(f' Factor <0 all -------------------------')
+            print(f'#{itr} Factor <0 all -------------------------')
         #compute delta in marginal log likelihood for new action selection
         deltaML = deltaML * 0
         action = action * 0
@@ -391,8 +391,6 @@ def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
         #     print('pd_err of Hessian')
         #     return None, H, None, None, True
             #  Make sure its positive definite
-        
-        
         #  Before progressing, check for termination based on the gradient norm
         if all(abs(g)< grad_min): 
             break
