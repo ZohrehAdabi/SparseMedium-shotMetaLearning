@@ -179,9 +179,9 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             rvm_mll, rvm_mse = self.rvm_ML(K_m, labels, alpha_m, mu_m, U, beta)
             predictions = self.model(z)
             mll = self.mll(predictions, self.model.train_targets)
-            # loss = - mll  - l * rvm_mll 
-            loss =  - mll - rvm_mll
-            # loss = -(1-l) * mll  - l * rvm_mll + 100 * rvm_mse
+            loss = - mll  - l * rvm_mll 
+            # loss =  - mll - rvm_mll
+            # loss = -(1-l) * mll  - l * rvm_mll 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -423,7 +423,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch+1} => MLL: {mll}\n', "-"*30, Fore.RESET)
 
             scheduler.step()
-            if (epoch) in [100]:
+            if (epoch) in [50]:
                 optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.1 #gp
             # if (epoch) in [50, 80]:
             #     optimizer.param_groups[1]['lr'] = optimizer.param_groups[1]['lr'] * 0.1
