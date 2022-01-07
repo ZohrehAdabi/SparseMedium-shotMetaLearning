@@ -148,7 +148,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         batch, batch_labels = get_batch(train_people, n_samples)
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
         mll_list = []
-        l = 0.1
+        l = 0.2
         for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
 
             
@@ -423,8 +423,8 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch+1} => MLL: {mll}\n', "-"*30, Fore.RESET)
 
             scheduler.step()
-            # if (epoch) in [40]:
-            #     optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.1
+            if (epoch) in [100]:
+                optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.1 #gp
             # if (epoch) in [50, 80]:
             #     optimizer.param_groups[1]['lr'] = optimizer.param_groups[1]['lr'] * 0.1
 
