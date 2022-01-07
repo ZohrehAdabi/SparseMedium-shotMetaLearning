@@ -10,7 +10,7 @@ train_people = ['DennisPNoGlassesGrey','JohnGrey','SimonBGrey','SeanGGrey','DanJ
                 'YongminYGrey','TomKGrey','PaulVGrey','DennisPGrey','CarlaBGrey','JamieSGrey','KateSGrey','DerekCGrey',
             'KatherineWGrey','ColinPGrey','SueWGrey','GrahamWGrey','KrystynaNGrey','SeanGNoGlassesGrey', 'HeatherLGrey', 'KeithCGrey'
             ]
-val_people = ['JeffNGrey', 'JonGrey']
+val_people = ['JeffNGrey', 'JonGrey', 'HeatherLGrey', 'KeithCGrey']
 test_people  = ['RichardBGrey','TasosHGrey','SarahLGrey','AndreeaVGrey','YogeshRGrey']
 #  ['AdamBTestGrey', 'DerekCTestGrey', 'JamieSTestGrey', 'RichardBTestGrey', 'RichardHTestGrey'] #'JeffNGrey', 'JonGrey'
 def num_to_str(num):
