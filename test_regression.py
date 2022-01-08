@@ -80,6 +80,7 @@ for sd in range(seed, seed+repeat):
             params.checkpoint_dir += '/'
             id = f'random_{params.lr_gp}_{params.lr_net}_ip_{params.n_centers}_seed_{sd}'
             if params.normalize: id += '_norm'
+            if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
             params.checkpoint_dir = params.checkpoint_dir +  id
             model = Sparse_DKT_regression_Nystrom(bb, kernel_type=params.kernel_type, normalize=params.normalize, f_rvm=False, random=True,  n_inducing_points=params.n_centers, video_path=params.checkpoint_dir , 
                                 show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
