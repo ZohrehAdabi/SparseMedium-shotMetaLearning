@@ -280,6 +280,15 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             pred    = self.likelihood(self.model(z_query))
             lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
 
+            K_m = self.model.base_covar_module(z_query, ip_values).evaluate()
+            K_m = K_m.to(torch.float64)
+            scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+            K_m = K_m / scales
+            mu_m = mu / scales
+            y_pred_r = K_m @ mu_m       
+            mse_r = self.mse(y_pred_r, y_query)
+            print(f'FRVM MSE: {mse_r:0.4f}')
+
         
 
         def inducing_max_similar_in_support_x(train_x, inducing_points, train_y):
@@ -304,7 +313,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                                  inducing_points.gamma.cpu().numpy(), 
                                 x_inducing, y_inducing, np.array(i_idx), np.array(j_idx))
         
-        inducing_points = inducing_max_similar_in_support_x(x_support, inducing_points, y_support)
+        # inducing_points = inducing_max_similar_in_support_x(x_support, inducing_points, y_support)
 
         #**************************************************************
         mse = self.mse(pred.mean, y_query).item()
@@ -354,7 +363,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                 self.plots.fig_feature.canvas.flush_events()
                 self.mw_feature.grab_frame()
 
-        return mse, mse_, inducing_points.count
+        return mse, mse_, inducing_points.count, mse_r
 
   
     def train(self, stop_epoch, n_support, n_samples, optimizer):
@@ -374,22 +383,28 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                     print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
                     mse_list = []
                     mse_unnorm_list = []
+                    mse_rvm_list = []
+                    sv_count_list = []
                     val_count = 10
                     rep = True if val_count > len(val_people) else False
                     val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
                     for t in range(val_count):
-                        mse, mse_, _ = self.test_loop_fast_rvm(n_support, n_samples, val_person[t],  optimizer)
+                        mse, mse_, sv_count, mse_r = self.test_loop_fast_rvm(n_support, n_samples, val_person[t],  optimizer)
                         mse_list.append(mse)
                         mse_unnorm_list.append(mse_)
+                        sv_count_list.append(sv_count)
+                        mse_rvm_list.append(mse_r)
                     mse = np.mean(mse_list)
                     mse_ = np.mean(mse_unnorm_list)
+                    sv_c = np.mean(sv_count_list)
+                    mse_r = np.mean(mse_rvm_list)
                     if best_mse >= mse:
                         best_mse = mse
                         best_epoch = epoch
                         model_name = self.best_path + '_best_model.tar'
                         self.save_best_checkpoint(epoch+1, best_mse, model_name)
                         print(Fore.LIGHTRED_EX, f'Best MSE: {best_mse:.4f}', Fore.RESET)
-                    print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE (norm): {mse:.4f}, MSE: {mse_:.4f} Best MSE: {best_mse:.4f}', Fore.RESET)
+                    print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE RVM: {mse_r:.4f}, MSE(norm): {mse:.4f}, MSE: {mse_:.4f}, SV: {sv_c:2f} Best MSE: {best_mse:.4f}', Fore.RESET)
                     if(self.writer is not None):
                         self.writer.add_scalar('MSE (norm) Val.', mse, epoch)
                         # self.writer.add_scalar('MSE Val.', mse_, epoch)
@@ -451,6 +466,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         mse_list = []
         mse_list_ = []
         num_sv_list = []
+        mse_rvm_list = []
         # choose a random test person
         rep = True if test_count > len(test_people) else False
 
@@ -459,8 +475,9 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             self.test_i = t
             print(f'test #{t}')
             if self.f_rvm:
-                mse, mse_, num_sv = self.test_loop_fast_rvm(n_support, n_samples, test_person[t],  optimizer)
+                mse, mse_, num_sv, mse_r = self.test_loop_fast_rvm(n_support, n_samples, test_person[t],  optimizer)
                 num_sv_list.append(num_sv)
+                
             elif self.random:
                 mse = self.test_loop_random(n_support, n_samples, test_person[t],  optimizer)
             elif not self.f_rvm:
@@ -469,13 +486,17 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                 ValueError()
 
             mse_list.append(float(mse))
-            if self.f_rvm: mse_list_.append(float(mse_))
+            if self.f_rvm: 
+                mse_list_.append(float(mse_))
+                mse_rvm_list.append(mse_r)
 
         if self.show_plots_pred:
             self.mw.finish()
         if self.show_plots_features:
             self.mw_feature.finish()
-        if self.f_rvm: print(f'MSE (unnormed): {np.mean(mse_list_):.4f}')
+        if self.f_rvm: 
+            print(f'MSE (unnormed): {np.mean(mse_list_):.4f}')
+            print(f'MSE RVM: {np.mean(mse_rvm_list):.4f}')
         if self.f_rvm: print(f'Avg. SVs: {np.mean(num_sv_list):.2f}')
         return mse_list
 
