@@ -407,7 +407,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                     print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE RVM: {mse_r:.4f}, MSE(norm): {mse:.4f}, MSE: {mse_:.4f}, SV: {sv_c:2f} Best MSE: {best_mse:.4f}', Fore.RESET)
                     if(self.writer is not None):
                         self.writer.add_scalar('MSE (norm) Val.', mse, epoch)
-                        # self.writer.add_scalar('MSE Val.', mse_, epoch)
+                        self.writer.add_scalar('RVM MSE Val.', mse_r, epoch)
                 print(Fore.GREEN,"-"*30, Fore.RESET)
             
             elif self.random:
