@@ -8,7 +8,7 @@ from PIL import Image
 
 train_people = ['DennisPNoGlassesGrey','JohnGrey','SimonBGrey','SeanGGrey','DanJGrey','AdamBGrey','JackGrey','RichardHGrey',
                 'YongminYGrey','TomKGrey','PaulVGrey','DennisPGrey','CarlaBGrey','JamieSGrey','KateSGrey','DerekCGrey',
-            'KatherineWGrey','ColinPGrey','SueWGrey','GrahamWGrey','KrystynaNGrey','SeanGNoGlassesGrey', 'HeatherLGrey', 'KeithCGrey'
+            'KatherineWGrey','ColinPGrey','SueWGrey','GrahamWGrey','KrystynaNGrey','SeanGNoGlassesGrey'
             ]
 val_people = ['JeffNGrey', 'JonGrey', 'HeatherLGrey', 'KeithCGrey']
 test_people  = ['RichardBGrey','TasosHGrey','SarahLGrey','AndreeaVGrey','YogeshRGrey']
