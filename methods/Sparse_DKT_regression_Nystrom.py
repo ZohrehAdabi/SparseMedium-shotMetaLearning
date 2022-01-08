@@ -313,7 +313,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                                  inducing_points.gamma.cpu().numpy(), 
                                 x_inducing, y_inducing, np.array(i_idx), np.array(j_idx))
         
-        # inducing_points = inducing_max_similar_in_support_x(x_support, inducing_points, y_support)
+        inducing_points = inducing_max_similar_in_support_x(x_support, inducing_points, y_support)
 
         #**************************************************************
         mse = self.mse(pred.mean, y_query).item()
