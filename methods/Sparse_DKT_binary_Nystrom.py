@@ -40,12 +40,14 @@ except ImportError:
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=5 --train_aug
 IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j_idx")
 class Sparse_DKT_binary_Nystrom(MetaTemplate):
-    def __init__(self, model_func, kernel_type, n_way, n_support, sparse_method='FRVM', num_inducing_points=None, normalize=False, 
+    def __init__(self, model_func, kernel_type, n_way, n_support, sparse_method='FRVM', add_rvm_mll=False, lambda_rvm=0.1, num_inducing_points=None, normalize=False, 
                         scale=False, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
         super(Sparse_DKT_binary_Nystrom, self).__init__(model_func, n_way, n_support)
 
         self.num_inducing_points = num_inducing_points
         self.sparse_method = sparse_method
+        self.add_rvm_mll = add_rvm_mll
+        self.lambda_rvm = lambda_rvm
         self.config = config
         self.align_threshold = align_threshold
         self.gamma = gamma
@@ -177,8 +179,8 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
         # else:
         #     optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
         #         #                              {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
-        new_loss = True
-        l = 0.1
+        
+        l = self.lambda_rvm
         self.frvm_acc = []
         
         for i, (x,_) in enumerate(train_loader):
@@ -244,14 +246,15 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             # ip_values = z_train[inducing_points.index].cuda()
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
             
-            alpha_m = inducing_points.alpha
-            mu_m = inducing_points.mu
-            U = inducing_points.U
-            K = self.model.base_covar_module(z_train, ip_values).evaluate()
-            if True:
+            
+            if self.add_rvm_mll:
+                alpha_m = inducing_points.alpha
+                mu_m = inducing_points.mu
+                U = inducing_points.U
+                K = self.model.base_covar_module(z_train, ip_values).evaluate()
                 scales	= torch.sqrt(torch.sum(K**2, axis=0))
                 K = K / scales
-            rvm_mll = rvm_ML(K, target, alpha_m, mu_m, U)
+                rvm_mll = rvm_ML(K, target, alpha_m, mu_m, U)
 
             if(self.model.covar_module.base_kernel.lengthscale is not None):
                 lenghtscale+=self.model.base_covar_module.base_kernel.lengthscale.mean().cpu().detach().numpy().squeeze()
@@ -269,9 +272,10 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                 loss = -self.mll(output, transformed_targets).sum()
             else:
                 mll = self.mll(output, self.model.train_targets)
-                # loss = -mll - rvm_mll
-                # loss = -mll - l * rvm_mll
-                loss = - (1-l) * mll - l * rvm_mll
+                if self.add_rvm_mll:
+                    # loss = - mll  - l * rvm_mll 
+                    # loss =  - mll + 100 *  rvm_mse
+                    loss = -(1-l) * mll  - l * rvm_mll 
             loss.backward()
             optimizer.step()
 

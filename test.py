@@ -102,6 +102,7 @@ def single_test(params):
                                 config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
     elif params.method == 'Sparse_DKT_binary_Nystrom':
         model           = Sparse_DKT_binary_Nystrom(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
+                                add_rvm_mll=params.rvm_mll, lambda_rvm=params.lambda_rvm, 
                                 num_inducing_points=params.num_ip,
                                 normalize=params.normalize, scale=params.scale,
                                 config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
@@ -177,6 +178,7 @@ def single_test(params):
            
 
         if params.normalize: id += '_norm'
+        if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
         if params.train_aug: id += '_aug'
         if params.warmup:  id += '_warmup'
         if params.freeze: id += '_freeze'
