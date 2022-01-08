@@ -36,18 +36,18 @@ def rvm_ML(K_m, targets, alpha_m, mu_m, U):
 
         K_mu_m = K_m @ mu_m
         y	= torch.sigmoid(K_mu_m)
-        beta	= y * (1-y)
+        # beta	= y * (1-y)
         #   Compute the Hessian
-        beta_K_m	= (torch.diag(beta) @ K_m) 
-        H			= (K_m.T @ beta_K_m + torch.diag(alpha_m))
-        U, info =  torch.linalg.cholesky_ex(H, upper=True)
+        # beta_K_m	= (torch.diag(beta) @ K_m) 
+        # H			= (K_m.T @ beta_K_m + torch.diag(alpha_m))
+        # U, info =  torch.linalg.cholesky_ex(H, upper=True)
         dataLikely = (targets[targets==1].T @ torch.log(y[targets==1]+1e-12) + ((1-targets[targets==0]).T @ torch.log(1-y[targets==0]+1e-12)))
         logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
         # 2001-JMLR-SparseBayesianLearningandtheRelevanceVectorMachine in Appendix:
         # C = sigma * I + K_m @ A_m @ K_m.T  ,  log|C| = - log|Sigma_m| - N * log(beta) - log|A_m|
         # t.T @ C^-1 @ t = beta * ||t - K_m @ mu_m||**2 + mu_m.T @ A_m @ mu_m 
         # log p(t) = -1/2 (log|C| + t.T @ C^-1 @ t ) + const 
-        logML			= dataLikely - logdetHOver2  #- (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2
+        logML			= dataLikely #- logdetHOver2  #- (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2
         return logML/N
 
 
@@ -94,7 +94,7 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
     elif sparse_method=='FRVM':
         # with sigma and updating sigma converges to more sparse solution
         N   = inputs.shape[0]
-        tol = 1e-4
+        tol = 1e-5
         eps = torch.finfo(torch.float32).eps
         max_itr = 1000
         

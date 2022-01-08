@@ -81,6 +81,8 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                 os.makedirs(path)
             if dataset=='miniImagenet':
                 writer_path = path+ '/' + id[37:]
+            elif dataset=="omniglot":
+                writer_path = path + '/' + id[38:]
             else:
                 writer_path = path+ '/' + id #+'_old'#+ time_string
             self.writer = SummaryWriter(log_dir=writer_path)
@@ -276,6 +278,8 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                     # loss = - mll  - l * rvm_mll 
                     # loss =  - mll + 100 *  rvm_mse
                     loss = -(1-l) * mll  - l * rvm_mll 
+                else:
+                        loss = -mll
             loss.backward()
             optimizer.step()
 
