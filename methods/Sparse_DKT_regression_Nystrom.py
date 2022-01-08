@@ -285,7 +285,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
             mu_m = mu / scales
             y_pred_r = K_m @ mu_m       
-            mse_r = self.mse(y_pred_r, y_query)
+            mse_r = self.mse(y_pred_r, y_query).item()
             print(f'FRVM MSE: {mse_r:0.4f}')
 
         
