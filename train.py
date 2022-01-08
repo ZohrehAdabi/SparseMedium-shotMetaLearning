@@ -383,6 +383,7 @@ if __name__ == '__main__':
                 if params.gamma: id += '_gamma'
                 if params.scale: id += '_scale'
             if params.normalize: id += '_norm'
+            if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
