@@ -168,7 +168,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             if self.kernel_type=='spectral':
                 self.model.base_covar_module.initialize_from_data_empspect(z, labels)
 
-            # sigma = self.model.likelihood.noise[0].clone()
+            sigma = self.model.likelihood.noise[0].clone()
             # K_star = self.model.base_covar_module(z, ip_values).evaluate()
             # if self.add_rvm_mll or self.add_rvm_mse:
             alpha_m = inducing_points.alpha
@@ -178,7 +178,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             K_m = K_m / scales
             # alpha_m = alpha_m / (scales**2)
             # mu_m = mu_m / scales
-            rvm_mll, rvm_mse = self.rvm_ML(K_m, labels, alpha_m, mu_m, U, beta)
+            rvm_mll, rvm_mse = self.rvm_ML(K_m, labels, alpha_m, mu_m, U, 1/sigma)
 
             predictions = self.model(z)
             mll = self.mll(predictions, self.model.train_targets)
