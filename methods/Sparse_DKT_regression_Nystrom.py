@@ -170,15 +170,15 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
 
             # sigma = self.model.likelihood.noise[0].clone()
             # K_star = self.model.base_covar_module(z, ip_values).evaluate()
-            if self.add_rvm_mll or self.add_rvm_mse:
-                alpha_m = inducing_points.alpha
-                K_m = self.model.base_covar_module(z, ip_values).evaluate()
-                K_m = K_m.to(torch.float64)
-                scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
-                K_m = K_m / scales
-                # alpha_m = alpha_m / (scales**2)
-                # mu_m = mu_m / scales
-                rvm_mll, rvm_mse = self.rvm_ML(K_m, labels, alpha_m, mu_m, U, beta)
+            # if self.add_rvm_mll or self.add_rvm_mse:
+            alpha_m = inducing_points.alpha
+            K_m = self.model.base_covar_module(z, ip_values).evaluate()
+            K_m = K_m.to(torch.float64)
+            scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+            K_m = K_m / scales
+            # alpha_m = alpha_m / (scales**2)
+            # mu_m = mu_m / scales
+            rvm_mll, rvm_mse = self.rvm_ML(K_m, labels, alpha_m, mu_m, U, beta)
 
             predictions = self.model(z)
             mll = self.mll(predictions, self.model.train_targets)
@@ -186,9 +186,10 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                 loss = - mll  - l * rvm_mll 
                 # loss =  - mll + 100 *  rvm_mse
                 # loss = -(1-l) * mll  - l * rvm_mll 
-            if self.add_rvm_mse:
+            elif self.add_rvm_mse:
                 loss =  - mll + l *  rvm_mse
-
+            else: 
+                loss = -mll
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
