@@ -66,10 +66,12 @@ elif params.method=='Sparse_DKT_Nystrom':
         if params.gamma: id += '_gamma'
         if params.normalize: id += '_norm'
         if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
+        if params.rvm_mse: id += f'_rvm_mse_{params.lambda_rvm}'
         id += f'_{params.kernel_type}_seed_{params.seed}'
         params.checkpoint_dir = params.checkpoint_dir + id
 
-        model = Sparse_DKT_regression_Nystrom(bb, kernel_type=params.kernel_type, add_rvm_mll=params.rvm_mll, lambda_rvm=params.lambda_rvm, normalize=params.normalize, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
+        model = Sparse_DKT_regression_Nystrom(bb, kernel_type=params.kernel_type, add_rvm_mll=params.rvm_mll, add_rvm_mse=params.rvm_mse, lambda_rvm=params.lambda_rvm, 
+                            normalize=params.normalize, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
                             video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
         model.init_summary(id=id)
@@ -92,8 +94,10 @@ elif params.method=='Sparse_DKT_Nystrom':
         id = f'random_{params.lr_gp}_{params.lr_net}_ip_{params.n_centers}_seed_{params.seed}'
         if params.normalize: id += '_norm'
         if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
+        if params.rvm_mse: id += f'_rvm_mse_{params.lambda_rvm}'
         params.checkpoint_dir = params.checkpoint_dir +  id
-        model = Sparse_DKT_regression_Nystrom(bb, kernel_type=params.kernel_type, normalize=params.normalize, f_rvm=False, random=True,  n_inducing_points=params.n_centers, video_path=params.checkpoint_dir, 
+        model = Sparse_DKT_regression_Nystrom(bb, kernel_type=params.kernel_type,  add_rvm_mll=params.rvm_mll, add_rvm_mse=params.rvm_mse, lambda_rvm=params.lambda_rvm, 
+                            normalize=params.normalize, f_rvm=False, random=True,  n_inducing_points=params.n_centers, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
         model.init_summary(id=id)
                             

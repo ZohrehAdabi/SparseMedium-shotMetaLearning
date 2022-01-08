@@ -43,13 +43,14 @@ except ImportError:
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j_idx")
 class Sparse_DKT_regression_Nystrom(nn.Module):
-    def __init__(self, backbone, kernel_type='rbf', add_rvm_mll=False, lambda_rvm=0.1, normalize=False, f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
+    def __init__(self, backbone, kernel_type='rbf', add_rvm_mll=False, add_rvm_mse=False, lambda_rvm=0.1, normalize=False, f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_regression_Nystrom, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
         self.kernel_type = kernel_type
         self.add_rvm_mll = add_rvm_mll
+        self.add_rvm_mse = add_rvm_mse
         self.lambda_rvm = lambda_rvm
         self.normalize = normalize
         self.num_induce_points = n_inducing_points
@@ -169,7 +170,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
 
             # sigma = self.model.likelihood.noise[0].clone()
             # K_star = self.model.base_covar_module(z, ip_values).evaluate()
-            if self.add_rvm_mll:
+            if self.add_rvm_mll or self.add_rvm_mse:
                 alpha_m = inducing_points.alpha
                 K_m = self.model.base_covar_module(z, ip_values).evaluate()
                 K_m = K_m.to(torch.float64)
@@ -185,6 +186,9 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                 loss = - mll  - l * rvm_mll 
                 # loss =  - mll + 100 *  rvm_mse
                 # loss = -(1-l) * mll  - l * rvm_mll 
+            if self.add_rvm_mse:
+                loss =  - mll + l *  rvm_mse
+
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()

@@ -38,7 +38,8 @@ def parse_args(script):
     parser.add_argument('--freeze'      , action='store_true', help='continue from baseline, but freeze feature extractor')
     parser.add_argument('--normalize'   , action='store_true', help='normalize features by vector norm in z space')
     parser.add_argument('--rvm_mll', action='store_true', help='Add MLL of RVM to the outer GP MLL loss.') 
-    parser.add_argument('--lambda_rvm', default=1e-3, type=float, help='Coefficient of RVM MLL in Loss function') 
+    parser.add_argument('--lambda_rvm', default=1e-3, type=float, help='Coefficient of RVM MLL in Loss function')
+    parser.add_argument('--rvm_mse', action='store_true', help='Add MLL of RVM to the outer GP MLL loss.') 
     parser.add_argument('--scale'       , action='store_true', help='normalize kernel matrix in z space')
     if script == 'train':
         parser.add_argument('--num_classes' , default=200, type=int, help='total number of classes in softmax, only used in baseline') #make it larger than the maximum label value in base class
@@ -81,6 +82,7 @@ def parse_args_regression(script):
         parser.add_argument('--normalize', action='store_true', help='Normalize z: output of feature extractor') 
         parser.add_argument('--rvm_mll', action='store_true', help='Add MLL of RVM to the outer GP MLL loss.') 
         parser.add_argument('--lambda_rvm', default=1e-3, type=float, help='Coefficient of RVM MLL in Loss function') 
+        parser.add_argument('--rvm_mse', action='store_true', help='Add MLL of RVM to the outer GP MLL loss.') 
         parser.add_argument('--gamma', action='store_true', help='Delete data with low Gamma in FRVM algorithm') 
         parser.add_argument('--inner_loop', default=3, type=int, help='Number of adaptation or inner loop in MAML') 
         parser.add_argument('--inner_lr', default=1e-3, type=float, help='learning rate in adaptation or inner loop of MAML') 
