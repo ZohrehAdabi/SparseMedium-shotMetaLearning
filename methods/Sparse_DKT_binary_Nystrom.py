@@ -249,14 +249,14 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
             
             
-            if self.add_rvm_mll:
-                alpha_m = inducing_points.alpha
-                mu_m = inducing_points.mu
-                U = inducing_points.U
-                K = self.model.base_covar_module(z_train, ip_values).evaluate()
-                scales	= torch.sqrt(torch.sum(K**2, axis=0))
-                K = K / scales
-                rvm_mll = rvm_ML(K, target, alpha_m, mu_m, U)
+            
+            alpha_m = inducing_points.alpha
+            mu_m = inducing_points.mu
+            U = inducing_points.U
+            K = self.model.base_covar_module(z_train, ip_values).evaluate()
+            scales	= torch.sqrt(torch.sum(K**2, axis=0))
+            K = K / scales
+            rvm_mll = rvm_ML(K, target, alpha_m, mu_m, U)
 
             if(self.model.covar_module.base_kernel.lengthscale is not None):
                 lenghtscale+=self.model.base_covar_module.base_kernel.lengthscale.mean().cpu().detach().numpy().squeeze()
@@ -275,9 +275,9 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             else:
                 mll = self.mll(output, self.model.train_targets)
                 if self.add_rvm_mll:
-                    # loss = - mll  - l * rvm_mll 
+                    loss = - mll  - l * rvm_mll 
                     # loss =  - mll + 100 *  rvm_mse
-                    loss = -(1-l) * mll  - l * rvm_mll 
+                    # loss = -(1-l) * mll  - l * rvm_mll 
                 else:
                         loss = -mll
             loss.backward()
