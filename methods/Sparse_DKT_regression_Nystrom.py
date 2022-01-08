@@ -121,7 +121,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         # Gamma	= 1 - alpha_m * DiagC
         # beta	= (N - torch.sum(Gamma))/ED
         # dataLikely	= (N * torch.log(beta) - beta * ED)/2
-        logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
+        # logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
         
         # 2001-JMLR-SparseBayesianLearningandtheRelevanceVectorMachine in Appendix:
         # C = sigma * I + K_m @ A_m @ K_m.T  ,  log|C| = - log|Sigma_m| - N * log(beta) - log|A_m|
@@ -182,9 +182,9 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             predictions = self.model(z)
             mll = self.mll(predictions, self.model.train_targets)
             if self.add_rvm_mll:
-                # loss = - mll  - l * rvm_mll 
+                loss = - mll  - l * rvm_mll 
                 # loss =  - mll + 100 *  rvm_mse
-                loss = -(1-l) * mll  - l * rvm_mll 
+                # loss = -(1-l) * mll  - l * rvm_mll 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
