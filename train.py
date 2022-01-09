@@ -160,11 +160,11 @@ if __name__ == '__main__':
         #     16 * params.test_n_way / params.train_n_way))  # if test_n_way is smaller than train_n_way, reduce n_query to keep batch size small
 
         train_few_shot_params = dict(n_way=params.train_n_way, n_support=params.n_shot)
-        base_datamgr = SetDataManager(image_size, n_query=params.n_query, **train_few_shot_params) #n_eposide=100
+        base_datamgr = SetDataManager(image_size, **train_few_shot_params, n_query=params.n_query, n_eposide=params.n_task) #n_eposide=100
         base_loader = base_datamgr.get_data_loader(base_file, aug=params.train_aug)
 
         test_few_shot_params = dict(n_way=params.test_n_way, n_support=params.n_shot)
-        val_datamgr = SetDataManager(image_size, n_query=params.n_query, **test_few_shot_params)
+        val_datamgr = SetDataManager(image_size, **test_few_shot_params, n_query=params.n_query, n_eposide=params.n_task)
         val_loader = val_datamgr.get_data_loader(val_file, aug=False)
         # a batch for SetDataManager: a [n_way, n_support + n_query, dim, w, h] tensor
 
@@ -173,9 +173,9 @@ if __name__ == '__main__':
                                     num_inducing_points=params.num_ip, 
                                     normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
             if params.dirichlet:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'           
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'           
             
             if params.sparse_method in ['FRVM', 'augmFRVM']: 
                 id += f'_confg_{params.config}_{params.align_thr}'
@@ -195,9 +195,9 @@ if __name__ == '__main__':
                                     num_inducing_points=params.num_ip,
                                     normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
             if params.dirichlet:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'           
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'           
             if params.sparse_method in ['FRVM', 'augmFRVM']: 
                 id += f'_confg_{params.config}_{params.align_thr}'
                 if params.gamma: id += '_gamma'
@@ -217,9 +217,9 @@ if __name__ == '__main__':
                                     num_inducing_points=params.num_ip,
                                     normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
             if params.dirichlet:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'           
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'           
             if params.sparse_method in ['FRVM', 'augmFRVM', 'constFRVM']: 
                 id += f'_confg_{params.config}_{params.align_thr}'
                 if params.gamma: id += '_gamma'
@@ -242,9 +242,9 @@ if __name__ == '__main__':
                                     num_inducing_points=params.num_ip,
                                     normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
             if params.dirichlet:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'           
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'           
             if params.sparse_method in ['FRVM']: 
                 id += f'_confg_{params.config}_{params.align_thr}'
                 if params.gamma: id += '_gamma'
@@ -260,9 +260,9 @@ if __name__ == '__main__':
                                     num_inducing_points=params.num_ip,
                                     normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
             if params.dirichlet:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'           
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'           
             
             if params.sparse_method in ['FRVM', 'augmFRVM']: 
                 id += f'_confg_{params.config}_{params.align_thr}'
@@ -282,9 +282,9 @@ if __name__ == '__main__':
                                     num_inducing_points=params.num_ip,
                                     normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
             if params.dirichlet:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'           
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'           
             
             if params.sparse_method in ['FRVM', 'augmFRVM']: 
                 id += f'_confg_{params.config}_{params.align_thr}'
@@ -302,9 +302,9 @@ if __name__ == '__main__':
         elif(params.method == 'DKT'):
             model = DKT(model_dict[params.model], params.kernel_type, **train_few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
             if params.dirichlet:
-                id=f'DKT_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+                id=f'DKT_{params.model}_{params.dataset}_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
-                id=f'DKT_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+                id=f'DKT_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
            
             if params.normalize: id += '_norm'
             if params.train_aug: id += '_aug'
@@ -315,9 +315,9 @@ if __name__ == '__main__':
         elif(params.method == 'DKT_binary'):
             model = DKT_binary(model_dict[params.model], params.kernel_type, **train_few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
             if params.dirichlet:
-                id=f'DKT_binary_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+                id=f'DKT_binary_{params.model}_{params.dataset}_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
-                id=f'DKT_binary_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+                id=f'DKT_binary_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             if params.normalize: id += '_norm'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
@@ -327,9 +327,9 @@ if __name__ == '__main__':
         elif(params.method == 'DKT_binary_new_loss'):
             model = DKT_binary_new_loss(model_dict[params.model], params.kernel_type, **train_few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
             if params.dirichlet:
-                id=f'DKT_binary_new_loss_{params.model}_{params.dataset}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+                id=f'DKT_binary_new_loss_{params.model}_{params.dataset}_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
-                id=f'DKT_binary_new_loss_{params.model}_{params.dataset}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+                id=f'DKT_binary_new_loss_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             if params.normalize: id += '_norm'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
@@ -375,9 +375,9 @@ if __name__ == '__main__':
         
         if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sp_DKT_Bin_Nyst_NLoss', 'Sparse_DKT_binary_Exact', 'Sp_DKT_Bin_Exact_NLoss']:
             if params.dirichlet:
-                id = f'_{params.sparse_method}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+                id = f'_{params.sparse_method}_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
-                id = f'_{params.sparse_method}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'           
+                id = f'_{params.sparse_method}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'           
             if params.sparse_method in ['FRVM', 'augmFRVM', 'constFRVM']: 
                 id += f'_confg_{params.config}_{params.align_thr}'
                 if params.gamma: id += '_gamma'
@@ -393,9 +393,9 @@ if __name__ == '__main__':
             params.checkpoint_dir += id
         else:
             if params.dirichlet:
-                id=f'_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+                id=f'_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
-                id=f'_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+                id=f'_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
         
             if params.normalize: id += '_norm'
             if params.train_aug: id += '_aug'
