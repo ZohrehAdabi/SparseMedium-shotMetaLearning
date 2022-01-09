@@ -51,7 +51,7 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
                                       
     else:
         raise ValueError('Unknown optimization, please define by yourself')
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1)
+    # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1)
     max_acc = 0
     print(f'num train task {len(base_loader)}')
     print(f'num val task {len(val_loader)}')
@@ -63,9 +63,9 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
         print(f'Epoch {epoch}')
         model.train()
         model.train_loop(epoch, base_loader, optimizer)  # model are called by reference, no need to return
-        scheduler.step()
-        # if (epoch) in [50]:
-        #         optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.1
+        # scheduler.step()
+        if (epoch) in [50]:
+                optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.1
         model.eval()
         if ((epoch+1)%2==0 and (epoch+1) > 50) or ((epoch+1)%10==0 and (epoch+1)<=50):
             if not os.path.isdir(params.checkpoint_dir):
