@@ -429,7 +429,7 @@
              "--seed","2", "--config", "1011", "--align_thr", "1e-3", "--lr_gp", "1e-3", "--lr_net", "1e-3", "--kernel_type", "rbf"
              //, "--gamma"
             ]  
-      // python train_regression.py --method "Sparse_DKT_Nystrom_new_loss" --sparse_method "FRVM"  --n_samples 72 --n_support 60 --stop_epoch 100  --show_plots_features  --seed  2 --config "1011" --align_thr 1e-3  --lr_gp  1e-2 --lr_net  1e-3 --kernel_type "rbf"
+      // python train_regression.py --method "Sparse_DKT_Nystrom_new_loss" --sparse_method "FRVM"  --n_samples 72 --n_support 60 --stop_epoch 100  --show_plots_features  --seed  2 --config "1011" --align_thr 1e-3  --lr_gp  1e-3 --lr_net  1e-3 --kernel_type "rbf"
         },
         {
             "name": "Sparse_DKT_Nystrom_new_loss: test_regression",
