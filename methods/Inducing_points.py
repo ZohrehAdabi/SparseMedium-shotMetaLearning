@@ -22,7 +22,7 @@ IP = namedtuple("inducing_points", "z_values index count alpha gamma mu U")
 def rvm_ML(K_m, targets, alpha_m, mu_m, U):
         
         N = targets.shape[0]
-        alpha_m = alpha_m.to(torch.float64)
+        # alpha_m = alpha_m.to(torch.float64)
         targets = targets.to(torch.float64)
         targets[targets==-1]= 0
         # targets_pseudo_linear	= 2 * targets - 1
@@ -124,7 +124,7 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
         IP_index = active
 
         if True:
-            ss = scales[index]
+            # ss = scales[index]
             K = base_covar_module(inputs, inducing_points).evaluate()
             mu_r = mu_m / ss
             mu_r = mu_r.to(torch.float)
@@ -134,7 +134,7 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
             
             acc = (torch.sum(y_pred==target) / N).item()  * 100 # targets is zero and one (after FRVM)
             if verbose:
-                print(f'FRVM ACC on IPs: {(acc):.2f}%')
+                print(f'FRVM ACC on Inputs: {(acc):.2f}%')
             
             # self.frvm_acc.append(acc.item())
     elif sparse_method=='augmFRVM':

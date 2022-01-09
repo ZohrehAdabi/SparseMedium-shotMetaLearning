@@ -104,16 +104,16 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
     def rvm_ML(self, K_m, targets, alpha_m, mu_m, U, beta):
         
         N = targets.shape[0]
-        targets = targets.to(torch.float64)
-        K_mt = targets @ K_m
-        A_m = torch.diag(alpha_m)
-        H = A_m + beta * K_m.T @ K_m
-        U, info =  torch.linalg.cholesky_ex(H, upper=True)
+        # targets = targets.to(torch.float64)
+        # K_mt = targets @ K_m
+        # A_m = torch.diag(alpha_m)
+        # H = A_m + beta * K_m.T @ K_m
+        # U, info =  torch.linalg.cholesky_ex(H, upper=True)
         # if info>0:
         #     print('pd_err of Hessian')
-        U_inv = torch.linalg.inv(U)
-        Sigma_m = U_inv @ U_inv.T      
-        mu_m = beta * (Sigma_m @ K_mt)
+        # U_inv = torch.linalg.inv(U)
+        # Sigma_m = U_inv @ U_inv.T      
+        # mu_m = beta * (Sigma_m @ K_mt)
         y_ = K_m @ mu_m  
         e = (targets - y_)
         ED = e.T @ e
@@ -127,7 +127,7 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
         # C = sigma * I + K_m @ A_m @ K_m.T  ,  log|C| = - log|Sigma_m| - N * log(beta) - log|A_m|
         # t.T @ C^-1 @ t = beta * ||t - K_m @ mu_m||**2 + mu_m.T @ A_m @ mu_m 
         # log p(t) = -1/2 (log|C| + t.T @ C^-1 @ t ) + const 
-        logML = -1/2 * (beta * ED + (mu_m**2) @ alpha_m + 2*logdetHOver2 )  #+ N * torch.log(beta)
+        logML = -1/2 * (beta * ED + (mu_m**2) @ alpha_m)  #+ N * torch.log(beta)  + 2*logdetHOver2 
         # logML			= dataLikely - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
         # logML = -1/2 * beta * ED
     
@@ -187,15 +187,17 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
             
             z_query = self.feature_extractor(x_query)
             if self.normalize: z_query = F.normalize(z_query, p=2, dim=1)
-            K_star = self.model.base_covar_module(z_query, ip_values).evaluate()
-            K_m = self.model.base_covar_module(z_query, ip_values).evaluate()
+            # K_star = self.model.base_covar_module(z_query, ip_values).evaluate()
+            K_m = self.model.base_covar_module(z, ip_values).evaluate()
             K_m = K_m.to(torch.float64)
             scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+            # ss = scales[scales!=0]
+            # K_m2 = K_m[:, scales!=0]
             K_m = K_m / scales
                 # scales	= torch.sqrt(torch.sum(K_star**2, axis=0))
                 # K_star = K_star / scales
             # rvm_mll = self.rvm_ML(K_m, K_star, y_support, y_query, alpha_m, mu_m, U, beta)
-            rvm_mll, rvm_mse = self.rvm_ML(K_m, y_query, alpha_m, mu_m, U, beta)
+            rvm_mll, rvm_mse = self.rvm_ML(K_m, y_support, alpha_m, mu_m, U, beta)
             self.model.eval()
             predictions = self.model(z_query)
             self.model.train()
