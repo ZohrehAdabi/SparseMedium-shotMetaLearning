@@ -64,8 +64,8 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
         model.train()
         model.train_loop(epoch, base_loader, optimizer)  # model are called by reference, no need to return
         scheduler.step()
-        # if (epoch) in [50]:
-        #         optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.1
+        if (epoch) in [50]:
+                optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.1
         model.eval()
         if ((epoch+1)%2==0 and (epoch+1) > 50) or ((epoch+1)%10==0 and (epoch+1)<=50):
             if not os.path.isdir(params.checkpoint_dir):
