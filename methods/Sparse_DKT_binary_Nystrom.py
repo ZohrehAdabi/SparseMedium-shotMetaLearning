@@ -79,7 +79,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             time_string = strftime("%d%m%Y_%H%M", gmtime())
             if not os.path.isdir(path):
                 os.makedirs(path)
-            if dataset=='miniImagenet':
+            if dataset in ['miniImagenet', 'CUB']:
                 writer_path = path+ '/' + id[37:]
             elif dataset=="omniglot":
                 writer_path = path + '/' + id[38:]
