@@ -42,12 +42,15 @@ except ImportError:
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx")
 class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
-    def __init__(self, backbone, kernel_type='rbf', normalize=False, f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
+    def __init__(self, backbone, kernel_type='rbf', add_rvm_mll=False, add_rvm_mse=False, lambda_rvm=0.1, normalize=False, f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_regression_Nystrom_new_loss, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
         self.kernel_type = kernel_type
+        self.add_rvm_mll = add_rvm_mll
+        self.add_rvm_mse = add_rvm_mse
+        self.lambda_rvm = lambda_rvm
         self.normalize = normalize
         self.num_induce_points = n_inducing_points
         self.config = config
@@ -185,20 +188,24 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
             z_query = self.feature_extractor(x_query)
             if self.normalize: z_query = F.normalize(z_query, p=2, dim=1)
             K_star = self.model.base_covar_module(z_query, ip_values).evaluate()
-            K_m = self.model.base_covar_module(z, ip_values).evaluate()
+            K_m = self.model.base_covar_module(z_query, ip_values).evaluate()
             K_m = K_m.to(torch.float64)
-            if True:
-                scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
-                K_m = K_m / scales
+            scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+            K_m = K_m / scales
                 # scales	= torch.sqrt(torch.sum(K_star**2, axis=0))
                 # K_star = K_star / scales
             # rvm_mll = self.rvm_ML(K_m, K_star, y_support, y_query, alpha_m, mu_m, U, beta)
-            rvm_mll, rvm_mse = self.rvm_ML(K_m, y_support, alpha_m, mu_m, U, beta)
+            rvm_mll, rvm_mse = self.rvm_ML(K_m, y_query, alpha_m, mu_m, U, beta)
             self.model.eval()
             predictions = self.model(z_query)
             self.model.train()
             mll =  self.mll(predictions, y_query) 
-            loss = - (1-l) * mll- l * rvm_mll
+            if self.add_rvm_mll :
+                loss = - mll - l * rvm_mll
+            elif self.add_rvm_mse:
+                loss = - mll + l * rvm_mse
+            else:
+                loss = -mll
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -505,12 +512,12 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
             active, alpha, gamma, beta, mu_m, U = Fast_RVM_regression(kernel_matrix, target, beta, N, self.config, self.align_threshold,
                                                     self.gamma, eps, tol, max_itr, self.device, verbose)
             
-            index = np.argsort(active)
-            active = active[index]
-            gamma = gamma[index]
+            # index = np.argsort(active)
+            # active = active[index]
+            # gamma = gamma[index]
             ss = scales[active]
-            alpha = alpha[index] #/ ss**2
-            mu_m = mu_m[index] #/ ss
+            # alpha = alpha[index] #/ ss**2
+            # mu_m = mu_m[index] #/ ss
             inducing_points = inputs[active]
             num_IP = active.shape[0]
             IP_index = active

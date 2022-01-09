@@ -247,8 +247,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             ip_values = z_train[ip_index]
             # ip_values = z_train[inducing_points.index].cuda()
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
-            
-            
+   
             
             alpha_m = inducing_points.alpha
             mu_m = inducing_points.mu

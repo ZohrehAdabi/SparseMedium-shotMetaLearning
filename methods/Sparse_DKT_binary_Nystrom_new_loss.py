@@ -39,13 +39,12 @@ except ImportError:
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=5 --train_aug
 IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j_idx")
 class Sparse_DKT_binary_Nystrom_new_loss(MetaTemplate):
-    def __init__(self, model_func, kernel_type='rbf', add_rvm_mll=False, add_rvm_mse=False, lambda_rvm=0.1, n_way, n_support, sparse_method='FRVM', num_inducing_points=None, normalize=False, 
+    def __init__(self, model_func, kernel_type='rbf', add_rvm_mll=False, lambda_rvm=0.1, n_way=None, n_support=None, sparse_method='FRVM', num_inducing_points=None, normalize=False, 
                         scale=False, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
         super(Sparse_DKT_binary_Nystrom_new_loss, self).__init__(model_func, n_way, n_support)
         self.num_inducing_points = num_inducing_points
         self.sparse_method = sparse_method
         self.add_rvm_mll = add_rvm_mll
-        self.add_rvm_mse = add_rvm_mse
         self.lambda_rvm = lambda_rvm
         self.config = config
         self.align_threshold = align_threshold
