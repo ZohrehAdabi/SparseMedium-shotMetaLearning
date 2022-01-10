@@ -303,7 +303,7 @@ def main():
         # mu_m = mu_m / scales
         rvm_mll, rvm_mse = rvm_ML(K_m, labels, alpha_m, mu_m, U, beta)
 
-        gp.set_train_data(inputs=z, targets=labels)  
+        gp.set_train_data(inputs=z, targets=labels, strict=False)  
         predictions = gp(z)
         mll = mll(predictions, gp.train_targets)
 
