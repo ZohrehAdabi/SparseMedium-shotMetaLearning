@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
-
+import random
 import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set()
@@ -167,30 +167,41 @@ def normalize(x, x_min, x_max):
 def denormalize(x, x_min, x_max):
     x = x * x_max + x_min
     return x
+seed = 1
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False 
 def main():
     ## Defining model
     device = 'cpu'
     do_train = True
-    n_shot_train = 100
-    n_shot_test = 80 #n_support for test time 
-    t = 20.0
+
+    family = 'sine'
+    n_shot_train = 200
+    n_shot_test = 180 #n_support for test time 
+    t = 150.0
     train_range=(-t, t)
     test_range=(-t, t) # This must be (-5, +10) for the out-of-range condition
     y_range = (-6, 6)
-    sample_size = 100
+    sample_size = n_shot_train
     checkpoint = './sines/save_model'
     if not os.path.isdir(checkpoint):
         os.makedirs(checkpoint)
     criterion = nn.MSELoss()
-    tasks     = Task_Distribution(amplitude_min=0.1, amplitude_max=5.0, 
+    tasks_loader     = [Task_Distribution(amplitude_min=0.1, amplitude_max=5.0, 
                                   phase_min=0.0, phase_max=np.pi, 
                                   x_min=train_range[0], x_max=train_range[1], 
-                                  family="sine")
+                                  family=family) for _ in range(100)]
     net       = Feature().to(device)
     likelihood = gpytorch.likelihoods.GaussianLikelihood().to(device)
     dummy_inputs = torch.zeros([n_shot_train,40]).to(device)
     dummy_labels = torch.zeros([n_shot_train]).to(device)
     gp = ExactGPModel(dummy_inputs, dummy_labels, likelihood).to(device)
+    gp.likelihood.noise = 0.1
     mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, gp).to(device)
     optimizer = torch.optim.Adam([{'params': gp.parameters(), 'lr': 1e-3},
                                   {'params': net.parameters(), 'lr': 1e-3}])
@@ -200,59 +211,60 @@ def main():
     gp.train()
     net.train()
 
-    tot_iterations=5000 #50000
+    tot_epoch=100 #50000
     if do_train:
-        for epoch in range(tot_iterations):
-            optimizer.zero_grad()
-            inputs, labels = tasks.sample_task().sample_data(n_shot_train, noise=0.1)
-            # x = inputs.to(device)
-            # y = labels.to(device)
+        for epoch in range(tot_epoch):
+            for itr, task in enumerate(tasks_loader):
+                optimizer.zero_grad()
+                xx, yy = task.sample_task().sample_data(n_shot_train, noise=0.1)
+                # x = inputs.to(device)
+                # y = labels.to(device)
+                
+                xx = normalize(xx, xx.min(), xx.max())
+                yy = normalize(yy, yy.min(), yy.max())
+                # x = x - xx.min(0)[0]
+                # x = 2 * (x / xx.max(0)[0]) - 1
+                # y = y - yy.min(0)[0]
+                # y = 2 * (y / yy.max(0)[0]) - 1
+                z = net(xx)
+                gp.set_train_data(inputs=z, targets=yy, strict=False)  
+                predictions = gp(z)
+                loss = -mll(predictions, gp.train_targets)
+                loss.backward()
+                optimizer.step()
+                mse = criterion(predictions.mean, yy)
+                #---- print some stuff ----
+                if(itr%20==0):
+                    print('[%d/%d] - Loss: %.3f  MSE: %.3f  lengthscale: %.3f   noise: %.3f' % (
+                        itr, epoch, loss.item(), mse.item(),
+                        gp.covar_module.base_kernel.lengthscale.item(),
+                        gp.likelihood.noise.item()
+                    ))
             
-            xx = normalize(inputs, inputs.min(), inputs.max())
-            yy = normalize(labels, labels.min(), labels.max())
-            # x = x - xx.min(0)[0]
-            # x = 2 * (x / xx.max(0)[0]) - 1
-            # y = y - yy.min(0)[0]
-            # y = 2 * (y / yy.max(0)[0]) - 1
-            z = net(xx)
-            gp.set_train_data(inputs=z, targets=yy, strict=False)  
-            predictions = gp(z)
-            loss = -mll(predictions, gp.train_targets)
-            loss.backward()
-            optimizer.step()
-            mse = criterion(predictions.mean, yy)
-            #---- print some stuff ----
-            if(epoch%100==0):
-                print('[%d] - Loss: %.3f  MSE: %.3f  lengthscale: %.3f   noise: %.3f' % (
-                    epoch, loss.item(), mse.item(),
-                    0.0, #gp.covar_module.base_kernel.lengthscale.item(),
-                    gp.likelihood.noise.item()
-                ))
-        
-        
+            
         save_checkpoint(f'{checkpoint}/DKT.pth', gp, likelihood, net)
     
     
     ## Test phase on a new sine/cosine wave
     checkpoint = f'{checkpoint}/DKT.pth'
     gp, likelihood, net = load_checkpoint(gp, likelihood, net, checkpoint)
-    tasks_test = Task_Distribution(amplitude_min=0.1, amplitude_max=5.0, 
-                                   phase_min=0.0, phase_max=np.pi, 
-                                   x_min=test_range[0], x_max=test_range[1], 
-                                   family="sine")
+    tasks_test_loader = [Task_Distribution(amplitude_min=0.1, amplitude_max=5.0, 
+                                  phase_min=0.0, phase_max=np.pi, 
+                                  x_min=train_range[0], x_max=train_range[1], 
+                                  family=family) for _ in range(500)]
     print("Test, please wait...")
 
     likelihood.eval()    
     net.eval()
     gp.eval()
-    tot_iterations=500
+    tot_iterations=100
     mse_list = list()
-    for epoch in range(tot_iterations):
-        sample_task = tasks_test.sample_task()
+    for epoch, task_test in enumerate(tasks_test_loader):
+        sample_task = task_test.sample_task()
         
-        x_all, y_all = sample_task.sample_data(sample_size, noise=0.1, sort=True)
-        xx = normalize(x_all, x_all.min(), x_all.max())
-        yy = normalize(y_all, y_all.min(), y_all.max())
+        xx, yy = sample_task.sample_data(sample_size, noise=0.1, sort=True)
+        xx = normalize(xx, xx.min(), xx.max())
+        yy = normalize(yy, yy.min(), yy.max())
         indices = np.arange(sample_size)
         np.random.shuffle(indices)
         support_indices = np.sort(indices[0:n_shot_test])
@@ -279,18 +291,22 @@ def main():
     print("-------------------")
     print("Average MSE: " + str(np.mean(mse_list)) + " +- " + str(np.std(mse_list)))
     print("-------------------")
-
-    for i in range(10):
+    tasks_test_loader = [Task_Distribution(amplitude_min=0.1, amplitude_max=5.0, 
+                                  phase_min=0.0, phase_max=np.pi, 
+                                  x_min=train_range[0], x_max=train_range[1], 
+                                  family=family) for _ in range(10)]
+    for i, task_test in enumerate(tasks_test_loader):
+        sample_task = task_test.sample_task()
         x_all, y_all = sample_task.sample_data(sample_size, noise=0.1, sort=True)
-        x_min, x_max =  x_all.min(), x_all.max()
-        y_min, y_max =  y_all.min(), y_all.max()
-        xx = normalize(x_all, x_min, x_max)
-        yy = normalize(y_all, y_min, y_max)
+        # x_min, x_max =  x_all.min(), x_all.max()
+        # y_min, y_max =  y_all.min(), y_all.max()
+        # xx = normalize(x_all, x_min, x_max)
+        # yy = normalize(y_all, y_min, y_max)
         query_indices = np.sort(indices[n_shot_test:])
-        x_support = xx[support_indices]
-        y_support = yy[support_indices]
-        x_query = xx[query_indices]
-        y_query = yy[query_indices]
+        x_support = x_all[support_indices]
+        y_support = y_all[support_indices]
+        x_query = x_all[query_indices]
+        y_query = y_all[query_indices]
     
         z_support = net(x_support).detach()
         gp.train()
@@ -298,14 +314,14 @@ def main():
         gp.eval()
             
         #Evaluation on all data
-        z_all = net(xx).detach()
+        z_all = net(x_all).detach()
         mean = likelihood(gp(z_all)).mean
         lower, upper = likelihood(gp(z_all)).confidence_region() #2 standard deviations above and below the mean
-        mean = denormalize(mean, y_min, y_max)
-        lower = denormalize(lower, y_min, y_max)
-        upper = denormalize(upper, y_min, y_max)
+        # mean = denormalize(mean, y_min, y_max)
+        # lower = denormalize(lower, y_min, y_max)
+        # upper = denormalize(upper, y_min, y_max)
         #Plot
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(16, 2))
         #true-curve
         true_curve = np.linspace(train_range[0], train_range[1], 1000)
         true_curve = [sample_task.true_function(x) for x in true_curve]
@@ -330,7 +346,7 @@ def main():
         #all points
         #ax.scatter(x_all.numpy(), y_all.numpy())
         #plt.show()
-        
+        plt.tight_layout()
         plt.ylim(y_range[0], y_range[1])
         plt.xlim(test_range[0], test_range[1])
         plt.savefig('./sines/image/plot_DKT_' + str(i) + '.png', dpi=300)
