@@ -174,8 +174,8 @@ def main():
         inputs, labels = tasks.sample_task().sample_data(n_shot_train, noise=0.1)
         # x_normalized = inputs - inputs.min(0)[0]
         # x_normalized = 2 * (x_normalized / x_normalized.max(0)[0]) - 1
-        z = net(x_normalized)
-        gp.set_train_data(inputs=z, targets=labels)  
+        z = net(inputs)
+        gp.set_train_data(inputs=z, targets=labels, strict=False)  
         predictions = gp(z)
         loss = -mll(predictions, gp.train_targets)
         loss.backward()
