@@ -136,8 +136,8 @@ class ExactGPModel(gpytorch.models.ExactGP):
         #z = self.feature_extractor(x)
         #z_normalized = z - z.min(0)[0]
         #z_normalized = 2 * (z_normalized / z_normalized.max(0)[0]) - 1
-        #x_normalized = x - x.min(0)[0]
-        #x_normalized = 2 * (x_normalized / x_normalized.max(0)[0]) - 1
+        # x_normalized = x - x.min(0)[0]
+        # x_normalized = 2 * (x_normalized / x_normalized.max(0)[0]) - 1
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
@@ -145,6 +145,7 @@ class ExactGPModel(gpytorch.models.ExactGP):
 
 def main():
     ## Defining model
+    device = 'cpu'
     n_shot_train = 10
     n_shot_test = 5
     train_range=(-5.0, 5.0)
@@ -154,12 +155,12 @@ def main():
                                   phase_min=0.0, phase_max=np.pi, 
                                   x_min=train_range[0], x_max=train_range[1], 
                                   family="sine")
-    net       = Feature()
-    likelihood = gpytorch.likelihoods.GaussianLikelihood()
-    dummy_inputs = torch.zeros([n_shot_train,40])
-    dummy_labels = torch.zeros([n_shot_train])
-    gp = ExactGPModel(dummy_inputs, dummy_labels, likelihood)
-    mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, gp)
+    net       = Feature().to(device)
+    likelihood = gpytorch.likelihoods.GaussianLikelihood().to(device)
+    dummy_inputs = torch.zeros([n_shot_train,40]).to(device)
+    dummy_labels = torch.zeros([n_shot_train]).to(device)
+    gp = ExactGPModel(dummy_inputs, dummy_labels, likelihood).to(device)
+    mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, gp).to(device)
     optimizer = torch.optim.Adam([{'params': gp.parameters(), 'lr': 1e-3},
                                   {'params': net.parameters(), 'lr': 1e-3}])
 
@@ -171,16 +172,20 @@ def main():
     tot_iterations=50000 #50000
     for epoch in range(tot_iterations):
         optimizer.zero_grad()
-        inputs, labels = tasks.sample_task().sample_data(n_shot_train, noise=0.1)
-        # x_normalized = inputs - inputs.min(0)[0]
-        # x_normalized = 2 * (x_normalized / x_normalized.max(0)[0]) - 1
-        z = net(inputs)
-        gp.set_train_data(inputs=z, targets=labels, strict=False)  
+        xx, yy = tasks.sample_task().sample_data(n_shot_train, noise=0.1)
+        # x = inputs.to(device)
+        # y = labels.to(device)
+        # x = x - xx.min(0)[0]
+        # x = 2 * (x / xx.max(0)[0]) - 1
+        # y = y - yy.min(0)[0]
+        # y = 2 * (y / yy.max(0)[0]) - 1
+        z = net(xx)
+        gp.set_train_data(inputs=z, targets=yy, strict=False)  
         predictions = gp(z)
         loss = -mll(predictions, gp.train_targets)
         loss.backward()
         optimizer.step()
-        mse = criterion(predictions.mean, labels)
+        mse = criterion(predictions.mean, yy)
         #---- print some stuff ----
         if(epoch%100==0):
             print('[%d] - Loss: %.3f  MSE: %.3f  lengthscale: %.3f   noise: %.3f' % (
