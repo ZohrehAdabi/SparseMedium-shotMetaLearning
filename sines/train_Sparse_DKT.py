@@ -14,6 +14,11 @@ import torch
 import torch.nn as nn
 import numpy as np
 import matplotlib.pyplot as plt
+
+from colorama import Fore
+import sys, os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+# import methods
 from methods.Fast_RVM_regression import Fast_RVM_regression 
 
 class Sine_Task():
@@ -144,39 +149,27 @@ class ExactGPModel(gpytorch.models.ExactGP):
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j_idx")
-def get_inducing_points(self, inputs, targets, verbose=True):
+def get_inducing_points(gp, likelihood, inputs, targets,  config='1011', align_threshold=1e-3, verbose=True, device='cpu'):
 
-        
+        criterion = nn.MSELoss()
         IP_index = np.array([])
-        if not self.f_rvm:
-            num_IP = self.num_induce_points
-            
-            # self.kmeans_clustering = KMeans(n_clusters=num_IP, init='k-means++',  n_init=10, max_iter=1000).fit(inputs.cpu().numpy())
-            # inducing_points = self.kmeans_clustering.cluster_centers_
-            # inducing_points = torch.from_numpy(inducing_points).to(torch.float)
 
-            self.kmeans_clustering = Fast_KMeans(n_clusters=num_IP, max_iter=1000)
-            self.kmeans_clustering.fit(inputs.cuda())
-            inducing_points = self.kmeans_clustering.centroids
-            # print(inducing_points.shape[0])
-
-
-        else:
+        if True:
             # with sigma and updating sigma converges to more sparse solution
             N   = inputs.shape[0]
             tol = 1e-6
             eps = torch.finfo(torch.float32).eps
             max_itr = 1000
-            sigma = self.model.likelihood.noise[0].clone()
+            sigma = likelihood.noise[0].clone()
             # sigma = torch.tensor([0.0000001])
             # sigma = torch.tensor([torch.var(targets) * 0.1]) #sigma^2
-            sigma = sigma.to(self.device)
+            sigma = sigma.to(device)
             beta = 1 /(sigma + eps)
-            covar_module = self.model.base_covar_module
+            covar_module = gp.base_covar_module
             kernel_matrix = covar_module(inputs).evaluate()
             # normalize kernel
-            scales = torch.ones(kernel_matrix.shape[0]).to(self.device)
-            if self.scale:
+            scales = torch.ones(kernel_matrix.shape[0]).to(device)
+            if True:
                 scales	= torch.sqrt(torch.sum(kernel_matrix**2, axis=0))
                 # print(f'scale: {Scales}')
                 scales[scales==0] = 1
@@ -184,8 +177,8 @@ def get_inducing_points(self, inputs, targets, verbose=True):
 
             kernel_matrix = kernel_matrix.to(torch.float64)
             target = targets.clone().to(torch.float64)
-            active, alpha, gamma, beta, mu_m, U = Fast_RVM_regression(kernel_matrix, target, beta, N, self.config, self.align_threshold,
-                                                    self.gamma, eps, tol, max_itr, self.device, verbose)
+            active, alpha, gamma, beta, mu_m, U = Fast_RVM_regression(kernel_matrix, target, beta, N, config, align_threshold,
+                                                    False, eps, tol, max_itr, device, verbose)
             
             # index = np.argsort(active)
             # active = active[index]
@@ -206,13 +199,13 @@ def get_inducing_points(self, inputs, targets, verbose=True):
                     mu_r = mu_m.to(torch.float) /ss
                     y_pred_r = K @ mu_r
                     
-                    mse_r = self.mse(y_pred_r, target)
+                    mse_r = criterion(y_pred_r, target)
                     print(f'FRVM MSE: {mse_r:0.4f}')
             
 
         return IP(inducing_points, IP_index, num_IP, alpha.to(torch.float64), gamma, None, None, None, None), beta, mu_m.to(torch.float64), U
  
-def rvm_ML(self, K_m, targets, alpha_m, mu_m, U, beta):
+def rvm_ML(K_m, targets, alpha_m, mu_m, U, beta):
         
         N = targets.shape[0]
         # targets = targets.to(torch.float64)
@@ -254,14 +247,47 @@ def rvm_ML(self, K_m, targets, alpha_m, mu_m, U, beta):
         # return logML/N
         return logML/N, ED/N
 
+def save_checkpoint(checkpoint, gp, likelihood, feature_extractor):
+        # save state
+        gp_state_dict         = gp.state_dict()
+        likelihood_state_dict = likelihood.state_dict()
+        nn_state_dict         = feature_extractor.state_dict()
+        torch.save({'gp': gp_state_dict, 'likelihood': likelihood_state_dict, 'net':nn_state_dict}, checkpoint)
 
+def load_checkpoint(gp, likelihood, feature_extractor, checkpoint):
+    
+    ckpt = torch.load(checkpoint)
+    if 'best' in checkpoint:
+        print(f'\nBest model at epoch {ckpt["epoch"]}, MSE: {ckpt["mse"]}')
+    IP = torch.ones(gp.covar_module.inducing_points.shape[0], 40).cuda()
+    ckpt['gp']['covar_module.inducing_points'] = IP
+    gp.load_state_dict(ckpt['gp'])
+    likelihood.load_state_dict(ckpt['likelihood'])
+    feature_extractor.load_state_dict(ckpt['net'])
 
+    return gp, likelihood, feature_extractor
+
+def normalize(x, x_min, x_max):
+    x = (x - x_min) / x_max
+    return x
+
+def denormalize(x, x_min, x_max):
+    x = x * x_max + x_min
+    return x
 def main():
     ## Defining model
-    n_shot_train = 10
-    n_shot_test = 5
-    train_range=(-5.0, 5.0)
-    test_range=(-5.0, 5.0) # This must be (-5, +10) for the out-of-range condition
+    device = 'cpu'
+    do_train = False
+    n_shot_train = 100
+    n_shot_test = 80
+    t = 20.0
+    train_range=(-t, t)
+    test_range=(-t, t) # This must be (-5, +10) for the out-of-range condition
+    y_range = (-6, 6)
+    sample_size = 100 
+    checkpoint = './sines/save_model'
+    if not os.path.isdir(checkpoint):
+        os.makedirs(checkpoint)
     criterion = nn.MSELoss()
     tasks     = Task_Distribution(amplitude_min=0.1, amplitude_max=5.0, 
                                   phase_min=0.0, phase_max=np.pi, 
@@ -272,56 +298,65 @@ def main():
     dummy_inputs = torch.zeros([n_shot_train,40])
     dummy_labels = torch.zeros([n_shot_train])
     gp = ExactGPModel(dummy_inputs, dummy_labels, dummy_inputs, likelihood)
-    mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, gp)
+    mll_loss = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, gp)
     optimizer = torch.optim.Adam([{'params': gp.parameters(), 'lr': 1e-3},
                                   {'params': net.parameters(), 'lr': 1e-3}])
 
     ## Training
-    likelihood.train()
-    gp.train()
-    net.train()
+    if do_train:
+        likelihood.train()
+        gp.train()
+        net.train()
 
-    tot_iterations=50000 #50000
-    l = 100
-    for epoch in range(tot_iterations):
-        optimizer.zero_grad()
-        inputs, labels = tasks.sample_task().sample_data(n_shot_train, noise=0.1)
-        z = net(inputs)
-        with torch.no_grad():
-            inducing_points, beta, mu_m, U = get_inducing_points(z, labels, verbose=False)
-           
-        ip_index = inducing_points.index
-        ip_values = z[ip_index]
-        gp.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
+        tot_iterations=5000 #50000
+        l = 100
+        for epoch in range(tot_iterations):
+            optimizer.zero_grad()
+            inputs, labels = tasks.sample_task().sample_data(n_shot_train, noise=0.1)
+            xx = normalize(inputs, inputs.min(), inputs.max())
+            yy = normalize(labels, labels.min(), labels.max())
+            z = net(xx)
+            with torch.no_grad():
+                inducing_points, beta, mu_m, U = get_inducing_points(gp, likelihood, z, yy, verbose=False, device=device)
+            
+            ip_index = inducing_points.index
+            ip_values = z[ip_index]
+            gp.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
 
-        alpha_m = inducing_points.alpha
-        K_m = gp.base_covar_module(z, ip_values).evaluate()
-        K_m = K_m.to(torch.float64)
-        scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
-        K_m = K_m / scales
-        # alpha_m = alpha_m / (scales**2)
-        # mu_m = mu_m / scales
-        rvm_mll, rvm_mse = rvm_ML(K_m, labels, alpha_m, mu_m, U, beta)
+            alpha_m = inducing_points.alpha
+            K_m = gp.base_covar_module(z, ip_values).evaluate()
+            K_m = K_m.to(torch.float64)
+            scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+            K_m = K_m / scales
+            # alpha_m = alpha_m / (scales**2)
+            # mu_m = mu_m / scales
+            rvm_mll, rvm_mse = rvm_ML(K_m, yy, alpha_m, mu_m, U, beta)
 
-        gp.set_train_data(inputs=z, targets=labels, strict=False)  
-        predictions = gp(z)
-        mll = mll(predictions, gp.train_targets)
+            gp.set_train_data(inputs=z, targets=yy, strict=False)  
+            predictions = gp(z)
+            mll = mll_loss(predictions, gp.train_targets)
 
-        loss = -mll + l * rvm_mse
-        # loss = -mll - l * rvm_mll
+            loss = -mll + l * rvm_mse
+            # loss = -mll - l * rvm_mll
 
-        loss.backward()
-        optimizer.step()
-        mse = criterion(predictions.mean, labels)
-        #---- print some stuff ----
-        if(epoch%100==0):
-            print('[%d] - Loss: %.3f  MSE: %.3f MLL: %.3f  RVM MLL: %.3f  lengthscale: %.3f   noise: %.3f' % (
-                epoch, loss.item(), mse.item(), -mll.item(), -rvm_mll.item()
-                0.0, #gp.covar_module.base_kernel.lengthscale.item(),
-                gp.likelihood.noise.item()
-            ))
+            loss.backward()
+            optimizer.step()
+            mse = criterion(predictions.mean, labels)
+            #---- print some stuff ----
+            if(epoch%100==0):
+                print(Fore.LIGHTRED_EX, '[%d] - Loss: %.3f  MSE: %.3f MLL: %.3f  RVM MLL: %.3f  lengthscale: %.3f   noise: %.3f' % (
+                    epoch, loss.item(), mse.item(), -mll.item(), -rvm_mll.item(),
+                    gp.base_covar_module.base_kernel.lengthscale.item(),
+                    gp.likelihood.noise.item()
+                ), Fore.RESET)
 
+        
+        save_checkpoint(f'{checkpoint}/Sparse_DKT.pth', gp, likelihood, net)
+    
+    
     ## Test phase on a new sine/cosine wave
+    model_path = f'{checkpoint}/Sparse_DKT.pth'
+    gp, likelihood, net = load_checkpoint(gp, likelihood, net, model_path)
     tasks_test = Task_Distribution(amplitude_min=0.1, amplitude_max=5.0, 
                                    phase_min=0.0, phase_max=np.pi, 
                                    x_min=test_range[0], x_max=test_range[1], 
@@ -334,21 +369,29 @@ def main():
     mse_list = list()
     for epoch in range(tot_iterations):
         sample_task = tasks_test.sample_task()
-        sample_size = 200
+        
         x_all, y_all = sample_task.sample_data(sample_size, noise=0.1, sort=True)
+        xx = normalize(x_all, x_all.min(), x_all.max())
+        yy = normalize(y_all, y_all.min(), y_all.max())
         indices = np.arange(sample_size)
         np.random.shuffle(indices)
         support_indices = np.sort(indices[0:n_shot_test])
 
         query_indices = np.sort(indices[n_shot_test:])
-        x_support = x_all[support_indices]
-        y_support = y_all[support_indices]
-        x_query = x_all[query_indices]
-        y_query = y_all[query_indices]
+        x_support = xx[support_indices]
+        y_support = yy[support_indices]
+        x_query = xx[query_indices]
+        y_query = yy[query_indices]
 
         #Feed the support set
         z_support = net(x_support).detach()
         gp.train()
+        with torch.no_grad():
+            inducing_points, beta, mu_m, U = get_inducing_points(gp, likelihood, z_support, y_support, verbose=False, device=device)
+            
+        ip_index = inducing_points.index
+        ip_values = z_support[ip_index]
+        gp.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
         gp.set_train_data(inputs=z_support, targets=y_support, strict=False)  
         gp.eval()
 
@@ -365,22 +408,34 @@ def main():
 
     for i in range(10):
         x_all, y_all = sample_task.sample_data(sample_size, noise=0.1, sort=True)
+        x_min, x_max =  x_all.min(), x_all.max()
+        y_min, y_max =  y_all.min(), y_all.max()
+        xx = normalize(x_all, x_min, x_max)
+        yy = normalize(y_all, y_min, y_max)
         query_indices = np.sort(indices[n_shot_test:])
-        x_support = x_all[support_indices]
-        y_support = y_all[support_indices]
-        x_query = x_all[query_indices]
-        y_query = y_all[query_indices]
+        x_support = xx[support_indices]
+        y_support = yy[support_indices]
+        x_query = xx[query_indices]
+        y_query = yy[query_indices]
     
         z_support = net(x_support).detach()
         gp.train()
+        with torch.no_grad():
+            inducing_points, beta, mu_m, U = get_inducing_points(gp, likelihood, z_support, y_support, verbose=False, device=device)
+            
+        ip_index = inducing_points.index
+        ip_values = z_support[ip_index]
+        gp.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
         gp.set_train_data(inputs=z_support, targets=y_support, strict=False)  
         gp.eval()
             
         #Evaluation on all data
-        z_all = net(x_all).detach()
+        z_all = net(xx).detach()
         mean = likelihood(gp(z_all)).mean
         lower, upper = likelihood(gp(z_all)).confidence_region() #2 standard deviations above and below the mean
-
+        mean = denormalize(mean, y_min, y_max)
+        lower = denormalize(lower, y_min, y_max)
+        upper = denormalize(upper, y_min, y_max)
         #Plot
         fig, ax = plt.subplots()
         #true-curve
@@ -400,15 +455,21 @@ def main():
                         lower.detach().numpy(), upper.detach().numpy(),
                         alpha=.1, color='red')
         #support points
+        x_support = x_all[support_indices]
+        y_support = y_all[support_indices]
         ax.scatter(x_support, y_support, color='darkblue', marker='*', s=50, zorder=10)
+        ax.scatter(x_support[ip_index], y_support[ip_index], color='darkgreen', marker='*', s=50, zorder=11)
                     
         #all points
         #ax.scatter(x_all.numpy(), y_all.numpy())
         #plt.show()
-        plt.ylim(-6.0, 6.0)
+        plt.ylim(y_range[0], y_range[1])
         plt.xlim(test_range[0], test_range[1])
-        plt.savefig('plot_DKT_' + str(i) + '.png', dpi=300)
+        plt.savefig('./sines/image/plot_Sparse_DKT_' + str(i) + '.png', dpi=300)
 
+    print("-------------------")
+    print("Average MSE: " + str(np.mean(mse_list)) + " +- " + str(np.std(mse_list)))
+    print("-------------------")
 
 if __name__ == "__main__":
     main()

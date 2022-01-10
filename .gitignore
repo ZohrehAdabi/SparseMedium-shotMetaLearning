@@ -249,3 +249,6 @@ Sparse_DKT_binary_Nystrom_miniImagenet_log/
 Sparse_DKT_Nystrom_QMUL_Loss_old/
 Sparse_DKT_QMUL_Eaxct_Loss/
 Sparse_DKT_QMUL_Nystrom_Loss/
+sines/image
+sines/save_model
+Sparse_DKT_Nystrom_Sine_Loss/

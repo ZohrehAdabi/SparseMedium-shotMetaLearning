@@ -404,6 +404,19 @@ class Conv3_MAML(nn.Module): #MAML
             out = out.view(out.size(0), -1)
         return out
 
+# Backbone for Sine regression
+class SimpleRegressor(nn.Module):
+    def __init__(self):
+        super(SimpleRegressor, self).__init__()
+        self.layer1 = nn.Linear(1, 40)
+        self.layer2 = nn.Linear(40,40)
+        #self.layer3 = nn.Linear(40,1)
+        
+    def forward(self, x):
+        out = F.relu(self.layer1(x))
+        out = F.relu(self.layer2(out))
+        #out = self.layer3(out)
+        return out
 
 class Conv3(nn.Module):
     def __init__(self, flatten=True):

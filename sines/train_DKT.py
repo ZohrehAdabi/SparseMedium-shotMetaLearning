@@ -9,7 +9,7 @@ from torch.autograd import Variable
 import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set()
-
+import os
 import torch
 import torch.nn as nn
 import numpy as np
@@ -127,9 +127,9 @@ class ExactGPModel(gpytorch.models.ExactGP):
     def __init__(self, train_x, train_y, likelihood):
         super(ExactGPModel, self).__init__(train_x, train_y, likelihood)
         self.mean_module = gpytorch.means.ConstantMean()
-        #self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
+        self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
         #self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.MaternKernel(nu=2.5))
-        self.covar_module = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=4, ard_num_dims=40)
+        # self.covar_module = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=4, ard_num_dims=40)
         #self.feature_extractor = feature_extractor
         
     def forward(self, x):
@@ -142,14 +142,45 @@ class ExactGPModel(gpytorch.models.ExactGP):
         covar_x = self.covar_module(x)
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
+def save_checkpoint(checkpoint, gp, likelihood, feature_extractor):
+        # save state
+        gp_state_dict         = gp.state_dict()
+        likelihood_state_dict = likelihood.state_dict()
+        nn_state_dict         = feature_extractor.state_dict()
+        torch.save({'gp': gp_state_dict, 'likelihood': likelihood_state_dict, 'net':nn_state_dict}, checkpoint)
 
+def load_checkpoint(gp, likelihood, feature_extractor, checkpoint):
+    
+    ckpt = torch.load(checkpoint)
+    if 'best' in checkpoint:
+        print(f'\nBest model at epoch {ckpt["epoch"]}, MSE: {ckpt["mse"]}')
+    
+    gp.load_state_dict(ckpt['gp'])
+    likelihood.load_state_dict(ckpt['likelihood'])
+    feature_extractor.load_state_dict(ckpt['net'])
+
+    return gp, likelihood, feature_extractor
+
+def normalize(x, x_min, x_max):
+    x = (x - x_min) / x_max
+    return x
+def denormalize(x, x_min, x_max):
+    x = x * x_max + x_min
+    return x
 def main():
     ## Defining model
     device = 'cpu'
-    n_shot_train = 10
-    n_shot_test = 5
-    train_range=(-5.0, 5.0)
-    test_range=(-5.0, 5.0) # This must be (-5, +10) for the out-of-range condition
+    do_train = True
+    n_shot_train = 100
+    n_shot_test = 80 #n_support for test time 
+    t = 20.0
+    train_range=(-t, t)
+    test_range=(-t, t) # This must be (-5, +10) for the out-of-range condition
+    y_range = (-6, 6)
+    sample_size = 100
+    checkpoint = './sines/save_model'
+    if not os.path.isdir(checkpoint):
+        os.makedirs(checkpoint)
     criterion = nn.MSELoss()
     tasks     = Task_Distribution(amplitude_min=0.1, amplitude_max=5.0, 
                                   phase_min=0.0, phase_max=np.pi, 
@@ -169,32 +200,42 @@ def main():
     gp.train()
     net.train()
 
-    tot_iterations=50000 #50000
-    for epoch in range(tot_iterations):
-        optimizer.zero_grad()
-        xx, yy = tasks.sample_task().sample_data(n_shot_train, noise=0.1)
-        # x = inputs.to(device)
-        # y = labels.to(device)
-        # x = x - xx.min(0)[0]
-        # x = 2 * (x / xx.max(0)[0]) - 1
-        # y = y - yy.min(0)[0]
-        # y = 2 * (y / yy.max(0)[0]) - 1
-        z = net(xx)
-        gp.set_train_data(inputs=z, targets=yy, strict=False)  
-        predictions = gp(z)
-        loss = -mll(predictions, gp.train_targets)
-        loss.backward()
-        optimizer.step()
-        mse = criterion(predictions.mean, yy)
-        #---- print some stuff ----
-        if(epoch%100==0):
-            print('[%d] - Loss: %.3f  MSE: %.3f  lengthscale: %.3f   noise: %.3f' % (
-                epoch, loss.item(), mse.item(),
-                0.0, #gp.covar_module.base_kernel.lengthscale.item(),
-                gp.likelihood.noise.item()
-            ))
-
+    tot_iterations=5000 #50000
+    if do_train:
+        for epoch in range(tot_iterations):
+            optimizer.zero_grad()
+            inputs, labels = tasks.sample_task().sample_data(n_shot_train, noise=0.1)
+            # x = inputs.to(device)
+            # y = labels.to(device)
+            
+            xx = normalize(inputs, inputs.min(), inputs.max())
+            yy = normalize(labels, labels.min(), labels.max())
+            # x = x - xx.min(0)[0]
+            # x = 2 * (x / xx.max(0)[0]) - 1
+            # y = y - yy.min(0)[0]
+            # y = 2 * (y / yy.max(0)[0]) - 1
+            z = net(xx)
+            gp.set_train_data(inputs=z, targets=yy, strict=False)  
+            predictions = gp(z)
+            loss = -mll(predictions, gp.train_targets)
+            loss.backward()
+            optimizer.step()
+            mse = criterion(predictions.mean, yy)
+            #---- print some stuff ----
+            if(epoch%100==0):
+                print('[%d] - Loss: %.3f  MSE: %.3f  lengthscale: %.3f   noise: %.3f' % (
+                    epoch, loss.item(), mse.item(),
+                    0.0, #gp.covar_module.base_kernel.lengthscale.item(),
+                    gp.likelihood.noise.item()
+                ))
+        
+        
+        save_checkpoint(f'{checkpoint}/DKT.pth', gp, likelihood, net)
+    
+    
     ## Test phase on a new sine/cosine wave
+    checkpoint = f'{checkpoint}/DKT.pth'
+    gp, likelihood, net = load_checkpoint(gp, likelihood, net, checkpoint)
     tasks_test = Task_Distribution(amplitude_min=0.1, amplitude_max=5.0, 
                                    phase_min=0.0, phase_max=np.pi, 
                                    x_min=test_range[0], x_max=test_range[1], 
@@ -203,21 +244,24 @@ def main():
 
     likelihood.eval()    
     net.eval()
+    gp.eval()
     tot_iterations=500
     mse_list = list()
     for epoch in range(tot_iterations):
         sample_task = tasks_test.sample_task()
-        sample_size = 200
+        
         x_all, y_all = sample_task.sample_data(sample_size, noise=0.1, sort=True)
+        xx = normalize(x_all, x_all.min(), x_all.max())
+        yy = normalize(y_all, y_all.min(), y_all.max())
         indices = np.arange(sample_size)
         np.random.shuffle(indices)
         support_indices = np.sort(indices[0:n_shot_test])
 
         query_indices = np.sort(indices[n_shot_test:])
-        x_support = x_all[support_indices]
-        y_support = y_all[support_indices]
-        x_query = x_all[query_indices]
-        y_query = y_all[query_indices]
+        x_support = xx[support_indices]
+        y_support = yy[support_indices]
+        x_query = xx[query_indices]
+        y_query = yy[query_indices]
 
         #Feed the support set
         z_support = net(x_support).detach()
@@ -238,11 +282,15 @@ def main():
 
     for i in range(10):
         x_all, y_all = sample_task.sample_data(sample_size, noise=0.1, sort=True)
+        x_min, x_max =  x_all.min(), x_all.max()
+        y_min, y_max =  y_all.min(), y_all.max()
+        xx = normalize(x_all, x_min, x_max)
+        yy = normalize(y_all, y_min, y_max)
         query_indices = np.sort(indices[n_shot_test:])
-        x_support = x_all[support_indices]
-        y_support = y_all[support_indices]
-        x_query = x_all[query_indices]
-        y_query = y_all[query_indices]
+        x_support = xx[support_indices]
+        y_support = yy[support_indices]
+        x_query = xx[query_indices]
+        y_query = yy[query_indices]
     
         z_support = net(x_support).detach()
         gp.train()
@@ -250,10 +298,12 @@ def main():
         gp.eval()
             
         #Evaluation on all data
-        z_all = net(x_all).detach()
+        z_all = net(xx).detach()
         mean = likelihood(gp(z_all)).mean
         lower, upper = likelihood(gp(z_all)).confidence_region() #2 standard deviations above and below the mean
-
+        mean = denormalize(mean, y_min, y_max)
+        lower = denormalize(lower, y_min, y_max)
+        upper = denormalize(upper, y_min, y_max)
         #Plot
         fig, ax = plt.subplots()
         #true-curve
@@ -273,14 +323,17 @@ def main():
                         lower.detach().numpy(), upper.detach().numpy(),
                         alpha=.1, color='red')
         #support points
+        x_support = x_all[support_indices]
+        y_support = y_all[support_indices]
         ax.scatter(x_support, y_support, color='darkblue', marker='*', s=50, zorder=10)
                     
         #all points
         #ax.scatter(x_all.numpy(), y_all.numpy())
         #plt.show()
-        plt.ylim(-6.0, 6.0)
+        
+        plt.ylim(y_range[0], y_range[1])
         plt.xlim(test_range[0], test_range[1])
-        plt.savefig('plot_DKT_' + str(i) + '.png', dpi=300)
+        plt.savefig('./sines/image/plot_DKT_' + str(i) + '.png', dpi=300)
 
 
 if __name__ == "__main__":
