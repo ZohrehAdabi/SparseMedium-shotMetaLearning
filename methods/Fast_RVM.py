@@ -302,10 +302,10 @@ def Statistics(K, K_m, mu_m, alpha_m, active_m, targets, N, device):
         y	= torch.sigmoid(K_mu_m)
         e	= (targets-y)
         logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
-        if torch.isinf(dataLikely):
-            logML			=  - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
-        else:
-            logML			= dataLikely - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
+        # if torch.isinf(dataLikely):
+        #     logML			=  - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
+        # else:
+        logML			= dataLikely - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
         #  Well-determinedness factors
         DiagC	= torch.sum(U_inv**2, axis=1)
         Gamma	= 1 - alpha_m * DiagC
