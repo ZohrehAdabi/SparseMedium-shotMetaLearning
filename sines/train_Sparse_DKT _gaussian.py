@@ -1,4 +1,3 @@
-from inspect import Traceback
 import numpy as np
 import gpytorch
 import torch
@@ -6,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
-import random
+
 import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set()
@@ -129,14 +128,18 @@ class Task_Distribution():
     The task distribution for sine regression tasks for MAML
     """
 
-    def __init__(self, amplitude_min=None, amplitude_max=None, phase_min=None, phase_max=None
-                        , x_min=None, x_max=None, family="sine"):
+    def __init__(self, amplitude_min=None, amplitude_max=None, phase_min=None, phase_max=None, outscale=None, lengthscale=None
+                        , x_min=None, x_max=None, size=100, sort=False, family="sine"):
         self.amplitude_min = amplitude_min
         self.amplitude_max = amplitude_max
         self.phase_min = phase_min
         self.phase_max = phase_max
+        self.outscale = outscale 
+        self.lengthscale = lengthscale
         self.x_min = x_min
         self.x_max = x_max
+        self.size = size
+        self.sort = sort
         self.family = family
 
     def sample_task(self):
@@ -146,13 +149,15 @@ class Task_Distribution():
         returns:
             Sine_Task object
         """
-        amplitude = np.random.uniform(self.amplitude_min, self.amplitude_max)
-        phase = np.random.uniform(self.phase_min, self.phase_max)
+        if self.family=='sine':
+            amplitude = np.random.uniform(self.amplitude_min, self.amplitude_max)
+            phase = np.random.uniform(self.phase_min, self.phase_max)
         if(self.family=="sine"):
             return Sine_Task(amplitude, phase, self.x_min, self.x_max)
         elif(self.family=="cosine"):
             return Cosine_Task(amplitude, phase, self.x_min, self.x_max)
-       
+        elif(self.family=="gaussian"):
+            return Gaussian_Task(self.outscale, self.lengthscale, self.x_min, self.x_max, self.size, self.sort)
         else:
             return None
 
@@ -198,7 +203,7 @@ def get_inducing_points(gp, likelihood, inputs, targets,  config='1011', align_t
         if True:
             # with sigma and updating sigma converges to more sparse solution
             N   = inputs.shape[0]
-            tol = 1e-4
+            tol = 1e-6
             eps = torch.finfo(torch.float32).eps
             max_itr = 1000
             sigma = likelihood.noise[0].clone()
@@ -316,46 +321,38 @@ def denormalize(x, x_min, x_max):
     x = x * x_max + x_min
     return x
 
-
-seed = 1
-random.seed(seed)
-np.random.seed(seed)
-torch.manual_seed(seed)
-torch.cuda.manual_seed(seed)
-torch.cuda.manual_seed_all(seed)
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = False
 def main():
     ## Defining model
     device = 'cpu'
     do_train = False
-
-    noise = 0.25
-    family = 'sine'
-    n_shot_train = 200
-    n_shot_test = 180
-    t = 50.0
+    family = 'gaussian'
+    # family = 'sine'
+    n_shot_train = 100
+    n_shot_test = 80
+    t = 20.0
     train_range=(-t, t)
     test_range=(-t, t) # This must be (-5, +10) for the out-of-range condition
     y_range = (-6, 6)
-    sample_size = n_shot_train 
+    sample_size = 100 
     checkpoint = './sines/save_model'
     if not os.path.isdir(checkpoint):
         os.makedirs(checkpoint)
     criterion = nn.MSELoss()
     if family=='sine':
-        tasks_loader     = [Task_Distribution(amplitude_min=0.1, amplitude_max=5.0, 
+        tasks     = Task_Distribution(amplitude_min=0.1, amplitude_max=5.0, 
                                   phase_min=0.0, phase_max=np.pi, 
                                   x_min=train_range[0], x_max=train_range[1], 
-                                  family=family) for _ in range(100)]
-        
-
+                                  family=family)
+    elif family=='gaussian':
+        tasks     = Task_Distribution(outscale=0.5, lengthscale=0.5,  
+                                  x_min=train_range[0], x_max=train_range[1], 
+                                  size=n_shot_train,
+                                  family=family)
     net       = Feature()
     likelihood = gpytorch.likelihoods.GaussianLikelihood()
     dummy_inputs = torch.zeros([n_shot_train,40])
     dummy_labels = torch.zeros([n_shot_train])
     gp = ExactGPModel(dummy_inputs, dummy_labels, dummy_inputs, likelihood)
-    gp.likelihood.noise = 0.1
     mll_loss = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, gp)
     optimizer = torch.optim.Adam([{'params': gp.parameters(), 'lr': 1e-3},
                                   {'params': net.parameters(), 'lr': 1e-3}])
@@ -366,50 +363,47 @@ def main():
         gp.train()
         net.train()
 
-        tot_epoch=100 #50000
-        l = 0.01
-        for epoch in range(tot_epoch):
-            for itr, task in enumerate(tasks_loader):
-                optimizer.zero_grad()
-                # inputs, labels = task.sample_task().sample_data(n_shot_train, noise=0.1)
-                xx, yy = task.sample_task().sample_data(n_shot_train, noise=noise)
-                # xx = normalize(inputs, inputs.min(), inputs.max())
-                # yy = normalize(labels, labels.min(), labels.max())
-                z = net(xx)
-                with torch.no_grad():
-                    inducing_points, beta, mu_m, U = get_inducing_points(gp, likelihood, z, yy, verbose=False, device=device)
-                
-                ip_index = inducing_points.index
-                ip_values = z[ip_index]
-                gp.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
+        tot_iterations=500 #50000
+        l = 100
+        for epoch in range(tot_iterations):
+            optimizer.zero_grad()
+            inputs, labels = tasks.sample_task().sample_data(n_shot_train, noise=0.1)
+            xx = normalize(inputs, inputs.min(), inputs.max())
+            yy = normalize(labels, labels.min(), labels.max())
+            z = net(xx)
+            with torch.no_grad():
+                inducing_points, beta, mu_m, U = get_inducing_points(gp, likelihood, z, yy, verbose=False, device=device)
+            
+            ip_index = inducing_points.index
+            ip_values = z[ip_index]
+            gp.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
 
-                alpha_m = inducing_points.alpha
-                K_m = gp.base_covar_module(z, ip_values).evaluate()
-                K_m = K_m.to(torch.float64)
-                scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
-                K_m = K_m / scales
-                # alpha_m = alpha_m / (scales**2)
-                # mu_m = mu_m / scales
-                rvm_mll, rvm_mse = rvm_ML(K_m, yy, alpha_m, mu_m, U, beta)
+            alpha_m = inducing_points.alpha
+            K_m = gp.base_covar_module(z, ip_values).evaluate()
+            K_m = K_m.to(torch.float64)
+            scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+            K_m = K_m / scales
+            # alpha_m = alpha_m / (scales**2)
+            # mu_m = mu_m / scales
+            rvm_mll, rvm_mse = rvm_ML(K_m, yy, alpha_m, mu_m, U, beta)
 
-                gp.set_train_data(inputs=z, targets=yy, strict=False)  
-                predictions = gp(z)
-                mll = mll_loss(predictions, gp.train_targets)
+            gp.set_train_data(inputs=z, targets=yy, strict=False)  
+            predictions = gp(z)
+            mll = mll_loss(predictions, gp.train_targets)
 
-                # loss = -mll + l * rvm_mse
-                # loss = -mll - l * rvm_mll
-                loss = -(1-l) * mll  - l * rvm_mll 
+            loss = -mll + l * rvm_mse
+            # loss = -mll - l * rvm_mll
 
-                loss.backward()
-                optimizer.step()
-                mse = criterion(predictions.mean, yy)
-                #---- print some stuff ----
-                if(itr%20==0):
-                    print(Fore.LIGHTRED_EX, '[%d/%d] - Loss: %.3f  MSE: %.3f MLL: %.3f  RVM MLL: %.3f  lengthscale: %.3f   noise: %.3f' % (
-                        itr, epoch, loss.item(), mse.item(), -mll.item(), -rvm_mll.item(),
-                        gp.base_covar_module.base_kernel.lengthscale.item(),
-                        gp.likelihood.noise.item()
-                    ), Fore.RESET)
+            loss.backward()
+            optimizer.step()
+            mse = criterion(predictions.mean, labels)
+            #---- print some stuff ----
+            if(epoch%100==0):
+                print(Fore.LIGHTRED_EX, '[%d] - Loss: %.3f  MSE: %.3f MLL: %.3f  RVM MLL: %.3f  lengthscale: %.3f   noise: %.3f' % (
+                    epoch, loss.item(), mse.item(), -mll.item(), -rvm_mll.item(),
+                    gp.base_covar_module.base_kernel.lengthscale.item(),
+                    gp.likelihood.noise.item()
+                ), Fore.RESET)
 
         
         save_checkpoint(f'{checkpoint}/Sparse_DKT.pth', gp, likelihood, net)
@@ -419,32 +413,36 @@ def main():
     model_path = f'{checkpoint}/Sparse_DKT.pth'
     gp, likelihood, net = load_checkpoint(gp, likelihood, net, model_path)
     if family=='sine':
-        tasks_test_loader = [Task_Distribution(amplitude_min=0.1, amplitude_max=5.0, 
-                                  phase_min=0.0, phase_max=np.pi, 
+        tasks_test = Task_Distribution(amplitude_min=0.1, amplitude_max=5.0, 
+                                    phase_min=0.0, phase_max=np.pi, 
+                                    x_min=test_range[0], x_max=test_range[1], 
+                                    family=family)
+    elif family=='gaussian':
+        tasks_test     = Task_Distribution(outscale=0.5, lengthscale=0.5,  
                                   x_min=train_range[0], x_max=train_range[1], 
-                                  family=family) for _ in range(500)]
-  
+                                  size=n_shot_train, sort=True,
+                                  family=family)
     print("Test, please wait...")
 
     likelihood.eval()    
     net.eval()
-    tot_iterations=1
+    tot_iterations=50
     mse_list = list()
-    for epoch, task_test in enumerate(tasks_test_loader):
-        sample_task = task_test.sample_task()
+    for epoch in range(tot_iterations):
+        sample_task = tasks_test.sample_task()
         
-        x_all, y_all = sample_task.sample_data(sample_size, noise=noise, sort=True)
-        # xx = normalize(x_all, x_all.min(), x_all.max())
-        # yy = normalize(y_all, y_all.min(), y_all.max())
+        x_all, y_all = sample_task.sample_data(sample_size, noise=0.1, sort=True)
+        xx = normalize(x_all, x_all.min(), x_all.max())
+        yy = normalize(y_all, y_all.min(), y_all.max())
         indices = np.arange(sample_size)
         np.random.shuffle(indices)
         support_indices = np.sort(indices[0:n_shot_test])
 
         query_indices = np.sort(indices[n_shot_test:])
-        x_support = x_all[support_indices]
-        y_support = y_all[support_indices]
-        x_query = x_all[query_indices]
-        y_query = y_all[query_indices]
+        x_support = xx[support_indices]
+        y_support = yy[support_indices]
+        x_query = xx[query_indices]
+        y_query = yy[query_indices]
 
         #Feed the support set
         z_support = net(x_support).detach()
@@ -468,22 +466,18 @@ def main():
     print("-------------------")
     print("Average MSE: " + str(np.mean(mse_list)) + " +- " + str(np.std(mse_list)))
     print("-------------------")
-    tasks_test_loader = [Task_Distribution(amplitude_min=0.1, amplitude_max=5.0, 
-                                  phase_min=0.0, phase_max=np.pi, 
-                                  x_min=train_range[0], x_max=train_range[1], 
-                                  family=family) for _ in range(10)]
-    for i, task_test in enumerate(tasks_test_loader):
-        sample_task = task_test.sample_task()
-        x_all, y_all = sample_task.sample_data(sample_size, noise=noise, sort=True)
-        # x_min, x_max =  x_all.min(), x_all.max()
-        # y_min, y_max =  y_all.min(), y_all.max()
-        # xx = normalize(x_all, x_min, x_max)
-        # yy = normalize(y_all, y_min, y_max)
+
+    for i in range(10):
+        x_all, y_all = sample_task.sample_data(sample_size, noise=0.1, sort=True)
+        x_min, x_max =  x_all.min(), x_all.max()
+        y_min, y_max =  y_all.min(), y_all.max()
+        xx = normalize(x_all, x_min, x_max)
+        yy = normalize(y_all, y_min, y_max)
         query_indices = np.sort(indices[n_shot_test:])
-        x_support = x_all[support_indices]
-        y_support = y_all[support_indices]
-        x_query = x_all[query_indices]
-        y_query = y_all[query_indices]
+        x_support = xx[support_indices]
+        y_support = yy[support_indices]
+        x_query = xx[query_indices]
+        y_query = yy[query_indices]
     
         z_support = net(x_support).detach()
         gp.train()
@@ -497,19 +491,18 @@ def main():
         gp.eval()
             
         #Evaluation on all data
-        z_all = net(x_all).detach()
+        z_all = net(xx).detach()
         mean = likelihood(gp(z_all)).mean
         lower, upper = likelihood(gp(z_all)).confidence_region() #2 standard deviations above and below the mean
-        # mean = denormalize(mean, y_min, y_max)
-        # lower = denormalize(lower, y_min, y_max)
-        # upper = denormalize(upper, y_min, y_max)
+        mean = denormalize(mean, y_min, y_max)
+        lower = denormalize(lower, y_min, y_max)
+        upper = denormalize(upper, y_min, y_max)
         #Plot
-        fig, ax = plt.subplots(figsize=(16, 2))
-    
+        fig, ax = plt.subplots()
         #true-curve
-        true_curve_x = np.linspace(train_range[0], train_range[1], 1000)
-        true_curve = [sample_task.true_function(x) for x in true_curve_x]
-        ax.plot(true_curve_x, true_curve, color='blue', linewidth=2.0)
+        true_curve = np.linspace(train_range[0], train_range[1], 1000)
+        true_curve = [sample_task.true_function(x) for x in true_curve]
+        ax.plot(np.linspace(train_range[0], train_range[1], 1000), true_curve, color='blue', linewidth=2.0)
         if(train_range[1]<test_range[1]):
             dotted_curve = np.linspace(train_range[1], test_range[1], 1000)
             dotted_curve = [sample_task.true_function(x) for x in dotted_curve]
@@ -527,13 +520,12 @@ def main():
         y_support = y_all[support_indices]
         ax.scatter(x_support, y_support, color='darkblue', marker='*', s=50, zorder=10)
         ax.scatter(x_support[ip_index], y_support[ip_index], color='darkgreen', marker='*', s=50, zorder=11)
-        ax.set_title(f'num SVs: {ip_index.shape[0]}')            
+                    
         #all points
         #ax.scatter(x_all.numpy(), y_all.numpy())
         #plt.show()
         plt.ylim(y_range[0], y_range[1])
         plt.xlim(test_range[0], test_range[1])
-        plt.tight_layout()
         plt.savefig('./sines/image/plot_Sparse_DKT_' + str(i) + '.png', dpi=300)
 
     print("-------------------")

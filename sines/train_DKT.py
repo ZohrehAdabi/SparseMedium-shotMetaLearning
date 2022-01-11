@@ -181,9 +181,10 @@ def main():
     do_train = True
 
     family = 'sine'
+    noise = 0.25
     n_shot_train = 200
     n_shot_test = 180 #n_support for test time 
-    t = 150.0
+    t = 50.0
     train_range=(-t, t)
     test_range=(-t, t) # This must be (-5, +10) for the out-of-range condition
     y_range = (-6, 6)
@@ -216,12 +217,12 @@ def main():
         for epoch in range(tot_epoch):
             for itr, task in enumerate(tasks_loader):
                 optimizer.zero_grad()
-                xx, yy = task.sample_task().sample_data(n_shot_train, noise=0.1)
+                xx, yy = task.sample_task().sample_data(n_shot_train, noise=noise)
                 # x = inputs.to(device)
                 # y = labels.to(device)
                 
-                xx = normalize(xx, xx.min(), xx.max())
-                yy = normalize(yy, yy.min(), yy.max())
+                # xx = normalize(xx, xx.min(), xx.max())
+                # yy = normalize(yy, yy.min(), yy.max())
                 # x = x - xx.min(0)[0]
                 # x = 2 * (x / xx.max(0)[0]) - 1
                 # y = y - yy.min(0)[0]
@@ -259,12 +260,15 @@ def main():
     gp.eval()
     tot_iterations=100
     mse_list = list()
+    mse_list2 = list()
     for epoch, task_test in enumerate(tasks_test_loader):
         sample_task = task_test.sample_task()
         
-        xx, yy = sample_task.sample_data(sample_size, noise=0.1, sort=True)
-        xx = normalize(xx, xx.min(), xx.max())
-        yy = normalize(yy, yy.min(), yy.max())
+        xx, yy = sample_task.sample_data(sample_size, noise=noise, sort=True)
+        # x_min, x_max =  xx.min(), xx.max()
+        # y_min, y_max =  yy.min(), yy.max()
+        # xx = normalize(xx, x_min, x_max)
+        # yy = normalize(yy, y_min, y_max)
         indices = np.arange(sample_size)
         np.random.shuffle(indices)
         support_indices = np.sort(indices[0:n_shot_test])
@@ -287,17 +291,23 @@ def main():
 
         mse = criterion(mean, y_query)
         mse_list.append(mse.item())
+        # mean = denormalize(mean, y_min, y_max)
+        # mse = criterion(mean, y_query)
+        # mse_list2.append(mse.item())
 
     print("-------------------")
     print("Average MSE: " + str(np.mean(mse_list)) + " +- " + str(np.std(mse_list)))
     print("-------------------")
+    # print("-------------------")
+    # print("Average MSE 2: " + str(np.mean(mse_list2)) + " +- " + str(np.std(mse_list2)))
+    # print("-------------------")
     tasks_test_loader = [Task_Distribution(amplitude_min=0.1, amplitude_max=5.0, 
                                   phase_min=0.0, phase_max=np.pi, 
                                   x_min=train_range[0], x_max=train_range[1], 
                                   family=family) for _ in range(10)]
     for i, task_test in enumerate(tasks_test_loader):
         sample_task = task_test.sample_task()
-        x_all, y_all = sample_task.sample_data(sample_size, noise=0.1, sort=True)
+        x_all, y_all = sample_task.sample_data(sample_size, noise=noise, sort=True)
         # x_min, x_max =  x_all.min(), x_all.max()
         # y_min, y_max =  y_all.min(), y_all.max()
         # xx = normalize(x_all, x_min, x_max)
@@ -323,9 +333,9 @@ def main():
         #Plot
         fig, ax = plt.subplots(figsize=(16, 2))
         #true-curve
-        true_curve = np.linspace(train_range[0], train_range[1], 1000)
-        true_curve = [sample_task.true_function(x) for x in true_curve]
-        ax.plot(np.linspace(train_range[0], train_range[1], 1000), true_curve, color='blue', linewidth=2.0)
+        true_curve_x = np.linspace(train_range[0], train_range[1], 1000)
+        true_curve = [sample_task.true_function(x) for x in true_curve_x]
+        ax.plot(true_curve_x, true_curve, color='blue', linewidth=2.0)
         if(train_range[1]<test_range[1]):
             dotted_curve = np.linspace(train_range[1], test_range[1], 1000)
             dotted_curve = [sample_task.true_function(x) for x in dotted_curve]
