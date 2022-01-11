@@ -40,13 +40,14 @@ except ImportError:
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=5 --train_aug
 IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j_idx")
 class Sparse_DKT_binary_Nystrom(MetaTemplate):
-    def __init__(self, model_func, kernel_type, n_way, n_support, sparse_method='FRVM', add_rvm_mll=False, lambda_rvm=0.1, num_inducing_points=None, normalize=False, 
+    def __init__(self, model_func, kernel_type, n_way, n_support, sparse_method='FRVM', add_rvm_mll=False, add_rvm_mll_one=False, lambda_rvm=0.1, num_inducing_points=None, normalize=False, 
                         scale=False, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
         super(Sparse_DKT_binary_Nystrom, self).__init__(model_func, n_way, n_support)
 
         self.num_inducing_points = num_inducing_points
         self.sparse_method = sparse_method
         self.add_rvm_mll = add_rvm_mll
+        self.add_rvm_mll_one = add_rvm_mll_one
         self.lambda_rvm = lambda_rvm
         self.config = config
         self.align_threshold = align_threshold
@@ -274,9 +275,11 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                 loss = -self.mll(output, transformed_targets).sum()
             else:
                 mll = self.mll(output, self.model.train_targets)
-                if self.add_rvm_mll:
-                    # loss = - mll  - l * rvm_mll 
+                if self.add_rvm_mll_one:
+                    #  
                     loss = -(1-l) * mll  - l * rvm_mll 
+                if self.add_rvm_mll:
+                    loss = - mll  - l * rvm_mll
                 else:
                     loss = -mll
             loss.backward()
