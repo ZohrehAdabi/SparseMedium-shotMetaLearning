@@ -124,9 +124,13 @@ for sd in range(seed, seed+repeat):
             params.checkpoint_dir += '/'
             id =  f'Exact_FRVM_{params.config}_{params.align_thr}_{params.lr_gp}_{params.lr_net}'
             if params.gamma: id += '_gamma'
+            if params.normalize: id += '_norm'
+            if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
+            if params.rvm_mse: id += f'_rvm_mse_{params.lambda_rvm}'
             id += f'_{params.kernel_type}_seed_{sd}'
             params.checkpoint_dir = params.checkpoint_dir + id
-            model = Sparse_DKT_regression_Exact(bb, kernel_type=params.kernel_type, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
+            model = Sparse_DKT_regression_Exact(bb, kernel_type=params.kernel_type,  kernel_type=params.kernel_type, add_rvm_mll=params.rvm_mll, add_rvm_mse=params.rvm_mse, lambda_rvm=params.lambda_rvm, 
+                                normalize=params.normalize, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
                                 video_path=params.checkpoint_dir, 
                                 show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
         
@@ -145,9 +149,12 @@ for sd in range(seed, seed+repeat):
             id =  f'Exact_new_loss_FRVM_{params.config}_{params.align_thr}_{params.lr_gp}_{params.lr_net}'
             if params.gamma: id += '_gamma'
             if params.normalize: id += '_norm'
+            if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
+            if params.rvm_mse: id += f'_rvm_mse_{params.lambda_rvm}'
             id += f'_{params.kernel_type}_seed_{sd}'
             params.checkpoint_dir = params.checkpoint_dir + id
-            model = Sparse_DKT_regression_Exact_new_loss(bb, kernel_type=params.kernel_type, normalize=params.normalize, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
+            model = Sparse_DKT_regression_Exact_new_loss(bb, kernel_type=params.kernel_type, add_rvm_mll=params.rvm_mll, add_rvm_mse=params.rvm_mse, lambda_rvm=params.lambda_rvm,
+                                normalize=params.normalize, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
                                 video_path=params.checkpoint_dir, 
                                 show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
         

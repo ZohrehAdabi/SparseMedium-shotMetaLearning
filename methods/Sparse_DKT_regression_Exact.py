@@ -41,12 +41,16 @@ except ImportError:
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx")
 class Sparse_DKT_regression_Exact(nn.Module):
-    def __init__(self, backbone, kernel_type, f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
+    def __init__(self, backbone, kernel_type, add_rvm_mll=False, add_rvm_mse=False, lambda_rvm=0.1, normalize=False, f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_regression_Exact, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
         self.kernel_type = kernel_type
+        self.add_rvm_mll = add_rvm_mll
+        self.add_rvm_mse = add_rvm_mse
+        self.lambda_rvm = lambda_rvm
+        self.normalize = normalize
         self.num_induce_points = n_inducing_points
         self.config = config
         self.gamma = gamma
@@ -83,6 +87,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
         return self.model, self.likelihood, self.mll
     
     def init_summary(self, id):
+        self.id = id
         if(IS_TBX_INSTALLED):
             path = './Sparse_DKT_QMUL_Eaxct_Loss'
             time_string = strftime("%d%m%Y_%H%M", gmtime())
@@ -97,30 +102,47 @@ class Sparse_DKT_regression_Exact(nn.Module):
     def set_forward_loss(self, x):
         pass
     
-    def rvm_ML(self, K, targets, alpha_m, beta, ip_index):
+    def rvm_ML(self, K_m, targets, alpha_m, mu_m, beta):
         
         N = targets.shape[0]
-        Kt = K.T @ targets
-        KK = K.T @ K
-        K_m = K[:, ip_index]
-        KK_mm = KK[ip_index, :][:, ip_index]
-        K_mt = Kt[ip_index]
-        A_m = torch.diag(alpha_m)
-        H = A_m + beta * KK_mm
-        U, info =  torch.linalg.cholesky_ex(H, upper=True)
-        # if info>0:
-        #     print('pd_err of Hessian')
-        U_inv = torch.linalg.inv(U)
-        Sigma_m = U_inv @ U_inv.T      
-        mu_m = beta * (Sigma_m @ K_mt)
+        # targets = targets.to(torch.float64)
+        # K_mt = targets @ K_m
+        # A_m = torch.diag(alpha_m)
+        # H = A_m + beta * K_m.T @ K_m
+        # U, info =  torch.linalg.cholesky_ex(H, upper=True)
+        # # if info>0:
+        # #     print('pd_err of Hessian')
+        # U_inv = torch.linalg.inv(U)
+        # Sigma_m = U_inv @ U_inv.T      
+        # mu_m = beta * (Sigma_m @ K_mt)
         y_ = K_m @ mu_m  
         e = (targets - y_)
         ED = e.T @ e
-        dataLikely	= (N * torch.log(beta) - beta * ED)/2
-        logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
+        # DiagC	= torch.sum(U_inv**2, axis=1)
+        # Gamma	= 1 - alpha_m * DiagC
+        # beta	= (N - torch.sum(Gamma))/ED
+        # dataLikely	= (N * torch.log(beta) - beta * ED)/2
+        # logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
         
-        logML			= dataLikely - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
-        return logML/N
+        # 2001-JMLR-SparseBayesianLearningandtheRelevanceVectorMachine in Appendix:
+        # C = sigma * I + K_m @ A_m @ K_m.T  ,  log|C| = - log|Sigma_m| - N * log(beta) - log|A_m|
+        # t.T @ C^-1 @ t = beta * ||t - K_m @ mu_m||**2 + mu_m.T @ A_m @ mu_m 
+        # log p(t) = -1/2 (log|C| + t.T @ C^-1 @ t ) + const 
+        logML = -1/2 * (beta * ED)  #+ (mu_m**2) @ alpha_m  #+ N * torch.log(beta) + 2*logdetHOver2
+        # logML			= dataLikely - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
+        # logML = -1/2 * beta * ED
+    
+        # NOTE new loss for rvm
+        # S = torch.ones(N).to(self.device) *1/beta
+        # K_star_Sigma = torch.diag(K_star_m @ Sigma_m @ K_star_m.T)
+        # Sigma_star = torch.diag(S) + torch.diag(K_star_Sigma)
+        # K_star_Sigma = K_star_m @ Sigma_m @ K_star_m.T
+        # Sigma_star = torch.diag(S) + K_star_Sigma
+
+        # new_loss =-1/2 *((e) @ torch.linalg.inv(Sigma_star) @ (e) + torch.log(torch.linalg.det(Sigma_star)+1e-10))
+
+        # return logML/N
+        return logML/N, ED/N
 
     def train_loop_fast_rvm(self, epoch, n_support, n_samples, optimizer):
         self.model.train()
@@ -129,14 +151,14 @@ class Sparse_DKT_regression_Exact(nn.Module):
         batch, batch_labels = get_batch(train_people, n_samples)
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
         mll_list = []
-       
+        l = self.lambda_rvm
         for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
 
 
             z = self.feature_extractor(inputs)
-            # z = F.normalize(z, p=2, dim=1)
+            if(self.normalize): z = F.normalize(z, p=2, dim=1)
             with torch.no_grad():
-                inducing_points = self.get_inducing_points(z, labels, verbose=False)
+                inducing_points, beta, mu_m = self.get_inducing_points(z, labels, verbose=False)
            
             ip_index = inducing_points.index
             ip_values = z[ip_index]
@@ -144,17 +166,25 @@ class Sparse_DKT_regression_Exact(nn.Module):
             # self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
             # NOTE 
             self.model.set_train_data(inputs=ip_values, targets=ip_labels, strict=False)
-            sigma = self.model.likelihood.noise[0].clone().detach()
-            
+            # sigma = self.model.likelihood.noise[0].clone().detach()
             alpha_m = inducing_points.alpha
-            K = self.model.base_covar_module(z, ip_values).evaluate()
-            if True:
-                scales	= torch.sqrt(torch.sum(K**2, axis=0))
-                K = K / scales
-            rvm_mll = self.rvm_ML(K, labels, alpha_m, 1/sigma, ip_index)
+            K_m = self.model.base_covar_module(z, ip_values).evaluate()
+            K_m = K_m.to(torch.float64)
+            scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+            # K = K / scales
+            mu_m = mu_m / scales
+            rvm_mll, rvm_mse = self.rvm_ML(K_m, labels, alpha_m, mu_m, beta)
             # z = self.feature_extractor(x_query)
             predictions = self.model(ip_values)
-            loss = -self.mll(predictions, self.model.train_targets) - 0.1 * rvm_mll
+            mll = self.mll(predictions, self.model.train_targets)
+            if self.add_rvm_mll:
+                # loss = - mll  - l * rvm_mll 
+                # loss =  - mll + 100 *  rvm_mse
+                loss = -(1-l) * mll  - l * rvm_mll 
+            elif self.add_rvm_mse:
+                loss =  - mll + l *  rvm_mse
+            else: 
+                loss = -mll
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -162,12 +192,14 @@ class Sparse_DKT_regression_Exact(nn.Module):
             mse = self.mse(predictions.mean, ip_labels)
 
             self.iteration = itr+(epoch*len(batch_labels))
-            if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)
-
+            if(self.writer is not None): self.writer.add_scalar('MLL + RVM MLL (Loss)', loss.item(), self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('MLL', -mll.item(), self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll.item(), self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('RVM MSE', rvm_mse.item(), self.iteration)
             if self.kernel_type=='rbf':
                 if ((epoch%1==0) & (itr%2==0)):
-                    print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f RVM ML: %3f MSE: %.3f noise: %.3f outputscale: %.3f lengthscale: %.3f' % (
-                        itr, epoch, loss.item(), rvm_mll.item(), mse.item(),
+                    print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.4f ML %.4f RVM ML: %.4f RVM MSE: %.4f  MSE: %.3f noise: %.4f outputscale: %.3f lengthscale: %.3f' % (
+                        itr, epoch, loss.item(), -mll.item(), -rvm_mll.item(), rvm_mse.item(), mse.item(),
                         self.model.likelihood.noise.item(), self.model.base_covar_module.outputscale,
                         self.model.base_covar_module.base_kernel.lengthscale
                     ),Fore.RESET)
@@ -193,7 +225,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
         
         return np.mean(mll_list)
 
-    def test_loop_fast_rvm(self, n_support, n_samples, test_person, optimizer=None): # no optimizer needed for GP
+    def test_loop_fast_rvm(self, n_support, n_samples, test_person, optimizer=None, verbose=False): # no optimizer needed for GP
 
         self.model.eval()
         self.likelihood.eval()
@@ -212,7 +244,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
         split = np.array([True]*15 + [False]*3)
         # print(split)
         shuffled_split = []
-        for _ in range(int(n_support/15)):
+        for _ in range(int(n_support//15)):
             s = split.copy()
             np.random.shuffle(s)
             shuffled_split.extend(s)
@@ -224,17 +256,12 @@ class Sparse_DKT_regression_Exact(nn.Module):
         x_query   = x_all[test_person, query_ind,:,:,:]
         y_query   = y_all[test_person, query_ind]
 
-
-        # induce_ind = list(np.random.choice(list(range(n_samples)), replace=False, size=self.num_induce_points))
-        # induce_point = self.feature_extractor(x_support[induce_ind, :,:,:])
         z_support = self.feature_extractor(x_support).detach()
-        # z_support = F.normalize(z_support, p=2, dim=1)
+        if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1)
         with torch.no_grad():
-            inducing_points = self.get_inducing_points(z_support, y_support, verbose=False)
+            inducing_points, beta, mu = self.get_inducing_points(z_support, y_support, verbose=False)
         
         ip_values = inducing_points.z_values.cuda()
-        # self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
-        # self.model.covar_module._clear_cache()
         self.model.set_train_data(inputs=ip_values, targets=y_support[inducing_points.index], strict=False)
 
         self.model.eval()
@@ -243,10 +270,16 @@ class Sparse_DKT_regression_Exact(nn.Module):
 
         with torch.no_grad():
             z_query = self.feature_extractor(x_query).detach()
-            # z_query = F.normalize(z_query, p=2, dim=1)
+            if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
             pred    = self.likelihood(self.model(z_query))
             lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
-
+            K_m = self.model.base_covar_module(z_query, ip_values).evaluate()
+            K_m = K_m.to(torch.float64)
+            scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+            mu_m = mu / scales
+            y_pred_r = K_m @ mu_m       
+            mse_r = self.mse(y_pred_r, y_query).item()
+            print(f'FRVM MSE: {mse_r:0.4f}')
         
 
         def inducing_max_similar_in_support_x(train_x, inducing_points, train_y):
@@ -281,24 +314,26 @@ class Sparse_DKT_regression_Exact(nn.Module):
         y = y.cpu().numpy()
         y_pred = y_pred.cpu().numpy()
         print(Fore.RED,"="*50, Fore.RESET)
-        print(f'inducing_points count: {inducing_points.count}')
-        print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha}',Fore.RESET)
-        print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma}',Fore.RESET)
+        if verbose:
+            print(f'inducing_points count: {inducing_points.count}')
+            print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha}',Fore.RESET)
+            print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma}',Fore.RESET)
         print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
         print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
         print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
         print(Fore.LIGHTRED_EX, f'mse:    {mse_:.4f}, mse (normed):{mse:.4f}', Fore.RESET)
         print(Fore.RED,"-"*50, Fore.RESET)
 
-        K = self.model.base_covar_module
-        kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
-        max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
-        y_s = get_unnormalized_label(y_support.detach().cpu().numpy()) #((y_support.detach().cpu().numpy() + 1) * 60 / 2) + 60
-        print(Fore.LIGHTGREEN_EX, f'target of most similar in support set:       {y_s[max_similar_idx_x_s]}', Fore.RESET)
-        
-        kernel_matrix = K(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
-        max_similar_idx_x_ip = np.argmax(kernel_matrix, axis=1)
-        print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (K kernel): {inducing_points.y[max_similar_idx_x_ip]}', Fore.RESET)
+        if verbose or self.show_plots_pred:
+            K = self.model.base_covar_module
+            kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
+            max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
+            y_s = get_unnormalized_label(y_support.detach().cpu().numpy()) #((y_support.detach().cpu().numpy() + 1) * 60 / 2) + 60
+            print(Fore.LIGHTGREEN_EX, f'target of most similar in support set:       {y_s[max_similar_idx_x_s]}', Fore.RESET)
+            
+            kernel_matrix = K(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
+            max_similar_idx_x_ip = np.argmax(kernel_matrix, axis=1)
+            print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (K kernel): {inducing_points.y[max_similar_idx_x_ip]}', Fore.RESET)
 
         # kernel_matrix = self.model.covar_module(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
         # max_similar_index = np.argmax(kernel_matrix, axis=1)
@@ -319,10 +354,10 @@ class Sparse_DKT_regression_Exact(nn.Module):
                 self.plots.fig_feature.canvas.flush_events()
                 self.mw_feature.grab_frame()
 
-        return mse, mse_, inducing_points.count
+        return mse, mse_, inducing_points.count, mse_r
 
   
-    def train(self, stop_epoch, n_support, n_samples, optimizer):
+    def train(self, stop_epoch, n_support, n_samples, optimizer, verbose=True):
 
         mll_list = []
         best_mse = 10e5 #stop_epoch//2
@@ -336,24 +371,31 @@ class Sparse_DKT_regression_Exact(nn.Module):
                 print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
                 mse_list = []
                 mse_unnorm_list = []
+                mse_rvm_list = []
+                sv_count_list = []
                 val_count = 10
                 rep = True if val_count > len(val_people) else False
                 val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
                 for t in range(val_count):
-                    mse, mse_, _ = self.test_loop_fast_rvm(n_support, n_samples, val_person[t],  optimizer)
+                    mse, mse_, sv_count, mse_r = self.test_loop_fast_rvm(n_support, n_samples, val_person[t],  optimizer, verbose)
                     mse_list.append(mse)
                     mse_unnorm_list.append(mse_)
+                    sv_count_list.append(sv_count)
+                    mse_rvm_list.append(mse_r)
                 mse = np.mean(mse_list)
                 mse_ = np.mean(mse_unnorm_list)
+                sv_c = np.mean(sv_count_list)
+                mse_r = np.mean(mse_rvm_list)
                 if best_mse >= mse:
                     best_mse = mse
                     model_name = self.best_path + '_best_model.tar'
                     self.save_best_checkpoint(epoch+1, best_mse, model_name)
                     print(Fore.LIGHTRED_EX, f'Best MSE: {best_mse:.4f}', Fore.RESET)
-                print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE (norm): {mse:.4f}, MSE: {mse_:.4f} Best MSE: {best_mse:.4f}', Fore.RESET)
+                print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE RVM: {mse_r:.4f}, MSE(norm): {mse:.4f}, MSE: {mse_:.4f}, SV: {sv_c:.2f} Best MSE: {best_mse:.4f}', Fore.RESET)
                 if(self.writer is not None):
                     self.writer.add_scalar('MSE (norm) Val.', mse, epoch)
-                    self.writer.add_scalar('MSE Val.', mse_, epoch)
+                    # self.writer.add_scalar('MSE Val.', mse_, epoch)
+                    self.writer.add_scalar('RVM MSE Val.', mse_r, epoch)
                 print(Fore.GREEN,"-"*30, Fore.RESET)
 
             mll_list.append(mll)
@@ -376,7 +418,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
             self.mw_feature.finish()
         return mll, mll_list
     
-    def test(self, n_support, n_samples, optimizer=None, test_count=None): # no optimizer needed for GP
+    def test(self, n_support, n_samples, optimizer=None, test_count=None, verbose=False): # no optimizer needed for GP
 
         mse_list = []
         mse_list_ = []
@@ -388,7 +430,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
         for t in range(test_count):
             print(f'test #{t}')
             if self.f_rvm:
-                mse, mse_, num_sv = self.test_loop_fast_rvm(n_support, n_samples, test_person[t],  optimizer)
+                mse, mse_, num_sv, _ = self.test_loop_fast_rvm(n_support, n_samples, test_person[t],  optimizer, verbose)
             elif self.random:
                 mse = self.test_loop_random(n_support, n_samples, test_person[t],  optimizer)
             elif not self.f_rvm:
@@ -415,7 +457,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
      
         # with sigma and updating sigma converges to more sparse solution
         N   = inputs.shape[0]
-        tol = 1e-6
+        tol = 1e-4
         eps = torch.finfo(torch.float32).eps
         max_itr = 1000
         sigma = self.model.likelihood.noise[0].clone()
@@ -439,14 +481,15 @@ class Sparse_DKT_regression_Exact(nn.Module):
 
         kernel_matrix = kernel_matrix.to(torch.float64)
         target = targets.clone().to(torch.float64)
-        active, alpha, gamma, beta, mu_m = Fast_RVM_regression(kernel_matrix, target, beta, N, self.config, self.align_threshold,
+        active, alpha, gamma, beta, mu_m, U = Fast_RVM_regression(kernel_matrix, target, beta, N, self.config, self.align_threshold,
                                                 self.gamma, eps, tol, max_itr, self.device, verbose)
         
-        index = np.argsort(active)
-        active = active[index]
-        gamma = gamma[index]
+        # index = np.argsort(active)
+        # active = active[index]
+        # gamma = gamma[index]
         ss = scales[active]
-        alpha = alpha[index] #/ ss**2
+        # alpha = alpha[index] #/ ss**2
+        # mu_m = mu_m #/ ss
         inducing_points = inputs[active]
         num_IP = active.shape[0]
         IP_index = active
@@ -455,15 +498,15 @@ class Sparse_DKT_regression_Exact(nn.Module):
                 
                 K = covar_module(inputs, inducing_points).evaluate()
                 # K = covar_module(X, X[active]).evaluate()
-                mu_m = (mu_m[index] / ss)
-                mu_m = mu_m.to(torch.float)
-                y_pred = K @ mu_m
+                mu_r =(mu_m / ss)
+                mu_r = mu_r.to(torch.float)
+                y_pred = K @ mu_r
                 
                 mse = self.mse(y_pred, target)
                 print(f'FRVM MSE: {mse:0.4f}')
         
 
-        return IP(inducing_points, IP_index, num_IP, alpha.to(torch.float), gamma, None, None, None, None)
+        return IP(inducing_points, IP_index, num_IP, alpha.to(torch.float), gamma, None, None, None, None), beta, mu_m
   
     def save_checkpoint(self, checkpoint):
         # save state

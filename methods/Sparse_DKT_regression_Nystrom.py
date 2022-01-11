@@ -89,6 +89,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         return self.model, self.likelihood, self.mll
     
     def init_summary(self, id):
+        self.id = id
         if(IS_TBX_INSTALLED):
             time_string = strftime("%d%m%Y_%H%M", gmtime())
             if not os.path.isdir('./Sparse_DKT_Nystrom_QMUL_Loss'):
@@ -168,7 +169,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             if self.kernel_type=='spectral':
                 self.model.base_covar_module.initialize_from_data_empspect(z, labels)
 
-            sigma = self.model.likelihood.noise[0].clone()
+            # sigma = self.model.likelihood.noise[0].clone()
             # K_star = self.model.base_covar_module(z, ip_values).evaluate()
             # if self.add_rvm_mll or self.add_rvm_mse:
             alpha_m = inducing_points.alpha
@@ -230,7 +231,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         
         return np.mean(mll_list)
 
-    def test_loop_fast_rvm(self, n_support, n_samples, test_person, optimizer=None): # no optimizer needed for GP
+    def test_loop_fast_rvm(self, n_support, n_samples, test_person, optimizer=None, verbose=False): # no optimizer needed for GP
 
         self.model.eval()
         self.likelihood.eval()
@@ -322,28 +323,30 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         y = y.cpu().numpy()
         y_pred = y_pred.cpu().numpy()
         print(Fore.RED,"="*50, Fore.RESET)
-        print(f'inducing_points count: {inducing_points.count}')
-        print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha}',Fore.RESET)
-        print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma}',Fore.RESET)
+        if verbose:
+            print(f'inducing_points count: {inducing_points.count}')
+            print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha}',Fore.RESET)
+            print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma}',Fore.RESET)
         print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
         print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
         print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
         print(Fore.LIGHTRED_EX, f'mse:    {mse_:.4f}, mse (normed):{mse:.4f}', Fore.RESET)
         print(Fore.RED,"-"*50, Fore.RESET)
 
-        K = self.model.base_covar_module
-        kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
-        max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
-        y_s = get_unnormalized_label(y_support.detach().cpu().numpy()) #((y_support.detach().cpu().numpy() + 1) * 60 / 2) + 60
-        print(Fore.LIGHTGREEN_EX, f'target of most similar in support set:       {y_s[max_similar_idx_x_s]}', Fore.RESET)
-        
-        kernel_matrix = K(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
-        max_similar_idx_x_ip = np.argmax(kernel_matrix, axis=1)
-        print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (K kernel): {inducing_points.y[max_similar_idx_x_ip]}', Fore.RESET)
+        if verbose or self.show_plots_pred:
+            K = self.model.base_covar_module
+            kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
+            max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
+            y_s = get_unnormalized_label(y_support.detach().cpu().numpy()) #((y_support.detach().cpu().numpy() + 1) * 60 / 2) + 60
+            print(Fore.LIGHTGREEN_EX, f'target of most similar in support set:       {y_s[max_similar_idx_x_s]}', Fore.RESET)
+            
+            kernel_matrix = K(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
+            max_similar_idx_x_ip = np.argmax(kernel_matrix, axis=1)
+            print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (K kernel): {inducing_points.y[max_similar_idx_x_ip]}', Fore.RESET)
 
-        kernel_matrix = self.model.covar_module(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
-        max_similar_index = np.argmax(kernel_matrix, axis=1)
-        print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (Q kernel): {inducing_points.y[max_similar_index]}', Fore.RESET)
+            kernel_matrix = self.model.covar_module(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
+            max_similar_index = np.argmax(kernel_matrix, axis=1)
+            print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (Q kernel): {inducing_points.y[max_similar_index]}', Fore.RESET)
         #**************************************************************
         if (self.show_plots_pred or self.show_plots_features) and self.f_rvm:
             embedded_z_support = None
@@ -365,7 +368,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         return mse, mse_, inducing_points.count, mse_r
 
   
-    def train(self, stop_epoch, n_support, n_samples, optimizer):
+    def train(self, stop_epoch, n_support, n_samples, optimizer, verbose=True):
 
         mll_list = []
         best_mse = 10e5 #stop_epoch//2
@@ -388,7 +391,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                     rep = True if val_count > len(val_people) else False
                     val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
                     for t in range(val_count):
-                        mse, mse_, sv_count, mse_r = self.test_loop_fast_rvm(n_support, n_samples, val_person[t],  optimizer)
+                        mse, mse_, sv_count, mse_r = self.test_loop_fast_rvm(n_support, n_samples, val_person[t],  optimizer, verbose)
                         mse_list.append(mse)
                         mse_unnorm_list.append(mse_)
                         sv_count_list.append(sv_count)
@@ -460,7 +463,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             self.mw_feature.finish()
         return mll, mll_list
     
-    def test(self, n_support, n_samples, optimizer=None, test_count=None): # no optimizer needed for GP
+    def test(self, n_support, n_samples, optimizer=None, test_count=None, verbose=False): # no optimizer needed for GP
 
         mse_list = []
         mse_list_ = []
@@ -474,7 +477,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             self.test_i = t
             print(f'test #{t}')
             if self.f_rvm:
-                mse, mse_, num_sv, mse_r = self.test_loop_fast_rvm(n_support, n_samples, test_person[t],  optimizer)
+                mse, mse_, num_sv, mse_r = self.test_loop_fast_rvm(n_support, n_samples, test_person[t],  optimizer, verbose)
                 num_sv_list.append(num_sv)
                 
             elif self.random:
