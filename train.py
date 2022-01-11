@@ -285,7 +285,7 @@ if __name__ == '__main__':
 
         elif params.method == 'Sp_DKT_Bin_Exact_NLoss':
             model = Sparse_DKT_binary_Exact_new_loss(model_dict[params.model], params.kernel_type, **train_few_shot_params, sparse_method=params.sparse_method, 
-                                    num_inducing_points=params.num_ip,
+                                    add_rvm_mll=params.rvm_mll, lambda_rvm=params.lambda_rvm, num_inducing_points=params.num_ip,
                                     normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
             if params.dirichlet:
                 id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
@@ -297,6 +297,7 @@ if __name__ == '__main__':
                 if params.gamma: id += '_gamma'
                 if params.scale: id += '_scale'
             if params.normalize: id += '_norm'
+            if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'

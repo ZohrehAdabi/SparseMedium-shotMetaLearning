@@ -120,7 +120,7 @@ def single_test(params):
    
     elif params.method == 'Sp_DKT_Bin_Exact_NLoss':
         model           = Sparse_DKT_binary_Exact_new_loss(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
-                                num_inducing_points=params.num_ip,
+                                add_rvm_mll=params.rvm_mll, lambda_rvm=params.lambda_rvm, num_inducing_points=params.num_ip,
                                 normalize=params.normalize, scale=params.scale,
                                 config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
 

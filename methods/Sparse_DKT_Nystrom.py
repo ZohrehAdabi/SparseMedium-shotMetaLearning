@@ -310,7 +310,7 @@ class Sparse_DKT_Nystrom(MetaTemplate):
                         outputscale, lenghtscale,  loss.item(),  -mll.item(), -rvm_mll.item(), 0, accuracy_query), Fore.RESET) #accuracy_support
                 else:
                     print(Fore.LIGHTRED_EX,'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} | Noise {:f} | Loss {:f} | MLL {:f} | RVM ML {:f}| Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
-                        outputscale, lenghtscale, noise, loss.item(),  -mll.item(), -rvm_mll.item() 0, accuracy_query), Fore.RESET)
+                        outputscale, lenghtscale, noise, loss.item(),  -mll.item(), -rvm_mll.item(), 0, accuracy_query), Fore.RESET)
 
     def get_inducing_points(self, base_covar_module, inputs, targets, verbose=True):
 
