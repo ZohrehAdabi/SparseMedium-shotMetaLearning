@@ -41,13 +41,14 @@ except ImportError:
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx")
 class Sparse_DKT_regression_Exact(nn.Module):
-    def __init__(self, backbone, kernel_type, add_rvm_mll=False, add_rvm_mse=False, lambda_rvm=0.1, normalize=False, f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
+    def __init__(self, backbone, kernel_type, add_rvm_mll=False, add_rvm_mll_one=False, add_rvm_mse=False, lambda_rvm=0.1, normalize=False, f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_regression_Exact, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
         self.kernel_type = kernel_type
         self.add_rvm_mll = add_rvm_mll
+        self.add_rvm_mll_one = add_rvm_mll_one
         self.add_rvm_mse = add_rvm_mse
         self.lambda_rvm = lambda_rvm
         self.normalize = normalize
@@ -178,9 +179,9 @@ class Sparse_DKT_regression_Exact(nn.Module):
             predictions = self.model(ip_values)
             mll = self.mll(predictions, self.model.train_targets)
             if self.add_rvm_mll:
-                # loss = - mll  - l * rvm_mll 
-                # loss =  - mll + 100 *  rvm_mse
-                loss = -(1-l) * mll  - l * rvm_mll 
+                loss = - mll  - l * rvm_mll 
+            elif self.add_rvm_mll_one:
+                loss = -(1-l) * mll  - l * rvm_mll  
             elif self.add_rvm_mse:
                 loss =  - mll + l *  rvm_mse
             else: 
