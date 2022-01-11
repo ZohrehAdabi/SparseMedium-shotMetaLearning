@@ -113,13 +113,13 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
         active, alpha, gamma, beta, mu_m, U = Fast_RVM(kernel_matrix, target, N, config, align_threshold, gamma,
                                                 eps, tol, max_itr, device, verbose)
 
-        index = np.argsort(active)
-        active = active[index]
+        # index = np.argsort(active)
+        # active = active[index]
         inducing_points = inputs[active]
-        gamma = gamma[index]
+        # gamma = gamma[index]
         ss = scales[active]
-        alpha = alpha[index] #/ ss**2
-        mu_m = mu_m[index] #/ss
+        # alpha = alpha[index] #/ ss**2
+        # mu_m = mu_m[index] #/ss
         num_IP = active.shape[0]
         IP_index = active
 

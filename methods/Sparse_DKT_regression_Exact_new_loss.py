@@ -193,16 +193,16 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
             # K_star = K_star / scales
             # rvm_mll = self.rvm_ML(K_m, K_star, y_all, alpha_m, mu_m, U, beta)  #y_support
             mu_m = mu_m / scales
-            rvm_mll, rvm_mse = self.rvm_ML(K_m, labels, alpha_m, mu_m, beta)
+            rvm_mll, rvm_mse = self.rvm_ML(K_m, y_support, alpha_m, mu_m, beta)
             # NOTE 
             self.model.set_train_data(inputs=ip_values, targets=ip_labels, strict=False)
 
-            z_query = self.feature_extractor(x_all)
+            z_query = self.feature_extractor(x_query)
             if self.normalize: z_query = F.normalize(z_query, p=2, dim=1)
             self.model.eval()
             predictions = self.model(z_query)
             self.model.train()
-            mll = self.mll(predictions, y_all)
+            mll = self.mll(predictions, y_query)
             if self.add_rvm_mll:
                 # loss = - mll  - l * rvm_mll 
                 # loss =  - mll + 100 *  rvm_mse
@@ -215,7 +215,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
             loss.backward()
             optimizer.step()
             mll_list.append(loss.item())
-            mse = self.mse(predictions.mean, y_all)
+            mse = self.mse(predictions.mean, y_query)
 
             self.iteration = itr+(epoch*len(batch_labels))
             if(self.writer is not None): self.writer.add_scalar('MLL + RVM MLL (Loss)', loss.item(), self.iteration)
@@ -488,7 +488,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
      
         # with sigma and updating sigma converges to more sparse solution
         N   = inputs.shape[0]
-        tol = 1e-6
+        tol = 1e-4
         eps = torch.finfo(torch.float32).eps
         max_itr = 1000
         sigma = self.model.likelihood.noise[0].clone()

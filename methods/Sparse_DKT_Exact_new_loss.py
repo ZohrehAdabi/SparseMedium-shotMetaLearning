@@ -16,7 +16,7 @@ import random
 from colorama import Fore
 # from configs import kernel_type
 from methods.Fast_RVM import Fast_RVM
-from methods.Inducing_points import get_inducing_points
+from methods.Inducing_points import get_inducing_points, rvm_ML
 #Check if tensorboardx is installed
 try:
     # tensorboard --logdir=./Sparse_DKT_log/ --host localhost --port 8089
@@ -36,12 +36,13 @@ except ImportError:
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=5 --train_aug
 IP = namedtuple("inducing_points", "z_values index count x y i_idx j_idx")
 class Sparse_DKT_Exact(MetaTemplate):
-    def __init__(self, model_func, kernel_type, n_way, n_support, sparse_method, num_inducing_points=None, normalize=False, 
+    def __init__(self, model_func, kernel_type, n_way, n_support, sparse_method,  add_rvm_mll=False, lambda_rvm=0.1, num_inducing_points=None, normalize=False, 
                             scale=False, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
         super(Sparse_DKT_Exact, self).__init__(model_func, n_way, n_support)
         self.num_inducing_points = num_inducing_points
         self.sparse_method = sparse_method
-        
+        self.add_rvm_mll = add_rvm_mll
+        self.lambda_rvm = lambda_rvm
         self.config = config
         self.align_threshold = align_threshold
         self.gamma = gamma
@@ -152,6 +153,7 @@ class Sparse_DKT_Exact(MetaTemplate):
         # else:
         # optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
         #                             {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
+        l = self.lambda_rvm
         for i, (x,_) in enumerate(train_loader):
             self.n_query = x.size(1) - self.n_support
             if self.change_way: self.n_way  = x.size(0)
@@ -205,6 +207,7 @@ class Sparse_DKT_Exact(MetaTemplate):
             noise = 0.0
             outputscale = 0.0
             print(Fore.LIGHTMAGENTA_EX, f'epoch:{epoch+1}', Fore.RESET)
+            rvm_mll_list = list()
             for idx, single_model in enumerate(self.model.models):
                 print(Fore.LIGHTMAGENTA_EX, f'model:{idx+1}', Fore.RESET)
                 with torch.no_grad():
@@ -217,6 +220,15 @@ class Sparse_DKT_Exact(MetaTemplate):
                 ip_index = inducing_points.index 
                 ip_values = z_train[ip_index]
                 ip_labels = target_list[idx][ip_index]
+                alpha_m = inducing_points.alpha
+                mu_m = inducing_points.mu
+                U = inducing_points.U
+                K = self.model.base_covar_module(z_train, ip_values).evaluate()
+                scales	= torch.sqrt(torch.sum(K**2, axis=0))
+                # K = K / scales
+                mu_m = mu_m /scales
+                rvm_mll = rvm_ML(K, target_list[idx], alpha_m, mu_m, U)
+                rvm_mll_list.append(rvm_mll)
                 if self.dirichlet:
                     # targets = target_list[idx]
                     targets = ip_labels
@@ -253,12 +265,20 @@ class Sparse_DKT_Exact(MetaTemplate):
                 transformed_targets = [model.likelihood.transformed_targets for model in self.model.models]
                 loss = -self.mll(output, transformed_targets).sum()
             else:
-                loss = -self.mll(output, target_list_all)
+                mll = self.mll(output, target_list_all)
+                if self.add_rvm_mll:
+                    rvm_mll = torch.sum(rvm_mll_list)
+                    # loss = -mll - l * torch.sum(rvm_mll_list)
+                    loss = -(1-l) * mll - l * rvm_mll
+                else:
+                    loss = -mll
             loss.backward()
             optimizer.step()
 
             self.iteration = i+(epoch*len(train_loader))
-            if(self.writer is not None): self.writer.add_scalar('loss', loss, self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('Loss', loss, self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('MLL', -mll, self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll, self.iteration)
 
             #Eval on the query (validation set)
             with torch.no_grad():
@@ -311,10 +331,10 @@ class Sparse_DKT_Exact(MetaTemplate):
             if i % print_freq==0:
                 if(self.writer is not None): self.writer.add_histogram('z_support', z_support, self.iteration)
                 if self.dirichlet:
-                    print(Fore.LIGHTRED_EX,'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} || Loss {:f} | Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
+                    print(Fore.LIGHTRED_EX,'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} || Loss {:f} | MLL {:f} | RVM ML {:f}| Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
                         outputscale, lenghtscale,  loss.item(), 0, accuracy_query), Fore.RESET) #accuracy_support
                 else:
-                    print(Fore.LIGHTRED_EX,'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} | Noise {:f} | Loss {:f} | Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
+                    print(Fore.LIGHTRED_EX,'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} | Noise {:f} | Loss {:f}| MLL {:f} | RVM ML {:f} | Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
                         outputscale, lenghtscale, noise, loss.item(), 0, accuracy_query), Fore.RESET)
 
     def get_inducing_points(self, base_covar_module, inputs, targets, verbose=True):
