@@ -160,7 +160,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
             z = self.feature_extractor(inputs)
             if(self.normalize): z = F.normalize(z, p=2, dim=1)
             with torch.no_grad():
-                inducing_points, beta, mu_m = self.get_inducing_points(z, labels, verbose=False)
+                inducing_points, beta, mu_m = self.get_inducing_points(z, labels, verbose=True)
            
             ip_index = inducing_points.index
             ip_values = z[ip_index]
