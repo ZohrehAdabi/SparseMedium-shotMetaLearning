@@ -408,7 +408,7 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
             y_pred = K @ mu_r
             y_pred = torch.sigmoid(y_pred)
             y_pred = (y_pred > 0.5).to(int)
-            
+            y_pred[y_pred==0] = -1
             acc = (torch.sum(y_pred==target) / N).item()  * 100 # targets is zero and one (after FRVM)
 
             if verbose:
