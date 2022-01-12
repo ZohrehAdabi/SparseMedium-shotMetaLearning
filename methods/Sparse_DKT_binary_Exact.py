@@ -19,7 +19,7 @@ import random
 from colorama import Fore
 # from configs import kernel_type
 from methods.Fast_RVM import Fast_RVM
-from methods.Inducing_points import get_inducing_points, rvm_ML
+from methods.Inducing_points import get_inducing_points, rvm_ML, get_inducing_points_regression, rvm_ML_regression
 #Check if tensorboardx is installed
 try:
     #tensorboard --logdir=./Sparse_DKT_binary_Exact_CUB_log/ --host localhost --port 8090
@@ -39,13 +39,15 @@ except ImportError:
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=5 --train_aug
 IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j_idx")
 class Sparse_DKT_binary_Exact(MetaTemplate):
-    def __init__(self, model_func, kernel_type, n_way, n_support, sparse_method, add_rvm_mll=False, lambda_rvm=0.1, num_inducing_points=None, normalize=False, 
+    def __init__(self, model_func, kernel_type, n_way, n_support, sparse_method, add_rvm_mll=False, add_rvm_mll_one=False, lambda_rvm=0.1, regression= True, num_inducing_points=None, normalize=False, 
                             scale=False, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
         super(Sparse_DKT_binary_Exact, self).__init__(model_func, n_way, n_support)
         self.num_inducing_points = num_inducing_points
         self.sparse_method = sparse_method
         self.add_rvm_mll = add_rvm_mll
+        self.add_rvm_mll_one = add_rvm_mll_one
         self.lambda_rvm = lambda_rvm
+        self.regression = regression
         self.config = config
         self.align_threshold = align_threshold
         self.gamma = gamma
@@ -185,7 +187,13 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             outputscale = 0.0
 
             with torch.no_grad():
-                inducing_points, frvm_acc = get_inducing_points(self.model.base_covar_module, #.base_kernel,
+                if self.regression:
+                        inducing_points, frvm_acc = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
+                                                                z_train, target, sparse_method=self.sparse_method, scale=self.scale,
+                                                                config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
+                                                                num_inducing_points=self.num_inducing_points, verbose=True, device=self.device)
+                else:
+                    inducing_points, frvm_acc = get_inducing_points(self.model.base_covar_module, #.base_kernel,
                                                             z_train, target, sparse_method=self.sparse_method, scale=self.scale,
                                                             config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
                                                             num_inducing_points=self.num_inducing_points, verbose=True, device=self.device)
@@ -200,7 +208,10 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             scales	= torch.sqrt(torch.sum(K**2, axis=0))
             # K = K / scales
             mu_m = mu_m /scales
-            rvm_mll = rvm_ML(K, target, alpha_m, mu_m, U)
+            if self.regression:
+                rvm_mll = rvm_ML(K, target, alpha_m, mu_m)
+            else:
+                rvm_mll = rvm_ML(K, target, alpha_m, mu_m, U)
             if self.dirichlet:
                 ip_labels[ip_labels==-1] = 0
                 self.model.likelihood.targets = ip_labels.long()
@@ -231,12 +242,13 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
                 loss = -self.mll(output, transformed_targets).sum()
             else:
                 mll = self.mll(output, self.model.train_targets)
+                if self.add_rvm_mll_one:
+                    #  
+                    loss = -(1-l) * mll  - l * rvm_mll 
                 if self.add_rvm_mll:
-                    
-                    # loss = -mll - l * rvm_mll
-                    loss = -(1-l) * mll - l * rvm_mll
+                    loss = - mll  - l * rvm_mll
                 else:
-                    loss = -mll
+                    loss = -mlll
             loss.backward()
             optimizer.step()
 
@@ -409,10 +421,16 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         
         with torch.no_grad():
             
-            inducing_points, frvm_acc = get_inducing_points(self.model.base_covar_module, #.base_kernel,
+            if self.regression:
+                        inducing_points, frvm_acc = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
+                                                                z_train, target, sparse_method=self.sparse_method, scale=self.scale,
+                                                                config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
+                                                                num_inducing_points=self.num_inducing_points, verbose=True, device=self.device)
+            else:
+                inducing_points, frvm_acc = get_inducing_points(self.model.base_covar_module, #.base_kernel,
                                                         z_train, target, sparse_method=self.sparse_method, scale=self.scale,
                                                         config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-                                                        num_inducing_points=self.num_inducing_points, verbose=False, device=self.device)
+                                                        num_inducing_points=self.num_inducing_points, verbose=True, device=self.device)
             self.frvm_acc.append(frvm_acc)
             inducing_points = IP(inducing_points.z_values, inducing_points.index, inducing_points.count,
                                 inducing_points.alpha, inducing_points.gamma, 

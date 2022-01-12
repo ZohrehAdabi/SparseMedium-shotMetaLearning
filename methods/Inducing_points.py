@@ -51,6 +51,48 @@ def rvm_ML(K_m, targets, alpha_m, mu_m, U):
         logML			= dataLikely #- logdetHOver2  #- (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2
         return logML/N
 
+def rvm_ML_regression(K_m, targets, alpha_m, mu_m, beta=10.0):
+        
+        N = targets.shape[0]
+        # targets = targets.to(torch.float64)
+        # K_mt = targets @ K_m
+        # A_m = torch.diag(alpha_m)
+        # H = A_m + beta * K_m.T @ K_m
+        # U, info =  torch.linalg.cholesky_ex(H, upper=True)
+        # # if info>0:
+        # #     print('pd_err of Hessian')
+        # U_inv = torch.linalg.inv(U)
+        # Sigma_m = U_inv @ U_inv.T      
+        # mu_m = beta * (Sigma_m @ K_mt)
+        y_ = K_m @ mu_m  
+        e = (targets - y_)
+        ED = e.T @ e
+        # DiagC	= torch.sum(U_inv**2, axis=1)
+        # Gamma	= 1 - alpha_m * DiagC
+        # beta	= (N - torch.sum(Gamma))/ED
+        # dataLikely	= (N * torch.log(beta) - beta * ED)/2
+        # logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
+        
+        # 2001-JMLR-SparseBayesianLearningandtheRelevanceVectorMachine in Appendix:
+        # C = sigma * I + K_m @ A_m @ K_m.T  ,  log|C| = - log|Sigma_m| - N * log(beta) - log|A_m|
+        # t.T @ C^-1 @ t = beta * ||t - K_m @ mu_m||**2 + mu_m.T @ A_m @ mu_m 
+        # log p(t) = -1/2 (log|C| + t.T @ C^-1 @ t ) + const 
+        logML = -1/2 * (beta * ED)  #+ (mu_m**2) @ alpha_m  #+ N * torch.log(beta) + 2*logdetHOver2
+        # logML			= dataLikely - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
+        # logML = -1/2 * beta * ED
+    
+        # NOTE new loss for rvm
+        # S = torch.ones(N).to(self.device) *1/beta
+        # K_star_Sigma = torch.diag(K_star_m @ Sigma_m @ K_star_m.T)
+        # Sigma_star = torch.diag(S) + torch.diag(K_star_Sigma)
+        # K_star_Sigma = K_star_m @ Sigma_m @ K_star_m.T
+        # Sigma_star = torch.diag(S) + K_star_Sigma
+
+        # new_loss =-1/2 *((e) @ torch.linalg.inv(Sigma_star) @ (e) + torch.log(torch.linalg.det(Sigma_star)+1e-10))
+
+        # return logML/N
+        return logML/N
+
 
 def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale,
                         config='000', align_threshold='0', gamma=False, 
@@ -342,6 +384,7 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
         kernel_matrix = kernel_matrix.to(torch.float64)
         # targets[targets==-1]= 0
         target = targets.clone().to(torch.float64)
+        config = '0' + config
         # active, alpha, gamma, beta, mu_m, U = Fast_RVM(kernel_matrix, target, N, config, align_threshold, gamma,
         #                                         eps, tol, max_itr, device, verbose)
         active, alpha, gamma, beta, mu_m, U = Fast_RVM_regression(kernel_matrix, target, beta, N, config, align_threshold,
@@ -368,13 +411,6 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
             
             acc = (torch.sum(y_pred==target) / N).item()  * 100 # targets is zero and one (after FRVM)
 
-            pred = torch.sigmoid(prediction.mean)
-            y_pred = (pred < 0.5).to(int)
-            y_pred = y_pred.cpu().detach().numpy()
-
-            top1_correct = np.sum(y_pred == y_query)
-            count_this = len(y_query)
-            acc = (top1_correct/ count_this)*100
             if verbose:
                 print(f'FRVM ACC on Inputs: {(acc):.2f}%')
             
