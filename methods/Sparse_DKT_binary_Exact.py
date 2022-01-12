@@ -250,7 +250,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
                 if self.add_rvm_mll:
                     loss = - mll  - l * rvm_mll
                 else:
-                    loss = -mlll
+                    loss = -mll
             loss.backward()
             optimizer.step()
 
