@@ -411,7 +411,7 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
             
             acc = (torch.sum(y_pred==target) / N).item()  * 100 # targets is zero and one (after FRVM)
 
-            if verbose:
+            if True:
                 print(f'FRVM ACC on Inputs: {(acc):.2f}%')
             
             # self.frvm_acc.append(acc.item())
