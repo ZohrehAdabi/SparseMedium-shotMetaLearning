@@ -43,7 +43,7 @@ except ImportError:
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j_idx")
 class Sparse_DKT_regression_Nystrom(nn.Module):
-    def __init__(self, backbone, kernel_type='rbf', add_rvm_mll=False, add_rvm_mll_one=False, add_rvm_mse=False, lambda_rvm=0.1, normalize=False, f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
+    def __init__(self, backbone, kernel_type='rbf', add_rvm_mll=False, add_rvm_mll_one=False, add_rvm_mse=False, lambda_rvm=0.1, normalize=False, lr_decay=False, f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_regression_Nystrom, self).__init__()
         ## GP parameters
@@ -54,6 +54,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         self.add_rvm_mse = add_rvm_mse
         self.lambda_rvm = lambda_rvm
         self.normalize = normalize
+        self.lr_decay = lr_decay
         self.num_induce_points = n_inducing_points
         self.config = config
         self.gamma = gamma
@@ -376,6 +377,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         best_epoch = 0
         # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5, 50, 80], gamma=0.1)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=200, gamma=0.1)
+        scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
         for epoch in range(stop_epoch):
             
             if  self.f_rvm:
@@ -448,7 +450,8 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             if(self.writer is not None): self.writer.add_scalar('MLL per epoch', mll, epoch)
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch+1} => MLL: {mll}\n', "-"*30, Fore.RESET)
 
-            scheduler.step()
+            if self.lr_decay:
+                scheduler.step()
             # if (epoch) in [100]:
             #     optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.1 #gp
             # if (epoch) in [50, 80]:

@@ -33,11 +33,13 @@ except ImportError:
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx") #for test 
 class DKT_regression_New_Loss(nn.Module):
-    def __init__(self, backbone, kernel_type='rbf', video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
+    def __init__(self, backbone, kernel_type='rbf', normalize=False, lr_decay=False, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(DKT_regression_New_Loss, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
         self.kernel_type = kernel_type
+        self.normalize = normalize
+        self.lr_decay = lr_decay
         self.device = 'cuda'
         self.training_ = training
         self.video_path = video_path
@@ -109,9 +111,10 @@ class DKT_regression_New_Loss(nn.Module):
 
             optimizer.zero_grad()
             z = self.feature_extractor(x_support)
-
+            if self.normalize: z = F.normalize(z, p=2, dim=1)
             self.model.set_train_data(inputs=z, targets=y_support, strict=False)
             z_query = self.feature_extractor(x_query)
+            if self.normalize: z_query = F.normalize(z_query, p=2, dim=1)
             self.model.eval()
             predictions = self.model(z_query)
             self.model.train()
@@ -183,6 +186,7 @@ class DKT_regression_New_Loss(nn.Module):
 
     
         z_support = self.feature_extractor(x_support).detach()
+        if self.normalize: z_support = F.normalize(z_support, p=2, dim=1)
         #NOTE for test 
         # with torch.no_grad():
         #     inducing_points = self.get_inducing_points(z_support, y_support, verbose=False)
@@ -194,6 +198,7 @@ class DKT_regression_New_Loss(nn.Module):
 
         with torch.no_grad():
             z_query = self.feature_extractor(x_query).detach()
+            if self.normalize: z_query = F.normalize(z_query, p=2, dim=1)
             pred    = self.likelihood(self.model(z_query))
             lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
 
@@ -240,7 +245,8 @@ class DKT_regression_New_Loss(nn.Module):
     def train(self, stop_epoch, n_support, n_samples, optimizer):
 
         mll_list = []
-        # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=stop_epoch//3, gamma=0.1)
+        # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.1)
+        scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
         best_mse = 1e7
         for epoch in range(stop_epoch):
             mll = self.train_loop(epoch, n_support, n_samples, optimizer)
@@ -272,7 +278,9 @@ class DKT_regression_New_Loss(nn.Module):
             mll_list.append(mll)
             if(self.writer is not None): self.writer.add_scalar('MLL per epoch', mll, epoch)
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch+1} => MLL: {mll}\n', "-"*30, Fore.RESET)
-            # scheduler.step()
+            
+            if self.lr_decay:
+                scheduler.step()
         mll = np.mean(mll_list)
         if self.show_plots_pred:
             self.mw.finish()

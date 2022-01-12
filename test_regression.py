@@ -37,6 +37,7 @@ for sd in range(seed, seed+repeat):
     if params.method=='DKT':
         id = f'_{params.lr_gp}_{params.lr_net}_{params.kernel_type}_seed_{sd}'
         if params.normalize: id += '_norm'
+        if params.lr_decay: id += '_lr_decay'
         params.checkpoint_dir += id
         model = DKT_regression(bb, kernel_type=params.kernel_type, normalize=params.normalize, video_path=params.checkpoint_dir, 
                                 show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features).cuda()
@@ -44,8 +45,10 @@ for sd in range(seed, seed+repeat):
 
     elif params.method=='DKT_New_Loss':
         id = f'_{params.lr_gp}_{params.lr_net}_{params.kernel_type}_seed_{sd}'
+        if params.normalize: id += '_norm'
+        if params.lr_decay: id += '_lr_decay'
         params.checkpoint_dir += id
-        model = DKT_regression_New_Loss(bb, kernel_type=params.kernel_type, video_path=params.checkpoint_dir, 
+        model = DKT_regression_New_Loss(bb, kernel_type=params.kernel_type, normalize=params.normalize, video_path=params.checkpoint_dir, 
                                 show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features).cuda()
         optimizer = None
 
@@ -60,6 +63,7 @@ for sd in range(seed, seed+repeat):
             id =  f'FRVM_{params.config}_{params.align_thr}_{params.lr_gp}_{params.lr_net}'
             if params.gamma: id += '_gamma'
             if params.normalize: id += '_norm'
+            if params.lr_decay: id += '_lr_decay'
             if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
             if params.rvm_mll_one: id += f'_rvm_mll_one_{params.lambda_rvm}'
             if params.rvm_mse: id += f'_rvm_mse_{params.lambda_rvm}'
@@ -83,6 +87,7 @@ for sd in range(seed, seed+repeat):
             params.checkpoint_dir += '/'
             id = f'random_{params.lr_gp}_{params.lr_net}_ip_{params.n_centers}_seed_{sd}'
             if params.normalize: id += '_norm'
+            if params.lr_decay: id += '_lr_decay'
             if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
             if params.rvm_mll_one: id += f'_rvm_mll_one_{params.lambda_rvm}'
             if params.rvm_mse: id += f'_rvm_mse_{params.lambda_rvm}'
@@ -107,6 +112,7 @@ for sd in range(seed, seed+repeat):
             id =  f'Nystrom_new_loss_FRVM_{params.config}_{params.align_thr}_{params.lr_gp}_{params.lr_net}'
             if params.gamma: id += '_gamma'
             if params.normalize: id += '_norm'
+            if params.lr_decay: id += '_lr_decay'
             if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
             if params.rvm_mse: id += f'_rvm_mse_{params.lambda_rvm}'
             id += f'_{params.kernel_type}_seed_{sd}'
@@ -127,6 +133,7 @@ for sd in range(seed, seed+repeat):
             id =  f'Exact_FRVM_{params.config}_{params.align_thr}_{params.lr_gp}_{params.lr_net}'
             if params.gamma: id += '_gamma'
             if params.normalize: id += '_norm'
+            if params.lr_decay: id += '_lr_decay'
             if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
             if params.rvm_mll_one: id += f'_rvm_mll_one_{params.lambda_rvm}'
             if params.rvm_mse: id += f'_rvm_mse_{params.lambda_rvm}'
@@ -152,6 +159,7 @@ for sd in range(seed, seed+repeat):
             id =  f'Exact_new_loss_FRVM_{params.config}_{params.align_thr}_{params.lr_gp}_{params.lr_net}'
             if params.gamma: id += '_gamma'
             if params.normalize: id += '_norm'
+            if params.lr_decay: id += '_lr_decay'
             if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
             if params.rvm_mse: id += f'_rvm_mse_{params.lambda_rvm}'
             id += f'_{params.kernel_type}_seed_{sd}'
@@ -168,6 +176,7 @@ for sd in range(seed, seed+repeat):
 
     if params.method=='MAML':
         id = f'_{params.lr_net}_loop_{params.inner_loop}_inner_lr_{params.inner_lr}_seed_{sd}'
+        if params.lr_decay: id += '_lr_decay'
         params.checkpoint_dir += id
         model = MAML_regression(bb, inner_loop=params.inner_loop, inner_lr=params.inner_lr, video_path=params.checkpoint_dir, 
                                 show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features).cuda()
@@ -175,6 +184,7 @@ for sd in range(seed, seed+repeat):
 
     elif params.method=='transfer':
         id = f'_{params.lr_net}_seed_{sd}'
+        if params.lr_decay: id += '_lr_decay'
         params.checkpoint_dir += id
         model = FeatureTransfer(bb, video_path=params.checkpoint_dir, 
                                 show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features).cuda()

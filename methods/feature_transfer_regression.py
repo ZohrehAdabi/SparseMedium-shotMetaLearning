@@ -36,12 +36,13 @@ class Regressor(nn.Module):
         return out
 
 class FeatureTransfer(nn.Module):
-    def __init__(self, backbone,  video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
+    def __init__(self, backbone,  lr_decay=False, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(FeatureTransfer, self).__init__()
         regressor = Regressor()
         self.feature_extractor = backbone
         self.model = Regressor()
         self.criterion = nn.MSELoss()
+        self.lr_decay = lr_decay
         self.training_  = training
         self.video_path = video_path
         self.best_path = video_path
@@ -88,6 +89,8 @@ class FeatureTransfer(nn.Module):
         
         mse_list = []
         best_mse = 10e5
+        # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.1)
+        scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
         self.fine_tune = 3
         for epoch in range(stop_epoch):
             mse = self.train_loop(epoch, n_samples, optimizer)
@@ -111,7 +114,8 @@ class FeatureTransfer(nn.Module):
                 # if(self.writer is not None):
                 #     self.writer.add_scalar('MSE Val.', mse, epoch)
                 print(Fore.GREEN,"-"*30, Fore.RESET)
-
+            if self.lr_decay:
+                scheduler.step()
             print(Fore.LIGHTYELLOW_EX,"-"*30, f'\nend of epoch {epoch} => MSE: {mse}\n', "-"*30, Fore.RESET)
         
         mse = np.mean(mse_list)

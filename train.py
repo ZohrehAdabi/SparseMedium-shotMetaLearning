@@ -52,6 +52,7 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
     else:
         raise ValueError('Unknown optimization, please define by yourself')
     # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.1)
+    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
     max_acc = 0
     print(f'num train task {len(base_loader)}')
     print(f'num val task {len(val_loader)}')
@@ -63,7 +64,8 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
         print(f'Epoch {epoch}')
         model.train()
         model.train_loop(epoch, base_loader, optimizer)  # model are called by reference, no need to return
-        # scheduler.step()
+        if params.lr_decay:
+            scheduler.step()
         # if (epoch) in [50]:
         #         optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.1
         model.eval()
@@ -183,6 +185,7 @@ if __name__ == '__main__':
                 if params.gamma: id += '_gamma'
                 if params.scale: id += '_scale'
             if params.normalize: id += '_norm'
+            if params.lr_decay: id += '_lr_decay'
             if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
@@ -206,6 +209,7 @@ if __name__ == '__main__':
                 if params.gamma: id += '_gamma'
                 if params.scale: id += '_scale'
             if params.normalize: id += '_norm'
+            if params.lr_decay: id += '_lr_decay'
             if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
@@ -229,6 +233,7 @@ if __name__ == '__main__':
                 if params.gamma: id += '_gamma'
                 if params.scale: id += '_scale'
             if params.normalize: id += '_norm'
+            if params.lr_decay: id += '_lr_decay'
             if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
             if params.rvm_mll_one: id += f'_rvm_mll_one_{params.lambda_rvm}'
             if params.regression: id += f'_regression'
@@ -256,6 +261,7 @@ if __name__ == '__main__':
                 if params.gamma: id += '_gamma'
                 if params.scale: id += '_scale'
             if params.normalize: id += '_norm'
+            if params.lr_decay: id += '_lr_decay'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
@@ -276,6 +282,7 @@ if __name__ == '__main__':
                 if params.gamma: id += '_gamma'
                 if params.scale: id += '_scale'
             if params.normalize: id += '_norm'
+            if params.lr_decay: id += '_lr_decay'
             if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
             if params.rvm_mll_one: id += f'_rvm_mll_one_{params.lambda_rvm}'
             if params.regression: id += f'_regression'
@@ -301,6 +308,7 @@ if __name__ == '__main__':
                 if params.gamma: id += '_gamma'
                 if params.scale: id += '_scale'
             if params.normalize: id += '_norm'
+            if params.lr_decay: id += '_lr_decay'
             if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
@@ -318,6 +326,7 @@ if __name__ == '__main__':
                 id=f'DKT_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
            
             if params.normalize: id += '_norm'
+            if params.lr_decay: id += '_lr_decay'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
@@ -330,6 +339,7 @@ if __name__ == '__main__':
             else:
                 id=f'DKT_binary_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             if params.normalize: id += '_norm'
+            if params.lr_decay: id += '_lr_decay'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
@@ -342,6 +352,7 @@ if __name__ == '__main__':
             else:
                 id=f'DKT_binary_new_loss_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             if params.normalize: id += '_norm'
+            if params.lr_decay: id += '_lr_decay'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
@@ -394,6 +405,7 @@ if __name__ == '__main__':
                 if params.gamma: id += '_gamma'
                 if params.scale: id += '_scale'
             if params.normalize: id += '_norm'
+            if params.lr_decay: id += '_lr_decay'
             if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
             if params.rvm_mll_one: id += f'_rvm_mll_one_{params.lambda_rvm}'
             if params.regression: id += f'_regression'

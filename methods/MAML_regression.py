@@ -50,13 +50,14 @@ class Linear_fw(nn.Linear): #used in MAML to forward input with fast weight
 
 
 class MAML_regression(nn.Module):
-    def __init__(self, backbone, inner_loop=3, inner_lr=1e-3, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
+    def __init__(self, backbone, inner_loop=3, inner_lr=1e-3, lr_decay=False, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(MAML_regression, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
         self.model = Linear_fw(2916, 1)
         self.device = 'cuda'
         self.training_  = training
+        self.lr_decay = lr_decay
         self.video_path = video_path
         self.best_path = video_path
         self.show_plots_pred = show_plots_pred
@@ -260,6 +261,8 @@ class MAML_regression(nn.Module):
         best_mse = 1e7
         train_mse_list = []
         val_mse_list = []
+        # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.1)
+        scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
         for epoch in range(stop_epoch):
             train_mse = self.train_loop(epoch, n_support, n_samples, optimizer)
             train_mse_list.append(train_mse)
@@ -283,7 +286,8 @@ class MAML_regression(nn.Module):
                 if(self.writer is not None):
                     self.writer.add_scalar('MSE Val.', mse, epoch)
                 print(Fore.GREEN,"-"*30, Fore.RESET)
-
+            if self.lr_decay:
+                scheduler.step()
             if(self.writer is not None): self.writer.add_scalar('Train MSE per epoch', train_mse, epoch)
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => Train MSE: {train_mse}\n', "-"*30, Fore.RESET)
         
