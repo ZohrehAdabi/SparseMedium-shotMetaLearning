@@ -358,10 +358,10 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
         if ((itr+1)%50==0) and False:
             print(f'#{itr+1:3},     m={active_m.shape[0]}, selected_action= {selected_action.item():.0f}, logML= {logML.item()/N:.5f}, sigma2= {1/beta:.4f}')
 
-    if verbose:
+    if False:
         print(f'logML= {logML/N}\n{logMarginalLog}')
     print(f'End, m= {active_m.shape[0]:3}')
-    if count > 0:
+    if verbose and count > 0:
         print(f'add: {add_count:3d} ({add_count/count:.1%}), delete: {del_count:3d} ({del_count/count:.1%}), recompute: {recomp_count:3d} ({recomp_count/count:.1%})')
 
     return active_m.cpu().numpy(), alpha_m, Gamma, beta, mu_m, U
