@@ -230,8 +230,8 @@ class DKT_regression(nn.Module):
     def train(self, stop_epoch, n_support, n_samples, optimizer):
 
         mll_list = []
-        # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.1)
-        scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.1)
+        # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
         best_mse = 1e7
         for epoch in range(stop_epoch):
             mll = self.train_loop(epoch, n_support, n_samples, optimizer)
@@ -266,7 +266,7 @@ class DKT_regression(nn.Module):
             
             if self.lr_decay:
                 scheduler.step()
-                
+
         mll = np.mean(mll_list)
         if self.show_plots_pred:
             self.mw.finish()

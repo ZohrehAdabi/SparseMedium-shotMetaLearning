@@ -51,8 +51,8 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
                                       
     else:
         raise ValueError('Unknown optimization, please define by yourself')
-    # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.1)
-    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
+    # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
     max_acc = 0
     print(f'num train task {len(base_loader)}')
     print(f'num val task {len(val_loader)}')
