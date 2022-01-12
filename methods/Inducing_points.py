@@ -370,7 +370,7 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
         tol = 1e-4
         eps = torch.finfo(torch.float32).eps
         max_itr = 1000
-        sigma = 0.1
+        sigma =torch.tensor(0.1).to(device) 
         beta = 1/sigma
         kernel_matrix = base_covar_module(inputs).evaluate()
         # normalize kernel

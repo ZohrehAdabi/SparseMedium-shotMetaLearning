@@ -188,10 +188,10 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
 
             with torch.no_grad():
                 if self.regression:
-                        inducing_points, frvm_acc = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
-                                                                z_train, target, sparse_method=self.sparse_method, scale=self.scale,
-                                                                config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-                                                                num_inducing_points=self.num_inducing_points, verbose=True, device=self.device)
+                    inducing_points, frvm_acc = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
+                                                            z_train, target, sparse_method=self.sparse_method, scale=self.scale,
+                                                            config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
+                                                            num_inducing_points=self.num_inducing_points, verbose=False, device=self.device)
                 else:
                     inducing_points, frvm_acc = get_inducing_points(self.model.base_covar_module, #.base_kernel,
                                                             z_train, target, sparse_method=self.sparse_method, scale=self.scale,
@@ -204,14 +204,15 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             alpha_m = inducing_points.alpha
             mu_m = inducing_points.mu
             U = inducing_points.U
-            K = self.model.base_covar_module(z_train, ip_values).evaluate()
-            scales	= torch.sqrt(torch.sum(K**2, axis=0))
+            K_m = self.model.base_covar_module(z_train, ip_values).evaluate()
+            K_m = K_m.to(torch.float64)
+            scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
             # K = K / scales
             mu_m = mu_m /scales
             if self.regression:
-                rvm_mll = rvm_ML(K, target, alpha_m, mu_m)
+                rvm_mll = rvm_ML_regression(K_m, target, alpha_m, mu_m)
             else:
-                rvm_mll = rvm_ML(K, target, alpha_m, mu_m, U)
+                rvm_mll = rvm_ML(K_m, target, alpha_m, mu_m, U)
             if self.dirichlet:
                 ip_labels[ip_labels==-1] = 0
                 self.model.likelihood.targets = ip_labels.long()
@@ -425,7 +426,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
                         inducing_points, frvm_acc = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
                                                                 z_train, target, sparse_method=self.sparse_method, scale=self.scale,
                                                                 config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-                                                                num_inducing_points=self.num_inducing_points, verbose=True, device=self.device)
+                                                                num_inducing_points=self.num_inducing_points, verbose=False, device=self.device)
             else:
                 inducing_points, frvm_acc = get_inducing_points(self.model.base_covar_module, #.base_kernel,
                                                         z_train, target, sparse_method=self.sparse_method, scale=self.scale,
