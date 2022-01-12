@@ -313,7 +313,7 @@ def single_test(params):
             print("-----------------------------")
             print('Test Acc best model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
             print("-----------------------------") 
-
+        print(f'\n{id}\n')
     else:
         novel_file = os.path.join( checkpoint_dir.replace("checkpoints","features"), split_str +".hdf5") #defaut split = novel, but you can also test base or val classes
         cl_data_file = feat_loader.init_loader(novel_file)
