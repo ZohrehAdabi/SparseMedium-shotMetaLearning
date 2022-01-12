@@ -138,8 +138,8 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
         terminate = False
 
         if not anyWorthwhileAction:
-            # if verbose:
-            print(f'{itr:3}, No positive action, m={active_m.shape[0]:3}')
+            if verbose:
+                print(f'{itr:3}, No positive action, m={active_m.shape[0]:3}')
             selected_action = 10
             terminate = True
 
@@ -148,8 +148,8 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
             
             if no_change_in_alpha:
                 # print(selected_action)
-                # if verbose:
-                print(f'{itr:3}, No change in alpha, m= {active_m.shape[0]:3}')
+                if verbose:
+                    print(f'{itr:3}, No change in alpha, m= {active_m.shape[0]:3}')
                 selected_action = 11
                 terminate = True
         # else:
@@ -335,7 +335,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
             delta_beta	= torch.log(beta)-torch.log(beta_old)
             beta_KK_m       = beta * KK_m
             if torch.abs(delta_beta) > 1e-6:
-                if verbose:
+                if verbose and False:
                     print(f'{itr:3}, update statistics after beta update')
                 Sigma_m, mu_m, S, Q, s, q, logML, Gamma, U = Statistics(K_m, KK_m, KK_mm, K, KK_diag, Kt, K_mt, alpha_m, active_m, beta, targets, N)
                 count = count + 1
