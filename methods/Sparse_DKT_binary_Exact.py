@@ -76,7 +76,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             time_string = strftime("%d%m%Y_%H%M", gmtime())
             if not os.path.isdir(path):
                 os.makedirs(path)
-            writer_path = path + '/' + id #+'_'+ time_string
+            writer_path = path + '/' + id[24:] #+'_'+ time_string
             self.writer = SummaryWriter(log_dir=writer_path)
 
     def get_model_likelihood_mll(self, train_x=None, train_y=None):
@@ -152,7 +152,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         #     optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
         #         #                              {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
         self.frvm_acc = []
-        l =  self.lamda_rvm
+        l =  self.lambda_rvm
         for i, (x,_) in enumerate(train_loader):
             self.n_query = x.size(1) - self.n_support
             if self.change_way: self.n_way  = x.size(0)
@@ -476,12 +476,13 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             top1_correct = np.sum(y_pred == y_query)
             count_this = len(y_query)
             acc = (top1_correct/ count_this)*100
-            print(Fore.RED,"="*50, Fore.RESET)
-            print(f'inducing_points count: {inducing_points.count}')
-            # print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha.cpu().numpy()}',Fore.RESET)
-            # print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma.cpu().numpy()}',Fore.RESET)
-            print(Fore.YELLOW, f'itr {i:3}, ACC: {acc:.2f}%', Fore.RESET)
-            print(Fore.RED,"-"*50, Fore.RESET)
+            if i%10==0:
+                # print(Fore.RED,"-"*25, Fore.RESET)
+                print(f'inducing_points count: {inducing_points.count}')
+                # print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha.cpu().numpy()}',Fore.RESET)
+                # print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma.cpu().numpy()}',Fore.RESET)
+                print(Fore.YELLOW, f'itr {i:3}, ACC: {acc:.2f}%', Fore.RESET)
+                print(Fore.RED,"="*50, Fore.RESET)
             if self.show_plot:
                 self.plot_test(x_query, y_query, y_pred, inducing_points, i)
 
