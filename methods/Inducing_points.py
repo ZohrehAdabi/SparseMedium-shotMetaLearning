@@ -335,6 +335,7 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
     acc = None
     mu_m = None
     U = None
+    print_freq = 5
     if sparse_method=='Random':
         if classification:
             if num_inducing_points is not None:
@@ -420,11 +421,11 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
                 y_pred = (y_pred > 0.5).to(int)
                 y_pred[y_pred==0] = -1
                 acc = (torch.sum(y_pred==target) / N).item()  * 100
-                if verbose: 
+                if verbose and (task_id%print_freq==0): 
                     print(f'FRVM ACC on Inputs: {(acc):.2f}%')
             else:
                 mse_r = mse_loss(y_pred, target)
-                if verbose:
+                if verbose and (task_id%print_freq==0):
                     print(f'FRVM MSE: {mse_r:0.4f}')
             
             # self.frvm_acc.append(acc.item())
