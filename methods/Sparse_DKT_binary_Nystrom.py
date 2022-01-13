@@ -268,7 +268,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             # K = K / scales
             mu_m = mu_m /scales
             if self.regression:
-                rvm_mll = rvm_ML_regression(K_m, target, alpha_m, mu_m)
+                rvm_mll, _ = rvm_ML_regression(K_m, target, alpha_m, mu_m)
             else:
                 rvm_mll = rvm_ML(K_m, target, alpha_m, mu_m, U)
 
@@ -602,7 +602,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             correct_this, count_this, loss_value, num_sv, correct_this_rvm = self.correct(x, i)
             acc_all.append(correct_this/ count_this*100)
             acc_all_rvm.append(correct_this_rvm/ count_this*100)
-            num_sv_list.append(num_sv)
+            num_sv_list.append(num_sv_list)
             if(i % 10==0):
                 acc_mean = np.mean(np.asarray(acc_all))
                 acc_mean_rvm = np.mean(np.asarray(acc_all_rvm))
@@ -611,7 +611,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
         acc_mean = np.mean(acc_all)
         acc_mean_rvm = np.mean(np.asarray(acc_all_rvm))
         acc_std  = np.std(acc_all)
-        mean_num_sv = np.mean(num_sv)
+        mean_num_sv = np.mean(num_sv_list)
         print(Fore.LIGHTRED_EX,"="*30, Fore.RESET)
         print(f'Avg. FRVM ACC on support set: {np.mean(self.frvm_acc):4.2f}%, Avg. SVs {mean_num_sv:.2f}', Fore.RESET)
         print(f'Avg. FRVM ACC on query set: {acc_mean_rvm:4.2f}%', Fore.RESET)
