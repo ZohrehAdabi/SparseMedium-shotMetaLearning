@@ -364,7 +364,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
             
             print(Fore.RED,"-"*50, Fore.RESET)
 
-        if (verbose and self.test_i%20==0) or self.show_plots_pred:
+        if (False and self.test_i%20==0) or self.show_plots_pred:
             K = self.model.base_covar_module
             kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
             max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)

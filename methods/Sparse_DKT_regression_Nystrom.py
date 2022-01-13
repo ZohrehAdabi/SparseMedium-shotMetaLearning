@@ -368,7 +368,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             print(f'FRVM MSE on query: {mse_r:0.4f}')
             print(Fore.RED,"-"*50, Fore.RESET)
 
-        if self.show_plots_pred or (verbose and self.test_i%20==0):
+        if self.show_plots_pred or (False and self.test_i%20==0):
             K = self.model.base_covar_module
             kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
             max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
