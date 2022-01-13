@@ -12,7 +12,7 @@ from sklearn.svm import SVR
 from sklearn.metrics import mean_squared_error as mse
 
 
-def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol, max_itr=3000, device='cuda', verbose=True):
+def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol, max_itr=3000, device='cuda', verbose=True, task_id=None):
     
 
     M = K.shape[1]
@@ -55,6 +55,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
     del_count = 0
     recomp_count = 0
     count = 0
+    print_freq = 5
     for itr in range(max_itr):
 
         # 'Relevance Factor' (q^2-s) values for basis functions in model
@@ -138,7 +139,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
         terminate = False
 
         if not anyWorthwhileAction:
-            if verbose:
+            if verbose and (task_id%print_freq==0):
                 print(f'{itr:3}, No positive action, m={active_m.shape[0]:3}')
             selected_action = 10
             terminate = True
@@ -148,7 +149,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
             
             if no_change_in_alpha:
                 # print(selected_action)
-                if verbose:
+                if verbose and (task_id%print_freq==0):
                     print(f'{itr:3}, No change in alpha, m= {active_m.shape[0]:3}')
                 selected_action = 11
                 terminate = True
@@ -348,9 +349,9 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
 
         if terminate:
             # print(f'sigma2={1/beta:.4f}')
-            if verbose:
-            
-                print(f'Finished at {itr:3}, m= {active_m.shape[0]:3} sigma2= {1/beta:4.4f} logML= {logML.item()/N:.5f}')
+            if verbose and (task_id%print_freq==0):
+                if selected_action!=11:
+                    print(f'Finished at {itr:3}, m= {active_m.shape[0]:3} sigma2= {1/beta:4.4f} logML= {logML.item()/N:.5f}')
             # if count > 0:
             #     print(f'add: {add_count:3d} ({add_count/count:.1%}), delete: {del_count:3d} ({del_count/count:.1%}), recompute: {recomp_count:3d} ({recomp_count/count:.1%})')
             return active_m.cpu().numpy(), alpha_m, Gamma, beta, mu_m, U

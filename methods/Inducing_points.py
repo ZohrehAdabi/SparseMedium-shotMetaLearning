@@ -98,7 +98,7 @@ def rvm_ML_regression(K_m, targets, alpha_m, mu_m, beta=10.0):
 
 def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale,
                         config='000', align_threshold='0', gamma=False, 
-                        num_inducing_points=None, verbose=True, device='cuda'):
+                        num_inducing_points=None, verbose=True, task_id=None, device='cuda'):
 
         
     IP_index = np.array([])
@@ -156,7 +156,7 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
         # targets[targets==-1]= 0
         target = targets.clone().to(torch.float64)
         active, alpha, gamma, beta, mu_m, U = Fast_RVM(kernel_matrix, target, N, config, align_threshold, gamma,
-                                                eps, tol, max_itr, device, verbose)
+                                                eps, tol, max_itr, device, verbose, task_id)
 
         # index = np.argsort(active)
         # active = active[index]
@@ -328,7 +328,7 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
 
 def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_method, scale, beta,
                         config='0000', align_threshold='0', gamma=False, 
-                        num_inducing_points=None, verbose=True, device='cuda', classification=False):
+                        num_inducing_points=None, verbose=True, task_id=None, device='cuda', classification=False):
 
         
     IP_index = np.array([])
@@ -393,7 +393,7 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
         # active, alpha, gamma, beta, mu_m, U = Fast_RVM(kernel_matrix, target, N, config, align_threshold, gamma,
         #                                         eps, tol, max_itr, device, verbose)
         active, alpha, gamma, beta, mu_m, U = Fast_RVM_regression(kernel_matrix, target, beta, N, config, align_threshold,
-                                                    False, eps, tol, max_itr, device, verbose)
+                                                    False, eps, tol, max_itr, device, verbose, task_id)
 
         # index = np.argsort(active)
         # active = active[index]

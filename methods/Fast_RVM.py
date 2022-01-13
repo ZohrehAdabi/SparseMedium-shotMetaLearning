@@ -16,7 +16,7 @@ from torch.utils import data
 # from autograd_minimize import minimize
 
 
-def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, device='cuda', verbose=True):
+def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, device='cuda', verbose=True, task_id=None):
     
 
     M = K.shape[1]
@@ -70,7 +70,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
     deltaML = torch.zeros(M, dtype=torch.float64).to(device)  
     action = torch.zeros(M)
     tic = time.time()
-    
+    print_freq = 5
     for itr in range(max_itr):
 
         # 'Relevance Factor' (q^2-s) values for basis functions in model
@@ -136,7 +136,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
         terminate = False
 
         if not anyWorthwhileAction:
-            if verbose:
+            if verbose and (task_id%print_freq==0):
                 print(f'{itr:3}, No positive action, m={active_m.shape[0]:3}')
             selected_action = torch.tensor(10)
             terminate = True
@@ -144,7 +144,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
         elif (selected_action==0) and (not anyToDelete):
             no_change_in_alpha = torch.abs(torch.log(alpha_new) - torch.log(alpha_m[j])) < tol
             if no_change_in_alpha:
-                if verbose:
+                if verbose and (task_id%print_freq==0):
                     print(f'{itr:3}, No change in alpha, m={active_m.shape[0]:3}')
                 selected_action = torch.tensor(11)
                 terminate = True
@@ -263,7 +263,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
 
         if terminate:
            
-            # if verbose:
+            # if verbose and (task_id%print_freq==0):
             #     if selected_action!=11:
             #         print(f'Finished at {itr:3}, m= {active_m.shape[0]:3}')
             toc = time.time()

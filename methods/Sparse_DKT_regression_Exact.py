@@ -169,7 +169,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
                 inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
                                                                 z, labels, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
                                                                 config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-                                                                num_inducing_points=self.num_inducing_points, verbose=True, device=self.device)
+                                                                num_inducing_points=self.num_inducing_points, verbose=True, task_id=itr, device=self.device)
            
             ip_index = inducing_points.index
             ip_values = z[ip_index]
@@ -280,7 +280,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
             inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
                                                             z_support, y_support, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
                                                             config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-                                                            num_inducing_points=self.num_inducing_points, verbose=False, device=self.device)
+                                                            num_inducing_points=self.num_inducing_points, verbose=False, task_id=self.test_i, device=self.device)
         
         ip_values = inducing_points.z_values.cuda()
         mu_m = inducing_points.mu
