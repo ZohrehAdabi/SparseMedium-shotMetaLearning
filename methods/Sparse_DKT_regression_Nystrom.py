@@ -307,7 +307,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             mu_m = mu_m / scales
             y_pred_r = K_m @ mu_m       
             mse_r = self.mse(y_pred_r, y_query).item()
-            print(f'FRVM MSE on query: {mse_r:0.4f}')
+            # print(f'FRVM MSE on query: {mse_r:0.4f}')
 
         
 
@@ -352,6 +352,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
             print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
             print(Fore.LIGHTRED_EX, f'mse:    {mse_:.4f}, mse (normed):{mse:.4f}', Fore.RESET)
+            print(f'FRVM MSE on query: {mse_r:0.4f}')
             print(Fore.RED,"-"*50, Fore.RESET)
 
         if verbose or self.show_plots_pred:
