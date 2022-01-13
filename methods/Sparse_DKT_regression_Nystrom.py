@@ -342,16 +342,17 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         mse_ = self.mse(y_pred, y).item()
         y = y.cpu().numpy()
         y_pred = y_pred.cpu().numpy()
-        print(Fore.RED,"="*50, Fore.RESET)
-        if verbose:
-            print(f'inducing_points count: {inducing_points.count}')
-            print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha}',Fore.RESET)
-            print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma}',Fore.RESET)
-        print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
-        print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
-        print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
-        print(Fore.LIGHTRED_EX, f'mse:    {mse_:.4f}, mse (normed):{mse:.4f}', Fore.RESET)
-        print(Fore.RED,"-"*50, Fore.RESET)
+        if self.test_i%5==0:
+            print(Fore.RED,"="*50, Fore.RESET)
+            if verbose:
+                print(f'inducing_points count: {inducing_points.count}')
+                print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha}',Fore.RESET)
+                print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma}',Fore.RESET)
+            print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
+            print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
+            print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
+            print(Fore.LIGHTRED_EX, f'mse:    {mse_:.4f}, mse (normed):{mse:.4f}', Fore.RESET)
+            print(Fore.RED,"-"*50, Fore.RESET)
 
         if verbose or self.show_plots_pred:
             K = self.model.base_covar_module

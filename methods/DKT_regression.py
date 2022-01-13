@@ -139,7 +139,7 @@ class DKT_regression(nn.Module):
 
         return np.mean(mll_list)
 
-    def test_loop(self, n_support, n_samples, test_person, optimizer=None): # no optimizer needed for GP
+    def test_loop(self, n_support, n_samples, test_person, optimizer=None, verbose=False): # no optimizer needed for GP
         self.model.eval()
         self.feature_extractor.eval()
         self.likelihood.eval()
@@ -194,18 +194,20 @@ class DKT_regression(nn.Module):
         mse_ = self.mse(y_pred, y).item()
         y = y.cpu().numpy()
         y_pred = y_pred.cpu().numpy()
-        print(Fore.RED,"="*50, Fore.RESET)
-        print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
-        print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
-        print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
-        print(Fore.LIGHTRED_EX, f'mse:    {mse_:.4f}, mse (normed): {mse:.4f}', Fore.RESET)
-        print(Fore.RED,"-"*50, Fore.RESET)
-
-        K = self.model.covar_module
-        kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
-        max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
-        y_s = ((y_support.detach().cpu().numpy() + 1) * 60 / 2) + 60
-        print(Fore.LIGHTGREEN_EX, f'target of most similar in support set: {y_s[max_similar_idx_x_s]}', Fore.RESET)
+        if self.test_i%5==0:
+            
+            print(Fore.RED,"="*50, Fore.RESET)
+            print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
+            print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
+            print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
+            print(Fore.LIGHTRED_EX, f'mse:    {mse_:.4f}, mse (normed): {mse:.4f}', Fore.RESET)
+            print(Fore.RED,"-"*50, Fore.RESET)
+        if self.show_plots_pred:
+            K = self.model.covar_module
+            kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
+            max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
+            y_s = ((y_support.detach().cpu().numpy() + 1) * 60 / 2) + 60
+            print(Fore.LIGHTGREEN_EX, f'target of most similar in support set: {y_s[max_similar_idx_x_s]}', Fore.RESET)
         #**************************************************
 
         if (self.show_plots_pred or self.show_plots_features):
@@ -283,6 +285,7 @@ class DKT_regression(nn.Module):
 
         test_person = np.random.choice(np.arange(len(test_people)), size=test_count, replace=rep)
         for t in range(test_count):
+            self.test_t = t
             print(f'test #{t}')
             
             mse, mse_ = self.test_loop(n_support, n_samples, test_person[t],  optimizer)
