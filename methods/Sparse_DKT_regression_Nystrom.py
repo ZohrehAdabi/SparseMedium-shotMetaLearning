@@ -356,7 +356,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         y_pred = y_pred.cpu().numpy()
         if self.test_i%5==0:
             print(Fore.RED,"="*50, Fore.RESET)
-            if verbose:
+            if verbose and self.test_i%20==0:
                 print(f'inducing_points count: {inducing_points.count}')
                 print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha}',Fore.RESET)
                 print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma}',Fore.RESET)
@@ -368,7 +368,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             print(f'FRVM MSE on query: {mse_r:0.4f}')
             print(Fore.RED,"-"*50, Fore.RESET)
 
-        if verbose or self.show_plots_pred:
+        if self.show_plots_pred or (verbose and self.test_i%20==0):
             K = self.model.base_covar_module
             kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
             max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
