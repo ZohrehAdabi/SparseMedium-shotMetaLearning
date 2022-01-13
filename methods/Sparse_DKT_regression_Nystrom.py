@@ -25,7 +25,7 @@ import random
 ## Our packages
 import gpytorch
 from methods.Fast_RVM_regression import Fast_RVM_regression
-from Inducing_points import get_inducing_points_regression, rvm_ML_regression
+from methods.Inducing_points import get_inducing_points_regression, rvm_ML_regression
 
 from statistics import mean
 from data.qmul_loader import get_batch, train_people, val_people, test_people, get_unnormalized_label
