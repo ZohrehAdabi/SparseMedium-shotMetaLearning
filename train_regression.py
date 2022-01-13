@@ -10,6 +10,7 @@ from methods.Sparse_DKT_sine_regression_Nystrom import Sparse_DKT_sine_regressio
 from methods.Sparse_DKT_regression_Nystrom_new_loss import Sparse_DKT_regression_Nystrom_new_loss
 from methods.Sparse_DKT_regression_Exact import Sparse_DKT_regression_Exact
 from methods.Sparse_DKT_regression_Exact_new_loss import Sparse_DKT_regression_Exact_new_loss
+from methods.Sparse_DKT_regression_RVM import Sparse_DKT_regression_RVM
 from methods.DKT_regression import DKT_regression
 from methods.DKT_regression_New_Loss import DKT_regression_New_Loss
 from methods.MAML_regression import     MAML_regression
@@ -245,6 +246,54 @@ elif params.method=='Sparse_DKT_Sine_Nystrom':
         if params.rvm_mse: id += f'_rvm_mse_{params.lambda_rvm}'
         params.checkpoint_dir = params.checkpoint_dir +  id
         model = Sparse_DKT_sine_regression_Nystrom(bb, kernel_type=params.kernel_type,  add_rvm_mll=params.rvm_mll, add_rvm_mse=params.rvm_mse, lambda_rvm=params.lambda_rvm, 
+                            normalize=params.normalize, lr_decay=params.lr_decay, f_rvm=False, random=True,  n_inducing_points=params.n_centers, video_path=params.checkpoint_dir, 
+                            show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
+        model.init_summary(id=id)
+                            
+    else:
+       raise  ValueError('Unrecognised sparse method')
+
+elif params.method=='Sparse_DKT_RVM':
+    params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s' % (configs.save_dir, params.dataset, params.model, params.method, 
+                                                        params.sparse_method)
+    video_path = params.checkpoint_dir
+    
+    
+    if params.sparse_method=='FRVM':
+        params.checkpoint_dir += '/'
+        if not os.path.isdir(params.checkpoint_dir):
+            os.makedirs(params.checkpoint_dir)
+        
+        id =  f'FRVM_{params.config}_{params.align_thr}_{params.lr_gp}_{params.lr_net}'
+        if params.gamma: id += '_gamma'
+        if params.normalize: id += '_norm'
+        if params.lr_decay: id += '_lr_decay'
+        if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
+        if params.rvm_mll_one: id += f'_rvm_mll_one_{params.lambda_rvm}'
+        if params.rvm_mse: id += f'_rvm_mse_{params.lambda_rvm}'
+        id += f'_{params.kernel_type}_seed_{params.seed}'
+        params.checkpoint_dir = params.checkpoint_dir + id
+
+        model = Sparse_DKT_regression_RVM(bb, kernel_type=params.kernel_type, sparse_method=params.sparse_method, add_rvm_mll=params.rvm_mll, add_rvm_mll_one=params.rvm_mll_one, add_rvm_mse=params.rvm_mse, lambda_rvm=params.lambda_rvm, 
+                            normalize=params.normalize, lr_decay=params.lr_decay, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
+                            video_path=params.checkpoint_dir, 
+                            show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
+        model.init_summary(id=id)
+
+
+
+    elif params.sparse_method=='random':
+        params.checkpoint_dir += '/'
+        if not os.path.isdir(params.checkpoint_dir):
+            os.makedirs(params.checkpoint_dir)
+        id = f'random_{params.lr_gp}_{params.lr_net}_ip_{params.n_centers}_seed_{params.seed}'
+        if params.normalize: id += '_norm'
+        if params.lr_decay: id += '_lr_decay'
+        if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
+        if params.rvm_mll_one: id += f'_rvm_mll_one_{params.lambda_rvm}'
+        if params.rvm_mse: id += f'_rvm_mse_{params.lambda_rvm}'
+        params.checkpoint_dir = params.checkpoint_dir +  id
+        model = Sparse_DKT_regression_RVM(bb, kernel_type=params.kernel_type, sparse_method=params.sparse_method, add_rvm_mll=params.rvm_mll, add_rvm_mll_one=params.rvm_mll_one, add_rvm_mse=params.rvm_mse, lambda_rvm=params.lambda_rvm, 
                             normalize=params.normalize, lr_decay=params.lr_decay, f_rvm=False, random=True,  n_inducing_points=params.n_centers, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
         model.init_summary(id=id)
