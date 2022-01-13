@@ -307,7 +307,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             mu_m = mu_m / scales
             y_pred_r = K_m @ mu_m       
             mse_r = self.mse(y_pred_r, y_query).item()
-            print(f'FRVM MSE: {mse_r:0.4f}')
+            print(f'FRVM MSE on query: {mse_r:0.4f}')
 
         
 
@@ -521,7 +521,8 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         if self.f_rvm: 
             print(f'MSE (unnormed): {np.mean(mse_list_):.4f}')
             print(f'MSE RVM: {np.mean(mse_rvm_list):.4f}')
-        if self.f_rvm: print(f'Avg. SVs: {np.mean(num_sv_list):.2f}')
+            print(f'Avg. SVs: {np.mean(num_sv_list):.2f}')
+  
         return mse_list
 
     def train_loop_random(self, epoch, n_support, n_samples, optimizer):
