@@ -44,7 +44,8 @@ except ImportError:
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j_idx")
 class Sparse_DKT_regression_Nystrom(nn.Module):
-    def __init__(self, backbone, kernel_type='rbf', sparse_method='FRVM', add_rvm_mll=False, add_rvm_mll_one=False, add_rvm_mse=False, lambda_rvm=0.1, normalize=False, lr_decay=False, f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
+    def __init__(self, backbone, kernel_type='rbf', sparse_method='FRVM', add_rvm_mll=False, add_rvm_mll_one=False, add_rvm_mse=False, lambda_rvm=0.1, normalize=False, lr_decay=False, 
+                        f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_regression_Nystrom, self).__init__()
         ## GP parameters
@@ -57,7 +58,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         self.lambda_rvm = lambda_rvm
         self.normalize = normalize
         self.lr_decay = lr_decay
-        self.num_induce_points = n_inducing_points
+        self.num_inducing_points = n_inducing_points
         self.config = config
         self.gamma = gamma
         self.align_threshold = align_threshold
@@ -75,9 +76,9 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         self.get_model_likelihood_mll() #Init model, likelihood, and mll
         
     def get_model_likelihood_mll(self, train_x=None, train_y=None):
-        if(train_x is None): train_x=torch.ones(self.num_induce_points, 2916).cuda() #2916: size of feature z
+        if(train_x is None): train_x=torch.ones(self.num_inducing_points, 2916).cuda() #2916: size of feature z
         # if(train_x is None): train_x=torch.rand(19, 3, 100, 100).cuda()
-        if(train_y is None): train_y=torch.ones(self.num_induce_points).cuda()
+        if(train_y is None): train_y=torch.ones(self.num_inducing_points).cuda()
 
         likelihood = gpytorch.likelihoods.GaussianLikelihood()
         likelihood.noise = 0.1
@@ -271,7 +272,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         y_query   = y_all[test_person, query_ind]
 
 
-        # induce_ind = list(np.random.choice(list(range(n_samples)), replace=False, size=self.num_induce_points))
+        # induce_ind = list(np.random.choice(list(range(n_samples)), replace=False, size=self.num_inducing_points))
         # induce_point = self.feature_extractor(x_support[induce_ind, :,:,:])
         z_support = self.feature_extractor(x_support).detach()
         if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1) 
@@ -531,7 +532,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
 
             # random selection of inducing points
-            inducing_points_index = list(np.random.choice(list(range(n_samples)), replace=False, size=self.num_induce_points))
+            inducing_points_index = list(np.random.choice(list(range(n_samples)), replace=False, size=self.num_inducing_points))
 
             z = self.feature_extractor(inputs)
 
@@ -610,7 +611,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         y_query   = y_all[test_person, query_ind]
 
 
-        inducing_points_index = np.random.choice(list(range(n_support)), replace=False, size=self.num_induce_points)
+        inducing_points_index = np.random.choice(list(range(n_support)), replace=False, size=self.num_inducing_points)
 
         z_support = self.feature_extractor(x_support).detach()
 
@@ -699,7 +700,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         
         IP_index = np.array([])
         if not self.f_rvm:
-            num_IP = self.num_induce_points
+            num_IP = self.num_inducing_points
             
             # self.kmeans_clustering = KMeans(n_clusters=num_IP, init='k-means++',  n_init=10, max_iter=1000).fit(inputs.cpu().numpy())
             # inducing_points = self.kmeans_clustering.cluster_centers_
