@@ -283,6 +283,8 @@ class Sparse_DKT_regression_Exact(nn.Module):
                                                             num_inducing_points=self.num_inducing_points, verbose=False, task_id=self.test_i, device=self.device)
         
         ip_values = inducing_points.z_values.cuda()
+        alpha_m = inducing_points.alpha
+        beta = inducing_points.beta
         mu_m = inducing_points.mu
         scales = inducing_points.scale
         self.model.set_train_data(inputs=ip_values, targets=y_support[inducing_points.index], strict=False)
@@ -302,6 +304,16 @@ class Sparse_DKT_regression_Exact(nn.Module):
             mu_m = mu_m / scales
             y_pred_r = K_m @ mu_m       
             mse_r = self.mse(y_pred_r, y_query).item()
+
+            H = torch.diag(alpha_m) + beta * K_m.T @ K_m
+            U, info =  torch.linalg.cholesky_ex(H, upper=True)
+            # # if info>0:
+            # #     print('pd_err of Hessian')
+            U_inv = torch.linalg.inv(U)
+            Sigma_m = U_inv @ U_inv.T
+            S = torch.ones(z_query.shape[0]).to(self.device) *1/beta
+            K_star_Sigma = torch.diag(K_m @ Sigma_m @ K_m.T)
+            rvm_var = S + K_star_Sigma
             
         
 
@@ -346,7 +358,9 @@ class Sparse_DKT_regression_Exact(nn.Module):
             print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
             print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
             print(Fore.LIGHTRED_EX, f'mse:    {mse_:.4f}, mse (normed):{mse:.4f}', Fore.RESET)
+            print(f'FRVM Var on query: {rvm_var}')
             print(f'FRVM MSE on query: {mse_r:0.4f}')
+            
             print(Fore.RED,"-"*50, Fore.RESET)
 
         if verbose or self.show_plots_pred:
