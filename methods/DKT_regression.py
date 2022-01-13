@@ -246,6 +246,7 @@ class DKT_regression(nn.Module):
                 rep = True if val_count > len(val_people) else False
                 val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
                 for t in range(val_count):
+                    self.test_i = t
                     mse, mse_ = self.test_loop(n_support, n_samples, val_person[t],  optimizer)
                     mse_list.append(mse)
                     mse_unnorm_list.append(mse_)
