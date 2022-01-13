@@ -549,29 +549,43 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             else: 
                 pred = torch.sigmoid(prediction.mean)
                 y_pred = (pred > 0.5).to(int)
-                y_pred = y_pred.cpu().detach().numpy()
+                y_pred = y_pred.detach().cpu().numpy()
 
             top1_correct = np.sum(y_pred == y_query)
             count_this = len(y_query)
             acc = (top1_correct/ count_this)*100
+            #FRVM ACC on query
+            K_m = self.model.base_covar_module(z_query, ip_values).evaluate()
+            K_m = K_m.to(torch.float64)
+            scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+            mu = inducing_points.mu
+            mu_m = mu / scales
+            y_pred_ = K_m @ mu_m 
+            y_pred_r = torch.sigmoid(y_pred_)
+            y_pred_r = (y_pred_r > 0.5).to(int)
+            y_pred_r = y_pred_r.detach().cpu().numpy()
+            top1_correct_r = np.sum(y_pred_r==y_query)
+            acc_r = (top1_correct_r / count_this)* 100
+
             if i%10==0:
                 # print(Fore.RED,"-"*25, Fore.RESET)
                 print(f'inducing_points count: {inducing_points.count}')
                 # print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha.cpu().numpy()}',Fore.RESET)
                 # print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma.cpu().numpy()}',Fore.RESET)
-                print(Fore.YELLOW, f'itr {i:3}, ACC: {acc:.2f}%', Fore.RESET)
+                print(Fore.YELLOW, f'itr {i:3}, RVM ACC: {acc_r:.2f}%, ACC: {acc:.2f}%', Fore.RESET)
                 print(Fore.RED,"="*50, Fore.RESET)
             if self.show_plot:
                 self.plot_test(x_query, y_query, y_pred, inducing_points, i)
 
 
-        return float(top1_correct), count_this, avg_loss/float(N+1e-10), inducing_points.count
+        return float(top1_correct), count_this, avg_loss/float(N+1e-10), inducing_points.count, top1_correct_r
 
     def test_loop(self, test_loader, record=None, return_std=False):
         print_freq = 10
         correct =0
         count = 0
         acc_all = []
+        acc_all_rvm = []
         num_sv_list = []
         iter_num = len(test_loader)
         self.show_plot = iter_num < 5
@@ -581,18 +595,22 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             self.n_query = x.size(1) - self.n_support
             if self.change_way:
                 self.n_way  = x.size(0)
-            correct_this, count_this, loss_value, num_sv = self.correct(x, i)
+            correct_this, count_this, loss_value, num_sv, correct_this_rvm = self.correct(x, i)
             acc_all.append(correct_this/ count_this*100)
+            acc_all_rvm.append(correct_this_rvm/ count_this*100)
             num_sv_list.append(num_sv)
             if(i % 10==0):
                 acc_mean = np.mean(np.asarray(acc_all))
-                print('Test | Batch {:d}/{:d} | Loss {:f} | Acc {:f}'.format(i, len(test_loader), loss_value, acc_mean))
+                acc_mean_rvm = np.mean(np.asarray(acc_all_rvm))
+                print('Test | Batch {:d}/{:d} | Loss {:f} |RVM Acc {:f}| Acc {:f}'.format(i, len(test_loader), loss_value, acc_mean_rvm, acc_mean))
         acc_all  = np.asarray(acc_all)
         acc_mean = np.mean(acc_all)
+        acc_mean_rvm = np.mean(np.asarray(acc_all_rvm))
         acc_std  = np.std(acc_all)
         mean_num_sv = np.mean(num_sv)
         print(Fore.LIGHTRED_EX,"="*30, Fore.RESET)
-        print(f'Avg. FRVM ACC: {np.mean(self.frvm_acc):4.2f}%, Avg. SVs {mean_num_sv:.2f}', Fore.RESET)
+        print(f'Avg. FRVM ACC on support set: {np.mean(self.frvm_acc):4.2f}%, Avg. SVs {mean_num_sv:.2f}', Fore.RESET)
+        print(f'Avg. FRVM ACC on query set: {acc_mean_rvm:4.2f}%', Fore.RESET)
         print(Fore.YELLOW,'%d Test Acc = %4.2f%% +- %4.2f%%' %(iter_num,  acc_mean, 1.96* acc_std/np.sqrt(iter_num)), Fore.RESET)
         print(Fore.LIGHTRED_EX,"="*30, Fore.RESET)
         if(self.writer is not None): self.writer.add_scalar('test_accuracy', acc_mean, self.iteration)
