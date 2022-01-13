@@ -189,10 +189,11 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
 
             with torch.no_grad():
                 if self.regression:
+                    self.config = '0' + self.config
                     inducing_points, frvm_acc = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
-                                                            z_train, target, sparse_method=self.sparse_method, scale=self.scale,
+                                                            z_train, target, sparse_method=self.sparse_method, scale=self.scale, beta=torch.tensor(10.0),
                                                             config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-                                                            num_inducing_points=self.num_inducing_points, verbose=True, device=self.device)
+                                                            num_inducing_points=self.num_inducing_points, verbose=True, device=self.device, classification=True)
                 else:
                     inducing_points, frvm_acc = get_inducing_points(self.model.base_covar_module, #.base_kernel,
                                                             z_train, target, sparse_method=self.sparse_method, scale=self.scale,
@@ -424,10 +425,11 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         with torch.no_grad():
             
             if self.regression:
-                        inducing_points, frvm_acc = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
-                                                                z_train, target, sparse_method=self.sparse_method, scale=self.scale,
-                                                                config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-                                                                num_inducing_points=self.num_inducing_points, verbose=False, device=self.device)
+                self.config = '0' + self.config
+                inducing_points, frvm_acc = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
+                                                        z_train, target, sparse_method=self.sparse_method, scale=self.scale, beta=torch.tensor(10.0),
+                                                        config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
+                                                        num_inducing_points=self.num_inducing_points, verbose=False, device=self.device, classification=True)
             else:
                 inducing_points, frvm_acc = get_inducing_points(self.model.base_covar_module, #.base_kernel,
                                                         z_train, target, sparse_method=self.sparse_method, scale=self.scale,
@@ -498,9 +500,10 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             #FRVM ACC on query
             K_m = self.model.base_covar_module(z_query, ip_values).evaluate()
             K_m = K_m.to(torch.float64)
-            scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+            # scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+            scales_m = inducing_points.scale
             mu = inducing_points.mu
-            mu_m = mu / scales
+            mu_m = mu / scales_m
             y_pred_ = K_m @ mu_m 
             y_pred_r = torch.sigmoid(y_pred_)
             y_pred_r = (y_pred_r > 0.5).to(int)

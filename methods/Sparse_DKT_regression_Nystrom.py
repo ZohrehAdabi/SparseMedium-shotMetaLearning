@@ -25,6 +25,7 @@ import random
 ## Our packages
 import gpytorch
 from methods.Fast_RVM_regression import Fast_RVM_regression
+from Inducing_points import get_inducing_points_regression, rvm_ML_regression
 
 from statistics import mean
 from data.qmul_loader import get_batch, train_people, val_people, test_people, get_unnormalized_label
@@ -87,7 +88,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         self.likelihood = likelihood.cuda()
         self.mll        = gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self.model).cuda()
         self.mse        = nn.MSELoss()
-
+        
         return self.model, self.likelihood, self.mll
     
     def init_summary(self, id):
@@ -161,9 +162,19 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             z = self.feature_extractor(inputs)
             if(self.normalize): z = F.normalize(z, p=2, dim=1)
             with torch.no_grad():
-                inducing_points, beta, mu_m, U = self.get_inducing_points(z, labels, verbose=True)
+                # inducing_points, beta, mu_m, U = self.get_inducing_points(z, labels, verbose=True)
+                sigma = self.model.likelihood.noise[0].clone()
+                beta = 1/sigma
+                inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
+                                                                z, labels, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
+                                                                config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
+                                                                num_inducing_points=self.num_inducing_points, verbose=True, device=self.device)
            
             ip_index = inducing_points.index
+            beta = inducing_points.beta
+            mu_m = inducing_points.mu
+            U = inducing_points.U
+            scales = inducing_points.scale
             ip_values = z[ip_index]
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
             self.model.train()
@@ -171,13 +182,10 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             if self.kernel_type=='spectral':
                 self.model.base_covar_module.initialize_from_data_empspect(z, labels)
 
-            # sigma = self.model.likelihood.noise[0].clone()
-            # K_star = self.model.base_covar_module(z, ip_values).evaluate()
-            # if self.add_rvm_mll or self.add_rvm_mse:
             alpha_m = inducing_points.alpha
             K_m = self.model.base_covar_module(z, ip_values).evaluate()
             K_m = K_m.to(torch.float64)
-            scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+            # scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
             # K_m = K_m / scales
             # alpha_m = alpha_m / (scales**2)
             mu_m = mu_m / scales
@@ -203,7 +211,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             if(self.writer is not None): self.writer.add_scalar('MLL + RVM MLL (Loss)', loss.item(), self.iteration)
             if(self.writer is not None): self.writer.add_scalar('MLL', -mll.item(), self.iteration)
             if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll.item(), self.iteration)
-            if(self.writer is not None): self.writer.add_scalar('RVM MSE', rvm_mse.item(), self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('RVM MSE', frvm_mse.item(), self.iteration)
             if self.kernel_type=='rbf':
                 if ((epoch%1==0) & (itr%2==0)):
                     print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.4f ML %.4f RVM ML: %.4f RVM MSE: %.4f  MSE: %.3f noise: %.4f outputscale: %.3f lengthscale: %.3f' % (
@@ -267,9 +275,17 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         z_support = self.feature_extractor(x_support).detach()
         if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1) 
         with torch.no_grad():
-            inducing_points, beta, mu, U = self.get_inducing_points(z_support, y_support, verbose=False)
+            # inducing_points, beta, mu, U = self.get_inducing_points(z_support, y_support, verbose=False)
+            sigma = self.model.likelihood.noise[0].clone()
+            beta = 1/sigma
+            inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
+                                                            z_support, y_support, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
+                                                            config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
+                                                            num_inducing_points=self.num_inducing_points, verbose=False, device=self.device)
         
         ip_values = inducing_points.z_values.cuda()
+        mu_m = inducing_points.mu
+        scales = inducing_points.scale
         self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
         self.model.covar_module._clear_cache()
         self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
@@ -285,8 +301,8 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
 
             K_m = self.model.base_covar_module(z_query, ip_values).evaluate()
             K_m = K_m.to(torch.float64)
-            scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
-            mu_m = mu / scales
+            # scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+            mu_m = mu_m / scales
             y_pred_r = K_m @ mu_m       
             mse_r = self.mse(y_pred_r, y_query).item()
             print(f'FRVM MSE: {mse_r:0.4f}')

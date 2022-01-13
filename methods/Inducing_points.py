@@ -17,8 +17,10 @@ import random
 from colorama import Fore
 from methods.Fast_RVM import Fast_RVM, posterior_mode
 from methods.Fast_RVM_regression import Fast_RVM_regression
+import torch.nn as nn
 
-IP = namedtuple("inducing_points", "z_values index count alpha gamma mu U")
+IP = namedtuple("inducing_points", "z_values index count alpha gamma beta mu scale U")
+mse_loss  = nn.MSELoss() 
 
 def rvm_ML(K_m, targets, alpha_m, mu_m, U):
         
@@ -108,7 +110,7 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
             num_IP = num_inducing_points
             # random selection of inducing points
             idx_zero = torch.where((targets==-1) | (targets==0))[0]
-            idx_one = torch.where(targets==-1)[0]
+            idx_one = torch.where(targets==1)[0]
             inducing_points_zero = list(np.random.choice(idx_zero.cpu().numpy(), replace=False, size=num_inducing_points//2))
             inducing_points_one = list(np.random.choice(idx_one.cpu().numpy(), replace=False, size=num_inducing_points//2))
 
@@ -160,16 +162,16 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
         # active = active[index]
         inducing_points = inputs[active]
         # gamma = gamma[index]
-        ss = scales[active]
-        # alpha = alpha[index] #/ ss**2
-        # mu_m = mu_m[index] #/ss
+        scales_m = scales[active]
+        # alpha = alpha[index] #/ scales_m**2
+        # mu_m = mu_m[index] #/scales_m
         num_IP = active.shape[0]
         IP_index = active
 
         if True:
             # ss = scales[index]
             K = base_covar_module(inputs, inducing_points).evaluate()
-            mu_r = mu_m / ss
+            mu_r = mu_m / scales_m
             mu_r = mu_r.to(torch.float)
             y_pred = K @ mu_r
             y_pred = torch.sigmoid(y_pred)
@@ -321,12 +323,12 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
     else:
         print(f'No method')
 
-    return IP(inducing_points, IP_index, num_IP, alpha, gamma, mu_m, U), acc
+    return IP(inducing_points, IP_index, num_IP, alpha, gamma, mu_m, scales_m, U), acc
   
 
-def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_method, scale,
+def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_method, scale, beta,
                         config='0000', align_threshold='0', gamma=False, 
-                        num_inducing_points=None, verbose=True, device='cuda'):
+                        num_inducing_points=None, verbose=True, device='cuda', classification=False):
 
         
     IP_index = np.array([])
@@ -334,16 +336,17 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
     mu_m = None
     U = None
     if sparse_method=='Random':
-        if num_inducing_points is not None:
-            num_IP = num_inducing_points
-            # random selection of inducing points
-            idx_zero = torch.where((targets==-1) | (targets==0))[0]
-            idx_one = torch.where(targets==-1)[0]
-            inducing_points_zero = list(np.random.choice(idx_zero.cpu().numpy(), replace=False, size=num_inducing_points//2))
-            inducing_points_one = list(np.random.choice(idx_one.cpu().numpy(), replace=False, size=num_inducing_points//2))
+        if classification:
+            if num_inducing_points is not None:
+                num_IP = num_inducing_points
+                # random selection of inducing points
+                idx_zero = torch.where((targets==-1) | (targets==0))[0]
+                idx_one = torch.where(targets==1)[0]
+                inducing_points_zero = list(np.random.choice(idx_zero.cpu().numpy(), replace=False, size=num_inducing_points//2))
+                inducing_points_one = list(np.random.choice(idx_one.cpu().numpy(), replace=False, size=num_inducing_points//2))
 
-            IP_index = inducing_points_one + inducing_points_zero
-            inducing_points = inputs[IP_index, :]
+                IP_index = inducing_points_one + inducing_points_zero
+                inducing_points = inputs[IP_index, :]
             alpha = None
             gamma = None
 
@@ -370,8 +373,10 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
         tol = 1e-3
         eps = torch.finfo(torch.float32).eps
         max_itr = 1000
-        sigma =torch.tensor(0.1).to(device) 
-        beta = 1/sigma
+        # if classification:
+        #     sigma =torch.tensor(0.1).to(device) 
+        #     beta = 1/sigma
+        beta = beta.to(device)
         kernel_matrix = base_covar_module(inputs).evaluate()
         # normalize kernel
         scales = torch.ones(kernel_matrix.shape[1]).to(device)
@@ -384,7 +389,7 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
         kernel_matrix = kernel_matrix.to(torch.float64)
         # targets[targets==-1]= 0
         target = targets.clone().to(torch.float64)
-        config = '0' + config
+        
         # active, alpha, gamma, beta, mu_m, U = Fast_RVM(kernel_matrix, target, N, config, align_threshold, gamma,
         #                                         eps, tol, max_itr, device, verbose)
         active, alpha, gamma, beta, mu_m, U = Fast_RVM_regression(kernel_matrix, target, beta, N, config, align_threshold,
@@ -394,25 +399,33 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
         # active = active[index]
         inducing_points = inputs[active]
         # gamma = gamma[index]
-        ss = scales[active]
-        # alpha = alpha[index] #/ ss**2
-        # mu_m = mu_m[index] #/ss
+        scales_m = scales[active]
+        # alpha = alpha[index] #/ scales_m**2
+        # mu_m = mu_m[index] #/scales_m
         num_IP = active.shape[0]
         IP_index = active
 
         if True:
             # ss = scales[index]
             K = base_covar_module(inputs, inducing_points).evaluate()
-            mu_r = mu_m / ss
+            mu_r = mu_m / scales_m
             mu_r = mu_r.to(torch.float)
             y_pred = K @ mu_r
-            y_pred = torch.sigmoid(y_pred)
-            y_pred = (y_pred > 0.5).to(int)
-            y_pred[y_pred==0] = -1
-            acc = (torch.sum(y_pred==target) / N).item()  * 100 # targets is zero and one (after FRVM)
+            
+            
 
-            if verbose:
-                print(f'FRVM ACC on Inputs: {(acc):.2f}%')
+            
+            if classification:
+                y_pred = torch.sigmoid(y_pred)
+                y_pred = (y_pred > 0.5).to(int)
+                y_pred[y_pred==0] = -1
+                acc = (torch.sum(y_pred==target) / N).item()  * 100
+                if verbose: 
+                    print(f'FRVM ACC on Inputs: {(acc):.2f}%')
+            else:
+                mse_r = mse_loss(y_pred, target)
+                if verbose:
+                    print(f'FRVM MSE: {mse_r:0.4f}')
             
             # self.frvm_acc.append(acc.item())
     
@@ -557,6 +570,9 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
     else:
         print(f'No method')
 
-    return IP(inducing_points, IP_index, num_IP, alpha, gamma, mu_m, U), acc
+    if classification:
+        return IP(inducing_points, IP_index, num_IP, alpha, gamma, None, mu_m, scales_m, U), acc
+    else:
+        return IP(inducing_points, IP_index, num_IP, alpha, gamma, beta, mu_m, scales_m, U), mse_r
  
  

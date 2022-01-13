@@ -23,6 +23,7 @@ import random
 ## Our packages
 import gpytorch
 from methods.Fast_RVM_regression import Fast_RVM_regression
+from Inducing_points import get_inducing_points_regression
 
 from statistics import mean
 from data.qmul_loader import get_batch, train_people, val_people, test_people, get_unnormalized_label
@@ -160,11 +161,21 @@ class Sparse_DKT_regression_Exact(nn.Module):
             z = self.feature_extractor(inputs)
             if(self.normalize): z = F.normalize(z, p=2, dim=1)
             with torch.no_grad():
-                inducing_points, beta, mu_m = self.get_inducing_points(z, labels, verbose=True)
+                # inducing_points, beta, mu_m = self.get_inducing_points(z, labels, verbose=True)
+                sigma = self.model.likelihood.noise[0].clone()
+                beta = 1/sigma
+                inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
+                                                                z, labels, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
+                                                                config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
+                                                                num_inducing_points=self.num_inducing_points, verbose=True, device=self.device)
            
             ip_index = inducing_points.index
             ip_values = z[ip_index]
             ip_labels = labels[ip_index]
+            beta = inducing_points.beta
+            mu_m = inducing_points.mu
+            U = inducing_points.U
+            scales = inducing_points.scale
             # self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
             # NOTE 
             self.model.set_train_data(inputs=ip_values, targets=ip_labels, strict=False)
@@ -172,7 +183,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
             alpha_m = inducing_points.alpha
             K_m = self.model.base_covar_module(z, ip_values).evaluate()
             K_m = K_m.to(torch.float64)
-            scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+            # scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
             # K = K / scales
             mu_m = mu_m / scales
             rvm_mll, rvm_mse = self.rvm_ML(K_m, labels, alpha_m, mu_m, beta)
@@ -261,9 +272,17 @@ class Sparse_DKT_regression_Exact(nn.Module):
         z_support = self.feature_extractor(x_support).detach()
         if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1)
         with torch.no_grad():
-            inducing_points, beta, mu = self.get_inducing_points(z_support, y_support, verbose=False)
+            # inducing_points, beta, mu = self.get_inducing_points(z_support, y_support, verbose=False)
+            sigma = self.model.likelihood.noise[0].clone()
+            beta = 1/sigma
+            inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
+                                                            z_support, y_support, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
+                                                            config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
+                                                            num_inducing_points=self.num_inducing_points, verbose=False, device=self.device)
         
         ip_values = inducing_points.z_values.cuda()
+        mu_m = inducing_points.mu
+        scales = inducing_points.scale
         self.model.set_train_data(inputs=ip_values, targets=y_support[inducing_points.index], strict=False)
 
         self.model.eval()
@@ -277,8 +296,8 @@ class Sparse_DKT_regression_Exact(nn.Module):
             lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
             K_m = self.model.base_covar_module(z_query, ip_values).evaluate()
             K_m = K_m.to(torch.float64)
-            scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
-            mu_m = mu / scales
+            # scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+            mu_m = mu_m / scales
             y_pred_r = K_m @ mu_m       
             mse_r = self.mse(y_pred_r, y_query).item()
             print(f'FRVM MSE: {mse_r:0.4f}')
