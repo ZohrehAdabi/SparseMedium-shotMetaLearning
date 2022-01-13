@@ -434,9 +434,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
                                                         config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
                                                         num_inducing_points=self.num_inducing_points, verbose=False, device=self.device)
             self.frvm_acc.append(frvm_acc)
-            inducing_points = IP(inducing_points.z_values, inducing_points.index, inducing_points.count,
-                                inducing_points.alpha, inducing_points.gamma, 
-                                x_support[inducing_points.index], y_support[inducing_points.index], None, None)
+            
         ip_values = inducing_points.z_values.cuda()
         ip_labels = target[inducing_points.index]
         if self.dirichlet:
@@ -518,6 +516,9 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
                 print(Fore.YELLOW, f'itr {i:3}, RVM ACC: {acc_r:.2f}%, ACC: {acc:.2f}%', Fore.RESET)
                 print(Fore.RED,"="*50, Fore.RESET)
             if self.show_plot:
+                inducing_points = IP(inducing_points.z_values, inducing_points.index, inducing_points.count,
+                                inducing_points.alpha, inducing_points.gamma, 
+                                x_support[inducing_points.index], y_support[inducing_points.index], None, None)
                 self.plot_test(x_query, y_query, y_pred, inducing_points, i)
 
 

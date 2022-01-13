@@ -505,9 +505,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                                                             num_inducing_points=self.num_inducing_points, verbose=False, device=self.device)
             self.frvm_acc.append(frvm_acc) 
             # self.ip_count.append(inducing_points.count) 
-            inducing_points = IP(inducing_points.z_values, inducing_points.index, inducing_points.count,
-                                inducing_points.alpha, inducing_points.gamma,  
-                                x_support[inducing_points.index], y_support[inducing_points.index], None, None)
+            
     
         ip_values = inducing_points.z_values.cuda()
         # ip_values = z_train[inducing_points.index].cuda()
@@ -575,6 +573,9 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                 print(Fore.YELLOW, f'itr {i:3}, RVM ACC: {acc_r:.2f}%, ACC: {acc:.2f}%', Fore.RESET)
                 print(Fore.RED,"="*50, Fore.RESET)
             if self.show_plot:
+                inducing_points = IP(inducing_points.z_values, inducing_points.index, inducing_points.count,
+                                inducing_points.alpha, inducing_points.gamma,  
+                                x_support[inducing_points.index], y_support[inducing_points.index], None, None)
                 self.plot_test(x_query, y_query, y_pred, inducing_points, i)
 
 
