@@ -262,9 +262,10 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             alpha_m = inducing_points.alpha
             mu_m = inducing_points.mu
             U = inducing_points.U
+            scales = inducing_points.scale
             K_m = self.model.base_covar_module(z_train, ip_values).evaluate()
             K_m = K_m.to(torch.float64)
-            scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+            # scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
             # K = K / scales
             mu_m = mu_m /scales
             if self.regression:
@@ -611,10 +612,11 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
         acc_mean = np.mean(acc_all)
         acc_mean_rvm = np.mean(np.asarray(acc_all_rvm))
         acc_std  = np.std(acc_all)
+        acc_std_rvm  = np.std(acc_all_rvm)
         mean_num_sv = np.mean(num_sv_list)
         print(Fore.LIGHTRED_EX,"="*30, Fore.RESET)
         print(f'Avg. FRVM ACC on support set: {np.mean(self.frvm_acc):4.2f}%, Avg. SVs {mean_num_sv:.2f}', Fore.RESET)
-        print(f'Avg. FRVM ACC on query set: {acc_mean_rvm:4.2f}%', Fore.RESET)
+        print(f'Avg. FRVM ACC on query set: {acc_mean_rvm:4.2f}%, std: {acc_std_rvm}', Fore.RESET)
         print(Fore.YELLOW,'%d Test Acc = %4.2f%% +- %4.2f%%' %(iter_num,  acc_mean, 1.96* acc_std/np.sqrt(iter_num)), Fore.RESET)
         print(Fore.LIGHTRED_EX,"="*30, Fore.RESET)
         if(self.writer is not None): self.writer.add_scalar('test_accuracy', acc_mean, self.iteration)
