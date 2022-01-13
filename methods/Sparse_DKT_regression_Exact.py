@@ -42,12 +42,13 @@ except ImportError:
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx")
 class Sparse_DKT_regression_Exact(nn.Module):
-    def __init__(self, backbone, kernel_type, add_rvm_mll=False, add_rvm_mll_one=False, add_rvm_mse=False, lambda_rvm=0.1, normalize=False, lr_decay=False, f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
+    def __init__(self, backbone, kernel_type, sparse_method='FRVM', add_rvm_mll=False, add_rvm_mll_one=False, add_rvm_mse=False, lambda_rvm=0.1, normalize=False, lr_decay=False, f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_regression_Exact, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
         self.kernel_type = kernel_type
+        self.sparse_method = sparse_method
         self.add_rvm_mll = add_rvm_mll
         self.add_rvm_mll_one = add_rvm_mll_one
         self.add_rvm_mse = add_rvm_mse
