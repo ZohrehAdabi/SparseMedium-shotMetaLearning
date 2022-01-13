@@ -158,6 +158,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         batch, batch_labels = batch.cuda(), batch_labels.cuda()
         mll_list = []
         l = self.lambda_rvm
+        print_freq = 5
         for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
 
             
@@ -215,7 +216,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll.item(), self.iteration)
             if(self.writer is not None): self.writer.add_scalar('RVM MSE', frvm_mse.item(), self.iteration)
             if self.kernel_type=='rbf':
-                if ((epoch%1==0) & (itr%2==0)):
+                if ((epoch%2==0) & (itr%print_freq==0)):
                     print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.4f ML %.4f RVM ML: %.4f RVM MSE: %.4f  MSE: %.3f noise: %.4f outputscale: %.3f lengthscale: %.3f' % (
                         itr, epoch, loss.item(), -mll.item(), -rvm_mll.item(), rvm_mse.item(), mse.item(),
                         self.model.likelihood.noise.item(), self.model.base_covar_module.outputscale,
