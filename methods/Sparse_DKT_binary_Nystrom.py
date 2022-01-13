@@ -603,7 +603,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             correct_this, count_this, loss_value, num_sv, correct_this_rvm = self.correct(x, i)
             acc_all.append(correct_this/ count_this*100)
             acc_all_rvm.append(correct_this_rvm/ count_this*100)
-            num_sv_list.append(num_sv_list)
+            num_sv_list.append(num_sv)
             if(i % 10==0):
                 acc_mean = np.mean(np.asarray(acc_all))
                 acc_mean_rvm = np.mean(np.asarray(acc_all_rvm))
@@ -616,7 +616,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
         mean_num_sv = np.mean(num_sv_list)
         print(Fore.LIGHTRED_EX,"="*30, Fore.RESET)
         print(f'Avg. FRVM ACC on support set: {np.mean(self.frvm_acc):4.2f}%, Avg. SVs {mean_num_sv:.2f}', Fore.RESET)
-        print(f'Avg. FRVM ACC on query set: {acc_mean_rvm:4.2f}%, std: {acc_std_rvm}', Fore.RESET)
+        print(f'Avg. FRVM ACC on query set: {acc_mean_rvm:4.2f}%, std: {acc_std_rvm:.2f}', Fore.RESET)
         print(Fore.YELLOW,'%d Test Acc = %4.2f%% +- %4.2f%%' %(iter_num,  acc_mean, 1.96* acc_std/np.sqrt(iter_num)), Fore.RESET)
         print(Fore.LIGHTRED_EX,"="*30, Fore.RESET)
         if(self.writer is not None): self.writer.add_scalar('test_accuracy', acc_mean, self.iteration)
