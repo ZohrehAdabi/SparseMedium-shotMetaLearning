@@ -535,11 +535,14 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         if self.show_plots_features:
             self.mw_feature.finish()
         if self.f_rvm: 
-            print(f'MSE (unnormed): {np.mean(mse_list_):.4f}')
-            print(f'MSE RVM: {np.mean(mse_rvm_list):.4f}')
-            print(f'Avg. SVs: {np.mean(num_sv_list):.2f}')
+            print('\n-----------------------------------------')
+            print(Fore.YELLOW, f'MSE (unnormed): {np.mean(mse_list_):.4f}', Fore.RESET)
+            print(Fore.YELLOW, f'MSE RVM: {np.mean(mse_rvm_list):.4f}', Fore.RESET)
+            print(Fore.YELLOW,f'Avg. SVs: {np.mean(num_sv_list):.2f}', Fore.RESET)
+            print('-----------------------------------------')
   
         return mse_list
+
 
     def train_loop_random(self, epoch, n_support, n_samples, optimizer):
 
