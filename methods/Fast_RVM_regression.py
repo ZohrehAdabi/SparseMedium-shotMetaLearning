@@ -42,8 +42,8 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
     KK_mm = KK[active_m, :][:, active_m]
     K_mt = Kt[active_m] 
     beta_KK_m = beta * KK_m
-    with torch.no_grad():
-        Sigma_m, mu_m, S, Q, s, q, logML, Gamma, U = Statistics(K_m, KK_m, KK_mm, K, KK_diag, Kt, K_mt, alpha_m, active_m, beta, targets, N)
+    # with torch.no_grad():
+    Sigma_m, mu_m, S, Q, s, q, logML, Gamma, U = Statistics(K_m, KK_m, KK_mm, K, KK_diag, Kt, K_mt, alpha_m, active_m, beta, targets, N)
 
     update_sigma    = config[0]=="1"
     delete_priority = config[1]=="1"
@@ -339,8 +339,8 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
             if torch.abs(delta_beta) > 1e-6:
                 if verbose and False:
                     print(f'{itr:3}, update statistics after beta update')
-                with torch.no_grad():
-                    Sigma_m, mu_m, S, Q, s, q, logML, Gamma, U = Statistics(K_m, KK_m, KK_mm, K, KK_diag, Kt, K_mt, alpha_m, active_m, beta, targets, N)
+                # with torch.no_grad():
+                Sigma_m, mu_m, S, Q, s, q, logML, Gamma, U = Statistics(K_m, KK_m, KK_mm, K, KK_diag, Kt, K_mt, alpha_m, active_m, beta, targets, N)
                 count = count + 1
                 logMarginalLog.append(logML.item())
                 terminate = False
