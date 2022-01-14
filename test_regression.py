@@ -12,6 +12,7 @@ from methods.Sparse_DKT_regression_Exact_new_loss import Sparse_DKT_regression_E
 from methods.Sparse_DKT_regression_Nystrom import Sparse_DKT_regression_Nystrom
 from methods.Sparse_DKT_regression_Nystrom_new_loss import Sparse_DKT_regression_Nystrom_new_loss
 from methods.Sparse_DKT_regression_Exact import Sparse_DKT_regression_Exact
+from methods.Sparse_DKT_regression_RVM import Sparse_DKT_regression_RVM
 from methods.MAML_regression import MAML_regression
 from methods.feature_transfer_regression import FeatureTransfer
 import backbone
@@ -136,16 +137,11 @@ for sd in range(seed, seed+repeat):
             if params.lr_decay: id += '_lr_decay'
             if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
             if params.rvm_mll_one: id += f'_rvm_mll_one_{params.lambda_rvm}'
-            if params.rvm_mll_only: id += f'_rvm_mll_only'
-            if params.sparse_kernel: id += f'_sparse_kernel' 
-            if params.beta: id += f'_beta'
-            if params.beta_trajectory: id += f'_beta_trajectory'
             if params.rvm_mse: id += f'_rvm_mse_{params.lambda_rvm}'
             id += f'_{params.kernel_type}_seed_{sd}'
             params.checkpoint_dir = params.checkpoint_dir + id
             model = Sparse_DKT_regression_Exact(bb, kernel_type=params.kernel_type, sparse_method=params.sparse_method, add_rvm_mll=params.rvm_mll, 
-                                add_rvm_mll_one=params.rvm_mll_one, add_rvm_mse=params.rvm_mse, lambda_rvm=params.lambda_rvm, rvm_mll_only=params.rvm_mll_only, 
-                                sparse_kernel=params.sparse_kernel, beta=params.beta, beta_trajectory=params.beta_trajectory,
+                                add_rvm_mll_one=params.rvm_mll_one, add_rvm_mse=params.rvm_mse, lambda_rvm=params.lambda_rvm,
                                 normalize=params.normalize, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
                                 video_path=params.checkpoint_dir, 
                                 show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
@@ -171,6 +167,38 @@ for sd in range(seed, seed+repeat):
             id += f'_{params.kernel_type}_seed_{sd}'
             params.checkpoint_dir = params.checkpoint_dir + id
             model = Sparse_DKT_regression_Exact_new_loss(bb, kernel_type=params.kernel_type, add_rvm_mll=params.rvm_mll, add_rvm_mse=params.rvm_mse, lambda_rvm=params.lambda_rvm,
+                                normalize=params.normalize, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
+                                video_path=params.checkpoint_dir, 
+                                show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
+        
+
+
+        optimizer = None
+
+    elif params.method=='Sparse_DKT_RVM':
+        print(f'\n{params.sparse_method}\n')
+        params.checkpoint_dir = '%scheckpoints/%s/%s_%s_%s' % (configs.save_dir, params.dataset, params.model, params.method, params.sparse_method)
+
+        video_path = params.checkpoint_dir
+        
+        if params.sparse_method=='FRVM':
+            params.checkpoint_dir += '/'
+            id =  f'Exact_FRVM_{params.config}_{params.align_thr}_{params.lr_gp}_{params.lr_net}'
+            if params.gamma: id += '_gamma'
+            if params.normalize: id += '_norm'
+            if params.lr_decay: id += '_lr_decay'
+            if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
+            if params.rvm_mll_one: id += f'_rvm_mll_one_{params.lambda_rvm}'
+            if params.rvm_mll_only: id += f'_rvm_mll_only'
+            if params.sparse_kernel: id += f'_sparse_kernel' 
+            if params.beta: id += f'_beta'
+            if params.beta_trajectory: id += f'_beta_trajectory'
+            if params.rvm_mse: id += f'_rvm_mse_{params.lambda_rvm}'
+            id += f'_{params.kernel_type}_seed_{sd}'
+            params.checkpoint_dir = params.checkpoint_dir + id
+            model = Sparse_DKT_regression_RVM(bb, kernel_type=params.kernel_type, sparse_method=params.sparse_method, add_rvm_mll=params.rvm_mll, 
+                                add_rvm_mll_one=params.rvm_mll_one, add_rvm_mse=params.rvm_mse, lambda_rvm=params.lambda_rvm, rvm_mll_only=params.rvm_mll_only, 
+                                sparse_kernel=params.sparse_kernel, beta=params.beta, beta_trajectory=params.beta_trajectory,
                                 normalize=params.normalize, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
                                 video_path=params.checkpoint_dir, 
                                 show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()

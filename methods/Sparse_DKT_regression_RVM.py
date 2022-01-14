@@ -1062,11 +1062,13 @@ class SparseKernel(gpytorch.kernels.InducingPointKernel):
             # covar = LowRankRootLazyTensor(k_ux1.matmul(self._inducing_inv_root))
             covar = LowRankRootLazyTensor(k_ux1.matmul(self._A_inv_root))
             # sigma_I = torch.ones(covar.shape[0]).to('cuda') * (self.likelihood.noise)
-            sigma_I = torch.ones(covar.shape[0]).to('cuda') * (self.sigma_rvm)
+            
             # sigma_I = gpytorch.lazy.NonLazyTensor(sigma_I) #error
             # sigma_I = gpytorch.lazy.lazify(sigma_I) #error
             # covar = LowRankRootAddedDiagLazyTensor(covar, DiagLazyTensor(sigma_I))
-            covar = covar.add_diag(sigma_I)
+            
+            # sigma_I = torch.ones(covar.shape[0]).to('cuda') * (self.sigma_rvm)
+            #covar = covar.add_diag(sigma_I)
             # covar = SumLazyTensor(covar, torch.eye(covar.shape[0]).to('cuda') * (10)) #error
             # Diagonal correction for predictive posterior
             # if not self.training and settings.sgpr_diagonal_correction.on():
