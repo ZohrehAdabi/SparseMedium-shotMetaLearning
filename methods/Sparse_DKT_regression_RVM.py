@@ -166,7 +166,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
         print_freq = 5
         for itr, (inputs, labels) in enumerate(zip(batch, batch_labels)):
 
-            
+            rvm_mll , mll = None, None
             z = self.feature_extractor(inputs)
             if(self.normalize): z = F.normalize(z, p=2, dim=1)
 
@@ -234,10 +234,15 @@ class Sparse_DKT_regression_RVM(nn.Module):
             elif self.add_rvm_mll_one:
                 loss = -(1-l) * mll  - l * rvm_mll 
             elif self.rvm_mll_only:
-                mll.backward()
                 loss =  - rvm_mll
+                mll = mll.item()
+                rvm_mll = rvm_mll.item()
+                
             elif self.sparse_kernel: 
                 loss = -mll
+                rvm_mll = rvm_mll.item()
+                mll = mll.item()
+                
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -246,13 +251,13 @@ class Sparse_DKT_regression_RVM(nn.Module):
 
             self.iteration = itr+(epoch*len(batch_labels))
             if(self.writer is not None): self.writer.add_scalar('MLL + RVM MLL (Loss)', loss.item(), self.iteration)
-            if(self.writer is not None): self.writer.add_scalar('MLL', -mll.item(), self.iteration)
-            if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll.item(), self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('MLL', -mll, self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll, self.iteration)
             if(self.writer is not None): self.writer.add_scalar('RVM MSE', frvm_mse.item(), self.iteration)
             if self.kernel_type=='rbf':
                 if ((epoch%1==0) & (itr%print_freq==0)):
                     print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.4f ML %.4f RVM ML: %.4f RVM MSE: %.4f  MSE: %.3f noise: %.4f outputscale: %.3f lengthscale: %.3f' % (
-                        itr, epoch, loss.item(), -mll.item(), -rvm_mll.item(), frvm_mse.item(), mse.item(),
+                        itr, epoch, loss.item(), -mll, -rvm_mll, frvm_mse.item(), mse.item(),
                         self.model.likelihood.noise.item(), self.model.base_covar_module.outputscale,
                         self.model.base_covar_module.base_kernel.lengthscale
                     ),Fore.RESET)
