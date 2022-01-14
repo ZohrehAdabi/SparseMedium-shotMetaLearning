@@ -179,8 +179,8 @@ class Sparse_DKT_regression_RVM(nn.Module):
            
             ip_index = inducing_points.index
             beta = inducing_points.beta
-            mu_m = inducing_points.mu
-            U = inducing_points.U
+            mu_m = inducing_points.mu.detach()
+            U = inducing_points.U.detach()
             alpha_m = inducing_points.alpha
             scales = inducing_points.scale
             ip_values = z[ip_index]
@@ -189,13 +189,14 @@ class Sparse_DKT_regression_RVM(nn.Module):
             
             alpha_m = alpha_m / scales**2
             alpha_m = alpha_m.detach()
-            A = torch.diag(alpha_m).to(device='cuda').to(torch.float)
-            self.model.covar_module.A = nn.Parameter(A, requires_grad=False)
-            if self.beta_trajectory:
-                self.model.covar_module.sigma = 1/beta
-            else:
-                sigma = self.model.likelihood.noise[0].clone()
-                self.model.covar_module.sigma = sigma
+            if self.sparse_kernel:
+                A = torch.diag(alpha_m).to(device='cuda').to(torch.float)
+                self.model.covar_module.A = nn.Parameter(A, requires_grad=False)
+                if self.beta_trajectory:
+                    self.model.covar_module.sigma_rvm = nn.Parameter(1/beta, requires_grad=True) 
+                else:
+                    sigma = self.model.likelihood.noise[0].clone()
+                    self.model.covar_module.sigma_rvm = nn.Parameter(sigma, requires_grad=True) 
             
 
             self.model.train()
@@ -451,7 +452,8 @@ class Sparse_DKT_regression_RVM(nn.Module):
                     val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
                     for t in range(val_count):
                         self.test_i = t
-                        mse, mse_, sv_count, mse_r = self.test_loop_fast_rvm(n_support, n_samples, val_person[t],  optimizer, verbose)
+                        with torch.no_grad():
+                            mse, mse_, sv_count, mse_r = self.test_loop_fast_rvm(n_support, n_samples, val_person[t],  optimizer, verbose)
                         mse_list.append(mse)
                         mse_unnorm_list.append(mse_)
                         sv_count_list.append(sv_count)
