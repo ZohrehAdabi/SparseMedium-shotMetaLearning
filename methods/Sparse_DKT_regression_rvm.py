@@ -44,7 +44,8 @@ except ImportError:
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j_idx")
 class Sparse_DKT_regression_RVM(nn.Module):
-    def __init__(self, backbone, kernel_type='rbf', sparse_method='FRVM', add_rvm_mll=False, add_rvm_mll_one=False, add_rvm_mse=False, lambda_rvm=0.1, normalize=False, lr_decay=False, 
+    def __init__(self, backbone, kernel_type='rbf', sparse_method='FRVM', add_rvm_mll=False, add_rvm_mll_one=False, add_rvm_mse=False, lambda_rvm=0.1, rvm_mll_only=False, 
+                        sparse_kernel=False,  beta_trajectory=False, normalize=False, lr_decay=False, 
                         f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_regression_RVM, self).__init__()
@@ -54,6 +55,9 @@ class Sparse_DKT_regression_RVM(nn.Module):
         self.sparse_method = sparse_method
         self.add_rvm_mll = add_rvm_mll
         self.add_rvm_mll_one = add_rvm_mll_one
+        self.rvm_mll_only = rvm_mll_only
+        self.sparse_kernel= sparse_kernel
+        self.beta_trajectory = beta_trajectory
         self.add_rvm_mse = add_rvm_mse
         self.lambda_rvm = lambda_rvm
         self.normalize = normalize
@@ -164,14 +168,14 @@ class Sparse_DKT_regression_RVM(nn.Module):
             
             z = self.feature_extractor(inputs)
             if(self.normalize): z = F.normalize(z, p=2, dim=1)
-            with torch.no_grad():
+            # with torch.no_grad():
                 # inducing_points, beta, mu_m, U = self.get_inducing_points(z, labels, verbose=True)
-                sigma = self.model.likelihood.noise[0].clone()
-                beta = 1/sigma
-                inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
-                                                                z, labels, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
-                                                                config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-                                                                num_inducing_points=self.num_inducing_points, verbose=True, task_id=itr, device=self.device)
+            sigma = self.model.likelihood.noise[0].clone()
+            beta = 1/sigma
+            inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
+                                                            z, labels, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
+                                                            config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
+                                                            num_inducing_points=self.num_inducing_points, verbose=True, task_id=itr, device=self.device)
            
             ip_index = inducing_points.index
             beta = inducing_points.beta
@@ -182,10 +186,16 @@ class Sparse_DKT_regression_RVM(nn.Module):
             ip_values = z[ip_index]
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
             # sigma I + K_m @ A_inv @ K_m
+            
             alpha_m = alpha_m / scales**2
             A = torch.diag(alpha_m).to(device='cuda').to(torch.float)
-            self.model.covar_module.sigma = 1/beta 
-            self.model.covar_module.A = nn.Parameter(A, requires_grad=True)
+            self.model.covar_module.A = nn.Parameter(A, requires_grad=False)
+            if self.beta_trajectory:
+                self.model.covar_module.sigma = 1/beta
+            else:
+                sigma = self.model.likelihood.noise[0].clone()
+                self.model.covar_module.sigma = sigma
+            
 
             self.model.train()
             self.model.set_train_data(inputs=z, targets=labels, strict=False)
@@ -199,7 +209,11 @@ class Sparse_DKT_regression_RVM(nn.Module):
             # K_m = K_m / scales
             # alpha_m = alpha_m / (scales**2)
             mu_m = mu_m / scales
-            rvm_mll = rvm_ML_full(K_m, labels, alpha_m, mu_m, beta)
+            if self.beta_trajectory:
+                rvm_mll = rvm_ML_full(K_m, labels, alpha_m, mu_m, beta)
+            else:
+                sigma = self.model.likelihood.noise[0].clone()
+                rvm_mll = rvm_ML_full(K_m, labels, alpha_m, mu_m, 1/sigma)
 
             predictions = self.model(z)
             mll = self.mll(predictions, self.model.train_targets)
@@ -207,9 +221,9 @@ class Sparse_DKT_regression_RVM(nn.Module):
                 loss = - mll  - l * rvm_mll 
             elif self.add_rvm_mll_one:
                 loss = -(1-l) * mll  - l * rvm_mll 
-            # elif self.add_rvm_mse:
-            #     loss =  - mll + l *  rvm_mse
-            else: 
+            elif self.rvm_mll_only:
+                loss =  - rvm_mll
+            elif self.sparse_kernel: 
                 loss = -mll
             optimizer.zero_grad()
             loss.backward()
@@ -1006,7 +1020,8 @@ class SparseKernel(gpytorch.kernels.InducingPointKernel):
         
         super(SparseKernel, self).__init__(base_kernel, inducing_points, likelihood, active_dims=active_dims)
         self.register_parameter(name="A", parameter=torch.nn.Parameter(inducing_points))
-        self.sigma = torch.tensor(0.1)
+        self.register_parameter(name="sigma_rvm", parameter=torch.nn.Parameter(torch.tensor(0.1)))
+       
     @property
     def _A_inv_root(self):
         if not self.training and hasattr(self, "_cached_kernel_inv_root"):
@@ -1027,7 +1042,7 @@ class SparseKernel(gpytorch.kernels.InducingPointKernel):
             # covar = LowRankRootLazyTensor(k_ux1.matmul(self._inducing_inv_root))
             covar = LowRankRootLazyTensor(k_ux1.matmul(self._A_inv_root))
             # sigma_I = torch.ones(covar.shape[0]).to('cuda') * (self.likelihood.noise)
-            sigma_I = torch.ones(covar.shape[0]).to('cuda') * (self.sigma)
+            sigma_I = torch.ones(covar.shape[0]).to('cuda') * (self.sigma_rvm)
             # sigma_I = gpytorch.lazy.NonLazyTensor(sigma_I) #error
             # sigma_I = gpytorch.lazy.lazify(sigma_I) #error
             # covar = LowRankRootAddedDiagLazyTensor(covar, DiagLazyTensor(sigma_I))
@@ -1044,34 +1059,7 @@ class SparseKernel(gpytorch.kernels.InducingPointKernel):
             )
 
         return covar
-    
-    # def _get_covariance(self, x1, x2):
-    #     k_ux1 = delazify(self.base_kernel(x1, self.inducing_points))
-    #     if torch.equal(x1, x2):
-    #         covar = LowRankRootLazyTensor(k_ux1.matmul(self._A_inv_root))
-    #         covar = SumLazyTensor(torch.eye(covar.shape[0]).to('cuda') * (self.likelihood.noise),  covar)
 
-    #         # Diagonal correction for predictive posterior
-    #         # if not self.training:
-    #         #     correction = (self.base_kernel(x1, x2, diag=True) - covar.diag()).clamp(0, math.inf)
-    #         #     covar = LowRankRootAddedDiagLazyTensor(covar, DiagLazyTensor(correction))
-    #     else:
-    #         # covar = MatmulLazyTensor(
-    #         #     k_ux1.matmul(self._A_inv_root), k_ux2.matmul(self._A_inv_root).transpose(-1, -2)
-    #         # )
-    #         # covar = SumLazyTensor(torch.eye(covar.shape[0]).to('cuda') * (self.likelihood.noise),  covar)
-    #         # S = torch.inv((1/self.likelihood.noise) * k_ux1.transpose(-1, -2).matmul(k_ux1) + (1/self.A).pow(2))
-    #         # k_s = k_ux1.matmul(S)
-    #         # covar = MatmulLazyTensor(
-    #         #     k_s.transpose(-1, -2), k_ux2
-    #         # )
-          
-    #         k_ux2 = delazify(self.base_kernel(x2, self.inducing_points))
-    #         covar = MatmulLazyTensor(
-    #             k_ux1.matmul(self._inducing_inv_root), k_ux2.matmul(self._inducing_inv_root).transpose(-1, -2)
-    #         )
-
-    #     return covar
 
 
 
