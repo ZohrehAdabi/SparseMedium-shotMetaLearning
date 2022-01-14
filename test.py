@@ -20,6 +20,7 @@ from methods.protonet import ProtoNet
 from methods.Sparse_DKT_Nystrom import Sparse_DKT_Nystrom
 from methods.Sparse_DKT_Exact import Sparse_DKT_Exact
 from methods.Sparse_DKT_binary_Nystrom import Sparse_DKT_binary_Nystrom
+from methods.Sparse_DKT_binary_RVM import Sparse_DKT_binary_RVM
 from methods.Sparse_DKT_binary_Nystrom_new_loss import Sparse_DKT_binary_Nystrom_new_loss
 from methods.Sparse_DKT_binary_Exact import Sparse_DKT_binary_Exact
 from methods.Sparse_DKT_binary_Exact_new_loss import Sparse_DKT_binary_Exact_new_loss
@@ -106,6 +107,13 @@ def single_test(params):
                                 num_inducing_points=params.num_ip,
                                 normalize=params.normalize, scale=params.scale,
                                 config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
+    elif params.method == 'Sparse_DKT_binary_RVM':
+        model           = Sparse_DKT_binary_RVM(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
+                                add_rvm_mll=params.rvm_mll, add_rvm_mll_one=params.rvm_mll_one, lambda_rvm=params.lambda_rvm, regression=params.regression, 
+                                rvm_mll_only=params.rvm_mll_only, num_inducing_points=params.num_ip,
+                                normalize=params.normalize, scale=params.scale,
+                                config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
+
     elif params.method == 'Sp_DKT_Bin_Nyst_NLoss':
         model           = Sparse_DKT_binary_Nystrom_new_loss(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
                                 num_inducing_points=params.num_ip,
@@ -181,6 +189,7 @@ def single_test(params):
         if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
         if params.rvm_mll_one: id += f'_rvm_mll_one_{params.lambda_rvm}'
         if params.regression: id += f'_regression'
+        if params.rvm_mll_only: id += f'_rvm_mll_only'
         if params.train_aug: id += '_aug'
         if params.warmup:  id += '_warmup'
         if params.freeze: id += '_freeze'

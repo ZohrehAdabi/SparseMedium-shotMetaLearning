@@ -23,7 +23,7 @@ IP = namedtuple("inducing_points", "z_values index count alpha gamma beta mu sca
 mse_loss  = nn.MSELoss() 
 
 
-def rvm_ML_full(K_m, targets, alpha_m, mu_m, beta=10.0):
+def rvm_ML_regression_full(K_m, targets, alpha_m, mu_m, beta=10.0):
         
         N = targets.shape[0]
         targets = targets.to(torch.float64)
@@ -63,6 +63,37 @@ def rvm_ML_full(K_m, targets, alpha_m, mu_m, beta=10.0):
         # new_loss =-1/2 *((e) @ torch.linalg.inv(Sigma_star) @ (e) + torch.log(torch.linalg.det(Sigma_star)+1e-10))
 
         # return logML/N
+        return logML/N
+
+def rvm_ML_full(K_m, targets, alpha_m, mu_m, U):
+        
+        N = targets.shape[0]
+        # alpha_m = alpha_m.to(torch.float64)
+        t = targets.to(torch.float64)
+        t[t==-1]= 0
+        # targets_pseudo_linear	= 2 * targets - 1
+        K_m = K_m.to(torch.float64)
+        # LogOut	= (targets_pseudo_linear * 0.9 + 1) / 2
+        # mu_m	=  K_m.pinverse() @ (torch.log(LogOut / (1 - LogOut))) #
+        # with torch.no_grad():
+            # mu_m = torch.linalg.lstsq(K_m, (torch.log(LogOut / (1 - LogOut)))).solution
+            # mu_m = mu_m.to(torch.float64)
+            # mu_m, U, beta, dataLikely, bad_Hess = posterior_mode(K_m, targets, alpha_m, mu_m, max_itr=25, device='cuda')
+
+        K_mu_m = K_m @ mu_m
+        y	= torch.sigmoid(K_mu_m)
+        beta	= y * (1-y)
+        #   Compute the Hessian
+        beta_K_m	= (torch.diag(beta) @ K_m) 
+        H			= (K_m.T @ beta_K_m + torch.diag(alpha_m))
+        U, info =  torch.linalg.cholesky_ex(H, upper=True)
+        dataLikely = (t[t==1].T @ torch.log(y[t==1]+1e-12) + ((1-t[t==0]).T @ torch.log(1-y[t==0]+1e-12)))
+        logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
+        # 2001-JMLR-SparseBayesianLearningandtheRelevanceVectorMachine in Appendix:
+        # C = sigma * I + K_m @ A_m @ K_m.T  ,  log|C| = - log|Sigma_m| - N * log(beta) - log|A_m|
+        # t.T @ C^-1 @ t = beta * ||t - K_m @ mu_m||**2 + mu_m.T @ A_m @ mu_m 
+        # log p(t) = -1/2 (log|C| + t.T @ C^-1 @ t ) + const 
+        logML			= dataLikely - logdetHOver2  #- (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2
         return logML/N
 
 def rvm_ML(K_m, targets, alpha_m, mu_m, U):

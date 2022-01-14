@@ -41,6 +41,7 @@ def parse_args(script):
     parser.add_argument('--normalize'   , action='store_true', help='normalize features by vector norm in z space')
     parser.add_argument('--rvm_mll'     , action='store_true', help='Add MLL of RVM to the outer GP MLL loss.') 
     parser.add_argument('--rvm_mll_one' , action='store_true', help='Add MLL of RVM to the outer GP MLL loss with weights sum to one.') 
+    parser.add_argument('--rvm_mll_only', action='store_true', help='Use MLL of RVM only for loss.') 
     parser.add_argument('--lambda_rvm'  , default=1e-3, type=float, help='Coefficient of RVM MLL in Loss function')
     parser.add_argument('--regression'  , action='store_true', help='Uae gaussian RVM for classification insted of approximation.') 
     parser.add_argument('--rvm_mse'     , action='store_true', help='Add MLL of RVM to the outer GP MLL loss.') 

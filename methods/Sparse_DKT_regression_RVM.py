@@ -25,7 +25,7 @@ import random
 ## Our packages
 import gpytorch
 from methods.Fast_RVM_regression import Fast_RVM_regression
-from methods.Inducing_points import get_inducing_points_regression, rvm_ML_regression, rvm_ML_full
+from methods.Inducing_points import get_inducing_points_regression, rvm_ML_regression, rvm_ML_regression_full
 
 from statistics import mean
 from data.qmul_loader import get_batch, train_people, val_people, test_people, get_unnormalized_label
@@ -222,10 +222,10 @@ class Sparse_DKT_regression_RVM(nn.Module):
             # NOTE Use my rvm_ML_full as loss insted of SparseKernel
             if self.beta_trajectory or self.beta:
                 alpha_m = alpha_m.detach()
-                rvm_mll = rvm_ML_full(K_m, labels, alpha_m, mu_m, beta)
+                rvm_mll = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
             else:
                 
-                rvm_mll = rvm_ML_full(K_m, labels, alpha_m, mu_m, 1/sigma)
+                rvm_mll = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, 1/sigma)
 
             predictions = self.model(z)
             mll = self.mll(predictions, self.model.train_targets)
@@ -235,20 +235,18 @@ class Sparse_DKT_regression_RVM(nn.Module):
                 loss = -(1-l) * mll  - l * rvm_mll 
             elif self.rvm_mll_only:
                 loss =  - rvm_mll
-                mll = mll.item()
-                rvm_mll = rvm_mll.item()
-                
             elif self.sparse_kernel: 
                 loss = -mll
-                rvm_mll = rvm_mll.item()
-                mll = mll.item()
+   
                 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            
             mll_list.append(loss.item())
             mse = self.mse(predictions.mean, labels)
-
+            mll = mll.item()
+            rvm_mll = rvm_mll.item()
             self.iteration = itr+(epoch*len(batch_labels))
             if(self.writer is not None): self.writer.add_scalar('MLL + RVM MLL (Loss)', loss.item(), self.iteration)
             if(self.writer is not None): self.writer.add_scalar('MLL', -mll, self.iteration)
