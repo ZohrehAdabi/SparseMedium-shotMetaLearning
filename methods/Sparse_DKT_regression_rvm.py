@@ -210,6 +210,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
             # alpha_m = alpha_m / (scales**2)
             mu_m = mu_m / scales
             if self.beta_trajectory:
+                alpha_m = alpha_m.detach()
                 rvm_mll = rvm_ML_full(K_m, labels, alpha_m, mu_m, beta)
             else:
                 sigma = self.model.likelihood.noise[0].clone()

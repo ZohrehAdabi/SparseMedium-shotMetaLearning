@@ -430,7 +430,7 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
             scales[scales==0] = 1
             kernel_matrix = kernel_matrix / scales
 
-        kernel_matrix = kernel_matrix.to(torch.float64)
+        kernel_matrix = kernel_matrix.detach().to(torch.float64)
         # targets[targets==-1]= 0
         target = targets.clone().to(torch.float64)
         
@@ -450,26 +450,27 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
         IP_index = active
 
         if True:
-            # ss = scales[index]
-            K = base_covar_module(inputs, inducing_points).evaluate()
-            mu_r = mu_m / scales_m
-            mu_r = mu_r.to(torch.float)
-            y_pred = K @ mu_r
-            
-            
+            with torch.no_grad():
+                # ss = scales[index]
+                K = base_covar_module(inputs, inducing_points).evaluate()
+                mu_r = mu_m / scales_m
+                mu_r = mu_r.to(torch.float)
+                y_pred = K @ mu_r
+                
+                
 
-            
-            if classification:
-                y_pred = torch.sigmoid(y_pred)
-                y_pred = (y_pred > 0.5).to(int)
-                y_pred[y_pred==0] = -1
-                acc = (torch.sum(y_pred==target) / N).item()  * 100
-                if verbose and (task_id%print_freq==0): 
-                    print(f'FRVM ACC on Inputs: {(acc):.2f}%')
-            else:
-                mse_r = mse_loss(y_pred, target)
-                if verbose and (task_id%print_freq==0):
-                    print(f'FRVM MSE: {mse_r:0.4f}')
+                
+                if classification:
+                    y_pred = torch.sigmoid(y_pred)
+                    y_pred = (y_pred > 0.5).to(int)
+                    y_pred[y_pred==0] = -1
+                    acc = (torch.sum(y_pred==target) / N).item()  * 100
+                    if verbose and (task_id%print_freq==0): 
+                        print(f'FRVM ACC on Inputs: {(acc):.2f}%')
+                else:
+                    mse_r = mse_loss(y_pred, target)
+                    if verbose and (task_id%print_freq==0):
+                        print(f'FRVM MSE: {mse_r:0.4f}')
             
             # self.frvm_acc.append(acc.item())
     
