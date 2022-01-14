@@ -336,7 +336,12 @@ class Sparse_DKT_regression_RVM(nn.Module):
         if self.kernel_type=='spectral':
             self.model.base_covar_module.initialize_from_data_empspect(z_support, y_support)
         self.model.covar_module._clear_cache()
-
+        if self.beta_trajectory:
+            alpha_m = alpha_m / scales**2
+            alpha_m = alpha_m.detach()
+            A = torch.diag(alpha_m).to(device='cuda').to(torch.float)
+            self.model.covar_module.A = nn.Parameter(A, requires_grad=False)
+            
         with torch.no_grad():
             z_query = self.feature_extractor(x_query).detach()
             if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
