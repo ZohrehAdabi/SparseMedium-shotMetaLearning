@@ -358,7 +358,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
             print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
             print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
-            print(Fore.LIGHTRED_EX, f'mse: {mse_:.4f}, mse (normed): {mse:.4f}, FRVM mse on query: {mse_r:0.4f}num SVs: {inducing_points.count}', Fore.RESET)
+            print(Fore.LIGHTRED_EX, f'mse: {mse_:.4f}, mse (normed): {mse:.4f}, FRVM mse on query: {mse_r:0.4f}, num SVs: {inducing_points.count}', Fore.RESET)
             print(f'FRVM Var on query: {rvm_var.detach().cpu().numpy()}')
             
             print(Fore.RED,"-"*50, Fore.RESET)
