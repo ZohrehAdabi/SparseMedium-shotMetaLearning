@@ -242,7 +242,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
                 loss = - mll  - l * rvm_mll 
             elif self.add_rvm_mll_one:
                 loss = -(1-l) * mll  - l * rvm_mll 
-            elif self.rvm_mll_only:
+            elif self.rvm_mll_only or self.rvm_ll_only:
                 loss =  - rvm_mll
             elif self.sparse_kernel: 
                 loss = -mll
