@@ -356,14 +356,14 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         y_pred = y_pred.cpu().numpy()
         if self.test_i%5==0:
             print(Fore.RED,"="*50, Fore.RESET)
-            if verbose and self.test_i%20==0:
-                print(f'inducing_points count: {inducing_points.count}')
+            # print(f'inducing_points count: {inducing_points.count}')
+            if False and self.test_i%20==0:
                 print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha}',Fore.RESET)
                 print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma}',Fore.RESET)
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
             print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
             print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
-            print(Fore.LIGHTRED_EX, f'mse:    {mse_:.4f}, mse (normed):{mse:.4f}', Fore.RESET)
+            print(Fore.LIGHTRED_EX, f'mse:    {mse_:.4f}, mse (normed):{mse:.4f}, num SVs:{inducing_points.count}', Fore.RESET)
             print(f'FRVM Var on query: {rvm_var}')
             print(f'FRVM MSE on query: {mse_r:0.4f}')
             print(Fore.RED,"-"*50, Fore.RESET)
