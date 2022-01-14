@@ -847,9 +847,12 @@ class Sparse_DKT_regression_RVM(nn.Module):
         if 'best' in checkpoint:
             print(f'\nBest model at epoch {ckpt["epoch"]}, MSE: {ckpt["mse"]}')
         IP = torch.ones(self.model.covar_module.inducing_points.shape[0], 2916).cuda()
+
         ckpt['gp']['covar_module.inducing_points'] = IP
         # if 'A' in 
-        ckpt['gp']['covar_module.A'] = IP
+        A = torch.ones(self.model.covar_module.A.shape).cuda()
+        ckpt['gp']['covar_module.A'] = A
+        self.model.covar_module.A = A
         self.model.load_state_dict(ckpt['gp'])
         self.likelihood.load_state_dict(ckpt['likelihood'])
         self.feature_extractor.load_state_dict(ckpt['net'])
