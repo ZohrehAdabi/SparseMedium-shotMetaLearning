@@ -172,18 +172,18 @@ class Sparse_DKT_regression_RVM(nn.Module):
 
             sigma = self.model.likelihood.noise[0]
             beta = 1/sigma
-            # if self.beta_trajectory:
-            #     inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
-            #                                                     z, labels, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
-            #                                                     config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-            #                                                     num_inducing_points=self.num_inducing_points, verbose=True, task_id=itr, device=self.device)
-            #else:
-            with torch.no_grad():
-                # inducing_points, beta, mu_m, U = self.get_inducing_points(z, labels, verbose=True)
+            if self.beta_trajectory:
                 inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
                                                                 z, labels, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
                                                                 config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
                                                                 num_inducing_points=self.num_inducing_points, verbose=True, task_id=itr, device=self.device)
+            else:
+                with torch.no_grad():
+                    # inducing_points, beta, mu_m, U = self.get_inducing_points(z, labels, verbose=True)
+                    inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
+                                                                    z, labels, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
+                                                                    config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
+                                                                    num_inducing_points=self.num_inducing_points, verbose=True, task_id=itr, device=self.device)
            
             ip_index = inducing_points.index
             beta = inducing_points.beta
@@ -234,6 +234,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
             elif self.add_rvm_mll_one:
                 loss = -(1-l) * mll  - l * rvm_mll 
             elif self.rvm_mll_only:
+                mll.backward()
                 loss =  - rvm_mll
             elif self.sparse_kernel: 
                 loss = -mll
