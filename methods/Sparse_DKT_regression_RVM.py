@@ -43,9 +43,10 @@ except ImportError:
 
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j_idx")
+
 class Sparse_DKT_regression_RVM(nn.Module):
     def __init__(self, backbone, kernel_type='rbf', sparse_method='FRVM', add_rvm_mll=False, add_rvm_mll_one=False, add_rvm_mse=False, lambda_rvm=0.1, rvm_mll_only=False, 
-                        sparse_kernel=False,  beta=False, beta_trajectory=False, normalize=False, lr_decay=False, 
+                        rvm_ll_only=False, sparse_kernel=False,  beta=False, beta_trajectory=False, normalize=False, lr_decay=False, 
                         f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_regression_RVM, self).__init__()
@@ -56,6 +57,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
         self.add_rvm_mll = add_rvm_mll
         self.add_rvm_mll_one = add_rvm_mll_one
         self.rvm_mll_only = rvm_mll_only
+        self.rvm_ll_only = rvm_ll_only
         self.sparse_kernel= sparse_kernel
         self.beta = beta
         self.beta_trajectory = beta_trajectory
@@ -220,12 +222,19 @@ class Sparse_DKT_regression_RVM(nn.Module):
             # alpha_m = alpha_m / (scales**2)
             mu_m = mu_m / scales
             # NOTE Use my rvm_ML_full as loss insted of SparseKernel
-            if self.beta_trajectory or self.beta:
-                alpha_m = alpha_m.detach()
-                rvm_mll = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
+            if self.rvm_ll_only:
+                if self.beta_trajectory or self.beta:
+                    alpha_m = alpha_m.detach()
+                    rvm_mll = rvm_ML_regression(K_m, labels, alpha_m, mu_m, beta)
+                else:
+                    rvm_mll = rvm_ML_regression(K_m, labels, alpha_m, mu_m, 1/sigma)
             else:
-                
-                rvm_mll = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, 1/sigma)
+                if self.beta_trajectory or self.beta:
+                    alpha_m = alpha_m.detach()
+                    rvm_mll = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
+                else:
+                    
+                    rvm_mll = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, 1/sigma)
 
             predictions = self.model(z)
             mll = self.mll(predictions, self.model.train_targets)

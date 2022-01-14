@@ -570,12 +570,12 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             acc_r = (top1_correct_r / count_this)* 100
 
             if i%10==0:
-                # print(Fore.RED,"-"*25, Fore.RESET)
+                print(Fore.RED,"="*50, Fore.RESET)
                 print(f'inducing_points count: {inducing_points.count}')
                 # print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha.cpu().numpy()}',Fore.RESET)
                 # print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma.cpu().numpy()}',Fore.RESET)
                 print(Fore.YELLOW, f'itr {i:3}, RVM ACC: {acc_r:.2f}%, ACC: {acc:.2f}%', Fore.RESET)
-                print(Fore.RED,"="*50, Fore.RESET)
+                print(Fore.RED,"-"*20, Fore.RESET)
             if self.show_plot:
                 inducing_points = IP(inducing_points.z_values, inducing_points.index, inducing_points.count,
                                 inducing_points.alpha, inducing_points.gamma,  
@@ -614,7 +614,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
         acc_std  = np.std(acc_all)
         acc_std_rvm  = np.std(acc_all_rvm)
         mean_num_sv = np.mean(num_sv_list)
-        print(Fore.LIGHTRED_EX,"\n="*30, Fore.RESET)
+        print(Fore.LIGHTRED_EX,'\n', "="*30, Fore.RESET)
         print(Fore.CYAN,f'Avg. FRVM ACC on support set: {np.mean(self.frvm_acc):4.2f}%, Avg. SVs {mean_num_sv:.2f}', Fore.RESET)
         print(Fore.CYAN,f'Avg. FRVM ACC on query set: {acc_mean_rvm:4.2f}%, std: {acc_std_rvm:.2f}', Fore.RESET)
         print(Fore.YELLOW,'%d Test Acc = %4.2f%% +- %4.2f%%' %(iter_num,  acc_mean, 1.96* acc_std/np.sqrt(iter_num)), Fore.RESET)

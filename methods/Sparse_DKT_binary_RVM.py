@@ -42,7 +42,7 @@ except ImportError:
 IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j_idx")
 class Sparse_DKT_binary_RVM(MetaTemplate):
     def __init__(self, model_func, kernel_type, n_way, n_support, sparse_method='FRVM', add_rvm_mll=False, add_rvm_mll_one=False, lambda_rvm=0.1, 
-                        regression=False, rvm_mll_only=False, num_inducing_points=None, normalize=False, 
+                        regression=False, rvm_mll_only=False, rvm_ll_only=False, num_inducing_points=None, normalize=False, 
                         scale=False, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
         super(Sparse_DKT_binary_RVM, self).__init__(model_func, n_way, n_support)
 
@@ -53,6 +53,7 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
         self.lambda_rvm = lambda_rvm
         self.regression = regression
         self.rvm_mll_only = rvm_mll_only
+        self.rvm_ll_only = rvm_ll_only
         self.config = config
         self.align_threshold = align_threshold
         self.gamma = gamma
@@ -255,7 +256,12 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
                     rvm_mll = rvm_ML_regression_full(K_m, target, alpha_m, mu_m)
                 else:
                     rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U)
-            else:
+            elif self.rvm_ll_only:
+                if self.regression:
+                    rvm_mll, _ = rvm_ML_regression(K_m, target, alpha_m, mu_m)
+                else:
+                    rvm_mll = rvm_ML(K_m, target, alpha_m, mu_m, U)
+            else:# for classification, equal to rvm_ll_only now.
                 if self.regression:
                     rvm_mll, _ = rvm_ML_regression(K_m, target, alpha_m, mu_m)
                 else:
