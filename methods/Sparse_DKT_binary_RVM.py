@@ -89,7 +89,7 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
             elif dataset=="omniglot":
                 writer_path = path + '/' + id[38:]
             else:
-                writer_path = path+ '/' + id #+'_old'#+ time_string
+                writer_path = path+ '/' + id  #+'_old'#+ time_string
             self.writer = SummaryWriter(log_dir=writer_path)
 
     def get_model_likelihood_mll(self, train_x=None, train_y=None):
