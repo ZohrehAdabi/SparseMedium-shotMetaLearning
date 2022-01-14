@@ -23,7 +23,7 @@ IP = namedtuple("inducing_points", "z_values index count alpha gamma beta mu sca
 mse_loss  = nn.MSELoss() 
 
 
-def rvm_ML_regression_full(K_m, targets, alpha_m, mu_m, beta=10.0):
+def rvm_ML_regression_full(K_m, targets, alpha_m, mu_m, beta=torch.tensor(10.0, device='cuda')):
         
         N = targets.shape[0]
         targets = targets.to(torch.float64)
