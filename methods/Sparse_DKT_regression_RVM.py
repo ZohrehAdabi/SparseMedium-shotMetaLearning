@@ -852,7 +852,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
         # if 'A' in 
         A = torch.ones(self.model.covar_module.A.shape).cuda()
         ckpt['gp']['covar_module.A'] = A
-        self.model.covar_module.A = A
+        self.model.covar_module.A = nn.parameter(A)
         self.model.load_state_dict(ckpt['gp'])
         self.likelihood.load_state_dict(ckpt['likelihood'])
         self.feature_extractor.load_state_dict(ckpt['net'])
