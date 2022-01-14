@@ -255,3 +255,4 @@ Sparse_DKT_Nystrom_Sine_Loss/
 Sparse_DKT/
 Sparse_DKT_RVM_QMUL_Loss/
 # methods/Sparse_DKT_binary_RVM
+Sparse_DKT_binary_RVM_CUB_log/
