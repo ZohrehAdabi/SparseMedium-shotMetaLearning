@@ -45,7 +45,7 @@ except ImportError:
 IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j_idx")
 class Sparse_DKT_regression_RVM(nn.Module):
     def __init__(self, backbone, kernel_type='rbf', sparse_method='FRVM', add_rvm_mll=False, add_rvm_mll_one=False, add_rvm_mse=False, lambda_rvm=0.1, rvm_mll_only=False, 
-                        sparse_kernel=False,  beta_trajectory=False, normalize=False, lr_decay=False, 
+                        sparse_kernel=False,  beta=False, beta_trajectory=False, normalize=False, lr_decay=False, 
                         f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_regression_RVM, self).__init__()
@@ -57,6 +57,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
         self.add_rvm_mll_one = add_rvm_mll_one
         self.rvm_mll_only = rvm_mll_only
         self.sparse_kernel= sparse_kernel
+        self.beta = beta
         self.beta_trajectory = beta_trajectory
         self.add_rvm_mse = add_rvm_mse
         self.lambda_rvm = lambda_rvm
@@ -168,19 +169,26 @@ class Sparse_DKT_regression_RVM(nn.Module):
             
             z = self.feature_extractor(inputs)
             if(self.normalize): z = F.normalize(z, p=2, dim=1)
-            # with torch.no_grad():
-                # inducing_points, beta, mu_m, U = self.get_inducing_points(z, labels, verbose=True)
-            sigma = self.model.likelihood.noise[0].clone()
+
+            sigma = self.model.likelihood.noise[0]
             beta = 1/sigma
-            inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
-                                                            z, labels, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
-                                                            config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-                                                            num_inducing_points=self.num_inducing_points, verbose=True, task_id=itr, device=self.device)
+            # if self.beta_trajectory:
+            #     inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
+            #                                                     z, labels, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
+            #                                                     config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
+            #                                                     num_inducing_points=self.num_inducing_points, verbose=True, task_id=itr, device=self.device)
+            #else:
+            with torch.no_grad():
+                # inducing_points, beta, mu_m, U = self.get_inducing_points(z, labels, verbose=True)
+                inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
+                                                                z, labels, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
+                                                                config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
+                                                                num_inducing_points=self.num_inducing_points, verbose=True, task_id=itr, device=self.device)
            
             ip_index = inducing_points.index
             beta = inducing_points.beta
-            mu_m = inducing_points.mu.detach()
-            U = inducing_points.U.detach()
+            mu_m = inducing_points.mu
+            U = inducing_points.U
             alpha_m = inducing_points.alpha
             scales = inducing_points.scale
             ip_values = z[ip_index]
@@ -195,7 +203,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
             if self.beta_trajectory:
                 self.model.covar_module.sigma_rvm = nn.Parameter(1/beta, requires_grad=True) 
             else:
-                sigma = self.model.likelihood.noise[0].clone()
+                sigma = self.model.likelihood.noise[0]
                 self.model.covar_module.sigma_rvm = nn.Parameter(sigma, requires_grad=True) 
             
 
@@ -216,7 +224,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
                 alpha_m = alpha_m.detach()
                 rvm_mll = rvm_ML_full(K_m, labels, alpha_m, mu_m, beta)
             else:
-                sigma = self.model.likelihood.noise[0].clone()
+                
                 rvm_mll = rvm_ML_full(K_m, labels, alpha_m, mu_m, 1/sigma)
 
             predictions = self.model(z)
@@ -388,9 +396,9 @@ class Sparse_DKT_regression_RVM(nn.Module):
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
             print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
             print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
-            print(Fore.LIGHTRED_EX, f'mse:    {mse_:.4f}, mse (normed):{mse:.4f}, num SVs:{inducing_points.count}', Fore.RESET)
-            print(f'FRVM Var on query: {rvm_var}')
-            print(f'FRVM MSE on query: {mse_r:0.4f}')
+            print(Fore.LIGHTRED_EX, f'mse: {mse_:.4f}, mse (normed): {mse:.4f}, FRVM mse on query: {mse_r:0.4f}num SVs: {inducing_points.count}', Fore.RESET)
+            print(f'FRVM Var on query: {rvm_var.detach().cpu().numpy()}')
+           
             print(Fore.RED,"-"*50, Fore.RESET)
 
         if self.show_plots_pred or (False and self.test_i%20==0):

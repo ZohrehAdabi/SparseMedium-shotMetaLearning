@@ -376,7 +376,7 @@ def posterior_mode(K_m, targets, alpha_m, mu_m, max_itr, device):
         g	= K_m.T @ e - (alpha_m * mu_m)
         #  Compute the likelihood-dependent analogue of the noise precision.
         #  NB: Beta now a vector.
-        beta	= 2* y * (1-y)
+        beta	= y * (1-y)
         # beta = beta.unsqueeze(1)
         #   Compute the Hessian
         beta_K_m	= (torch.diag(beta) @ K_m)  #K_m * (beta.unsqueeze(1).repeat([1, alpha_m.shape[0]]))
