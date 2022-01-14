@@ -85,9 +85,9 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
             if not os.path.isdir(path):
                 os.makedirs(path)
             if dataset in ['miniImagenet', 'CUB']:
-                writer_path = path+ '/' + id[37:]
+                writer_path = path+ '/' + id[33:]
             elif dataset=="omniglot":
-                writer_path = path + '/' + id[38:]
+                writer_path = path + '/' + id[34:]
             else:
                 writer_path = path+ '/' + id  #+'_old'#+ time_string
             self.writer = SummaryWriter(log_dir=writer_path)
