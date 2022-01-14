@@ -622,7 +622,7 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
         print(Fore.LIGHTRED_EX,"="*30, Fore.RESET)
         if(self.writer is not None): self.writer.add_scalar('test_accuracy', acc_mean, self.iteration)
         if(self.writer is not None): self.writer.add_scalar('Avg. SVs', mean_num_sv, self.iteration)
-        if self.rvm_mll_only:
+        if self.rvm_mll_only or self.rvm_ll_only:
             if(return_std): return acc_mean_rvm, acc_std_rvm
             else: return acc_mean_rvm
         else:
