@@ -225,6 +225,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
             if self.rvm_ll_only:
                 if self.beta_trajectory or self.beta:
                     alpha_m = alpha_m.detach()
+                    mu_m = mu_m.detach()
                     rvm_mll, rvm_mse = rvm_ML_regression(K_m, labels, alpha_m, mu_m, beta)
                 else:
                     rvm_mll, rvm_mse = rvm_ML_regression(K_m, labels, alpha_m, mu_m, 1/sigma)
