@@ -39,9 +39,9 @@ def rvm_ML_full(K_m, targets, alpha_m, mu_m, beta=10.0):
         y_ = K_m @ mu_m  
         e = (targets - y_)
         ED = e.T @ e
-        DiagC	= torch.sum(U_inv**2, axis=1)
-        Gamma	= 1 - alpha_m * DiagC
-        beta	= (N - torch.sum(Gamma))/ED
+        # DiagC	= torch.sum(U_inv**2, axis=1)
+        # Gamma	= 1 - alpha_m * DiagC
+        # beta	= (N - torch.sum(Gamma))/ED
         dataLikely	= (N * torch.log(beta) - beta * ED)/2
         logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
         
