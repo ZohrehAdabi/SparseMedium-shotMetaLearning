@@ -21,10 +21,10 @@ import random
 from colorama import Fore
 from configs import kernel_type
 from methods.Fast_RVM import Fast_RVM
-from methods.Inducing_points import get_inducing_points, rvm_ML, get_inducing_points_regression, rvm_ML_regression, rvm_ML_full
+from methods.Inducing_points import get_inducing_points, rvm_ML, get_inducing_points_regression, rvm_ML_regression, rvm_ML_regression_full, rvm_ML_full
 #Check if tensorboardx is installed
 try:
-    #tensorboard --logdir=./Sparse_DKT_binary_Nystrom_CUB_log/ --host localhost --port 8090
+    #tensorboard --logdir=./Sparse_DKT_binary_RVM_CUB_log/ --host localhost --port 8090
     from tensorboardX import SummaryWriter
     IS_TBX_INSTALLED = True
 except ImportError:
@@ -252,7 +252,7 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
 
             if self.rvm_mll_only:
                 if self.regression:
-                    rvm_mll, _ = rvm_ML_regression(K_m, target, alpha_m, mu_m)
+                    rvm_mll = rvm_ML_regression_full(K_m, target, alpha_m, mu_m)
                 else:
                     rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U)
             else:
