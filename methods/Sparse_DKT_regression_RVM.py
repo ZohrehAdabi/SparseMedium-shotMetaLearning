@@ -188,7 +188,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
             ip_index = inducing_points.index
             beta = inducing_points.beta
             mu_m = inducing_points.mu
-            U = inducing_points.U
+            # U = inducing_points.U
             alpha_m = inducing_points.alpha
             scales = inducing_points.scale
             ip_values = z[ip_index]
@@ -199,8 +199,8 @@ class Sparse_DKT_regression_RVM(nn.Module):
             alpha_m = alpha_m.detach()
             A = torch.diag(alpha_m).to(device='cuda').to(torch.float)
             self.model.covar_module.A = nn.Parameter(A, requires_grad=False)
-            # Using SparseKernel (based on InducingPointKernel of gpytorch) 
-            if self.beta_trajectory:
+            # Use NOTE SparseKernel (based on InducingPointKernel of gpytorch) 
+            if self.beta_trajectory or self.beta:
                 self.model.covar_module.sigma_rvm = nn.Parameter(1/beta, requires_grad=True) 
             else:
                 sigma = self.model.likelihood.noise[0]
@@ -219,8 +219,8 @@ class Sparse_DKT_regression_RVM(nn.Module):
             # K_m = K_m / scales
             # alpha_m = alpha_m / (scales**2)
             mu_m = mu_m / scales
-            # Use my rvm_ML_full as loss insted of SparseKernel
-            if self.beta_trajectory:
+            # NOTE Use my rvm_ML_full as loss insted of SparseKernel
+            if self.beta_trajectory or self.beta:
                 alpha_m = alpha_m.detach()
                 rvm_mll = rvm_ML_full(K_m, labels, alpha_m, mu_m, beta)
             else:
