@@ -331,17 +331,17 @@ class Sparse_DKT_regression_RVM(nn.Module):
         mu_m = inducing_points.mu
         scales = inducing_points.scale
         self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
-        
+        self.model.covar_module._clear_cache()
         self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
         if self.kernel_type=='spectral':
             self.model.base_covar_module.initialize_from_data_empspect(z_support, y_support)
-        self.model.covar_module._clear_cache()
-        if self.beta_trajectory:
-            alpha_m = alpha_m / scales**2
-            alpha_m = alpha_m.detach()
-            A = torch.diag(alpha_m).to(device='cuda').to(torch.float)
-            self.model.covar_module.A = nn.Parameter(A, requires_grad=False)
-            
+        
+        # if self.beta_trajectory:
+        #     alpha_m = alpha_m / scales**2
+        #     alpha_m = alpha_m.detach()
+        #     A = torch.diag(alpha_m).to(device='cuda').to(torch.float)
+        #     self.model.covar_module.A = nn.Parameter(A, requires_grad=False)
+
         with torch.no_grad():
             z_query = self.feature_extractor(x_query).detach()
             if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
@@ -848,6 +848,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
             print(f'\nBest model at epoch {ckpt["epoch"]}, MSE: {ckpt["mse"]}')
         IP = torch.ones(self.model.covar_module.inducing_points.shape[0], 2916).cuda()
         ckpt['gp']['covar_module.inducing_points'] = IP
+        ckpt['gp']['covar_module.A'] = IP
         self.model.load_state_dict(ckpt['gp'])
         self.likelihood.load_state_dict(ckpt['likelihood'])
         self.feature_extractor.load_state_dict(ckpt['net'])
