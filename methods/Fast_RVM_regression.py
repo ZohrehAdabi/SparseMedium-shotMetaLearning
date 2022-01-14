@@ -338,7 +338,8 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
             if torch.abs(delta_beta) > 1e-6:
                 if verbose and False:
                     print(f'{itr:3}, update statistics after beta update')
-                Sigma_m, mu_m, S, Q, s, q, logML, Gamma, U = Statistics(K_m, KK_m, KK_mm, K, KK_diag, Kt, K_mt, alpha_m, active_m, beta, targets, N)
+                with torch.no_grad():
+                    q, logML, Gamma, U = Statistics(K_m, KK_m, KK_mm, K, KK_diag, Kt, K_mt, alpha_m, active_m, beta, targets, N)
                 count = count + 1
                 logMarginalLog.append(logML.item())
                 terminate = False
