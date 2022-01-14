@@ -332,12 +332,12 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
             # with torch.enable_grad():
                 # beta.requires_grad = True
             beta_old = beta
-            y_      = K_m @ mu_m  
+            y_      = K_m @ mu_m 
             e       = (targets - y_)
             beta	= (N - torch.sum(Gamma))/(e.T @ e)
-            if beta > 1e3/torch.var(targets):
-                beta = 1e3/torch.var(targets)
-            # beta	= torch.min(beta, 1e3/torch.var(targets))
+            # if beta > 1e3/torch.var(targets):
+            #     beta = 1e3/torch.var(targets)
+            beta	= torch.min(beta, 1e3/torch.var(targets))
             delta_beta	= torch.log(beta)-torch.log(beta_old)
             beta_KK_m       = beta * KK_m
             if torch.abs(delta_beta) > 1e-6:

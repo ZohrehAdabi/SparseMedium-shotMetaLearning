@@ -174,7 +174,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
 
             sigma = self.model.likelihood.noise[0]
             beta = 1/sigma
-            if self.beta_trajectory:
+            if self.beta_trajectory:  #ERROR: gradient of beta is iterative and version of variable changes and error raise.
                 inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
                                                                 z, labels, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
                                                                 config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
