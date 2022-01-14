@@ -264,7 +264,7 @@ elif params.method=='Sparse_DKT_RVM':
         if not os.path.isdir(params.checkpoint_dir):
             os.makedirs(params.checkpoint_dir)
         
-        id =  f'FRVM_{params.config}_{params.align_thr}_{params.lr_gp}_{params.lr_net}'
+        id =  f'RVM_{params.config}_{params.align_thr}_{params.lr_gp}_{params.lr_net}'
         if params.gamma: id += '_gamma'
         if params.normalize: id += '_norm'
         if params.lr_decay: id += '_lr_decay'

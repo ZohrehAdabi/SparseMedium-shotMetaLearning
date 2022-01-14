@@ -483,16 +483,17 @@ class Sparse_DKT_regression_RVM(nn.Module):
                     mse_ = np.mean(mse_unnorm_list)
                     sv_c = np.mean(sv_count_list)
                     mse_r = np.mean(mse_rvm_list)
-                    if best_mse >= mse:
-                        best_mse = mse
+                    if best_mse >= mse_r:
+                        best_mse = mse_r
                         best_epoch = epoch
                         model_name = self.best_path + '_best_model.tar'
                         self.save_best_checkpoint(epoch+1, best_mse, model_name)
                         print(Fore.LIGHTRED_EX, f'Best MSE: {best_mse:.4f}', Fore.RESET)
-                    print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE RVM: {mse_r:.4f}, MSE(norm): {mse:.4f}, MSE: {mse_:.4f}, SV: {sv_c:.2f} Best MSE: {best_mse:.4f}', Fore.RESET)
+                    print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE RVM: {mse_r:.4f}, MSE(norm): {mse:.4f}, MSE: {mse_:.4f}, SV: {sv_c:.2f} Best MSE (RVM): {best_mse:.4f}', Fore.RESET)
                     if(self.writer is not None):
                         self.writer.add_scalar('MSE (norm) Val.', mse, epoch)
                         self.writer.add_scalar('RVM MSE Val.', mse_r, epoch)
+                        self.writer.add_scalar('Avg. SVs', sv_c, epoch)
                 print(Fore.GREEN,"-"*30, Fore.RESET)
             
             elif self.random:
@@ -849,10 +850,10 @@ class Sparse_DKT_regression_RVM(nn.Module):
         IP = torch.ones(self.model.covar_module.inducing_points.shape[0], 2916).cuda()
 
         ckpt['gp']['covar_module.inducing_points'] = IP
-        # if 'A' in 
-        A = torch.ones(self.model.covar_module.A.shape).cuda()
-        ckpt['gp']['covar_module.A'] = A
-        self.model.covar_module.A = nn.Parameter(A)
+        if 'covar_module.A' in ckpt['gp']:
+            A = torch.ones(self.model.covar_module.A.shape).cuda()
+            ckpt['gp']['covar_module.A'] = A
+            self.model.covar_module.A = nn.Parameter(A)
         self.model.load_state_dict(ckpt['gp'])
         self.likelihood.load_state_dict(ckpt['likelihood'])
         self.feature_extractor.load_state_dict(ckpt['net'])

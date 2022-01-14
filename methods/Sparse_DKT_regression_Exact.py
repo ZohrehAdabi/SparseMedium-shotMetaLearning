@@ -437,6 +437,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
                     self.writer.add_scalar('MSE (norm) Val.', mse, epoch)
                     # self.writer.add_scalar('MSE Val.', mse_, epoch)
                     self.writer.add_scalar('RVM MSE Val.', mse_r, epoch)
+                    self.writer.add_scalar('Avg. SVs', sv_c, epoch)
                 print(Fore.GREEN,"-"*30, Fore.RESET)
 
             mll_list.append(mll)

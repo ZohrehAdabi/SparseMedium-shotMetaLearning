@@ -446,6 +446,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                     if(self.writer is not None):
                         self.writer.add_scalar('MSE (norm) Val.', mse, epoch)
                         self.writer.add_scalar('RVM MSE Val.', mse_r, epoch)
+                        self.writer.add_scalar('Avg. SVs', sv_c, epoch)
                 print(Fore.GREEN,"-"*30, Fore.RESET)
             
             elif self.random:
