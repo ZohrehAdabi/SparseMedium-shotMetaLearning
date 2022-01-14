@@ -148,6 +148,7 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
     acc = None
     mu_m = None
     U = None
+    print_freq = 5
     if sparse_method=='Random':
         if num_inducing_points is not None:
             num_IP = num_inducing_points
@@ -221,7 +222,7 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
             y_pred = (y_pred > 0.5).to(int)
             
             acc = (torch.sum(y_pred==target) / N).item()  * 100 # targets is zero and one (after FRVM)
-            if verbose:
+            if verbose and (task_id%print_freq==0):
                 print(f'FRVM ACC on Inputs: {(acc):.2f}%')
             
             # self.frvm_acc.append(acc.item())
@@ -366,7 +367,7 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
     else:
         print(f'No method')
 
-    return IP(inducing_points, IP_index, num_IP, alpha, gamma, mu_m, scales_m, U), acc
+    return IP(inducing_points, IP_index, num_IP, alpha, gamma, None, mu_m, scales_m, U), acc
   
 
 def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_method, scale, beta,
@@ -457,10 +458,7 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
                 mu_r = mu_m / scales_m
                 mu_r = mu_r.to(torch.float)
                 y_pred = K @ mu_r
-                
-                
-
-                
+    
                 if classification:
                     y_pred = torch.sigmoid(y_pred)
                     y_pred = (y_pred > 0.5).to(int)
