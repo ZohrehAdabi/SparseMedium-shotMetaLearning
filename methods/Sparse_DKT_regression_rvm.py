@@ -188,6 +188,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
             # sigma I + K_m @ A_inv @ K_m
             
             alpha_m = alpha_m / scales**2
+            alpha_m = alpha_m.detach()
             A = torch.diag(alpha_m).to(device='cuda').to(torch.float)
             self.model.covar_module.A = nn.Parameter(A, requires_grad=False)
             if self.beta_trajectory:
