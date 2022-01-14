@@ -155,9 +155,10 @@ if __name__ == '__main__':
         elif params.method == 'baseline++':
             model = BaselineTrain(model_dict[params.model], params.num_classes, loss_type='dist')
 
-    elif params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sp_DKT_Bin_Nyst_NLoss', 'Sparse_DKT_binary_Exact', 'Sp_DKT_Bin_Exact_NLoss', 
+    elif params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss', 
+                            'Sparse_DKT_binary_Exact', 'Sp_DKT_Bin_Exact_NLoss', 
                             'DKT', 'DKT_binary', 'DKT_binary_new_loss', 'protonet', 
-                        'matchingnet', 'relationnet', 'relationnet_softmax', 'maml', 'maml_approx']:
+                            'matchingnet', 'relationnet', 'relationnet_softmax', 'maml', 'maml_approx']:
         # for fewshot setting
         # n_query = max(1, int(
         #     16 * params.test_n_way / params.train_n_way))  # if test_n_way is smaller than train_n_way, reduce n_query to keep batch size small
@@ -427,7 +428,8 @@ if __name__ == '__main__':
     #     params.checkpoint_dir += '_aug'
     if not params.method in ['baseline', 'baseline++']:
         
-        if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sp_DKT_Bin_Nyst_NLoss', 'Sparse_DKT_binary_Exact', 'Sp_DKT_Bin_Exact_NLoss']:
+        if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 
+                                'Sp_DKT_Bin_Nyst_NLoss', 'Sparse_DKT_binary_Exact', 'Sp_DKT_Bin_Exact_NLoss']:
             if params.dirichlet:
                 id = f'_{params.sparse_method}_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
@@ -474,7 +476,7 @@ if __name__ == '__main__':
         resume_file = get_resume_file(params.checkpoint_dir)
         if resume_file is not None:
             tmp = torch.load(resume_file)
-            if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_binary_Nystrom', 'Sp_DKT_Bin_Nyst_NLoss']:
+            if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss']:
                 
                 IP = torch.ones(100, 64).cuda()
                 tmp['state']['model.covar_module.inducing_points'] = IP
