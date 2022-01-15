@@ -141,11 +141,11 @@ class DKT_binary(MetaTemplate):
             y_train = y_all
 
             samples_per_model = int(len(y_train) / self.n_way) #25 / 5 = 5
-            target = torch.ones(len(y_train), dtype=torch.float32) * -1 
+            target = torch.ones(len(y_train), dtype=torch.float32) * 1 
             # target = torch.zeros(len(y_train), dtype=torch.float32) 
             start_index = 0
             stop_index = start_index+samples_per_model
-            target[start_index:stop_index] = 1.0
+            target[start_index:stop_index] = -1.0
             target = target.cuda()
 
             self.model.train()
@@ -223,7 +223,7 @@ class DKT_binary(MetaTemplate):
                    y_pred = max_pred.cpu().detach().numpy()
                 else: 
                    pred = torch.sigmoid(prediction.mean)
-                   y_pred = (pred < 0.5).to(int)
+                   y_pred = (pred > 0.5).to(int)
                    y_pred = y_pred.cpu().detach().numpy()
                
                 accuracy_query = (np.sum(y_pred==y_query) / float(len(y_query))) * 100.0
@@ -266,11 +266,11 @@ class DKT_binary(MetaTemplate):
         y_train = y_support
 
         samples_per_model = int(len(y_train) / self.n_way) #25 / 5 = 5
-        target = torch.ones(len(y_train), dtype=torch.float32) * -1 
+        target = torch.ones(len(y_train), dtype=torch.float32) * 1 
         # target = torch.zeros(len(y_train), dtype=torch.float32) 
         start_index = 0
         stop_index = start_index+samples_per_model
-        target[start_index:stop_index] = 1.0
+        target[start_index:stop_index] = -1.0
         target = target.cuda()
 
         z_train = self.feature_extractor.forward(x_train).detach() #[340, 64]
@@ -320,7 +320,7 @@ class DKT_binary(MetaTemplate):
                    y_pred = max_pred.cpu().detach().numpy()
             else: 
                 pred = torch.sigmoid(prediction.mean)
-                y_pred = (pred < 0.5).to(int)
+                y_pred = (pred > 0.5).to(int)
                 y_pred = y_pred.cpu().detach().numpy()
 
             top1_correct = np.sum(y_pred == y_query)
