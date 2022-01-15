@@ -270,7 +270,7 @@ for sd in range(seed, seed+repeat):
         print(f'\nBest model\n{params.checkpoint_dir}_best_model.tar')
         model.load_checkpoint(params.checkpoint_dir +'_best_model.tar')
         if params.method=='transfer':
-            mse_list_best = model.test(params.n_support, params.n_samples, optimizer, params.fine_tune, params.n_test_epochs)
+            mse_list_best, result = model.test(params.n_support, params.n_samples, optimizer, params.fine_tune, params.n_test_epochs)
         else:
             mse_list_best, result = model.test(params.n_support, params.n_samples, optimizer, params.n_test_epochs)
         
@@ -289,7 +289,7 @@ for sd in range(seed, seed+repeat):
         model.load_checkpoint(params.checkpoint_dir)
 
         if params.method=='transfer':
-            mse_list = model.test(params.n_support, params.n_samples, optimizer, params.fine_tune, params.n_test_epochs)
+            mse_list, result = model.test(params.n_support, params.n_samples, optimizer, params.fine_tune, params.n_test_epochs)
         else:
             mse_list, result = model.test(params.n_support, params.n_samples, optimizer, params.n_test_epochs)
 

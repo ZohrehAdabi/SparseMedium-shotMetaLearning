@@ -558,7 +558,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             print('-----------------------------------------')
         # result = {'mse':f'{np.mean(mse_list):.3f}', 'rvm mse':f'{np.mean(mse_rvm_list):.3f}', 'std':f'{np.std(mse_list):.3f}', 'std rvm': f'{np.std(mse_rvm_list):.3f}', 'SVs':f'{np.mean(num_sv_list):.3f}'} #  
         result = {'mse':np.mean(mse_list), 'rvm mse':np.mean(mse_rvm_list), 'std':np.std(mse_list), 'std rvm': np.std(mse_rvm_list), 'SVs':np.mean(num_sv_list)}
-        result = {k: np.around(v, 3) for k, v in result.items()}
+        result = {k: np.around(v, 4) for k, v in result.items()}
         if self.add_rvm_ll: result['rvm_ll'] = True
         if self.add_rvm_mll: result['rvm_mll'] = True
         if self.add_rvm_ll or self.add_rvm_mll: result['lambda_rvm'] = self.lambda_rvm

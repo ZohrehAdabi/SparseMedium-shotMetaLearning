@@ -321,7 +321,7 @@ class MAML_regression(nn.Module):
         print(f'MSE (unnormed): {np.mean(mse_list_):.4f}')
         result = {'mse':f'{np.mean(mse_list):.3f}', 'std':f'{np.std(mse_list):.3f}'} #  
         result = {'mse':np.mean(mse_list),  'std':np.std(mse_list)}
-        result = {k: np.around(v, 3) for k, v in result.items()}
+        result = {k: np.around(v, 4) for k, v in result.items()}
         #result = {'mse':np.around(np.mean(mse_list), 3), 'std':np.around(np.std(mse_list),3)}
         result['inner_loop'] = self.task_update_num
         result['inner_lr'] = self.train_lr

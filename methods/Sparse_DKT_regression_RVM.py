@@ -597,7 +597,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
             print('-----------------------------------------')
         # result = {'mse':f'{np.mean(mse_list):.3f}', 'rvm mse':f'{np.mean(mse_rvm_list):.3f}', 'std':f'{np.std(mse_list):.3f}', 'std rvm': f'{np.std(mse_rvm_list):.3f}', 'SVs':f'{np.mean(num_sv_list):.3f}'} #  
         result = {'mse':np.mean(mse_list), 'rvm mse':np.mean(mse_rvm_list), 'std':np.std(mse_list), 'std rvm': np.std(mse_rvm_list), 'SVs':np.mean(num_sv_list)}
-        result = {k: np.around(v, 3) for k, v in result.items()}
+        result = {k: np.around(v, 4) for k, v in result.items()}
         #result = {'mse':np.around(np.mean(mse_list), 3), 'rvm mse':np.around(np.mean(mse_rvm_list),3), 'std':np.around(np.std(mse_list),3), 'std rvm': np.around(np.std(mse_rvm_list), 3), 'SVs':np.around(np.mean(num_sv_list),2)}
         return mse_list, result
 
