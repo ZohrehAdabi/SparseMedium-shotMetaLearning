@@ -86,11 +86,11 @@ def single_test(params):
     elif params.method == 'protonet':
         model           = ProtoNet( model_dict[params.model], **few_shot_params )
     elif params.method == 'DKT':
-        model           = DKT(model_dict[params.model], params.kernel_type, **few_shot_params, dirichlet=params.dirichlet)
+        model           = DKT(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
     elif params.method == 'DKT_binary':
-        model           = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, dirichlet=params.dirichlet)
+        model           = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
     elif params.method == 'DKT_binary_new_loss':
-        model           = DKT_binary_new_loss(model_dict[params.model], params.kernel_type, **few_shot_params, dirichlet=params.dirichlet)   
+        model           = DKT_binary_new_loss(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)   
     elif params.method == 'Sparse_DKT_Nystrom':
         model           = Sparse_DKT_Nystrom(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
                                 add_rvm_mll=params.rvm_mll, lambda_rvm=params.lambda_rvm, num_inducing_points=params.num_ip,
