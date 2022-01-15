@@ -216,7 +216,7 @@ class Sparse_DKT_Exact(MetaTemplate):
                         rvm_mll, _ = rvm_ML_regression(K_m, target, alpha_m, mu_m)
                     else:
                         rvm_mll = rvm_ML(K_m, target, alpha_m, mu_m, U)
-                elif self.rvm_mll:
+                elif self.add_rvm_mll:
                     if self.regression:
                         rvm_mll = rvm_ML_regression_full(K_m, target, alpha_m, mu_m)
                     else:
