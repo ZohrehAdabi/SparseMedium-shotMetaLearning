@@ -620,7 +620,11 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
         print(Fore.CYAN,f'Avg. FRVM ACC on query set: {acc_mean_rvm:4.2f}%, std: {acc_std_rvm:.2f}', Fore.RESET)
         print(Fore.YELLOW,'%d Test Acc = %4.2f%% +- %4.2f%%' %(iter_num,  acc_mean, 1.96* acc_std/np.sqrt(iter_num)), Fore.RESET)
         print(Fore.LIGHTRED_EX,"="*30, Fore.RESET)
-        if(self.writer is not None): self.writer.add_scalar('test_accuracy', acc_mean, self.iteration)
+        if(self.writer is not None): 
+            if self.rvm_mll_only or self.rvm_ll_only:
+                self.writer.add_scalar('test_accuracy', acc_mean_rvm, self.iteration)
+            else:
+                self.writer.add_scalar('test_accuracy', acc_mean, self.iteration)
         if(self.writer is not None): self.writer.add_scalar('Avg. SVs', mean_num_sv, self.iteration)
         if self.rvm_mll_only or self.rvm_ll_only:
             if(return_std): return acc_mean_rvm, acc_std_rvm
