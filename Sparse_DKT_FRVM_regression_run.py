@@ -7,7 +7,7 @@ seed_list = [1, 2, 3]
 lr_gp_list = [0.1, 0.01, 0.001, 0.0001]
 lr_net_list = [0.01, 0.001, 0.0001]
 
-stop_epoch = 2
+stop_epoch = 150
 lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['1011']
