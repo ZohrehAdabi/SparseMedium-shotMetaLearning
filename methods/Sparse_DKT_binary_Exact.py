@@ -19,7 +19,7 @@ import random
 from colorama import Fore
 # from configs import kernel_type
 from methods.Fast_RVM import Fast_RVM
-from methods.Inducing_points import get_inducing_points, rvm_ML, get_inducing_points_regression, rvm_ML_regression
+from methods.Inducing_points import get_inducing_points, rvm_ML, rvm_ML_full, get_inducing_points_regression, rvm_ML_regression, rvm_ML_regression_full
 #Check if tensorboardx is installed
 try:
     #tensorboard --logdir=./Sparse_DKT_binary_Exact_CUB_log/ --host localhost --port 8090
@@ -39,12 +39,14 @@ except ImportError:
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=5 --train_aug
 IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j_idx")
 class Sparse_DKT_binary_Exact(MetaTemplate):
-    def __init__(self, model_func, kernel_type, n_way, n_support, sparse_method, add_rvm_mll=False, add_rvm_mll_one=False, lambda_rvm=0.1, regression=False, num_inducing_points=None, normalize=False, 
+    def __init__(self, model_func, kernel_type, n_way, n_support, sparse_method, add_rvm_mll=False, add_rvm_ll=False, add_rvm_mll_one=False, lambda_rvm=0.1, 
+                            regression=False, num_inducing_points=None, normalize=False, 
                             scale=False, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
         super(Sparse_DKT_binary_Exact, self).__init__(model_func, n_way, n_support)
         self.num_inducing_points = num_inducing_points
         self.sparse_method = sparse_method
         self.add_rvm_mll = add_rvm_mll
+        self.add_rvm_ll = add_rvm_ll
         self.add_rvm_mll_one = add_rvm_mll_one
         self.lambda_rvm = lambda_rvm
         self.regression = regression
@@ -212,10 +214,22 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             # scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
             # K = K / scales
             mu_m = mu_m /scales
-            if self.regression:
-                rvm_mll, _ = rvm_ML_regression(K_m, target, alpha_m, mu_m)
-            else:
-                rvm_mll = rvm_ML(K_m, target, alpha_m, mu_m, U)
+            if self.add_rvm_ll:
+                if self.regression:
+                    rvm_mll, _ = rvm_ML_regression(K_m, target, alpha_m, mu_m)
+                else:
+                    rvm_mll = rvm_ML(K_m, target, alpha_m, mu_m, U)
+            elif self.rvm_mll:
+                if self.regression:
+                    rvm_mll = rvm_ML_regression_full(K_m, target, alpha_m, mu_m)
+                else:
+                    rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U)
+            else: #when rvm is not used this function runs to have rvm_mll  for report in print
+                if self.regression:
+                    rvm_mll = rvm_ML_regression_full(K_m, target, alpha_m, mu_m)
+                else:
+                    rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U)
+
             if self.dirichlet:
                 ip_labels[ip_labels==-1] = 0
                 self.model.likelihood.targets = ip_labels.long()
@@ -249,13 +263,15 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
                 if self.add_rvm_mll_one:
                     #  
                     loss = -(1-l) * mll  - l * rvm_mll 
-                if self.add_rvm_mll:
+                if self.add_rvm_mll or self.add_rvm_ll:
                     loss = - mll  - l * rvm_mll
                 else:
                     loss = -mll
             loss.backward()
             optimizer.step()
-
+            
+            mll = mll.item()
+            rvm_mll = rvm_mll.item()
             self.iteration = i+(epoch*len(train_loader))
             if(self.writer is not None): self.writer.add_scalar('Loss', loss, self.iteration)
             if(self.writer is not None): self.writer.add_scalar('MLL', -mll, self.iteration)
@@ -310,10 +326,10 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
                 if(self.writer is not None): self.writer.add_histogram('z_support', z_support, self.iteration)
                 if self.dirichlet:
                     print(Fore.LIGHTRED_EX,'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} || Loss {:f} | MLL {:f} | RVM ML {:f}| Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
-                        outputscale, lenghtscale,  loss.item(),  -mll.item(), -rvm_mll.item(), 0, accuracy_query), Fore.RESET) #accuracy_support
+                        outputscale, lenghtscale,  loss.item(),  -mll, -rvm_mll, 0, accuracy_query), Fore.RESET) #accuracy_support
                 else:
                     print(Fore.LIGHTRED_EX,'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} | Noise {:f} | Loss {:f} | MLL {:f} | RVM ML {:f}| Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
-                        outputscale, lenghtscale, noise, loss.item(),  -mll.item(), -rvm_mll.item(), 0, accuracy_query), Fore.RESET)
+                        outputscale, lenghtscale, noise, loss.item(),  -mll, -rvm_mll, 0, accuracy_query), Fore.RESET)
 
     def get_inducing_points(self, base_covar_module, inputs, targets, verbose=True):
 

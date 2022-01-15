@@ -205,7 +205,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             elif self.add_rvm_ll:
                 rvm_mll, rvm_mse = rvm_ML_regression(K_m, labels, alpha_m, mu_m, beta)
             else: #when rvm is not used this function runs to have rvm_mll  for report in print
-                rvm_mll, rvm_mse = rvm_ML_regression(K_m, labels, alpha_m, mu_m, beta)
+                rvm_mll = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
 
             predictions = self.model(z)
             mll = self.mll(predictions, self.model.train_targets)
