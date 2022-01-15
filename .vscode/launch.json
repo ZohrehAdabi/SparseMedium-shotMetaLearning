@@ -322,8 +322,8 @@
             "program": "${workspaceFolder}/train.py",
             "console": "integratedTerminal",
            "args": ["--method","DKT_binary", "--dataset", "CUB", 
-            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50",  "--n_query", "10",  "--lr_gp", "1e-1", "--lr_net", "1e-3",
-            "--seed","1",  "--kernel_type", "linear"]  // "--resume", "--train_aug"
+            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50",  "--n_query", "10",  "--lr_gp", "1e-3", "--lr_net", "1e-3",
+            "--seed","1",  "--kernel_type", "linear", "--normalize"]  // "--resume", "--train_aug"
          // python train.py --method "DKT_binary"  --dataset "CUB"  --train_n_way 2 --test_n_way 2 --n_shot 50 --n_query 10 --seed 1 --lr_gp  1e-2 --lr_net  1e-3 --kernel_type "linear" --train_aug
         },
         {
@@ -334,7 +334,7 @@
             "console": "integratedTerminal",
            "args": ["--method","DKT_binary", "--dataset", "CUB", 
             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50",  "--n_query", "10",  "--lr_gp", "1e-3", "--lr_net", "1e-3",
-            "--seed","1",  "--kernel_type", "linear"]  // "--resume", "--train_aug"
+            "--seed","1",  "--kernel_type", "linear",  "--normalize"]  // "--resume", "--train_aug"
          // python test.py --method "DKT_binary"  --dataset "CUB"  --train_n_way 2 --test_n_way 2 --n_shot 50 --n_query 10 --seed 1 --lr_gp  1e-2 --lr_net  1e-3  --kernel_type "linear" --train_aug
         },
         {
