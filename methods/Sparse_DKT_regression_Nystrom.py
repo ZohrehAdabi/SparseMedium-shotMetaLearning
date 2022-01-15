@@ -195,11 +195,11 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             # alpha_m = alpha_m / (scales**2)
             mu_m = mu_m / scales
             if self.add_rvm_mll:
-                rvm_mll = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, U, beta)
+                rvm_mll = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
             elif self.add_rvm_ll:
-                rvm_mll, rvm_mse = rvm_ML_regression(K_m, labels, alpha_m, mu_m, U, beta)
+                rvm_mll, rvm_mse = rvm_ML_regression(K_m, labels, alpha_m, mu_m, beta)
             else: #when rvm is not used this function runs to have rvm_mll  for report in print
-                rvm_mll, rvm_mse = rvm_ML_regression(K_m, labels, alpha_m, mu_m, U, beta)
+                rvm_mll, rvm_mse = rvm_ML_regression(K_m, labels, alpha_m, mu_m, beta)
 
             predictions = self.model(z)
             mll = self.mll(predictions, self.model.train_targets)
