@@ -23,7 +23,7 @@ import random
 ## Our packages
 import gpytorch
 from methods.Fast_RVM_regression import Fast_RVM_regression
-from methods.Inducing_points import get_inducing_points_regression, rvm_ML_regression
+from methods.Inducing_points import get_inducing_points_regression, rvm_ML_regression, rvm_ML_regression_full
 
 from statistics import mean
 from data.qmul_loader import get_batch, train_people, val_people, test_people, get_unnormalized_label
@@ -42,7 +42,8 @@ except ImportError:
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx")
 class Sparse_DKT_regression_Exact(nn.Module):
-    def __init__(self, backbone, kernel_type, sparse_method='FRVM', add_rvm_mll=False, add_rvm_mll_one=False, add_rvm_mse=False, lambda_rvm=0.1, normalize=False, lr_decay=False, 
+    def __init__(self, backbone, kernel_type, sparse_method='FRVM', add_rvm_mll=False, add_rvm_mll_one=False, add_rvm_ll=False,
+                    add_rvm_mse=False, lambda_rvm=0.1, normalize=False, lr_decay=False, 
                     f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_regression_Exact, self).__init__()
@@ -51,6 +52,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
         self.kernel_type = kernel_type
         self.sparse_method = sparse_method
         self.add_rvm_mll = add_rvm_mll
+        self.add_rvm_ll = add_rvm_ll
         self.add_rvm_mll_one = add_rvm_mll_one
         self.add_rvm_mse = add_rvm_mse
         self.lambda_rvm = lambda_rvm
@@ -189,8 +191,13 @@ class Sparse_DKT_regression_Exact(nn.Module):
             # scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
             # K = K / scales
             mu_m = mu_m / scales
-            rvm_mll, rvm_mse = rvm_ML_regression(K_m, labels, alpha_m, mu_m, beta)
-            # z = self.feature_extractor(x_query)
+            if self.add_rvm_mll:
+                rvm_mll = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, U, beta)
+            elif self.add_rvm_ll:
+                rvm_mll, rvm_mse = rvm_ML_regression(K_m, labels, alpha_m, mu_m, U, beta)
+            else: #when rvm is not used this function runs to have rvm_mll  for report in print
+                rvm_mll, rvm_mse = rvm_ML_regression(K_m, labels, alpha_m, mu_m, U, beta)
+            
             predictions = self.model(ip_values)
             mll = self.mll(predictions, self.model.train_targets)
             if self.add_rvm_mll:
@@ -204,18 +211,21 @@ class Sparse_DKT_regression_Exact(nn.Module):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+
             mll_list.append(loss.item())
             mse = self.mse(predictions.mean, ip_labels)
-
+            mll = mll.item()
+            rvm_mll = rvm_mll.item()
+            frvm_mse = frvm_mse.item()
             self.iteration = itr+(epoch*len(batch_labels))
             if(self.writer is not None): self.writer.add_scalar('MLL + RVM MLL (Loss)', loss.item(), self.iteration)
-            if(self.writer is not None): self.writer.add_scalar('MLL', -mll.item(), self.iteration)
-            if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll.item(), self.iteration)
-            if(self.writer is not None): self.writer.add_scalar('RVM MSE', rvm_mse.item(), self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('MLL', -mll, self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll, self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('RVM MSE', rvm_mse, self.iteration)
             if self.kernel_type=='rbf':
                 if ((epoch%1==0) & (itr%print_freq==0)):
                     print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.4f ML %.4f RVM ML: %.4f RVM MSE: %.4f  MSE: %.3f noise: %.4f outputscale: %.3f lengthscale: %.3f' % (
-                        itr, epoch, loss.item(), -mll.item(), -rvm_mll.item(), rvm_mse.item(), mse.item(),
+                        itr, epoch, loss.item(), -mll, -rvm_mll, frvm_mse, mse.item(),
                         self.model.likelihood.noise.item(), self.model.base_covar_module.outputscale,
                         self.model.base_covar_module.base_kernel.lengthscale
                     ),Fore.RESET)
