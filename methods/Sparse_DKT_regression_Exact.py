@@ -43,7 +43,7 @@ except ImportError:
 IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx")
 class Sparse_DKT_regression_Exact(nn.Module):
     def __init__(self, backbone, kernel_type, sparse_method='FRVM', add_rvm_mll=False, add_rvm_mll_one=False, add_rvm_ll=False,
-                    add_rvm_mse=False, lambda_rvm=0.1, normalize=False, lr_decay=False, 
+                    add_rvm_mse=False, lambda_rvm=0.1, beta=False, normalize=False, lr_decay=False, 
                     f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_regression_Exact, self).__init__()
@@ -56,6 +56,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
         self.add_rvm_mll_one = add_rvm_mll_one
         self.add_rvm_mse = add_rvm_mse
         self.lambda_rvm = lambda_rvm
+        self.beta = beta
         self.normalize = normalize
         self.lr_decay = lr_decay
         self.num_inducing_points = n_inducing_points
@@ -165,10 +166,11 @@ class Sparse_DKT_regression_Exact(nn.Module):
 
             z = self.feature_extractor(inputs)
             if(self.normalize): z = F.normalize(z, p=2, dim=1)
+
+            sigma = self.model.likelihood.noise[0].clone()
+            beta = 1/sigma
             with torch.no_grad():
                 # inducing_points, beta, mu_m = self.get_inducing_points(z, labels, verbose=True)
-                sigma = self.model.likelihood.noise[0].clone()
-                beta = 1/sigma
                 inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
                                                                 z, labels, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
                                                                 config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
@@ -184,12 +186,15 @@ class Sparse_DKT_regression_Exact(nn.Module):
             # self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
             # NOTE 
             self.model.set_train_data(inputs=ip_values, targets=ip_labels, strict=False)
-            # sigma = self.model.likelihood.noise[0].clone().detach()
             alpha_m = inducing_points.alpha
             K_m = self.model.base_covar_module(z, ip_values).evaluate()
             K_m = K_m.to(torch.float64)
             # scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
             # K = K / scales
+            if self.beta:
+                beta = inducing_points.beta
+            else:
+                beta = 1/sigma
             mu_m = mu_m / scales
             if self.add_rvm_mll:
                 rvm_mll = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
