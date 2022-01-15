@@ -17,12 +17,13 @@ from methods.MAML_regression import MAML_regression
 from methods.feature_transfer_regression import FeatureTransfer
 import backbone
 import numpy as np
+import time, json
 
 params = parse_args_regression('test_regression')
 
 repeat = params.repeat
 seed = params.seed
-accuracy_list = list()
+best_accuracy_list, last_accuracy_list = list(), list()
 for sd in range(seed, seed+repeat):
     np.random.seed(sd)
     torch.manual_seed(sd)
@@ -238,6 +239,32 @@ for sd in range(seed, seed+repeat):
     else:
         ValueError('Unrecognised method')
 
+    # log test result
+    info_path = params.checkpoint_dir
+    info_path = info_path.replace('\\', '/')
+    info = info_path.split('/')
+    info = '_'.join(info[3:])
+    result_path = f'./record/{params.dataset}'
+    if not os.path.isdir(result_path):
+        os.makedirs(result_path)
+    file = f'{result_path}/results_{info}.json'
+    old_data = None
+    if os.path.exists(file):
+        if os.stat(file).st_size!=0:
+            f = open(file , "r")
+            old_data = json.load(f)
+            f.close()
+    f = open(file , "w")
+    if old_data is None:
+        f.write('[\n')
+    else:
+        f = open(file , "w")
+        f.write('[\n')
+        for data in old_data:
+            json.dump(data, f, indent=2)
+            f.write(',\n')
+    timestamp = time.strftime("%Y/%m/%d-%H:%M", time.localtime()) 
+
     print(f'\n{params.checkpoint_dir}')
     if os.path.isfile(params.checkpoint_dir+'_best_model.tar'):
         print(f'\nBest model\n{params.checkpoint_dir}_best_model.tar')
@@ -245,32 +272,47 @@ for sd in range(seed, seed+repeat):
         if params.method=='transfer':
             mse_list_best = model.test(params.n_support, params.n_samples, optimizer, params.fine_tune, params.n_test_epochs)
         else:
-            mse_list_best = model.test(params.n_support, params.n_samples, optimizer, params.n_test_epochs)
+            mse_list_best, result = model.test(params.n_support, params.n_samples, optimizer, params.n_test_epochs)
+        
+        
+        f.write('{\n"time": ')
+        f.write(f'"{timestamp}",\n')
+        f.write('"best model":\n')
+        json.dump(result, f, indent=2) #f.write(json.dumps(result))
+        f.write(',\n')
+
         print("-------------------")
         print(f"Average MSE, seed {sd}: " + str(np.mean(mse_list_best)) + " +- " + str(np.std(mse_list_best)))
         print("-------------------")
-        accuracy_list.append(np.mean(mse_list_best))
+        best_accuracy_list.append(np.mean(mse_list_best))
     if True:
         model.load_checkpoint(params.checkpoint_dir)
 
         if params.method=='transfer':
             mse_list = model.test(params.n_support, params.n_samples, optimizer, params.fine_tune, params.n_test_epochs)
         else:
-            mse_list = model.test(params.n_support, params.n_samples, optimizer, params.n_test_epochs)
+            mse_list, result = model.test(params.n_support, params.n_samples, optimizer, params.n_test_epochs)
 
         print("-------------------")
         print(f"Average MSE, seed {sd}: " + str(np.mean(mse_list)) + " +- " + str(np.std(mse_list)))
         print("-------------------")
+        last_accuracy_list.append(np.mean(mse_list))
 
+        f.write('"last model":\n')
+        json.dump(result, f, indent=2)
+        f.write('\n}\n]')
+
+    f.close()
     print(f'\n{id}\n')
     print("-------------------")
     print("Average MSE best model: " + str(np.mean(mse_list_best)) + " +- " + str(np.std(mse_list_best)))
-    print("-------------------")
-
-    print("-------------------")
     print("Average MSE last model: " + str(np.mean(mse_list)) + " +- " + str(np.std(mse_list)))
     print("-------------------")
 
+
+
+
 print("===================")
-print(f"Overall Test Acc [repeat {repeat}]: " + str(np.mean(accuracy_list)) + " +- " + str(np.std(accuracy_list)))
+print(f"Overall Test Acc [best model] [repeat {repeat}]: " + str(np.mean(best_accuracy_list)) + " +- " + str(np.std(best_accuracy_list)))
+print(f"Overall Test Acc [last model] [repeat {repeat}]: " + str(np.mean(last_accuracy_list)) + " +- " + str(np.std(last_accuracy_list)))
 print("===================")

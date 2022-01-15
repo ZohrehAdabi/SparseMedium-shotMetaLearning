@@ -220,7 +220,13 @@ class FeatureTransfer(nn.Module):
             self.mw.finish()
         if self.show_plots_features:
             self.mw_feature.finish()
-        return mse_list
+
+        result = {'mse':f'{np.mean(mse_list):.3f}', 'std':f'{np.std(mse_list):.3f}'} #  
+        result = {'mse':np.mean(mse_list),  'std':np.std(mse_list)}
+        result = {k: np.around(v, 3) for k, v in result.items()}
+        result['fine_tune']=fine_tune
+        #result = {'mse':np.around(np.mean(mse_list), 3), 'std':np.around(np.std(mse_list),3)}
+        return mse_list, result
 
     def save_checkpoint(self, checkpoint):
         torch.save({'feature_extractor': self.feature_extractor.state_dict(), 'model':self.model.state_dict()}, checkpoint)

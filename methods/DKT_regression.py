@@ -299,7 +299,11 @@ class DKT_regression(nn.Module):
         if self.show_plots_features:
             self.mw_feature.finish()
         print(f'MSE (unnormed): {np.mean(mse_list_):.4f}')
-        return mse_list
+        result = {'mse':f'{np.mean(mse_list):.3f}', 'std':f'{np.std(mse_list):.3f}'} #  
+        result = {'mse':np.mean(mse_list),  'std':np.std(mse_list)}
+        result = {k: np.around(v, 3) for k, v in result.items()}
+        #result = {'mse':np.around(np.mean(mse_list), 3), 'std':np.around(np.std(mse_list),3)}
+        return mse_list, result
 
     def get_inducing_points(self, inputs, targets, verbose=True):
 
