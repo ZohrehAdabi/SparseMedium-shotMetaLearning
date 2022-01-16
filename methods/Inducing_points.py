@@ -214,7 +214,7 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
     elif sparse_method=='FRVM':
         # with sigma and updating sigma converges to more sparse solution
         N   = inputs.shape[0]
-        tol = 1e-3
+        tol = 1e-5
         eps = torch.finfo(torch.float32).eps
         max_itr = 1000
         
@@ -446,7 +446,7 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
     elif sparse_method=='FRVM':
         # with sigma and updating sigma converges to more sparse solution
         N   = inputs.shape[0]
-        tol = 1e-3
+        tol = 1e-5
         eps = torch.finfo(torch.float32).eps
         max_itr = 1000
         # if classification:
