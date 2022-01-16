@@ -240,30 +240,31 @@ for sd in range(seed, seed+repeat):
         ValueError('Unrecognised method')
 
     # log test result
-    info_path = params.checkpoint_dir
-    info_path = info_path.replace('\\', '/')
-    info = info_path.split('/')
-    info = '_'.join(info[3:])
-    result_path = f'./record/{params.dataset}'
-    if not os.path.isdir(result_path):
-        os.makedirs(result_path)
-    file = f'{result_path}/results_{info}.json'
-    old_data = None
-    if os.path.exists(file):
-        if os.stat(file).st_size!=0:
-            f = open(file , "r")
-            old_data = json.load(f)
-            f.close()
-    f = open(file , "w")
-    if old_data is None:
-        f.write('[\n')
-    else:
+    if params.save_result:
+        info_path = params.checkpoint_dir
+        info_path = info_path.replace('\\', '/')
+        info = info_path.split('/')
+        info = '_'.join(info[3:])
+        result_path = f'./record/{params.dataset}'
+        if not os.path.isdir(result_path):
+            os.makedirs(result_path)
+        file = f'{result_path}/results_{info}.json'
+        old_data = None
+        if os.path.exists(file):
+            if os.stat(file).st_size!=0:
+                f = open(file , "r")
+                old_data = json.load(f)
+                f.close()
         f = open(file , "w")
-        f.write('[\n')
-        for data in old_data:
-            json.dump(data, f, indent=2)
-            f.write(',\n')
-    timestamp = time.strftime("%Y/%m/%d-%H:%M", time.localtime()) 
+        if old_data is None:
+            f.write('[\n')
+        else:
+            f = open(file , "w")
+            f.write('[\n')
+            for data in old_data:
+                json.dump(data, f, indent=2)
+                f.write(',\n')
+        timestamp = time.strftime("%Y/%m/%d-%H:%M", time.localtime()) 
 
     print(f'\n{params.checkpoint_dir}')
     if os.path.isfile(params.checkpoint_dir+'_best_model.tar'):
@@ -274,12 +275,12 @@ for sd in range(seed, seed+repeat):
         else:
             mse_list_best, result = model.test(params.n_support, params.n_samples, optimizer, params.n_test_epochs)
         
-        
-        f.write('{\n"time": ')
-        f.write(f'"{timestamp}",\n')
-        f.write('"best model":\n')
-        json.dump(result, f, indent=2) #f.write(json.dumps(result))
-        f.write(',\n')
+        if params.save_result:
+            f.write('{\n"time": ')
+            f.write(f'"{timestamp}",\n')
+            f.write('"best model":\n')
+            json.dump(result, f, indent=2) #f.write(json.dumps(result))
+            f.write(',\n')
 
         print("-------------------")
         print(f"Average MSE, seed {sd}: " + str(np.mean(mse_list_best)) + " +- " + str(np.std(mse_list_best)))
@@ -298,9 +299,10 @@ for sd in range(seed, seed+repeat):
         print("-------------------")
         last_accuracy_list.append(np.mean(mse_list))
 
-        f.write('"last model":\n')
-        json.dump(result, f, indent=2)
-        f.write('\n}\n]')
+        if params.save_result:
+            f.write('"last model":\n')
+            json.dump(result, f, indent=2)
+            f.write('\n}\n]')
 
     f.close()
     print(f'\n{id}\n')
