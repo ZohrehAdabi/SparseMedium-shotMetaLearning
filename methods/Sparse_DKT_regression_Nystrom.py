@@ -468,7 +468,9 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
 
 
                 if epoch%50==0:
-                    self.save_checkpoint(model_name)
+                    model_name = self.best_path + f'_{epoch}'
+                    self.save_best_checkpoint(epoch, mse, model_name)
+
             elif self.random:
                 mll = self.train_loop_random(epoch, n_support, n_samples, optimizer)
                 if epoch%1==0:
