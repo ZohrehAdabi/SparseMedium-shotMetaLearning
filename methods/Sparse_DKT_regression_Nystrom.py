@@ -209,7 +209,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
 
             predictions = self.model(z)
             mll = self.mll(predictions, self.model.train_targets)
-            
+
             if self.add_rvm_mll or self.add_rvm_ll:
                 loss = - mll  - l * rvm_mll 
             elif self.add_rvm_mll_one:
@@ -465,7 +465,10 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                         self.writer.add_scalar('RVM MSE Val.', mse_r, epoch)
                         self.writer.add_scalar('Avg. SVs', sv_c, epoch)
                 print(Fore.GREEN,"-"*30, Fore.RESET)
-            
+
+
+                if epoch%50==0:
+                    self.save_checkpoint(model_name)
             elif self.random:
                 mll = self.train_loop_random(epoch, n_support, n_samples, optimizer)
                 if epoch%1==0:
