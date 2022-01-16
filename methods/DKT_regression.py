@@ -267,7 +267,7 @@ class DKT_regression(nn.Module):
             if(self.writer is not None): self.writer.add_scalar('MLL per epoch', mll, epoch)
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch+1} => MLL: {mll}\n', "-"*30, Fore.RESET)
             
-            if epoch%50==0:
+            if epoch>50  and epoch%50==0:
                     model_name = self.best_path + f'_{epoch}'
                     self.save_best_checkpoint(epoch, mse, model_name)
 

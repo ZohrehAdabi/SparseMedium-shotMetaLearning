@@ -467,7 +467,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                 print(Fore.GREEN,"-"*30, Fore.RESET)
 
 
-                if epoch%50==0:
+                if epoch>50 and epoch%50==0:
                     model_name = self.best_path + f'_{epoch}'
                     self.save_best_checkpoint(epoch, mse, model_name)
 
