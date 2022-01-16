@@ -1,2 +1,0 @@
-Time: 20210814-113431, Setting: CUB-novel-Conv4-DKT 1shot 5way_train 5way_test, Acc: 600 Test Acc = 51.63% +- 0.87% 
-Time: 20210814-113914, Setting: CUB-novel-Conv4-DKT 1shot 5way_train 5way_test, Stop_epoch: 600 Test Acc = 51.63% +- 0.87% 
