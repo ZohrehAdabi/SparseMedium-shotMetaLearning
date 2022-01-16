@@ -304,7 +304,7 @@ for sd in range(seed, seed+repeat):
             json.dump(result, f, indent=2)
             f.write('\n}\n]')
 
-    f.close()
+    if params.save_result: f.close()
     print(f'\n{id}\n')
     print("-------------------")
     print("Average MSE best model: " + str(np.mean(mse_list_best)) + " +- " + str(np.std(mse_list_best)))
