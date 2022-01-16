@@ -21,7 +21,7 @@ for config in config_list:
                 align_thr = 0
             for method in method_list:
                 for sd in seed_list:
-                    lambda_rvm_list = [0.001, 1.0]
+                    lambda_rvm_list = [0.001, 0.1, 0.5, 1.0]
                     for lambda_rvm in lambda_rvm_list:
                         L = ['python', f'./train_regression.py', 
                                         '--method', f'{method}', '--sparse_method', 'FRVM',  '--n_samples', '72', '--n_support', '60', '--stop_epoch', f'{stop_epoch}', 
@@ -31,7 +31,7 @@ for config in config_list:
                                         '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_mll', '--beta'
                         ]
                         print(f'\n{" ".join(L)} \n')
-                        run(L)
+                        # run(L)
                         L = ['python', f'./test_regression.py', 
                                         '--method', f'{method}', '--sparse_method', 'FRVM',  '--n_samples', '72', '--n_support', '60', '--n_test_epoch', '10', 
                                     #   '--show_plots_pred',
@@ -40,7 +40,8 @@ for config in config_list:
                                         '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_mll', '--beta'
                         ]
                         print(f'\n{" ".join(L)} \n')
-                        run(L)
+                        # run(L)
+                        
                         L = ['python', f'./train_regression.py', 
                                         '--method', f'{method}', '--sparse_method', 'FRVM',  '--n_samples', '72', '--n_support', '60', '--stop_epoch', f'{stop_epoch}',
                                     #   '--show_plots_features',
