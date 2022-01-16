@@ -783,7 +783,7 @@ def Fast_RVM_regression_fullout(K, targets, beta, N, config, align_thr, gamma, e
     KK_mm = KK[active_m, :][:, active_m]
     K_mt = Kt[active_m] 
     beta_KK_m = beta * KK_m
-    Sigma_m, mu_m, S, Q, s, q, logML, Gamma = Statistics(K_m, KK_m, KK_mm, KK_diag, Kt, K_mt, alpha_m, active_m, beta, targets, N)
+    Sigma_m, mu_m, S, Q, s, q, logML, Gamma, U = Statistics(K_m, KK_m, KK_mm, K, KK_diag, Kt, K_mt, alpha_m, active_m, beta, targets, N)
 
     update_sigma    = config[0]=="1"
     delete_priority = config[1]=="1"
@@ -1050,17 +1050,18 @@ def Fast_RVM_regression_fullout(K, targets, beta, N, config, align_thr, gamma, e
             q[active_m] = tmp * Q[active_m]
             Sigma_m = Sigma_new
             #quantity Gamma_i measures how well the corresponding parameter mu_i is determined by the data
-            gamma_new = 1 - alpha_m * torch.diag(Sigma_m)
-            if (gamma_new > 1).any():
-                if (selected_action==-1):
-                    mask = torch.ones(Gamma.numel(), dtype=torch.bool)
-                    mask[j] = False 
-                    Gamma = Gamma[mask]
-                else: 
-                    gamma_new[gamma_new>1] = 1
-                    Gamma = gamma_new
-            else:
-                Gamma = gamma_new
+            # gamma_new = 1 - alpha_m * torch.diag(Sigma_m)
+            # if (gamma_new > 1).any():
+            #     if (selected_action==-1):
+            #         mask = torch.ones(Gamma.numel(), dtype=torch.bool)
+            #         mask[j] = False 
+            #         Gamma = Gamma[mask]
+            #     else: 
+            #         gamma_new[gamma_new>1] = 1
+            #         Gamma = gamma_new
+            # else:
+            #     Gamma = gamma_new
+            Gamma =  1 - alpha_m * torch.diag(Sigma_m)
             logML = logML + deltaLogMarginal
             logMarginalLog.append(logML.item())
             beta_KK_m = beta * KK_m
@@ -1076,9 +1077,9 @@ def Fast_RVM_regression_fullout(K, targets, beta, N, config, align_thr, gamma, e
             delta_beta	= torch.log(beta)-torch.log(beta_old)
             beta_KK_m       = beta * KK_m
             if torch.abs(delta_beta) > 1e-6:
-                if verbose:
-                    print(f'{itr:3}, update statistics after beta update')
-                Sigma_m, mu_m, S, Q, s, q, logML, Gamma = Statistics(K_m, KK_m, KK_mm, KK_diag, Kt, K_mt, alpha_m, active_m, beta, targets, N)
+                # if verbose:
+                #     print(f'{itr:3}, update statistics after beta update')
+                Sigma_m, mu_m, S, Q, s, q, logML, Gamma, U = Statistics(K_m, KK_m, KK_mm, K, KK_diag, Kt, K_mt, alpha_m, active_m, beta, targets, N)
                 count = count + 1
                 logMarginalLog.append(logML.item())
                 terminate = False
@@ -1096,7 +1097,7 @@ def Fast_RVM_regression_fullout(K, targets, beta, N, config, align_thr, gamma, e
             #     print(f'add: {add_count:3d} ({add_count/count:.1%}), delete: {del_count:3d} ({del_count/count:.1%}), recompute: {recomp_count:3d} ({recomp_count/count:.1%})')
             return active_m.cpu().numpy(), alpha_m, Gamma, beta, mu_m, Sigma_m, K_m 
 
-        if ((itr+1)%50==0) and verbose:
+        if ((itr+1)%10==0) and verbose:
             print(f'#{itr+1:3},     m={active_m.shape[0]}, selected_action= {selected_action.item():.0f}, logML= {logML.item()/N:.5f}, sigma2= {1/beta:.4f}')
 
     if verbose:

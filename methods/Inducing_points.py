@@ -93,7 +93,7 @@ def rvm_ML_full(K_m, targets, alpha_m, mu_m, U):
         # C = sigma * I + K_m @ A_m @ K_m.T  ,  log|C| = - log|Sigma_m| - N * log(beta) - log|A_m|
         # t.T @ C^-1 @ t = beta * ||t - K_m @ mu_m||**2 + mu_m.T @ A_m @ mu_m 
         # log p(t) = -1/2 (log|C| + t.T @ C^-1 @ t ) + const 
-        logML			= dataLikely - logdetHOver2  #- (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2
+        logML			= dataLikely - logdetHOver2  - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2
         return logML/N
 
 def rvm_ML(K_m, targets, alpha_m, mu_m, U):
