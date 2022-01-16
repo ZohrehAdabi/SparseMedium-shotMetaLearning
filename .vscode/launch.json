@@ -574,9 +574,10 @@
             "request": "launch",
             "program": "${workspaceFolder}/test_regression.py",
             "console": "integratedTerminal",
-           "args": ["--method","DKT",  "--n_samples", "72",  "--n_support", "60", "--n_test_epochs", "5", 
-            "--show_plots_pred", "--show_plots_features", "--seed","2",
-            "--lr_gp", "1e-1", "--lr_net", "1e-2", "--kernel_type", "rbf"]  
+           "args": ["--method","DKT",  "--n_samples", "72",  "--n_support", "60", "--n_test_epochs", "10", 
+            //"--show_plots_pred", "--show_plots_features", 
+            "--seed","1",
+            "--lr_gp", "1e-3", "--lr_net", "1e-3", "--kernel_type", "rbf"]  
             //python test_regression.py --method "DKT" --n_samples 72 --n_support 60 --n_test_epochs 5 --show_plots_pred  --show_plots_features  --seed  2   --lr_gp  1e-2 --lr_net  1e-3 --kernel_type "rbf"
         },
         {
