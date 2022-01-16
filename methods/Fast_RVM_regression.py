@@ -337,7 +337,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
             beta	= (N - torch.sum(Gamma))/(e.T @ e)
             # if beta > 1e3/torch.var(targets):
             #     beta = 1e3/torch.var(targets)
-            beta	= torch.min(beta, 1e3/torch.var(targets))
+            beta	= torch.min(beta, 1e6/torch.var(targets))
             delta_beta	= torch.log(beta)-torch.log(beta_old)
             beta_KK_m       = beta * KK_m
             if torch.abs(delta_beta) > 1e-6:
@@ -393,10 +393,8 @@ def Statistics(K_m, KK_m, KK_mm, K, KK_diag, Kt, K_mt, alpha_m, active_m, beta, 
         ED = e.T @ e
         dataLikely	= (N * torch.log(beta) - beta * ED)/2
         logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
-        if torch.isinf(dataLikely):
-            logML			=  - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
-        else:
-            logML			= dataLikely - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
+        
+        logML			= dataLikely - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
         DiagC	= torch.sum(U_inv**2, axis=1)
         Gamma	= 1 - alpha_m * DiagC
         # COMPUTE THE Q & S VALUES
