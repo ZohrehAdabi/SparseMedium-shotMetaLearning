@@ -43,6 +43,8 @@ except ImportError:
 
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j_idx")
+eps = torch.finfo(torch.float32).eps 
+
 class Sparse_DKT_regression_Nystrom(nn.Module):
     def __init__(self, backbone, kernel_type='rbf', sparse_method='FRVM', add_rvm_mll=False, add_rvm_mll_one=False, add_rvm_ll=False,
                         add_rvm_mse=False, lambda_rvm=0.1, beta=False, normalize=False, lr_decay=False, 
@@ -169,7 +171,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             if(self.normalize): z = F.normalize(z, p=2, dim=1)
 
             sigma = self.model.likelihood.noise[0].clone()
-            beta = 1/sigma
+            beta = 1 /(sigma + eps)
             with torch.no_grad():
                 # inducing_points, beta, mu_m, U = self.get_inducing_points(z, labels, verbose=True)
                 inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
@@ -198,7 +200,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             if self.beta:
                 beta = inducing_points.beta
             else:
-                beta = 1/sigma
+                beta = 1 /(sigma + eps)
             mu_m = mu_m / scales
             if self.add_rvm_mll:
                 rvm_mll = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
@@ -224,37 +226,18 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
 
             mll_list.append(loss.item())
             mse = self.mse(predictions.mean, labels)
-            # mll = mll.item()
-            # rvm_mll = rvm_mll.item()
-            # frvm_mse = frvm_mse.item()
-            # self.iteration = itr+(epoch*len(batch_labels))
-            # if(self.writer is not None): self.writer.add_scalar('MLL + RVM MLL (Loss)', loss.item(), self.iteration)
-            # if(self.writer is not None): self.writer.add_scalar('MLL', -mll, self.iteration)
-            # if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll, self.iteration)
-            # if(self.writer is not None): self.writer.add_scalar('RVM MSE', frvm_mse, self.iteration)
-            # if self.kernel_type=='rbf':
-            #     if ((epoch%1==0) & (itr%print_freq==0)):
-            #         print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.4f ML %.4f RVM ML: %.4f RVM MSE: %.4f  MSE: %.3f noise: %.4f outputscale: %.3f lengthscale: %.3f' % (
-            #             itr, epoch, loss.item(), -mll, -rvm_mll, frvm_mse, mse.item(),
-            #             self.model.likelihood.noise.item(), self.model.base_covar_module.outputscale,
-            #             self.model.base_covar_module.base_kernel.lengthscale
-            #         ),Fore.RESET)
-            # else:
-            #     if ((epoch%1==0) & (itr%2==0)):
-            #         print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
-            #             itr, epoch, loss.item(), mse.item(),
-            #             self.model.likelihood.noise.item(), 
-            #         ),Fore.RESET)
-
+            mll = mll.item()
+            rvm_mll = rvm_mll.item()
+            frvm_mse = frvm_mse.item()
             self.iteration = itr+(epoch*len(batch_labels))
             if(self.writer is not None): self.writer.add_scalar('MLL + RVM MLL (Loss)', loss.item(), self.iteration)
-            if(self.writer is not None): self.writer.add_scalar('MLL', -mll.item(), self.iteration)
-            if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll.item(), self.iteration)
-            if(self.writer is not None): self.writer.add_scalar('RVM MSE', rvm_mse.item(), self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('MLL', -mll, self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll, self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('RVM MSE', frvm_mse, self.iteration)
             if self.kernel_type=='rbf':
-                if ((epoch%1==0) & (itr%2==0)):
+                if ((epoch%1==0) & (itr%print_freq==0)):
                     print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.4f ML %.4f RVM ML: %.4f RVM MSE: %.4f  MSE: %.3f noise: %.4f outputscale: %.3f lengthscale: %.3f' % (
-                        itr, epoch, loss.item(), -mll.item(), -rvm_mll.item(), rvm_mse.item(), mse.item(),
+                        itr, epoch, loss.item(), -mll, -rvm_mll, frvm_mse, mse.item(),
                         self.model.likelihood.noise.item(), self.model.base_covar_module.outputscale,
                         self.model.base_covar_module.base_kernel.lengthscale
                     ),Fore.RESET)
@@ -264,6 +247,25 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                         itr, epoch, loss.item(), mse.item(),
                         self.model.likelihood.noise.item(), 
                     ),Fore.RESET)
+
+            # self.iteration = itr+(epoch*len(batch_labels))
+            # if(self.writer is not None): self.writer.add_scalar('MLL + RVM MLL (Loss)', loss.item(), self.iteration)
+            # if(self.writer is not None): self.writer.add_scalar('MLL', -mll.item(), self.iteration)
+            # if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll.item(), self.iteration)
+            # if(self.writer is not None): self.writer.add_scalar('RVM MSE', rvm_mse.item(), self.iteration)
+            # if self.kernel_type=='rbf':
+            #     if ((epoch%1==0) & (itr%2==0)):
+            #         print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.4f ML %.4f RVM ML: %.4f RVM MSE: %.4f  MSE: %.3f noise: %.4f outputscale: %.3f lengthscale: %.3f' % (
+            #             itr, epoch, loss.item(), -mll.item(), -rvm_mll.item(), rvm_mse.item(), mse.item(),
+            #             self.model.likelihood.noise.item(), self.model.base_covar_module.outputscale,
+            #             self.model.base_covar_module.base_kernel.lengthscale
+            #         ),Fore.RESET)
+            # else:
+            #     if ((epoch%1==0) & (itr%2==0)):
+            #         print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
+            #             itr, epoch, loss.item(), mse.item(),
+            #             self.model.likelihood.noise.item(), 
+            #         ),Fore.RESET)
                 
             if (self.show_plots_pred or self.show_plots_features) and  self.f_rvm:
                 embedded_z = TSNE(n_components=2).fit_transform(z.detach().cpu().numpy())
