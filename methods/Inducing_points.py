@@ -481,11 +481,12 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
         # mu_m = mu_m[index] #/scales_m
         num_IP = active.shape[0]
         IP_index = active
-
+        K = base_covar_module(inputs, inducing_points).evaluate().to(torch.float64)
+        scales_m	= torch.sqrt(torch.sum(K**2, axis=0))
         if True:
             with torch.no_grad():
                 # ss = scales[index]
-                K = base_covar_module(inputs, inducing_points).evaluate().to(torch.float64)
+                
                 mu_r = mu_m / scales_m
                 y_pred = K @ mu_r
     
