@@ -30,6 +30,7 @@ from methods.matchingnet import MatchingNet
 from methods.relationnet import RelationNet
 from methods.maml import MAML
 from io_utils import model_dict, parse_args, get_resume_file
+from configs import run_float64
 
 def _set_seed(seed, verbose=True):
     if(seed!=0):
@@ -40,6 +41,7 @@ def _set_seed(seed, verbose=True):
         torch.cuda.manual_seed_all(seed)
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
+        if run_float64: torch.set_default_dtype(torch.float64)
         if(verbose): print("[INFO] Setting SEED: " + str(seed))
     else:
         if(verbose): print("[INFO] Setting SEED: None")

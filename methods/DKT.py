@@ -355,8 +355,12 @@ class DKT(MetaTemplate):
         acc_std  = np.std(acc_all)
         print('%d Test Acc = %4.2f%% +- %4.2f%%' %(iter_num,  acc_mean, 1.96* acc_std/np.sqrt(iter_num)))
         if(self.writer is not None): self.writer.add_scalar('test_accuracy', acc_mean, self.iteration)
-        if(return_std): return acc_mean, acc_std
-        else: return acc_mean
+        result = {'acc': acc_mean, 'std': acc_std}
+        result = {k: np.around(v, 4) for k, v in result.items()}
+        if self.normalize: result['normalize'] = True
+        
+        if(return_std): return acc_mean, acc_std, result
+        else: return acc_mean, result
 
     def get_logits(self, x):
         self.n_query = x.size(1) - self.n_support

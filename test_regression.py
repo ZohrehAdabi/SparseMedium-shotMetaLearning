@@ -18,6 +18,7 @@ from methods.feature_transfer_regression import FeatureTransfer
 import backbone
 import numpy as np
 import time, json
+from configs import run_float64
 
 params = parse_args_regression('test_regression')
 
@@ -29,6 +30,7 @@ for sd in range(seed, seed+repeat):
     torch.manual_seed(sd)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+    if run_float64: torch.set_default_dtype(torch.float64)
 
     params.checkpoint_dir = '%scheckpoints/%s/%s_%s' % (configs.save_dir, params.dataset, params.model, params.method)
     if params.dataset=='QMUL':
@@ -242,6 +244,7 @@ for sd in range(seed, seed+repeat):
     # log test result
     if params.save_result:
         info_path = params.checkpoint_dir
+        info_path = info_path.replace('//', '/')
         info_path = info_path.replace('\\', '/')
         info = info_path.split('/')
         info = '_'.join(info[3:])

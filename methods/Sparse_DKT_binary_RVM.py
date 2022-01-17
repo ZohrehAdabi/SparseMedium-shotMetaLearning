@@ -1,4 +1,5 @@
 ## Original packages
+import re
 from sklearn.base import RegressorMixin
 from torchvision.transforms.transforms import ColorJitter
 import backbone
@@ -626,12 +627,18 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
             else:
                 self.writer.add_scalar('test_accuracy', acc_mean, self.iteration)
         if(self.writer is not None): self.writer.add_scalar('Avg. SVs', mean_num_sv, self.iteration)
+        result = {'acc': acc_mean, 'rvm acc': acc_mean_rvm, 'std': acc_std, 'rvm std': acc_std_rvm,'SVs':mean_num_sv}
+        result = {k: np.around(v, 4) for k, v in result.items()}
+        if self.rvm_ll_only: result['rvm_ll_only'] = True
+        if self.rvm_mll_only: result['rvm_mll_only'] = True
+        if self.regression: result['regression'] = True
+
         if self.rvm_mll_only or self.rvm_ll_only:
-            if(return_std): return acc_mean_rvm, acc_std_rvm
-            else: return acc_mean_rvm
+            if(return_std): return acc_mean_rvm, acc_std_rvm, result
+            else: return acc_mean_rvm, result
         else:
-            if(return_std): return acc_mean, acc_std
-            else: return acc_mean
+            if(return_std): return acc_mean, acc_std, result
+            else: return acc_mean, result
 
     
     def plot_test(self, x_query, y_query, y_pred, inducing_points, k):

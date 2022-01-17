@@ -31,6 +31,7 @@ from methods.matchingnet import MatchingNet
 from methods.relationnet import RelationNet
 from methods.maml import MAML
 from io_utils import model_dict, get_resume_file, parse_args, get_best_file , get_assigned_file
+from configs import run_float64
 
 def _set_seed(seed, verbose=True):
     if(seed!=0):
@@ -41,6 +42,7 @@ def _set_seed(seed, verbose=True):
         torch.cuda.manual_seed_all(seed)
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False 
+        if run_float64: torch.set_default_dtype(torch.float64)
         if(verbose): print("[INFO] Setting SEED: " + str(seed))   
     else:
         if(verbose): print("[INFO] Setting SEED: None")
@@ -202,8 +204,8 @@ def single_test(params):
     #modelfile   = get_resume_file(checkpoint_dir)
 
     if not params.method in ['baseline', 'baseline++'] : 
-        best = True
-        last = True
+        best = False
+        last = False
         print(f'\n{checkpoint_dir}\n')
         modelfile = None
         if params.save_iter != -1:
@@ -237,7 +239,7 @@ def single_test(params):
 
             model.load_state_dict(tmp['state'])
 
-        if last_modelfile is not None:
+        if last and (last_modelfile is not None):
             tmp = torch.load(last_modelfile)
             if params.method in ['Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss']:
                 
@@ -252,7 +254,7 @@ def single_test(params):
                     tmp['state'][f'mll.model.models.{i}.covar_module.inducing_points'] = IP
             last_model.load_state_dict(tmp['state'])
 
-        if best_modelfile is not None:
+        if best and (best_modelfile is not None):
             tmp = torch.load(best_modelfile)
             best_epoch = tmp['epoch']
             if params.method in ['Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss']:
@@ -307,23 +309,62 @@ def single_test(params):
         if params.adaptation:
             model.task_update_num = 100 #We perform adaptation on MAML simply by updating more times.
 
+        if params.save_result:
+            info_path = checkpoint_dir
+            info_path = info_path.replace('//', '/')
+            info_path = info_path.replace('\\', '/')
+            info = info_path.split('/')
+            info = '_'.join(info[3:]) 
+            result_path = f'./record/{params.dataset}'
+            if not os.path.isdir(result_path):
+                os.makedirs(result_path)
+            file = f'{result_path}/results_{info}.json'
+            old_data = None
+            if os.path.exists(file):
+                if os.stat(file).st_size!=0:
+                    f = open(file , "r")
+                    old_data = json.load(f)
+                    f.close()
+            f = open(file , "w")
+            if old_data is None:
+                f.write('[\n')
+            else:
+                f = open(file , "w")
+                f.write('[\n')
+                for data in old_data:
+                    json.dump(data, f, indent=2)
+                    f.write(',\n')
+            timestamp = time.strftime("%Y/%m/%d-%H:%M", time.localtime()) 
+
         if params.save_iter != -1:    
             model.eval()
-            acc_mean, acc_std = model.test_loop( novel_loader, return_std = True)
+            acc_mean, acc_std, result = model.test_loop( novel_loader, return_std = True)
         if last:
             print(f'\nModel at last epoch {num}\n')
             last_model.eval()
-            acc_mean, acc_std = last_model.test_loop( novel_loader, return_std = True)
+            acc_mean, acc_std, result = last_model.test_loop( novel_loader, return_std = True)
+            if params.save_result:
+                f.write('{\n"time": ')
+                f.write(f'"{timestamp}",\n')
+                f.write('"last model":\n')
+                json.dump(result, f, indent=2) #f.write(json.dumps(result))
+                f.write(',\n')
             print("-----------------------------")
             print('Test Acc last model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
             print("-----------------------------") 
         if best:
             print(f'\nBest model epoch {best_epoch}\n')
             best_model.eval()
-            acc_mean, acc_std = best_model.test_loop( novel_loader, return_std = True)
+            acc_mean, acc_std, result = best_model.test_loop( novel_loader, return_std = True)
+            if params.save_result:
+                f.write('"best model":\n')
+                json.dump(result, f, indent=2)
+                f.write('\n}\n]')
             print("-----------------------------")
             print('Test Acc best model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
             print("-----------------------------") 
+        
+        if params.save_result: f.close()
         print(f'\n{id}\n')
     else:
         novel_file = os.path.join( checkpoint_dir.replace("checkpoints","features"), split_str +".hdf5") #defaut split = novel, but you can also test base or val classes
@@ -337,18 +378,20 @@ def single_test(params):
         acc_mean = np.mean(acc_all)
         acc_std  = np.std(acc_all)
         print('%d Test Acc = %4.2f%% +- %4.2f%%' %(iter_num, acc_mean, 1.96* acc_std/np.sqrt(iter_num)))
-        
-    with open(f'./record/results{id}.txt' , 'a') as f:
-        # timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime()) 
-        timestamp = time.strftime("%Y/%m/%d-%H:%M", time.localtime()) 
-        aug_str = '-aug' if params.train_aug else ''
-        aug_str += '-adapted' if params.adaptation else ''
-        if params.method in ['baseline', 'baseline++'] :
-            exp_setting = '%s-%s-%s-%s%s %sshot %sway_test' %(params.dataset, split_str, params.model, params.method, aug_str, params.n_shot, params.test_n_way )
-        else:
-            exp_setting = '%s-%s-%s-%s%s %sshot %sway_train %sway_test' %(params.dataset, split_str, params.model, params.method, aug_str , params.n_shot , params.train_n_way, params.test_n_way )
-        acc_str = '%d Test Acc = %4.2f%% +- %4.2f%%' %(iter_num, acc_mean, 1.96* acc_std/np.sqrt(iter_num))
-        f.write( 'Time: %s, Setting: %s, Stop_epoch: %s \n' %(timestamp,exp_setting,acc_str)  )
+
+    if params.save_result:   
+       
+        with open(f'./record/results_{info}.txt' , 'a') as f:
+            # timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime()) 
+            timestamp = time.strftime("%Y/%m/%d-%H:%M", time.localtime()) 
+            aug_str = '-aug' if params.train_aug else ''
+            aug_str += '-adapted' if params.adaptation else ''
+            if params.method in ['baseline', 'baseline++'] :
+                exp_setting = '%s-%s-%s-%s%s %sshot %sway_test' %(params.dataset, split_str, params.model, params.method, aug_str, params.n_shot, params.test_n_way )
+            else:
+                exp_setting = '%s-%s-%s-%s%s %sshot %sway_train %sway_test' %(params.dataset, split_str, params.model, params.method, aug_str , params.n_shot , params.train_n_way, params.test_n_way )
+            acc_str = '%d Test Acc = %4.2f%% +- %4.2f%%' %(iter_num, acc_mean, 1.96* acc_std/np.sqrt(iter_num))
+            f.write( 'Time: %s, Setting: %s, Stop_epoch: %s \n' %(timestamp,exp_setting,acc_str)  )
     return acc_mean
 
 def main():        
