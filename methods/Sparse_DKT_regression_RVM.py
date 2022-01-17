@@ -89,7 +89,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
 
         likelihood = gpytorch.likelihoods.GaussianLikelihood()
         likelihood.noise = 0.1
-        model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel=self.kernel_type, induce_point=train_x)
+        model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel=self.kernel_type, induce_point=train_x, sparse_kernel=self.sparse_kernel)
         if self.kernel_type=='rbf':
             model.base_covar_module.outputscale = 0.1
             model.base_covar_module.base_kernel.lengthscale = 0.1
@@ -197,10 +197,11 @@ class Sparse_DKT_regression_RVM(nn.Module):
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
             
             # sigma I + K_m @ A_inv @ K_m
-            alpha_m = alpha_m / scales**2
-            alpha_m = alpha_m.detach()
-            A = torch.diag(alpha_m).to(device='cuda').to(torch.float)
-            self.model.covar_module.A = nn.Parameter(A, requires_grad=False)
+            if self.sparse_kernel:
+                alpha_m = alpha_m / scales**2
+                alpha_m = alpha_m.detach()
+                A = torch.diag(alpha_m).to(device='cuda').to(torch.float64)
+                self.model.covar_module.A = nn.Parameter(A, requires_grad=False)
             # Use NOTE SparseKernel (based on InducingPointKernel of gpytorch) 
             if self.beta_trajectory or self.beta:
                 self.model.covar_module.sigma_rvm = nn.Parameter(1/beta, requires_grad=True) 
@@ -1114,7 +1115,7 @@ class SparseKernel(gpytorch.kernels.InducingPointKernel):
 
 
 class ExactGPLayer(gpytorch.models.ExactGP):
-    def __init__(self, train_x, train_y, likelihood, kernel='linear', induce_point=None):
+    def __init__(self, train_x, train_y, likelihood, kernel='linear', induce_point=None, sparse_kernel=False):
         super(ExactGPLayer, self).__init__(train_x, train_y, likelihood)
         self.mean_module  = gpytorch.means.ConstantMean()
 
@@ -1130,8 +1131,11 @@ class ExactGPLayer(gpytorch.models.ExactGP):
         else:
             raise ValueError("[ERROR] the kernel '" + str(kernel) + "' is not supported for regression, use 'rbf' or 'spectral'.")
         
-        self.covar_module = SparseKernel(self.base_covar_module, inducing_points=induce_point, likelihood=likelihood)
-    
+        
+        if sparse_kernel:
+            self.covar_module = SparseKernel(self.base_covar_module, inducing_points=induce_point, likelihood=likelihood)
+        else:
+            self.covar_module = gpytorch.kernels.InducingPointKernel(self.base_covar_module, inducing_points=induce_point , likelihood=likelihood)
     def forward(self, x):
         mean_x  = self.mean_module(x)
         # covar_x = self.base_covar_module(x)
