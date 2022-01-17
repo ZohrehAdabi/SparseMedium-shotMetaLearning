@@ -69,7 +69,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
         # RECOMPUTE: must be a POSITIVE 'factor' and already IN the model
         idx                 = active_factor > 1e-12
         recompute           = active_m[idx]
-        alpha_prim          =  s[recompute]**2 / (Factor[recompute]+1e-10)
+        alpha_prim          =  s[recompute]**2 / (Factor[recompute])
         delta_alpha         = (1/alpha_prim) - (1/alpha_m[idx])
         d_alpha_S           = delta_alpha * S[recompute] + 1 
         deltaML[recompute]  = ((delta_alpha * Q[recompute]**2) / (d_alpha_S) - torch.log(d_alpha_S)) 
