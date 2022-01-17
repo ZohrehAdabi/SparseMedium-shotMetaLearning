@@ -454,7 +454,7 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
         #     beta = 1/sigma
         beta = beta.to(device)
         kernel_matrix = base_covar_module(inputs).evaluate()
-        kernel_matrix = kernel_matrix.to(torch.float64)
+        
         # normalize kernel
         scales = torch.ones(kernel_matrix.shape[1]).to(device)
         if scale:
@@ -466,7 +466,7 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
         
         # targets[targets==-1]= 0
         target = targets.clone().to(torch.float64)
-        
+        kernel_matrix = kernel_matrix.to(torch.float64)
         # active, alpha, gamma, beta, mu_m, U = Fast_RVM(kernel_matrix, target, N, config, align_threshold, gamma,
         #                                         eps, tol, max_itr, device, verbose)
         active, alpha, gamma, beta, mu_m, U = Fast_RVM_regression(kernel_matrix, target, beta, N, config, align_threshold,
