@@ -95,7 +95,7 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
         add = torch.where(good_factor)[0]
         anyToAdd = len(add) > 0
         if anyToAdd:
-            Q_S             = Q[add]**2 / (S[add] +1e-10)
+            Q_S             = Q[add]**2 / (S[add])
             deltaML[add]    = (Q_S - 1 - torch.log(Q_S)) 
             action[add]     = 1
 
