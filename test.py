@@ -29,7 +29,7 @@ from methods.DKT_binary import DKT_binary
 from methods.DKT_binary_new_loss import DKT_binary_new_loss
 from methods.matchingnet import MatchingNet
 from methods.relationnet import RelationNet
-from methods.maml import MAML
+from methods.MAML import MAML
 from io_utils import model_dict, get_resume_file, parse_args, get_best_file , get_assigned_file
 from configs import run_float64
 
