@@ -28,7 +28,7 @@ from methods.Sparse_DKT_binary_Exact_new_loss import Sparse_DKT_binary_Exact_new
 from methods.protonet import ProtoNet
 from methods.matchingnet import MatchingNet
 from methods.relationnet import RelationNet
-from methods.MAML import MAML
+from methods.maml import MAML
 from io_utils import model_dict, parse_args, get_resume_file
 from configs import run_float64
 
