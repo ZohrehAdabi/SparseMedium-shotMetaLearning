@@ -485,9 +485,8 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
         if True:
             with torch.no_grad():
                 # ss = scales[index]
-                K = base_covar_module(inputs, inducing_points).evaluate()
+                K = base_covar_module(inputs, inducing_points).evaluate().to(torch.float64)
                 mu_r = mu_m / scales_m
-                mu_r = mu_r.to(torch.float)
                 y_pred = K @ mu_r
     
                 if classification:
