@@ -256,13 +256,13 @@ class MAML_regression(nn.Module):
 
         return mse, mse_
 
-    def train(self, stop_epoch, n_support, n_samples, optimizer):
+    def train(self, stop_epoch, n_support, n_samples, optimizer, save_model=False):
         
         best_mse = 1e7
         train_mse_list = []
         val_mse_list = []
-        # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.1)
-        scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.1)
+        # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
         for epoch in range(stop_epoch):
             train_mse = self.train_loop(epoch, n_support, n_samples, optimizer)
             train_mse_list.append(train_mse)
@@ -290,7 +290,11 @@ class MAML_regression(nn.Module):
                 scheduler.step()
             if(self.writer is not None): self.writer.add_scalar('Train MSE per epoch', train_mse, epoch)
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch} => Train MSE: {train_mse}\n', "-"*30, Fore.RESET)
-        
+
+            if save_model and epoch>50 and epoch%50==0:
+                    model_name = self.best_path + f'_{epoch}'
+                    self.save_best_checkpoint(epoch, mse, model_name)
+                    
         train_mse = np.mean(train_mse_list)
         if self.show_plots_pred:
             self.mw.finish()

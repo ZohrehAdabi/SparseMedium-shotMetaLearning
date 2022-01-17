@@ -411,7 +411,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
         return mse, mse_, inducing_points.count, mse_r
 
   
-    def train(self, stop_epoch, n_support, n_samples, optimizer, verbose=True):
+    def train(self, stop_epoch, n_support, n_samples, optimizer, save_model=False, verbose=True):
 
         mll_list = []
         best_mse = 10e5 #stop_epoch//2
@@ -422,7 +422,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
          
             mll = self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
             
-            if epoch%2==0:
+            if epoch%1==0:
                 print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
                 mse_list = []
                 mse_unnorm_list = []
@@ -454,6 +454,11 @@ class Sparse_DKT_regression_Exact(nn.Module):
                     self.writer.add_scalar('RVM MSE Val.', mse_r, epoch)
                     self.writer.add_scalar('Avg. SVs', sv_c, epoch)
                 print(Fore.GREEN,"-"*30, Fore.RESET)
+
+
+            if save_model and epoch>50 and epoch%50==0:
+                model_name = self.best_path + f'_{epoch}'
+                self.save_best_checkpoint(epoch, mse, model_name)
 
             mll_list.append(mll)
             if(self.writer is not None): self.writer.add_scalar('MLL per epoch', mll, epoch)

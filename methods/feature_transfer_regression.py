@@ -85,12 +85,12 @@ class FeatureTransfer(nn.Module):
                 self.mw_feature.grab_frame()
         return np.mean(mse_list)
    
-    def train(self, stop_epoch, n_support, n_samples, optimizer):
+    def train(self, stop_epoch, n_support, n_samples, optimizer, save_model=False):
         
         mse_list = []
         best_mse = 10e5
-        # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.1)
-        scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.1)
+        # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
         self.fine_tune = 3
         for epoch in range(stop_epoch):
             mse = self.train_loop(epoch, n_samples, optimizer)
@@ -114,6 +114,10 @@ class FeatureTransfer(nn.Module):
                 # if(self.writer is not None):
                 #     self.writer.add_scalar('MSE Val.', mse, epoch)
                 print(Fore.GREEN,"-"*30, Fore.RESET)
+            if save_model and epoch>50 and epoch%50==0:
+                    model_name = self.best_path + f'_{epoch}'
+                    self.save_best_checkpoint(epoch, mse, model_name)    
+
             if self.lr_decay:
                 scheduler.step()
             print(Fore.LIGHTYELLOW_EX,"-"*30, f'\nend of epoch {epoch} => MSE: {mse}\n', "-"*30, Fore.RESET)
@@ -224,7 +228,7 @@ class FeatureTransfer(nn.Module):
         result = {'mse':f'{np.mean(mse_list):.3f}', 'std':f'{np.std(mse_list):.3f}'} #  
         result = {'mse':np.mean(mse_list),  'std':np.std(mse_list)}
         result = {k: np.around(v, 4) for k, v in result.items()}
-        result['fine_tune']=fine_tune
+        result['fine_tune'] = self.fine_tune
         #result = {'mse':np.around(np.mean(mse_list), 3), 'std':np.around(np.std(mse_list),3)}
         return mse_list, result
 

@@ -171,7 +171,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             if(self.normalize): z = F.normalize(z, p=2, dim=1)
 
             sigma = self.model.likelihood.noise[0].clone()
-            beta = 1 /(sigma + eps)
+            beta = 1 /sigma
             with torch.no_grad():
                 # inducing_points, beta, mu_m, U = self.get_inducing_points(z, labels, verbose=True)
                 inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
@@ -200,7 +200,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             if self.beta:
                 beta = inducing_points.beta
             else:
-                beta = 1 /(sigma + eps)
+                beta = 1 /sigma
             mu_m = mu_m / scales
             if self.add_rvm_mll:
                 rvm_mll = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
@@ -421,7 +421,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         return mse, mse_, inducing_points.count, mse_r
 
   
-    def train(self, stop_epoch, n_support, n_samples, optimizer, verbose=True):
+    def train(self, stop_epoch, n_support, n_samples, optimizer, save_model=False, verbose=True):
 
         mll_list = []
         best_mse = 10e5 #stop_epoch//2
@@ -469,7 +469,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                 print(Fore.GREEN,"-"*30, Fore.RESET)
 
 
-                if epoch>50 and epoch%50==0:
+                if save_model and epoch>50 and epoch%50==0:
                     model_name = self.best_path + f'_{epoch}'
                     self.save_best_checkpoint(epoch, mse, model_name)
 
@@ -498,7 +498,11 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                         self.writer.add_scalar('MSE (norm) Val.', mse, epoch)
                        
                 print(Fore.GREEN,"-"*30, Fore.RESET)
-            
+
+                if save_model and epoch>50 and epoch%50==0:
+                    model_name = self.best_path + f'_{epoch}'
+                    self.save_best_checkpoint(epoch, mse, model_name)
+                    
             elif  not self.f_rvm:
                 mll = self.train_loop_kmeans(epoch, n_support, n_samples, optimizer)
             else:

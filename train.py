@@ -28,7 +28,7 @@ from methods.Sparse_DKT_binary_Exact_new_loss import Sparse_DKT_binary_Exact_new
 from methods.protonet import ProtoNet
 from methods.matchingnet import MatchingNet
 from methods.relationnet import RelationNet
-from methods.maml import MAML
+from methods.MAML import MAML
 from io_utils import model_dict, parse_args, get_resume_file
 from configs import run_float64
 
@@ -88,7 +88,7 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
             print(Fore.YELLOW, f'ACC: {acc:4.2f}\n', Fore.RESET)
             print(Fore.YELLOW, f'Avg. Val ACC: {np.mean(acc_val_list):4.2f}\n', Fore.RESET)
             print(Fore.GREEN,"-"*50 ,'\n', Fore.RESET)
-        if (epoch % params.save_freq == 0) or (epoch == stop_epoch - 1):
+        if params.save_model and ((epoch % params.save_freq==0) or (epoch == stop_epoch - 1)):
             outfile = os.path.join(params.checkpoint_dir, '{:d}.tar'.format(epoch))
             torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
     print(f'\n{model.id}\n')
