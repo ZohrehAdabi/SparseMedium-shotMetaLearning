@@ -224,18 +224,37 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
 
             mll_list.append(loss.item())
             mse = self.mse(predictions.mean, labels)
-            mll = mll.item()
-            rvm_mll = rvm_mll.item()
-            frvm_mse = frvm_mse.item()
+            # mll = mll.item()
+            # rvm_mll = rvm_mll.item()
+            # frvm_mse = frvm_mse.item()
+            # self.iteration = itr+(epoch*len(batch_labels))
+            # if(self.writer is not None): self.writer.add_scalar('MLL + RVM MLL (Loss)', loss.item(), self.iteration)
+            # if(self.writer is not None): self.writer.add_scalar('MLL', -mll, self.iteration)
+            # if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll, self.iteration)
+            # if(self.writer is not None): self.writer.add_scalar('RVM MSE', frvm_mse, self.iteration)
+            # if self.kernel_type=='rbf':
+            #     if ((epoch%1==0) & (itr%print_freq==0)):
+            #         print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.4f ML %.4f RVM ML: %.4f RVM MSE: %.4f  MSE: %.3f noise: %.4f outputscale: %.3f lengthscale: %.3f' % (
+            #             itr, epoch, loss.item(), -mll, -rvm_mll, frvm_mse, mse.item(),
+            #             self.model.likelihood.noise.item(), self.model.base_covar_module.outputscale,
+            #             self.model.base_covar_module.base_kernel.lengthscale
+            #         ),Fore.RESET)
+            # else:
+            #     if ((epoch%1==0) & (itr%2==0)):
+            #         print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.3f  MSE: %.3f noise: %.3f' % (
+            #             itr, epoch, loss.item(), mse.item(),
+            #             self.model.likelihood.noise.item(), 
+            #         ),Fore.RESET)
+
             self.iteration = itr+(epoch*len(batch_labels))
             if(self.writer is not None): self.writer.add_scalar('MLL + RVM MLL (Loss)', loss.item(), self.iteration)
-            if(self.writer is not None): self.writer.add_scalar('MLL', -mll, self.iteration)
-            if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll, self.iteration)
-            if(self.writer is not None): self.writer.add_scalar('RVM MSE', frvm_mse, self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('MLL', -mll.item(), self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll.item(), self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('RVM MSE', rvm_mse.item(), self.iteration)
             if self.kernel_type=='rbf':
-                if ((epoch%1==0) & (itr%print_freq==0)):
+                if ((epoch%1==0) & (itr%2==0)):
                     print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.4f ML %.4f RVM ML: %.4f RVM MSE: %.4f  MSE: %.3f noise: %.4f outputscale: %.3f lengthscale: %.3f' % (
-                        itr, epoch, loss.item(), -mll, -rvm_mll, frvm_mse, mse.item(),
+                        itr, epoch, loss.item(), -mll.item(), -rvm_mll.item(), rvm_mse.item(), mse.item(),
                         self.model.likelihood.noise.item(), self.model.base_covar_module.outputscale,
                         self.model.base_covar_module.base_kernel.lengthscale
                     ),Fore.RESET)

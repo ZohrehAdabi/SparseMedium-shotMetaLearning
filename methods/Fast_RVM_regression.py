@@ -426,6 +426,11 @@ def Statistics(K_m, KK_m, KK_mm, K, KK_diag, Kt, K_mt, alpha_m, active_m, beta, 
 
         return Sigma_m, mu_m, S, Q, s, q, logML, Gamma, U 
 
+
+
+
+
+
 def Fast_RVM_regression_fullout_old(K, targets, beta, N, config, align_thr, eps, tol, max_itr=3000, device='cuda', verbose=True):
     
 
