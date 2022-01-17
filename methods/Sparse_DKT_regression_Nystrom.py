@@ -194,7 +194,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             alpha_m = inducing_points.alpha
             K_m = self.model.base_covar_module(z, ip_values).evaluate()
             K_m = K_m.to(torch.float64)
-            # scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+            scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
             # K_m = K_m / scales
             # alpha_m = alpha_m / (scales**2)
             if self.beta:
@@ -502,7 +502,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                 if save_model and epoch>50 and epoch%50==0:
                     model_name = self.best_path + f'_{epoch}'
                     self.save_best_checkpoint(epoch, mse, model_name)
-                    
+
             elif  not self.f_rvm:
                 mll = self.train_loop_kmeans(epoch, n_support, n_samples, optimizer)
             else:
