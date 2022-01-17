@@ -20,7 +20,7 @@ from methods.protonet import ProtoNet
 from methods.DKT import DKT
 from methods.matchingnet import MatchingNet
 from methods.relationnet import RelationNet
-from methods.MAML import MAML
+from methods.maml import MAML
 from io_utils import model_dict, get_resume_file, parse_args, get_best_file , get_assigned_file
 
 def _set_seed(seed, verbose=True):
