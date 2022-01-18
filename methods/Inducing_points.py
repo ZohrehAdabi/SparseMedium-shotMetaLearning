@@ -466,7 +466,7 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
         
         # targets[targets==-1]= 0
         target = targets.clone().to(torch.float64)
-         kernel_matrix = kernel_matrix.to(torch.float64)
+        kernel_matrix = kernel_matrix.to(torch.float64)
         # active, alpha, gamma, beta, mu_m, U = Fast_RVM(kernel_matrix, target, N, config, align_threshold, gamma,
         #                                         eps, tol, max_itr, device, verbose)
         with torch.no_grad():
