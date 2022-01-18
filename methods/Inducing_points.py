@@ -446,7 +446,7 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
     elif sparse_method=='FRVM':
         # with sigma and updating sigma converges to more sparse solution
         N   = inputs.shape[0]
-        tol = 1e-3
+        tol = 1e-4
         eps = torch.finfo(torch.float32).eps
         max_itr = 1000
         # if classification:
@@ -457,6 +457,7 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
        
         # normalize kernel
         scales = torch.ones(kernel_matrix.shape[1]).to(device)
+        kernel_matrix = kernel_matrix.to(torch.float64)
         if scale:
             scales	= torch.sqrt(torch.sum(kernel_matrix**2, axis=0))
             # print(f'scale: {Scales}')
@@ -466,7 +467,7 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
         
         # targets[targets==-1]= 0
         target = targets.clone().to(torch.float64)
-        kernel_matrix = kernel_matrix.to(torch.float64)
+        
         # active, alpha, gamma, beta, mu_m, U = Fast_RVM(kernel_matrix, target, N, config, align_threshold, gamma,
         #                                         eps, tol, max_itr, device, verbose)
         with torch.no_grad():
