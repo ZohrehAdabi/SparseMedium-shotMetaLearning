@@ -22,8 +22,8 @@ for config in config_list:
                 align_thr = 0
             for method in method_list:
                 for sd in seed_list:
-                    # lambda_rvm_list = [0.001, 0.1, 0.5, 1.0]
-                    lambda_rvm_list = [0.5]
+                    lambda_rvm_list = [0.001, 0.1, 0.5, 1.0]
+                    # lambda_rvm_list = [0] # for run: just mll of GP
                     for lambda_rvm in lambda_rvm_list:
                         # just mll of GP
                         # run(L)
