@@ -203,11 +203,11 @@ class Sparse_DKT_regression_RVM(nn.Module):
                 A = torch.diag(alpha_m).to(device='cuda').to(torch.float64)
                 self.model.covar_module.A = nn.Parameter(A, requires_grad=False)
             # Use NOTE SparseKernel (based on InducingPointKernel of gpytorch) 
-            if self.beta_trajectory or self.beta:
-                self.model.covar_module.sigma_rvm = nn.Parameter(1/beta, requires_grad=True) 
-            else:
-                sigma = self.model.likelihood.noise[0]
-                self.model.covar_module.sigma_rvm = nn.Parameter(sigma, requires_grad=True) 
+                if self.beta_trajectory or self.beta:
+                    self.model.covar_module.sigma_rvm = nn.Parameter(1/beta, requires_grad=True) 
+                else:
+                    sigma = self.model.likelihood.noise[0]
+                    self.model.covar_module.sigma_rvm = nn.Parameter(sigma, requires_grad=True) 
             
 
             self.model.train()
@@ -345,11 +345,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
         if self.kernel_type=='spectral':
             self.model.base_covar_module.initialize_from_data_empspect(z_support, y_support)
         
-        # if self.beta_trajectory:
-        #     alpha_m = alpha_m / scales**2
-        #     alpha_m = alpha_m.detach()
-        #     A = torch.diag(alpha_m).to(device='cuda').to(torch.float)
-        #     self.model.covar_module.A = nn.Parameter(A, requires_grad=False)
+    
 
         with torch.no_grad():
             z_query = self.feature_extractor(x_query).detach()
