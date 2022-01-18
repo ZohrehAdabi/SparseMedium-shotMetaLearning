@@ -189,13 +189,15 @@ class Sparse_DKT_regression_Exact(nn.Module):
             alpha_m = inducing_points.alpha
             K_m = self.model.base_covar_module(z, ip_values).evaluate()
             K_m = K_m.to(torch.float64)
-            # scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+            scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
             # K = K / scales
             if self.beta:
                 beta = inducing_points.beta
             else:
                 beta = 1/sigma
+                
             mu_m = mu_m / scales
+            alpha_m = alpha_m / scales**2
             if self.add_rvm_mll:
                 rvm_mll = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
             elif self.add_rvm_ll:
