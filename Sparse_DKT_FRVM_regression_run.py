@@ -7,6 +7,7 @@ seed_list = [1, 2, 3]
 lr_gp_list = [0.1, 0.01, 0.001, 0.0001]
 lr_net_list = [0.01, 0.001, 0.0001]
 
+save_model = True
 stop_epoch = 200
 lr_gp_list = [0.001]
 lr_net_list = [0.001]
@@ -32,6 +33,7 @@ for config in config_list:
                                         '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
                                         '--kernel_type', 'rbf',  '--beta'
                         ]
+                        if save_model: L.append('--save_model')
                         print(f'\n{" ".join(L)} \n')
                         # run(L)
                         L = ['python', f'./test_regression.py', 
@@ -52,6 +54,7 @@ for config in config_list:
                                         '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
                                         '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_mll', '--beta'
                         ]
+                        if save_model: L.append('--save_model')
                         print(f'\n{" ".join(L)} \n')
                         run(L)
                         L = ['python', f'./test_regression.py', 
@@ -72,6 +75,7 @@ for config in config_list:
                                         '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
                                         '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_ll', '--beta'
                         ]
+                        if save_model: L.append('--save_model')
                         print(f'\n{" ".join(L)} \n')
                         run(L)
                         L = ['python', f'./test_regression.py', 

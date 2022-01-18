@@ -269,7 +269,19 @@ for sd in range(seed, seed+repeat):
                 f.write(',\n')
         timestamp = time.strftime("%Y/%m/%d-%H:%M", time.localtime()) 
 
+    mse_list, mse_list_best = None, None
     print(f'\n{params.checkpoint_dir}')
+    if params.save_iter!=-1:
+        if os.path.isfile(params.checkpoint_dir+f'_{params.save_iter}'):
+            model.load_checkpoint(params.checkpoint_dir +'_best_model.tar')
+            if params.method=='transfer':
+                mse_list_, result = model.test(params.n_support, params.n_samples, optimizer, params.fine_tune, params.n_test_epochs)
+            else:
+                mse_list_, result = model.test(params.n_support, params.n_samples, optimizer, params.n_test_epochs)
+            print("-------------------")
+            print(f"Average MSE model at epoch {params.save_iter}, seed {sd}: " + str(np.mean(mse_list_)) + " +- " + str(np.std(mse_list_)))
+            print("-------------------")
+        
     if os.path.isfile(params.checkpoint_dir+'_best_model.tar'):
         print(f'\nBest model\n{params.checkpoint_dir}_best_model.tar')
         model.load_checkpoint(params.checkpoint_dir +'_best_model.tar')
@@ -289,7 +301,8 @@ for sd in range(seed, seed+repeat):
         print(f"Average MSE, seed {sd}: " + str(np.mean(mse_list_best)) + " +- " + str(np.std(mse_list_best)))
         print("-------------------")
         best_accuracy_list.append(np.mean(mse_list_best))
-    if True:
+
+    if os.path.isfile(params.checkpoint_dir):
         model.load_checkpoint(params.checkpoint_dir)
 
         if params.method=='transfer':
@@ -308,16 +321,17 @@ for sd in range(seed, seed+repeat):
             f.write('\n}\n]')
 
     if params.save_result: f.close()
-    print(f'\n{id}\n')
-    print("-------------------")
-    print("Average MSE best model: " + str(np.mean(mse_list_best)) + " +- " + str(np.std(mse_list_best)))
-    print("Average MSE last model: " + str(np.mean(mse_list)) + " +- " + str(np.std(mse_list)))
-    print("-------------------")
+    if mse_list is not None and mse_list_best is not None:
+        print(f'\n{id}\n')
+        print("-------------------")
+        print("Average MSE best model: " + str(np.mean(mse_list_best)) + " +- " + str(np.std(mse_list_best)))
+        print("Average MSE last model: " + str(np.mean(mse_list)) + " +- " + str(np.std(mse_list)))
+        print("-------------------")
 
 
 
-
-print("===================")
-print(f"Overall Test Acc [best model] [repeat {repeat}]: " + str(np.mean(best_accuracy_list)) + " +- " + str(np.std(best_accuracy_list)))
-print(f"Overall Test Acc [last model] [repeat {repeat}]: " + str(np.mean(last_accuracy_list)) + " +- " + str(np.std(last_accuracy_list)))
-print("===================")
+if len(best_accuracy_list) >0 and len(last_accuracy_list) >0:
+    print("===================")
+    print(f"Overall Test Acc [best model] [repeat {repeat}]: " + str(np.mean(best_accuracy_list)) + " +- " + str(np.std(best_accuracy_list)))
+    print(f"Overall Test Acc [last model] [repeat {repeat}]: " + str(np.mean(last_accuracy_list)) + " +- " + str(np.std(last_accuracy_list)))
+    print("===================")

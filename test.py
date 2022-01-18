@@ -204,8 +204,8 @@ def single_test(params):
     #modelfile   = get_resume_file(checkpoint_dir)
 
     if not params.method in ['baseline', 'baseline++'] : 
-        best = False
-        last = False
+        best = True
+        last = True
         print(f'\n{checkpoint_dir}\n')
         modelfile = None
         if params.save_iter != -1:
@@ -336,9 +336,12 @@ def single_test(params):
                     f.write(',\n')
             timestamp = time.strftime("%Y/%m/%d-%H:%M", time.localtime()) 
 
-        if params.save_iter != -1:    
+        if params.save_iter != -1 and modelfile is not None:    
             model.eval()
             acc_mean, acc_std, result = model.test_loop( novel_loader, return_std = True)
+            print("-----------------------------")
+            print('Test Acc model at epoch %d = %4.2f%% +- %4.2f%%' %(params.save_iter, acc_mean, acc_std))
+            print("-----------------------------") 
         if last:
             print(f'\nModel at last epoch {num}\n')
             last_model.eval()
