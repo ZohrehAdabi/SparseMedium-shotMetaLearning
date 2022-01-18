@@ -93,6 +93,7 @@ def parse_args_regression(script):
         parser.add_argument('--rvm_mll'            , action='store_true', help='Add MLL of RVM to the outer GP MLL loss.') 
         parser.add_argument('--rvm_ll'             , action='store_true', help='Add Likelihood of RVM only to the outer GP MLL loss.') 
         parser.add_argument('--rvm_mll_one'        , action='store_true', help='Add MLL of RVM to the outer GP MLL loss with weights sum to one.') 
+        parser.add_argument('--rvm_ll_one'        , action='store_true', help='Add LL of RVM to the outer GP MLL loss with weights sum to one.') 
         parser.add_argument('--lambda_rvm'         , default=1e-3, type=float, help='Coefficient of RVM MLL in Loss function') 
         parser.add_argument('--rvm_mse'            , action='store_true', help='Add MLL of RVM to the outer GP MLL loss.') 
         parser.add_argument('--rvm_mll_only'       , action='store_true', help='Use MLL of RVM only for loss.') 

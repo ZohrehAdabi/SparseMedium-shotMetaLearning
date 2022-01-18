@@ -46,7 +46,7 @@ IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j
 eps = torch.finfo(torch.float32).eps 
 
 class Sparse_DKT_regression_Nystrom(nn.Module):
-    def __init__(self, backbone, kernel_type='rbf', sparse_method='FRVM', add_rvm_mll=False, add_rvm_mll_one=False, add_rvm_ll=False,
+    def __init__(self, backbone, kernel_type='rbf', sparse_method='FRVM', add_rvm_mll=False, add_rvm_mll_one=False, add_rvm_ll_one=False, add_rvm_ll=False,
                         add_rvm_mse=False, lambda_rvm=0.1, beta=False, normalize=False, lr_decay=False, 
                         f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
@@ -58,6 +58,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         self.add_rvm_mll = add_rvm_mll
         self.add_rvm_ll = add_rvm_ll
         self.add_rvm_mll_one = add_rvm_mll_one
+        self.add_rvm_ll_one = add_rvm_ll_one
         self.add_rvm_mse = add_rvm_mse
         self.lambda_rvm = lambda_rvm
         self.beta = beta
@@ -203,9 +204,9 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                 beta = 1 /sigma
             mu_m = mu_m / scales
             alpha_m = alpha_m / scales**2 
-            if self.add_rvm_mll:
+            if self.add_rvm_mll or self.add_rvm_mll_one:
                 rvm_mll = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
-            elif self.add_rvm_ll:
+            elif self.add_rvm_ll or self.add_rvm_ll_one:
                 rvm_mll, rvm_mse = rvm_ML_regression(K_m, labels, alpha_m, mu_m, beta)
             else: #when rvm is not used this function runs to have rvm_mll  for report in print
                 rvm_mll = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
@@ -215,7 +216,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
 
             if self.add_rvm_mll or self.add_rvm_ll:
                 loss = - mll  - l * rvm_mll 
-            elif self.add_rvm_mll_one:
+            elif self.add_rvm_mll_one or self.add_rvm_ll_one:
                 loss = -(1-l) * mll  - l * rvm_mll 
             elif self.add_rvm_mse:
                 loss =  - mll + l *  rvm_mse
