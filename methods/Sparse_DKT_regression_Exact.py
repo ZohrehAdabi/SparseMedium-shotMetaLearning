@@ -195,7 +195,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
                 beta = inducing_points.beta
             else:
                 beta = 1/sigma
-                
+
             mu_m = mu_m / scales
             alpha_m = alpha_m / scales**2
             if self.add_rvm_mll:
@@ -418,8 +418,9 @@ class Sparse_DKT_regression_Exact(nn.Module):
         mll_list = []
         best_mse = 10e5 #stop_epoch//2
         # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5, 50, 80], gamma=0.1)
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.1)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.1)
         # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+        mse_val_log2, mse_val_log = [], []
         for epoch in range(stop_epoch):
          
             mll = self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
@@ -472,7 +473,19 @@ class Sparse_DKT_regression_Exact(nn.Module):
             #     optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.1
             # if (epoch) in [50, 80]:
             #     optimizer.param_groups[1]['lr'] = optimizer.param_groups[1]['lr'] * 0.1
-
+            
+            if mse > 0.25:
+                    mse_val_log2.append(mse)
+                    if len(mse_val_log2)> 10:
+                        print('\n', self.id, '\n')
+                        print(f'{mse_val_log2}\n')
+                        return mll, mll_list
+            if mse > 0.15:
+                mse_val_log.append(mse)
+                if len(mse_val_log)> 20:
+                    print('\n', self.id, '\n')
+                    print(f'{mse_val_log}\n')
+                    return mll, mll_list
 
         mll = np.mean(mll_list)
 

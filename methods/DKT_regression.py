@@ -232,7 +232,7 @@ class DKT_regression(nn.Module):
     def train(self, stop_epoch, n_support, n_samples, optimizer, save_model=False):
 
         mll_list = []
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.1)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.1)
         # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
         best_mse = 1e7
         for epoch in range(stop_epoch):
@@ -266,7 +266,7 @@ class DKT_regression(nn.Module):
                 if save_model and epoch>50 and epoch%50==0:
                     model_name = self.best_path + f'_{epoch}'
                     self.save_best_checkpoint(epoch, mse, model_name)
-                    
+
             mll_list.append(mll)
             if(self.writer is not None): self.writer.add_scalar('MLL per epoch', mll, epoch)
             print(Fore.CYAN,"-"*30, f'\nend of epoch {epoch+1} => MLL: {mll}\n', "-"*30, Fore.RESET)
