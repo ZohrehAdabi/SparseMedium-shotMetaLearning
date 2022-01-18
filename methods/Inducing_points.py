@@ -469,8 +469,9 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
         
         # active, alpha, gamma, beta, mu_m, U = Fast_RVM(kernel_matrix, target, N, config, align_threshold, gamma,
         #                                         eps, tol, max_itr, device, verbose)
-        active, alpha, gamma, beta, mu_m, U = Fast_RVM_regression(kernel_matrix, target, beta, N, config, align_threshold,
-                                                    False, eps, tol, max_itr, device, verbose, task_id)
+        with torch.no_grad():
+            active, alpha, gamma, beta, mu_m, U = Fast_RVM_regression(kernel_matrix, target, beta, N, config, align_threshold,
+                                                        False, eps, tol, max_itr, device, verbose, task_id)
 
         # index = np.argsort(active)
         # active = active[index]
