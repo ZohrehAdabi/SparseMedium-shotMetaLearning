@@ -472,13 +472,13 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                     # test for convergence or divergence
                     if mse > 0.25:
                         mse_val_log2.append(mse)
-                        if len(mse_val_log2)> 15:
+                        if len(mse_val_log2)> 10:
                             print('\n', self.id, '\n')
                             print(f'{mse_val_log2}\n')
                             return mll, mll_list
                     if mse > 0.15:
                         mse_val_log.append(mse)
-                        if len(mse_val_log)> 25:
+                        if len(mse_val_log)> 20:
                             print('\n', self.id, '\n')
                             print(f'{mse_val_log}\n')
                             return mll, mll_list
