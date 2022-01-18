@@ -22,8 +22,8 @@ for config in config_list:
                 align_thr = 0
             for method in method_list:
                 for sd in seed_list:
-                    # lambda_rvm_list = [0.001, 0.1, 0.5, 1.0]
-                    lambda_rvm_list = [0.001, 0.01, 0.1, 0.5]
+                    lambda_rvm_list = [0.001, 0.1, 0.5, 1.0]
+                    # lambda_rvm_list = [0.001, 0.01, 0.1, 0.5]
                     # lambda_rvm_list = [0]
                     for lambda_rvm in lambda_rvm_list:
                         # just mll of GP
@@ -53,7 +53,7 @@ for config in config_list:
                                     #   '--show_plots_features',
                                         '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
                                         '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
-                                        '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_mll_one', '--beta'
+                                        '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_mll', '--beta'
                         ]
                         if save_model: L.append('--save_model')
                         print(f'\n{" ".join(L)} \n')
@@ -63,7 +63,7 @@ for config in config_list:
                                     #   '--show_plots_pred',
                                         '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
                                         '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
-                                        '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_mll_one', '--beta'
+                                        '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_mll', '--beta'
                         ]
                         print(f'\n{" ".join(L)} \n')
                         # run(L)
@@ -74,7 +74,7 @@ for config in config_list:
                                     #   '--show_plots_features',
                                         '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
                                         '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
-                                        '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_ll_one', '--beta'
+                                        '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_ll', '--beta'
                         ]
                         if save_model: L.append('--save_model')
                         print(f'\n{" ".join(L)} \n')
@@ -84,7 +84,7 @@ for config in config_list:
                                     #   '--show_plots_pred',
                                         '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
                                         '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
-                                        '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_ll_one', '--beta'
+                                        '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_ll', '--beta'
                         ]
                         print(f'\n{" ".join(L)} \n')
                         # run(L)
