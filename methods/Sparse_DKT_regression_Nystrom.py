@@ -430,6 +430,8 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5, 50, 80], gamma=0.1)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.1)
         # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+        mse_val_log = []
+        mse_val_log2 = []
         for epoch in range(stop_epoch):
             
             if  self.f_rvm:
@@ -467,6 +469,20 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                         self.writer.add_scalar('MSE (norm) Val.', mse, epoch)
                         self.writer.add_scalar('RVM MSE Val.', mse_r, epoch)
                         self.writer.add_scalar('Avg. SVs', sv_c, epoch)
+                    # test for convergence or divergence
+                    if mse > 0.25:
+                        mse_val_log2.append(mse)
+                        if len(mse_val_log2)> 15:
+                            print('\n', self.id, '\n')
+                            print(f'{mse_val_log2}\n')
+                            return mll, mll_list
+                    if mse > 0.15:
+                        mse_val_log.append(mse)
+                        if len(mse_val_log)> 25:
+                            print('\n', self.id, '\n')
+                            print(f'{mse_val_log}\n')
+                            return mll, mll_list
+
                 print(Fore.GREEN,"-"*30, Fore.RESET)
 
 

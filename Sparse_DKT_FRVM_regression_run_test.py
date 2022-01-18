@@ -7,7 +7,7 @@ seed_list = [1, 2, 3]
 lr_gp_list = [0.1, 0.01, 0.001, 0.0001]
 lr_net_list = [0.01, 0.001, 0.0001]
 
-stop_epoch = 200
+stop_epoch = 150
 lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['1011']
@@ -21,8 +21,8 @@ for config in config_list:
                 align_thr = 0
             for method in method_list:
                 for sd in seed_list:
-                    lambda_rvm_list = [0.001, 0.1, 0.5, 1.0]
-                    # lambda_rvm_list = [0]
+                    # lambda_rvm_list = [0.001, 0.1, 0.5, 1.0]
+                    lambda_rvm_list = [0]
                     for lambda_rvm in lambda_rvm_list:
                         # just mll of GP
                         L = ['python', f'./train_regression.py', 
@@ -62,7 +62,7 @@ for config in config_list:
                                         '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_mll', '--beta'
                         ]
                         print(f'\n{" ".join(L)} \n')
-                        # run(L)
+                        run(L)
 
                         # rvm ll
                         L = ['python', f'./train_regression.py',  
@@ -82,7 +82,7 @@ for config in config_list:
                                         '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_ll', '--beta'
                         ]
                         print(f'\n{" ".join(L)} \n')
-                        # run(L)
+                        run(L)
 
           
 
