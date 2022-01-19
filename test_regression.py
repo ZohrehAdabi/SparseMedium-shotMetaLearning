@@ -278,7 +278,8 @@ for sd in range(seed, seed+repeat):
     print(f'\n{params.checkpoint_dir}')
     if params.save_iter!=-1:
         if os.path.isfile(params.checkpoint_dir+f'_{params.save_iter}'):
-            model.load_checkpoint(params.checkpoint_dir +'_best_model.tar')
+            model.load_checkpoint(params.checkpoint_dir+f'_{params.save_iter}')
+            print(f'\nMoldel at epoch {params.save_iter}\n{params.checkpoint_dir}_{params.save_iter}')        
             if params.method=='transfer':
                 mse_list_, result = model.test(params.n_support, params.n_samples, optimizer, params.fine_tune, params.n_test_epochs)
             else:
