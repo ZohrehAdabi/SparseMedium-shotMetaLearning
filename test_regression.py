@@ -276,7 +276,7 @@ for sd in range(seed, seed+repeat):
 
     mse_list, mse_list_best = None, None
     print(f'\n{params.checkpoint_dir}')
-    print(params.save_iter)
+  
     if params.save_iter!=-1:
         if os.path.isfile(params.checkpoint_dir+f'_{params.save_iter}'):
             model.load_checkpoint(params.checkpoint_dir+f'_{params.save_iter}')
