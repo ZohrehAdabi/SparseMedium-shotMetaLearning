@@ -403,7 +403,7 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
 
 def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_method, scale, beta,
                         config='0000', align_threshold='0', gamma=False, 
-                        num_inducing_points=None, verbose=True, task_id=None, device='cuda', classification=False):
+                        num_inducing_points=None, maxItr=1000,  verbose=True, task_id=None, device='cuda', classification=False):
 
         
     IP_index = np.array([])
@@ -448,7 +448,7 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
         N   = inputs.shape[0]
         tol = 1e-2
         eps = torch.finfo(torch.float32).eps
-        max_itr = 1000
+        max_itr = maxItr 
         # if classification:
         #     sigma =torch.tensor(0.1).to(device) 
         #     beta = 1/sigma

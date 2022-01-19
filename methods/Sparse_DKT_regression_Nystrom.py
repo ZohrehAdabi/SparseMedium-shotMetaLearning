@@ -47,7 +47,7 @@ eps = torch.finfo(torch.float32).eps
 
 class Sparse_DKT_regression_Nystrom(nn.Module):
     def __init__(self, backbone, kernel_type='rbf', sparse_method='FRVM', add_rvm_mll=False, add_rvm_mll_one=False, add_rvm_ll_one=False, add_rvm_ll=False,
-                        add_rvm_mse=False, lambda_rvm=0.1, beta=False, normalize=False, lr_decay=False, 
+                        add_rvm_mse=False, lambda_rvm=0.1, maxItr_rvm=1000, beta=False, normalize=False, lr_decay=False, 
                         f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_regression_Nystrom, self).__init__()
@@ -61,6 +61,9 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         self.add_rvm_ll_one = add_rvm_ll_one
         self.add_rvm_mse = add_rvm_mse
         self.lambda_rvm = lambda_rvm
+        self.maxItr_rvm = 1000
+        if maxItr_rvm!=-1:
+            self.maxItr_rvm = maxItr_rvm
         self.beta = beta
         self.normalize = normalize
         self.lr_decay = lr_decay
@@ -178,7 +181,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                 inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
                                                                 z, labels, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
                                                                 config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-                                                                num_inducing_points=self.num_inducing_points, verbose=True, task_id=itr, device=self.device)
+                                                                num_inducing_points=self.num_inducing_points, maxItr=self.maxItr_rvm, verbose=True, task_id=itr, device=self.device)
            
             ip_index = inducing_points.index
             
@@ -305,7 +308,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
                                                             z_support, y_support, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
                                                             config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-                                                            num_inducing_points=self.num_inducing_points, verbose=False, task_id=self.test_i, device=self.device)
+                                                            num_inducing_points=self.num_inducing_points, maxItr=self.maxItr_rvm, verbose=False, task_id=self.test_i, device=self.device)
         
         ip_values = inducing_points.z_values.cuda()
         alpha_m = inducing_points.alpha
