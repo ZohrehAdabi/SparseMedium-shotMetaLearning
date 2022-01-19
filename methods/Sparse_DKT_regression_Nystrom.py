@@ -87,7 +87,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         if(train_y is None): train_y=torch.ones(self.num_inducing_points).cuda()
 
         likelihood = gpytorch.likelihoods.GaussianLikelihood()
-        likelihood.noise = 0.1# 0.01
+        likelihood.noise = 0.01# 0.01
         model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel=self.kernel_type, induce_point=train_x)
         if self.kernel_type=='rbf':
             model.base_covar_module.outputscale = 0.1
@@ -301,7 +301,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         with torch.no_grad():
             # inducing_points, beta, mu, U = self.get_inducing_points(z_support, y_support, verbose=False)
             sigma = self.model.likelihood.noise[0].clone()
-            beta = 1/sigma
+            beta = 1/(sigma+eps)
             inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
                                                             z_support, y_support, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
                                                             config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
