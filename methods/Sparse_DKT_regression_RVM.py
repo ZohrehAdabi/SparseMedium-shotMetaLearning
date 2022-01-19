@@ -501,6 +501,9 @@ class Sparse_DKT_regression_RVM(nn.Module):
                         self.writer.add_scalar('RVM MSE Val.', mse_r, epoch)
                         self.writer.add_scalar('Avg. SVs', sv_c, epoch)
                 print(Fore.GREEN,"-"*30, Fore.RESET)
+                if save_model and epoch>50 and epoch%50==0:
+                    model_name = self.best_path + f'_{epoch}'
+                    self.save_best_checkpoint(epoch, mse, model_name)
                 if mse > 0.25:
                     mse_val_log2.append(mse)
                     if len(mse_val_log2)> 10:
@@ -513,6 +516,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
                         print('\n', self.id, '\n')
                         print(f'{mse_val_log}\n')
                         return mll, mll_list
+            
             elif self.random:
                 mll = self.train_loop_random(epoch, n_support, n_samples, optimizer)
                 if epoch%1==0:
