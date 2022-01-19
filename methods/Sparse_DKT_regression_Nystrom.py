@@ -197,7 +197,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
 
             alpha_m = inducing_points.alpha
             K_m = self.model.base_covar_module(z, ip_values).evaluate()
-            K_m = K_m.to(torch.float64)
+            # K_m = K_m.to(torch.float32)
             scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
             # K_m = K_m / scales
             # alpha_m = alpha_m / (scales**2)
@@ -329,7 +329,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
 
             K_m = self.model.base_covar_module(z_query, ip_values).evaluate()
-            K_m = K_m.to(torch.float64)
+            # K_m = K_m.to(torch.float64)
             # scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
             mu_m = mu_m / scales
             y_pred_r = K_m @ mu_m       

@@ -457,7 +457,6 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
        
         # normalize kernel
         scales = torch.ones(kernel_matrix.shape[1]).to(device)
-        kernel_matrix = kernel_matrix.to(torch.float64)
         if scale:
             scales	= torch.sqrt(torch.sum(kernel_matrix**2, axis=0))
             # print(f'scale: {Scales}')
@@ -467,7 +466,7 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
         
         # targets[targets==-1]= 0
         target = targets.clone().to(torch.float64)
-        
+        kernel_matrix = kernel_matrix.to(torch.float64)
         # active, alpha, gamma, beta, mu_m, U = Fast_RVM(kernel_matrix, target, N, config, align_threshold, gamma,
         #                                         eps, tol, max_itr, device, verbose)
         with torch.no_grad():
@@ -481,9 +480,11 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
         scales_m = scales[active]
         # alpha = alpha[index] #/ scales_m**2
         # mu_m = mu_m[index] #/scales_m
+        mu_m = mu_m.to(torch.float32)
+        alpha = alpha.to(torch.float32)
         num_IP = active.shape[0]
         IP_index = active
-        K = base_covar_module(inputs, inducing_points).evaluate().to(torch.float64)
+        K = base_covar_module(inputs, inducing_points).evaluate()
         scales_m	= torch.sqrt(torch.sum(K**2, axis=0))
         if True:
             with torch.no_grad():
