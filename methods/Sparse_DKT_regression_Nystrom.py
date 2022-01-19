@@ -175,7 +175,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             if(self.normalize): z = F.normalize(z, p=2, dim=1)
 
             sigma = self.model.likelihood.noise[0].clone()
-            beta = 1 /(sigma + eps)
+            beta = 1 /(sigma)
             with torch.no_grad():
                 # inducing_points, beta, mu_m, U = self.get_inducing_points(z, labels, verbose=True)
                 inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
@@ -204,7 +204,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             if self.beta:
                 beta = inducing_points.beta
             else:
-                beta = 1 /(sigma + eps)
+                beta = 1 /(sigma)
             mu_m = mu_m / scales
             alpha_m = alpha_m / scales**2 
             if self.add_rvm_mll or self.add_rvm_mll_one:
@@ -304,7 +304,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         with torch.no_grad():
             # inducing_points, beta, mu, U = self.get_inducing_points(z_support, y_support, verbose=False)
             sigma = self.model.likelihood.noise[0].clone()
-            beta = 1/(sigma+eps)
+            beta = 1/(sigma)
             inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
                                                             z_support, y_support, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
                                                             config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
