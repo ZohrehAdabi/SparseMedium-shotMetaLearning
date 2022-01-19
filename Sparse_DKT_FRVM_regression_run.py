@@ -22,7 +22,7 @@ for config in config_list:
                 align_thr = 0
             for method in method_list:
                 for sd in seed_list:
-                    lambda_rvm_list = [0.001, 0.1, 0.5, 1.0]
+                    lambda_rvm_list = [0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 1.0]
                     # lambda_rvm_list = [0.001, 0.01, 0.1, 0.5]
                     # lambda_rvm_list = [0]
                     for lambda_rvm in lambda_rvm_list:
