@@ -218,7 +218,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             mll = self.mll(predictions, self.model.train_targets)
 
             if self.add_rvm_mll or self.add_rvm_ll:
-                loss = - mll  - l * rvm_mll 
+                loss = - mll  - l * rvm_mll
             elif self.add_rvm_mll_one or self.add_rvm_ll_one:
                 loss = -(1-l) * mll  - l * rvm_mll 
             elif self.add_rvm_mse:
