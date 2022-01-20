@@ -480,8 +480,8 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
         scales_m = scales[active]
         # alpha = alpha[index] #/ scales_m**2
         # mu_m = mu_m[index] #/scales_m
-        mu_m = mu_m.to(torch.float32)
-        alpha = alpha.to(torch.float32)
+        # mu_m = mu_m.to(torch.float32)
+        # alpha = alpha.to(torch.float32)
         num_IP = active.shape[0]
         IP_index = active
         K = base_covar_module(inputs, inducing_points).evaluate()
