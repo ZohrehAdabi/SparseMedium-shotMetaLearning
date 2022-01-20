@@ -131,21 +131,21 @@ def rvm_ML_regression(K_m, targets, alpha_m, mu_m, beta=10.0):
         
         N = targets.shape[0]
         # targets = targets.to(torch.float64)
-        # K_mt = targets @ K_m
-        # A_m = torch.diag(alpha_m)
-        # H = A_m + beta * K_m.T @ K_m
-        # U, info =  torch.linalg.cholesky_ex(H, upper=True)
+        K_mt = targets @ K_m
+        A_m = torch.diag(alpha_m)
+        H = A_m + beta * K_m.T @ K_m
+        U, info =  torch.linalg.cholesky_ex(H, upper=True)
         # # if info>0:
         # #     print('pd_err of Hessian')
-        # U_inv = torch.linalg.inv(U)
-        # Sigma_m = U_inv @ U_inv.T      
-        # mu_m = beta * (Sigma_m @ K_mt)
+        U_inv = torch.linalg.inv(U)
+        Sigma_m = U_inv @ U_inv.T      
+        mu_m = beta * (Sigma_m @ K_mt)
         y_ = K_m @ mu_m  
         e = (targets - y_)
         ED = e.T @ e
-        # DiagC	= torch.sum(U_inv**2, axis=1)
-        # Gamma	= 1 - alpha_m * DiagC
-        # beta	= (N - torch.sum(Gamma))/ED
+        DiagC	= torch.sum(U_inv**2, axis=1)
+        Gamma	= 1 - alpha_m * DiagC
+        beta	= (N - torch.sum(Gamma))/ED
         # dataLikely	= (N * torch.log(beta) - beta * ED)/2
         # logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
         
