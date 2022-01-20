@@ -56,11 +56,11 @@ class DKT_regression(nn.Module):
         if(train_y is None): train_y=torch.ones(19).cuda()
 
         likelihood = gpytorch.likelihoods.GaussianLikelihood()
-        likelihood.noise = 0.01
+        likelihood.noise = 0.05
         model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel=self.kernel_type)
         if self.kernel_type=='rbf':
             model.covar_module.outputscale = 0.1
-            model.covar_module.base_kernel.lengthscale = 0.25
+            model.covar_module.base_kernel.lengthscale = 0.2
         self.model      = model.cuda()
         self.likelihood = likelihood.cuda()
         self.mll        = gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self.model).cuda()
