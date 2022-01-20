@@ -26,7 +26,7 @@ mse_loss  = nn.MSELoss()
 def rvm_ML_regression_full(K_m, targets, alpha_m, mu_m, beta=torch.tensor(10.0, device='cuda')):
         
         N = targets.shape[0]
-        targets = targets.to(torch.float32)
+        # targets = targets.to(torch.float32)
         K_mt = targets @ K_m
         A_m = torch.diag(alpha_m)
         H = A_m + beta * K_m.T @ K_m
@@ -69,10 +69,10 @@ def rvm_ML_full(K_m, targets, alpha_m, mu_m, U):
         
         N = targets.shape[0]
         # alpha_m = alpha_m.to(torch.float64)
-        t = targets.to(torch.float32)
+        t = targets#.to(torch.float32)
         t[t==-1]= 0
         # targets_pseudo_linear	= 2 * targets - 1
-        K_m = K_m.to(torch.float32)
+        # K_m = K_m.to(torch.float32)
         # LogOut	= (targets_pseudo_linear * 0.9 + 1) / 2
         # mu_m	=  K_m.pinverse() @ (torch.log(LogOut / (1 - LogOut))) #
         # with torch.no_grad():
@@ -100,10 +100,10 @@ def rvm_ML(K_m, targets, alpha_m, mu_m, U):
         
         N = targets.shape[0]
         # alpha_m = alpha_m.to(torch.float64)
-        t = targets.to(torch.float32)
+        t = targets#.to(torch.float32)
         t[t==-1]= 0
         # targets_pseudo_linear	= 2 * targets - 1
-        K_m = K_m.to(torch.float32)
+        # K_m = K_m.to(torch.float32)
         # LogOut	= (targets_pseudo_linear * 0.9 + 1) / 2
         # mu_m	=  K_m.pinverse() @ (torch.log(LogOut / (1 - LogOut))) #
         # with torch.no_grad():
