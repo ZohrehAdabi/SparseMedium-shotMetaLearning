@@ -90,11 +90,11 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         if(train_y is None): train_y=torch.ones(self.num_inducing_points).cuda()
 
         likelihood = gpytorch.likelihoods.GaussianLikelihood()
-        likelihood.noise = 0.1# 0.01
+        likelihood.noise = 0.05# 0.01
         model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel=self.kernel_type, induce_point=train_x)
         if self.kernel_type=='rbf':
             model.base_covar_module.outputscale = 0.1
-            model.base_covar_module.base_kernel.lengthscale = 0.1
+            model.base_covar_module.base_kernel.lengthscale = 0.2
         self.model      = model.cuda()
         self.likelihood = likelihood.cuda()
         self.mll        = gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self.model).cuda()
