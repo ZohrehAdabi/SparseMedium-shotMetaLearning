@@ -85,11 +85,11 @@ class Sparse_DKT_regression_Exact(nn.Module):
         if(train_y is None): train_y=torch.ones(self.num_inducing_points).cuda()
 
         likelihood = gpytorch.likelihoods.GaussianLikelihood()
-        likelihood.noise = 0.1
+        likelihood.noise = 0.05
         model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel=self.kernel_type, induce_point=train_x)
         if self.kernel_type=='rbf':
             model.base_covar_module.outputscale = 0.1
-            model.base_covar_module.base_kernel.lengthscale = 0.1
+            model.base_covar_module.base_kernel.lengthscale = 0.2
         self.model      = model.cuda()
         self.likelihood = likelihood.cuda()
         self.mll        = gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self.model).cuda()
@@ -191,9 +191,9 @@ class Sparse_DKT_regression_Exact(nn.Module):
             self.model.set_train_data(inputs=ip_values, targets=ip_labels, strict=False)
             alpha_m = inducing_points.alpha
             K_m = self.model.base_covar_module(z, ip_values).evaluate()
-            K_m = K_m.to(torch.float64)
+            # K_m = K_m.to(torch.float64)
             scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
-            # K = K / scales
+            
             if self.beta:
                 beta = inducing_points.beta
             else:
@@ -323,6 +323,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
             K_m = K_m.to(torch.float64)
             # scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
             mu_m = mu_m / scales
+            alpha_m = alpha_m / scales**2
             y_pred_r = K_m @ mu_m       
             mse_r = self.mse(y_pred_r, y_query).item()
 
