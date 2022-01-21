@@ -46,7 +46,7 @@ IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j
 
 class Sparse_DKT_regression_RVM(nn.Module):
     def __init__(self, backbone, kernel_type='rbf', sparse_method='FRVM', add_rvm_mll=False, add_rvm_mll_one=False, add_rvm_mse=False, lambda_rvm=0.1, rvm_mll_only=False, 
-                        rvm_ll_only=False, sparse_kernel=False,  beta=False, beta_trajectory=False, normalize=False, lr_decay=False, 
+                        rvm_ll_only=False, sparse_kernel=False,  maxItr_rvm=1000, beta=False, beta_trajectory=False, normalize=False, lr_decay=False, 
                         f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_regression_RVM, self).__init__()
@@ -59,6 +59,9 @@ class Sparse_DKT_regression_RVM(nn.Module):
         self.rvm_mll_only = rvm_mll_only
         self.rvm_ll_only = rvm_ll_only
         self.sparse_kernel= sparse_kernel
+        self.maxItr_rvm = 1000
+        if maxItr_rvm!=-1:
+            self.maxItr_rvm = maxItr_rvm
         self.beta = beta
         self.beta_trajectory = beta_trajectory
         self.add_rvm_mse = add_rvm_mse
@@ -185,7 +188,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
                     inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
                                                                     z, labels, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
                                                                     config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-                                                                    num_inducing_points=self.num_inducing_points, verbose=True, task_id=itr, device=self.device)
+                                                                    num_inducing_points=self.num_inducing_points, maxItr=self.maxItr_rvm, verbose=True, task_id=itr, device=self.device)
            
             ip_index = inducing_points.index
             beta = inducing_points.beta
@@ -332,7 +335,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
             inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
                                                             z_support, y_support, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
                                                             config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-                                                            num_inducing_points=self.num_inducing_points, verbose=False, task_id=self.test_i, device=self.device)
+                                                            num_inducing_points=self.num_inducing_points, maxItr=self.maxItr_rvm, verbose=False, task_id=self.test_i, device=self.device)
         
         ip_values = inducing_points.z_values.cuda()
         alpha_m = inducing_points.alpha

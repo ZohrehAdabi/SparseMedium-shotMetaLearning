@@ -43,7 +43,7 @@ except ImportError:
 IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx")
 class Sparse_DKT_regression_Exact(nn.Module):
     def __init__(self, backbone, kernel_type, sparse_method='FRVM', add_rvm_mll=False, add_rvm_mll_one=False, add_rvm_ll=False,
-                    add_rvm_mse=False, lambda_rvm=0.1, beta=False, normalize=False, lr_decay=False, 
+                    add_rvm_mse=False, lambda_rvm=0.1, maxItr_rvm=1000, beta=False, normalize=False, lr_decay=False, 
                     f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_regression_Exact, self).__init__()
@@ -56,6 +56,9 @@ class Sparse_DKT_regression_Exact(nn.Module):
         self.add_rvm_mll_one = add_rvm_mll_one
         self.add_rvm_mse = add_rvm_mse
         self.lambda_rvm = lambda_rvm
+        self.maxItr_rvm = 1000
+        if maxItr_rvm!=-1:
+            self.maxItr_rvm = maxItr_rvm
         self.beta = beta
         self.normalize = normalize
         self.lr_decay = lr_decay
@@ -174,7 +177,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
                 inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
                                                                 z, labels, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
                                                                 config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-                                                                num_inducing_points=self.num_inducing_points, verbose=True, task_id=itr, device=self.device)
+                                                                num_inducing_points=self.num_inducing_points, maxItr=self.maxItr_rvm, verbose=True, task_id=itr, device=self.device)
            
             ip_index = inducing_points.index
             ip_values = z[ip_index]
@@ -298,7 +301,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
             inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
                                                             z_support, y_support, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
                                                             config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-                                                            num_inducing_points=self.num_inducing_points, verbose=False, task_id=self.test_i, device=self.device)
+                                                            num_inducing_points=self.num_inducing_points, maxItr=self.maxItr_rvm, verbose=False, task_id=self.test_i, device=self.device)
         
         ip_values = inducing_points.z_values.cuda()
         alpha_m = inducing_points.alpha
@@ -417,51 +420,86 @@ class Sparse_DKT_regression_Exact(nn.Module):
 
         mll_list = []
         best_mse = 10e5 #stop_epoch//2
+        best_epoch = 0
         # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5, 50, 80], gamma=0.1)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.1)
         # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
         mse_val_log2, mse_val_log = [], []
         for epoch in range(stop_epoch):
-         
-            mll = self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
             
-            if epoch%1==0:
-                print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
-                mse_list = []
-                mse_unnorm_list = []
-                mse_rvm_list = []
-                sv_count_list = []
-                val_count = 10
-                rep = True if val_count > len(val_people) else False
-                val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
-                for t in range(val_count):
-                    self.test_i = t
-                    mse, mse_, sv_count, mse_r = self.test_loop_fast_rvm(n_support, n_samples, val_person[t],  optimizer, verbose)
-                    mse_list.append(mse)
-                    mse_unnorm_list.append(mse_)
-                    sv_count_list.append(sv_count)
-                    mse_rvm_list.append(mse_r)
-                mse = np.mean(mse_list)
-                mse_ = np.mean(mse_unnorm_list)
-                sv_c = np.mean(sv_count_list)
-                mse_r = np.mean(mse_rvm_list)
-                if best_mse >= mse:
-                    best_mse = mse
-                    model_name = self.best_path + '_best_model.tar'
-                    self.save_best_checkpoint(epoch+1, best_mse, model_name)
-                    print(Fore.LIGHTRED_EX, f'Best MSE: {best_mse:.4f}', Fore.RESET)
-                print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE RVM: {mse_r:.4f}, MSE(norm): {mse:.4f}, MSE: {mse_:.4f}, SV: {sv_c:.2f} Best MSE: {best_mse:.4f}', Fore.RESET)
-                if(self.writer is not None):
-                    self.writer.add_scalar('MSE (norm) Val.', mse, epoch)
-                    # self.writer.add_scalar('MSE Val.', mse_, epoch)
-                    self.writer.add_scalar('RVM MSE Val.', mse_r, epoch)
-                    self.writer.add_scalar('Avg. SVs', sv_c, epoch)
+            if self.f_rvm:
+                mll = self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
+                
+                if epoch%1==0:
+                    print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
+                    mse_list = []
+                    mse_unnorm_list = []
+                    mse_rvm_list = []
+                    sv_count_list = []
+                    val_count = 10
+                    rep = True if val_count > len(val_people) else False
+                    val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
+                    for t in range(val_count):
+                        self.test_i = t
+                        mse, mse_, sv_count, mse_r = self.test_loop_fast_rvm(n_support, n_samples, val_person[t],  optimizer, verbose)
+                        mse_list.append(mse)
+                        mse_unnorm_list.append(mse_)
+                        sv_count_list.append(sv_count)
+                        mse_rvm_list.append(mse_r)
+                    mse = np.mean(mse_list)
+                    mse_ = np.mean(mse_unnorm_list)
+                    sv_c = np.mean(sv_count_list)
+                    mse_r = np.mean(mse_rvm_list)
+                    if best_mse >= mse:
+                        best_mse = mse
+                        best_epoch = epoch
+                        model_name = self.best_path + '_best_model.tar'
+                        self.save_best_checkpoint(epoch+1, best_mse, model_name)
+                        print(Fore.LIGHTRED_EX, f'Best MSE: {best_mse:.4f}', Fore.RESET)
+                    print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE RVM: {mse_r:.4f}, MSE(norm): {mse:.4f}, MSE: {mse_:.4f}, SV: {sv_c:.2f} Best MSE: {best_mse:.4f}', Fore.RESET)
+                    if(self.writer is not None):
+                        self.writer.add_scalar('MSE (norm) Val.', mse, epoch)
+                        # self.writer.add_scalar('MSE Val.', mse_, epoch)
+                        self.writer.add_scalar('RVM MSE Val.', mse_r, epoch)
+                        self.writer.add_scalar('Avg. SVs', sv_c, epoch)
+                    print(Fore.GREEN,"-"*30, Fore.RESET)
+
+
+                if save_model and epoch>50 and epoch%50==0:
+                    model_name = self.best_path + f'_{epoch}'
+                    self.save_best_checkpoint(epoch, mse, model_name)
+            
+            elif self.random:
+             
+                mll = self.train_loop_random(epoch, n_support, n_samples, optimizer)
+                if epoch%1==0:
+                    print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
+                    mse_list = []
+                    val_count = 10
+                    rep = True if val_count > len(val_people) else False
+                    val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
+                    for t in range(val_count):
+                        self.test_i = t
+                        mse = self.test_loop_random(n_support, n_samples, val_person[t],  optimizer)
+                        mse_list.append(mse)
+                        
+                    mse = np.mean(mse_list)
+                    
+                    if best_mse >= mse:
+                        best_mse = mse
+                        best_epoch = epoch
+                        model_name = self.best_path + '_best_model.tar'
+                        self.save_best_checkpoint(epoch+1, best_mse, model_name)
+                        print(Fore.LIGHTRED_EX, f'Best MSE: {best_mse:.4f}', Fore.RESET)
+                    print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE (norm): {mse:.4f}, Best MSE: {best_mse:.4f}', Fore.RESET)
+                    if(self.writer is not None):
+                        self.writer.add_scalar('MSE (norm) Val.', mse, epoch)
+                       
                 print(Fore.GREEN,"-"*30, Fore.RESET)
 
-
-            if save_model and epoch>50 and epoch%50==0:
-                model_name = self.best_path + f'_{epoch}'
-                self.save_best_checkpoint(epoch, mse, model_name)
+                if save_model and epoch>50 and epoch%50==0:
+                    model_name = self.best_path + f'_{epoch}'
+                    self.save_best_checkpoint(epoch, mse, model_name)
 
             mll_list.append(mll)
             if(self.writer is not None): self.writer.add_scalar('MLL per epoch', mll, epoch)
@@ -487,6 +525,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
                     print(f'{mse_val_log}\n')
                     return mll, mll_list
 
+        print(Fore.CYAN,"-"*30, f'\nBest Val MSE {best_mse:4f} at epoch {best_epoch}\n', "-"*30, Fore.RESET)
         mll = np.mean(mll_list)
 
         
