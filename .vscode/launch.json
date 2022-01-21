@@ -456,8 +456,9 @@
             "console": "integratedTerminal",
            "args": ["--method","Sparse_DKT_RVM", "--sparse_method", "FRVM", "--n_samples", "72", "--n_support", "60", "--stop_epoch", "200",
              //"--show_plots_features", 
-             "--seed","4", "--config", "1001", "--align_thr", "1e-3", "--lr_gp", "1e-3", "--lr_net", "1e-3", "--kernel_type", "rbf",
-             // "--sparse_kernel", "--beta" ,
+             "--seed","4", "--config", "0011", "--align_thr", "1e-3", "--lr_gp", "1e-3", "--lr_net", "1e-3", "--kernel_type", "rbf",
+             // "--sparse_kernel", 
+            // "--beta" ,
               "--rvm_mll_only", "--init"
              //, "--gamma"
             ] ,
