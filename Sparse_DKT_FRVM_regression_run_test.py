@@ -13,7 +13,7 @@ lr_net_list = [0.001]
 config_list = ['1011']
 seed_list = [1]
 method_list = ['Sparse_DKT_Nystrom']
-test_epoch = 30
+test_epoch = 100
 save_result = True
 for config in config_list:
     for lr_gp in lr_gp_list:
