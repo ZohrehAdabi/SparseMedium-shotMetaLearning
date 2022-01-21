@@ -271,7 +271,7 @@ for sd in range(seed, seed+repeat):
         info_path = info_path.replace('\\', '/')
         info = info_path.split('/')
         info = '_'.join(info[3:])
-        result_path = f'./record/{params.dataset}'
+        result_path = f'./record/{params.dataset}/seed_{sd}'
         if not os.path.isdir(result_path):
             os.makedirs(result_path)
         file = f'{result_path}/results_{info}.json'
