@@ -225,9 +225,9 @@ class Sparse_DKT_regression_RVM(nn.Module):
             K_m = self.model.base_covar_module(z, ip_values).evaluate()
             K_m = K_m.to(torch.float64)
             scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
-            # K_m = K_m / scales
-            alpha_m = alpha_m / (scales**2)
-            mu_m = mu_m / scales
+            K_m = K_m / scales
+            # alpha_m = alpha_m / (scales**2)
+            # mu_m = mu_m / scales
             # NOTE Use my rvm_ML_full as loss insted of SparseKernel
             if self.rvm_ll_only:
                 if self.beta_trajectory or self.beta:
