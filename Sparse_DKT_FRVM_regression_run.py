@@ -13,7 +13,7 @@ lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['1011']
 seed_list = [1, 2, 3]
-method_list = ['Sparse_DKT_Nystrom']
+method_list = ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_RVM']
 sparse_method = 'FRVM' # 'random'
 for config in config_list:
     for lr_gp in lr_gp_list:
@@ -21,8 +21,9 @@ for config in config_list:
             align_thr = 1e-3
             if config in ['1000', '1010']:
                 align_thr = 0
-            for method in method_list:
-                for sd in seed_list:
+            for sd in seed_list:
+                for method in method_list:
+                
                     # just mll of GP
                     L = ['python', f'./train_regression.py', 
                                     '--method', f'{method}', '--sparse_method', f'{sparse_method}',  '--n_samples', '72', '--n_support', '60', '--stop_epoch', f'{stop_epoch}', 
