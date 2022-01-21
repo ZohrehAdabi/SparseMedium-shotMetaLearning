@@ -30,7 +30,7 @@ for config in config_list:
                                 #   '--show_plots_features',
                                     '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
                                     '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
-                                    '--kernel_type', 'rbf',  '--beta'
+                                    '--kernel_type', 'rbf', '--init',  '--beta'
                     ]
                     if save_model: L.append('--save_model')
                     print(f'\n{" ".join(L)} \n')
@@ -40,7 +40,7 @@ for config in config_list:
                                 #   '--show_plots_pred',
                                     '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
                                     '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
-                                    '--kernel_type', 'rbf', '--beta'
+                                    '--kernel_type', 'rbf', '--init', '--beta'
                     ]
                     print(f'\n{" ".join(L)} \n')
                     # run(L)
@@ -55,7 +55,7 @@ for config in config_list:
                                     #   '--show_plots_features',
                                         '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
                                         '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
-                                        '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_mll', '--beta'
+                                        '--kernel_type', 'rbf', '--init', '--lambda_rvm', f'{lambda_rvm}', '--rvm_mll', '--beta'
                         ]
                         if save_model: L.append('--save_model')
                         print(f'\n{" ".join(L)} \n')
@@ -65,7 +65,7 @@ for config in config_list:
                                     #   '--show_plots_pred',
                                         '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
                                         '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
-                                        '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_mll', '--beta'
+                                        '--kernel_type', 'rbf', '--init', '--lambda_rvm', f'{lambda_rvm}', '--rvm_mll', '--beta'
                         ]
                         print(f'\n{" ".join(L)} \n')
                         # run(L)
@@ -77,7 +77,7 @@ for config in config_list:
                                     #   '--show_plots_features',
                                         '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
                                         '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
-                                        '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_ll', '--beta'
+                                        '--kernel_type', 'rbf', '--init', '--lambda_rvm', f'{lambda_rvm}', '--rvm_ll', '--beta'
                         ]
                         if save_model: L.append('--save_model')
                         print(f'\n{" ".join(L)} \n')
@@ -87,7 +87,7 @@ for config in config_list:
                                     #   '--show_plots_pred',
                                         '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
                                         '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
-                                        '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_ll', '--beta'
+                                        '--kernel_type', 'rbf', '--init', '--lambda_rvm', f'{lambda_rvm}', '--rvm_ll', '--beta'
                         ]
                         print(f'\n{" ".join(L)} \n')
                         # run(L)
@@ -98,7 +98,7 @@ for config in config_list:
                             #   '--show_plots_features',
                                 '--seed',  f'{sd}', 
                                 '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
-                                '--kernel_type', 'rbf'
+                                '--kernel_type', 'rbf', '--init'
                 ]
                 if save_model: L.append('--save_model')
                 print(f'\n{" ".join(L)} \n')
