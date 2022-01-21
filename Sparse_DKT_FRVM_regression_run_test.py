@@ -13,6 +13,7 @@ lr_net_list = [0.001]
 config_list = ['1011']
 seed_list = [1]
 method_list = ['Sparse_DKT_Nystrom']
+test_epoch = 30
 save_result = True
 for config in config_list:
     for lr_gp in lr_gp_list:
@@ -25,7 +26,7 @@ for config in config_list:
                      # just mll of GP
                        
                     L = ['python', f'./test_regression.py', 
-                                    '--method', f'{method}', '--sparse_method', 'FRVM',  '--n_samples', '72', '--n_support', '60', '--n_test_epoch', '10', 
+                                    '--method', f'{method}', '--sparse_method', 'FRVM',  '--n_samples', '72', '--n_support', '60', '--n_test_epoch', f'{test_epoch}', 
                                 #   '--show_plots_pred',
                                     '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
                                     '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
@@ -43,7 +44,7 @@ for config in config_list:
                         
                         # rvm mll
                         L = ['python', f'./test_regression.py', 
-                                        '--method', f'{method}', '--sparse_method', 'FRVM',  '--n_samples', '72', '--n_support', '60', '--n_test_epoch', '10', 
+                                        '--method', f'{method}', '--sparse_method', 'FRVM',  '--n_samples', '72', '--n_support', '60', '--n_test_epoch', f'{test_epoch}', 
                                     #   '--show_plots_pred',
                                         '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
                                         '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
@@ -55,7 +56,7 @@ for config in config_list:
 
                         # rvm ll
                         L = ['python', f'./test_regression.py', 
-                                        '--method', f'{method}', '--sparse_method', 'FRVM',  '--n_samples', '72', '--n_support', '60', '--n_test_epoch', '10', 
+                                        '--method', f'{method}', '--sparse_method', 'FRVM',  '--n_samples', '72', '--n_support', '60', '--n_test_epoch', f'{test_epoch}', 
                                     #   '--show_plots_pred',
                                         '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
                                         '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
