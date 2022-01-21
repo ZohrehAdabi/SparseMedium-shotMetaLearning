@@ -90,6 +90,7 @@ def parse_args_regression(script):
         parser.add_argument('--lr_net'             , default=1e-3, type=float, help='Learning rate for Neural Network') 
         parser.add_argument('--lr_decay'           , action='store_true', help='Schedule learning rate')
         parser.add_argument('--normalize'          , action='store_true', help='Normalize z: output of feature extractor') 
+        parser.add_argument('--init'               , action='store_true', help='Initialize parameters of kernel') 
         parser.add_argument('--rvm_mll'            , action='store_true', help='Add MLL of RVM to the outer GP MLL loss.') 
         parser.add_argument('--rvm_ll'             , action='store_true', help='Add Likelihood of RVM only to the outer GP MLL loss.') 
         parser.add_argument('--rvm_mll_one'        , action='store_true', help='Add MLL of RVM to the outer GP MLL loss with weights sum to one.') 

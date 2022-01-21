@@ -26,7 +26,7 @@ mse_loss  = nn.MSELoss()
 def rvm_ML_regression_full(K_m, targets, alpha_m, mu_m, beta=torch.tensor(10.0, device='cuda')):
         
         N = targets.shape[0]
-        # targets = targets.to(torch.float32)
+        targets = targets.to(torch.float64)
         K_mt = targets @ K_m
         A_m = torch.diag(alpha_m)
         H = A_m + beta * K_m.T @ K_m
@@ -41,7 +41,7 @@ def rvm_ML_regression_full(K_m, targets, alpha_m, mu_m, beta=torch.tensor(10.0, 
         ED = e.T @ e
         DiagC	= torch.sum(U_inv**2, axis=1)
         Gamma	= 1 - alpha_m * DiagC
-        beta	= (N - torch.sum(Gamma))/ED
+        beta	= (N - torch.sum(Gamma))/ED  
         dataLikely	= (N * torch.log(beta) - beta * ED)/2
         logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
         
@@ -69,7 +69,7 @@ def rvm_ML_full(K_m, targets, alpha_m, mu_m, U):
         
         N = targets.shape[0]
         # alpha_m = alpha_m.to(torch.float64)
-        t = targets#.to(torch.float32)
+        t = targets.to(torch.float64)
         t[t==-1]= 0
         # targets_pseudo_linear	= 2 * targets - 1
         # K_m = K_m.to(torch.float32)
@@ -100,7 +100,7 @@ def rvm_ML(K_m, targets, alpha_m, mu_m, U):
         
         N = targets.shape[0]
         # alpha_m = alpha_m.to(torch.float64)
-        t = targets#.to(torch.float32)
+        t = targets.to(torch.float64)
         t[t==-1]= 0
         # targets_pseudo_linear	= 2 * targets - 1
         # K_m = K_m.to(torch.float32)
@@ -130,7 +130,7 @@ def rvm_ML(K_m, targets, alpha_m, mu_m, U):
 def rvm_ML_regression(K_m, targets, alpha_m, mu_m, beta=10.0):
         
         N = targets.shape[0]
-        # targets = targets.to(torch.float64)
+        targets = targets.to(torch.float64)
         K_mt = targets @ K_m
         A_m = torch.diag(alpha_m)
         H = A_m + beta * K_m.T @ K_m
@@ -484,7 +484,7 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
         # alpha = alpha.to(torch.float32)
         num_IP = active.shape[0]
         IP_index = active
-        K = base_covar_module(inputs, inducing_points).evaluate()
+        K = base_covar_module(inputs, inducing_points).evaluate().to(torch.float64)
         scales_m	= torch.sqrt(torch.sum(K**2, axis=0))
         if True:
             with torch.no_grad():

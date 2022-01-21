@@ -30,6 +30,7 @@ from data.qmul_loader import get_batch, train_people, val_people, test_people, g
 from configs import kernel_type
 from collections import namedtuple
 import torch.optim
+from configs import init_noise, init_outputscale, init_lengthscale
 #Check if tensorboardx is installed
 try:
     #tensorboard --logdir=./Sparse_DKT_QMUL_Eaxct_Loss/ --host localhost --port 8091
@@ -43,7 +44,7 @@ except ImportError:
 IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx")
 class Sparse_DKT_regression_Exact(nn.Module):
     def __init__(self, backbone, kernel_type, sparse_method='FRVM', add_rvm_mll=False, add_rvm_mll_one=False, add_rvm_ll=False,
-                    add_rvm_mse=False, lambda_rvm=0.1, maxItr_rvm=1000, beta=False, normalize=False, lr_decay=False, 
+                    add_rvm_mse=False, lambda_rvm=0.1, maxItr_rvm=1000, beta=False, normalize=False, initialize=False, lr_decay=False, 
                     f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_regression_Exact, self).__init__()
@@ -61,6 +62,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
             self.maxItr_rvm = maxItr_rvm
         self.beta = beta
         self.normalize = normalize
+        self.initialize = initialize
         self.lr_decay = lr_decay
         self.num_inducing_points = n_inducing_points
         self.config = config
@@ -85,11 +87,12 @@ class Sparse_DKT_regression_Exact(nn.Module):
         if(train_y is None): train_y=torch.ones(self.num_inducing_points).cuda()
 
         likelihood = gpytorch.likelihoods.GaussianLikelihood()
-        likelihood.noise = 0.05
+        likelihood.noise = init_noise
         model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel=self.kernel_type, induce_point=train_x)
-        if self.kernel_type=='rbf':
-            model.base_covar_module.outputscale = 0.1
-            model.base_covar_module.base_kernel.lengthscale = 0.2
+        if self.initialize:
+           if self.kernel_type=='rbf':
+                model.base_covar_module.outputscale = init_outputscale
+                model.base_covar_module.base_kernel.lengthscale = init_lengthscale
         self.model      = model.cuda()
         self.likelihood = likelihood.cuda()
         self.mll        = gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self.model).cuda()
@@ -191,7 +194,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
             self.model.set_train_data(inputs=ip_values, targets=ip_labels, strict=False)
             alpha_m = inducing_points.alpha
             K_m = self.model.base_covar_module(z, ip_values).evaluate()
-            # K_m = K_m.to(torch.float64)
+            K_m = K_m.to(torch.float64)
             scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
             
             if self.beta:
@@ -203,7 +206,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
             alpha_m = alpha_m / scales**2
             if self.add_rvm_mll:
                 rvm_mll = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
-            elif self.add_rvm_ll:
+            elif self.add_rvm_ll or self.add_rvm_mse:
                 rvm_mll, rvm_mse = rvm_ML_regression(K_m, labels, alpha_m, mu_m, beta)
             else: #when rvm is not used this function runs to have rvm_mll  for report in print
                 rvm_mll = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
