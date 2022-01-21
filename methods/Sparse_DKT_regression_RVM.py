@@ -25,7 +25,7 @@ import random
 ## Our packages
 import gpytorch
 from methods.Fast_RVM_regression import Fast_RVM_regression
-from methods.Inducing_points import get_inducing_points_regression, rvm_ML_regression, rvm_ML_regression_full
+from methods.Inducing_points import get_inducing_points_regression, rvm_ML_regression, rvm_ML_regression_full, rvm_ML_regression_full_rvm
 
 from statistics import mean
 from data.qmul_loader import get_batch, train_people, val_people, test_people, get_unnormalized_label
@@ -239,10 +239,10 @@ class Sparse_DKT_regression_RVM(nn.Module):
             else:
                 if self.beta_trajectory or self.beta:
                     # alpha_m = alpha_m.detach()
-                    rvm_mll = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
+                    rvm_mll = rvm_ML_regression_full_rvm(K_m, labels, alpha_m, mu_m, beta)
                 else:
                     
-                    rvm_mll = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, 1/sigma)
+                    rvm_mll = rvm_ML_regression_full_rvm(K_m, labels, alpha_m, mu_m, 1/sigma)
 
             predictions = self.model(z)
             mll = self.mll(predictions, self.model.train_targets)
