@@ -11,6 +11,6 @@ from . import Sparse_DKT_binary_Nystrom, Sparse_DKT_binary_Exact, Sparse_DKT_bin
 from . import Sparse_DKT_regression_Nystrom, Sparse_DKT_regression_Exact, Sparse_DKT_regression_RVM
 import sys
 sys.path.append("..")
-from .. import configs
+import configs
 
 
