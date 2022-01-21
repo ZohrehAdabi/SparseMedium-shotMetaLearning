@@ -21,7 +21,8 @@ import random
 from statistics import mean
 from methods.Fast_RVM_regression import Fast_RVM_regression
 from data.qmul_loader import get_batch, train_people, test_people, val_people, get_unnormalized_label
-from configs import kernel_type
+# from configs import kernel_type
+from configs import init_noise, init_outputscale, init_lengthscale
 #Check if tensorboardx is installed
 try:
     #tensorboard --logdir=./QMUL_Loss/ --host localhost --port 8091
@@ -56,11 +57,11 @@ class DKT_regression(nn.Module):
         if(train_y is None): train_y=torch.ones(19).cuda()
 
         likelihood = gpytorch.likelihoods.GaussianLikelihood()
-        likelihood.noise = 0.05
+        likelihood.noise = init_noise
         model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel=self.kernel_type)
         if self.kernel_type=='rbf':
-            model.covar_module.outputscale = 0.1
-            model.covar_module.base_kernel.lengthscale = 0.1
+            model.base_covar_module.outputscale = init_outputscale
+            model.base_covar_module.base_kernel.lengthscale = init_lengthscale
         self.model      = model.cuda()
         self.likelihood = likelihood.cuda()
         self.mll        = gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self.model).cuda()
