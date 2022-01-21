@@ -363,6 +363,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
             K_m = K_m.to(torch.float64)
             # scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
             mu_m = mu_m / scales
+            alpha_m = alpha_m / scales**2 
             y_pred_r = K_m @ mu_m       
             mse_r = self.mse(y_pred_r, y_query).item()
             # print(f'FRVM MSE on query: {mse_r:0.4f}')
