@@ -426,7 +426,8 @@
             "console": "integratedTerminal",
            "args": ["--method","Sparse_DKT_Nystrom", "--sparse_method", "FRVM", "--n_samples", "72", "--n_support", "60", "--stop_epoch", "200",
              //"--show_plots_features", 
-             "--seed","4", "--config", "1011", "--align_thr", "1e-3", "--lr_gp", "1e-3", "--lr_net", "1e-3", "--kernel_type", "rbf", "--lambda_rvm", "0.1", "--rvm_ll", "--beta"
+             "--seed","4", "--config", "1011", "--align_thr", "1e-3", "--lr_gp", "1e-3", "--lr_net", "1e-3", "--kernel_type", "rbf", "--lambda_rvm", "1.0", 
+             "--rvm_ll", "--beta", "--init"
              //, "--gamma"
             ] ,
             "justMyCode": false

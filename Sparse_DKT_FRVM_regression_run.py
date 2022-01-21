@@ -8,7 +8,7 @@ lr_gp_list = [0.1, 0.01, 0.001, 0.0001]
 lr_net_list = [0.01, 0.001, 0.0001]
 
 save_model = True
-stop_epoch = 200
+stop_epoch = 100
 lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['1011']
