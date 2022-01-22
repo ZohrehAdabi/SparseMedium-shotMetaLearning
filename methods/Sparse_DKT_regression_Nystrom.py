@@ -592,8 +592,8 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         if self.f_rvm: 
             print('\n-----------------------------------------')
             print(Fore.YELLOW, f'MSE (unnormed): {np.mean(mse_list_):.4f}', Fore.RESET)
-            print(Fore.YELLOW, f'MSE RVM: {np.mean(mse_rvm_list):.4f}', Fore.RESET)
-            print(Fore.YELLOW,f'Avg. SVs: {np.mean(num_sv_list):.2f}', Fore.RESET)
+            print(Fore.YELLOW, f'MSE RVM: {np.mean(mse_rvm_list):.5f}, std: {np.std(mse_rvm_list):.2f}', Fore.RESET)
+            print(Fore.YELLOW,f'Avg. SVs: {np.mean(num_sv_list):.2f}, std: {np.std(num_sv_list):.2f}', Fore.RESET)
             print('-----------------------------------------')
         # result = {'mse':f'{np.mean(mse_list):.3f}', 'rvm mse':f'{np.mean(mse_rvm_list):.3f}', 'std':f'{np.std(mse_list):.3f}', 'std rvm': f'{np.std(mse_rvm_list):.3f}', 'SVs':f'{np.mean(num_sv_list):.3f}'} #  
         result = {'mse':np.mean(mse_list), 'rvm mse':np.mean(mse_rvm_list), 'std':np.std(mse_list), 'std rvm': np.std(mse_rvm_list), 'SVs':np.mean(num_sv_list)}
