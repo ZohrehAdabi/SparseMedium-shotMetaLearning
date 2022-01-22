@@ -714,7 +714,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
             return IP(inducing_points_z, index, index.shape, None, None, 
                                 x_inducing, y_inducing, np.array(i_idx), np.array(j_idx))
         
-        inducing_points = inducing_max_similar_in_support_x(x_support, inducing_points_z, inducing_points_index, y_support)
+        inducing_points = inducing_max_similar_in_support_x(x_support, ip_values, inducing_points_index, y_support)
 
         #**************************************************************
         y = ((y_query.detach().cpu().numpy() + 1) * 60 / 2) + 60
@@ -727,7 +727,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
             print(Fore.LIGHTRED_EX, f'mse:    {mse:.4f}', Fore.RESET)
             print(Fore.RED,"-"*50, Fore.RESET)
 
-        if False and self.show_plots_pred:
+        if self.show_plots_pred:
             K = self.model.base_covar_module
             kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
             max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)

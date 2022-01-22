@@ -745,7 +745,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             print(Fore.LIGHTRED_EX, f'mse:    {mse:.4f}', Fore.RESET)
             print(Fore.RED,"-"*50, Fore.RESET)
 
-        if False and self.show_plots_pred:
+        if self.show_plots_pred:
             K = self.model.base_covar_module
             kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
             max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
