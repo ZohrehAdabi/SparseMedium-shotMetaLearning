@@ -34,12 +34,13 @@ except ImportError:
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx") #for test 
 class DKT_regression(nn.Module):
-    def __init__(self, backbone, kernel_type='rbf', normalize=False, lr_decay=False,video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
+    def __init__(self, backbone, kernel_type='rbf', normalize=False, initialize=False, lr_decay=False,video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(DKT_regression, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
         self.kernel_type = kernel_type
         self.normalize = normalize
+        self.initialize = initialize
         self.lr_decay = lr_decay
         self.training_  = training
         self.device = 'cuda'
@@ -59,9 +60,10 @@ class DKT_regression(nn.Module):
         likelihood = gpytorch.likelihoods.GaussianLikelihood()
         likelihood.noise = init_noise
         model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, kernel=self.kernel_type)
-        if self.kernel_type=='rbf':
-            model.base_covar_module.outputscale = init_outputscale
-            model.base_covar_module.base_kernel.lengthscale = init_lengthscale
+        if self.initialize:
+            if self.kernel_type=='rbf':
+                model.base_covar_module.outputscale = init_outputscale
+                model.base_covar_module.base_kernel.lengthscale = init_lengthscale
         self.model      = model.cuda()
         self.likelihood = likelihood.cuda()
         self.mll        = gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self.model).cuda()
