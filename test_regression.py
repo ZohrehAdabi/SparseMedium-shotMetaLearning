@@ -165,7 +165,7 @@ for sd in range(seed, seed+repeat):
             params.checkpoint_dir = params.checkpoint_dir + id
             model = Sparse_DKT_regression_Exact(bb, kernel_type=params.kernel_type, sparse_method=params.sparse_method, add_rvm_ll=params.rvm_ll, 
                                 add_rvm_mll=params.rvm_mll, add_rvm_mll_one=params.rvm_mll_one, add_rvm_mse=params.rvm_mse, lambda_rvm=params.lambda_rvm, beta=params.beta,
-                                normalize=params.normalize, f_rvm=False, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
+                                normalize=params.normalize, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
                                 video_path=params.checkpoint_dir, 
                                 show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
         

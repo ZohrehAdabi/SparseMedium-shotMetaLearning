@@ -22,7 +22,8 @@ import random
 from colorama import Fore
 from configs import kernel_type
 from methods.Fast_RVM import Fast_RVM
-from methods.Inducing_points import get_inducing_points, rvm_ML, get_inducing_points_regression, rvm_ML_regression, rvm_ML_regression_full, rvm_ML_full
+from methods.Inducing_points import get_inducing_points, rvm_ML, get_inducing_points_regression, rvm_ML_regression
+from methods.Inducing_points import rvm_ML_regression_full, rvm_ML_regression_full_rvm, rvm_ML_full
 #Check if tensorboardx is installed
 try:
     #tensorboard --logdir=./Sparse_DKT_binary_RVM_CUB_log/ --host localhost --port 8090
@@ -254,7 +255,7 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
 
             if self.rvm_mll_only:
                 if self.regression:
-                    rvm_mll = rvm_ML_regression_full(K_m, target, alpha_m, mu_m)
+                    rvm_mll = rvm_ML_regression_full_rvm(K_m, target, alpha_m, mu_m)
                 else:
                     rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U)
             elif self.rvm_ll_only:
@@ -262,11 +263,11 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
                     rvm_mll, _ = rvm_ML_regression(K_m, target, alpha_m, mu_m)
                 else:
                     rvm_mll = rvm_ML(K_m, target, alpha_m, mu_m, U)
-            else:# for classification, equal to rvm_ll_only now.
+            else:# for classification, equal to rvm_mll_only now.
                 if self.regression:
-                    rvm_mll, _ = rvm_ML_regression(K_m, target, alpha_m, mu_m)
+                    rvm_mll, _ = rvm_ML_regression_full_rvm(K_m, target, alpha_m, mu_m)
                 else:
-                    rvm_mll = rvm_ML(K_m, target, alpha_m, mu_m, U)
+                    rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U)
 
             if(self.model.covar_module.base_kernel.lengthscale is not None):
                 lenghtscale+=self.model.base_covar_module.base_kernel.lengthscale.mean().cpu().detach().numpy().squeeze()
@@ -302,7 +303,7 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
             rvm_mll = rvm_mll.item()
             mll = mll.item()
             self.iteration = i+(epoch*len(train_loader))
-            if(self.writer is not None): self.writer.add_scalar('Loss', loss, self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('Loss', loss.item(), self.iteration)
             if(self.writer is not None): self.writer.add_scalar('MLL', -mll, self.iteration)
             if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll, self.iteration)
 
@@ -351,15 +352,28 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
 
                 accuracy_query = (np.sum(y_pred==y_query) / float(len(y_query))) * 100.0
                 if(self.writer is not None): self.writer.add_scalar('GP_query_accuracy', accuracy_query, self.iteration)
-
+                 #FRVM ACC on query
+                K_m = self.model.base_covar_module(z_query, ip_values).evaluate()
+                K_m = K_m.to(torch.float64)
+                # scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+                scales_m = inducing_points.scale
+                mu = inducing_points.mu
+                mu_m = mu / scales_m
+                y_pred_ = K_m @ mu_m 
+                y_pred_r = torch.sigmoid(y_pred_)
+                y_pred_r = (y_pred_r > 0.5).to(int)
+                y_pred_r = y_pred_r.detach().cpu().numpy()
+                top1_correct_r = np.sum(y_pred_r==y_query)
+                acc_rvm = (top1_correct_r / float(len(y_query)))* 100
+                if(self.writer is not None): self.writer.add_scalar('RVM_query_accuracy', acc_rvm, self.iteration)
             if i % print_freq==0:
                 if(self.writer is not None): self.writer.add_histogram('z_support', z_support, self.iteration)
                 if self.dirichlet:
-                    print(Fore.LIGHTRED_EX,'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} || Loss {:f} | MLL {:f} | RVM ML {:f}| Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
-                        outputscale, lenghtscale,  loss.item(), -mll, -rvm_mll,  0, accuracy_query), Fore.RESET) #accuracy_support
+                    print(Fore.LIGHTRED_EX,'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} || Loss {:f} | MLL {:f} | RVM ML {:f}| Supp. acc {:f} | Query acc {:f}| Query RVM acc {:f}'.format(epoch, i, len(train_loader),
+                        outputscale, lenghtscale,  loss.item(), -mll, -rvm_mll,  0, accuracy_query, acc_rvm), Fore.RESET) #accuracy_support
                 else:
-                    print(Fore.LIGHTRED_EX,'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} | Noise {:f} | Loss {:f} | MLL {:f} | RVM ML {:f} | Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
-                        outputscale, lenghtscale, noise, loss.item(), -mll, -rvm_mll,0, accuracy_query), Fore.RESET)
+                    print(Fore.LIGHTRED_EX,'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} | Noise {:f} | Loss {:f} | MLL {:f} | RVM ML {:f} | Supp. acc {:f} | Query acc {:f}|  Query RVM acc {:f}'.format(epoch, i, len(train_loader),
+                        outputscale, lenghtscale, noise, loss.item(), -mll, -rvm_mll, 0, accuracy_query, acc_rvm), Fore.RESET)
 
     def get_inducing_points(self, base_covar_module, inputs, targets, verbose=True):
 
@@ -623,9 +637,10 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
         print(Fore.LIGHTRED_EX,"="*30, Fore.RESET)
         if(self.writer is not None): 
             if self.rvm_mll_only or self.rvm_ll_only:
-                self.writer.add_scalar('test_accuracy', acc_mean_rvm, self.iteration)
-            else:
-                self.writer.add_scalar('test_accuracy', acc_mean, self.iteration)
+                self.writer.add_scalar('test_accuracy RVM', acc_mean_rvm, self.iteration)
+                
+            self.writer.add_scalar('test_accuracy', acc_mean, self.iteration)
+
         if(self.writer is not None): self.writer.add_scalar('Avg. SVs', mean_num_sv, self.iteration)
         result = {'acc': acc_mean, 'rvm acc': acc_mean_rvm, 'std': acc_std, 'rvm std': acc_std_rvm,'SVs':mean_num_sv}
         result = {k: np.around(v, 4) for k, v in result.items()}
