@@ -337,7 +337,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
             beta = 1/sigma
             inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
                                                             z_support, y_support, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
-                                                            config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
+                                                            config='1011', align_threshold=self.align_threshold, gamma=self.gamma, 
                                                             num_inducing_points=self.num_inducing_points, maxItr=self.maxItr_rvm, verbose=False, task_id=self.test_i, device=self.device)
         
         ip_values = inducing_points.z_values.cuda()
