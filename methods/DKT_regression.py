@@ -296,7 +296,7 @@ class DKT_regression(nn.Module):
         test_person = np.random.choice(np.arange(len(test_people)), size=test_count, replace=rep)
         for t in range(test_count):
             self.test_i = t
-            print(f'test #{t}')
+            if t%20==0: print(f'test #{t}')
             
             mse, mse_ = self.test_loop(n_support, n_samples, test_person[t],  optimizer)
             

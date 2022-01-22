@@ -592,7 +592,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
         test_person = np.random.choice(np.arange(len(test_people)), size=test_count, replace=rep)
         for t in range(test_count):
             self.test_i = t
-            print(f'test #{t}')
+            if t%20==0: print(f'test #{t}')
             if self.f_rvm:
                 mse, mse_, num_sv, mse_r = self.test_loop_fast_rvm(n_support, n_samples, test_person[t],  optimizer, verbose)
                 num_sv_list.append(num_sv)
