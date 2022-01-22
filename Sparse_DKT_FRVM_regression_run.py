@@ -24,26 +24,7 @@ for config in config_list:
             for sd in seed_list:
                 for method in method_list:
                 
-                    # just mll of GP
-                    L = ['python', f'./train_regression.py', 
-                                    '--method', f'{method}', '--sparse_method', f'{sparse_method}',  '--n_samples', '72', '--n_support', '60', '--stop_epoch', f'{stop_epoch}', 
-                                #   '--show_plots_features',
-                                    '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
-                                    '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
-                                    '--kernel_type', 'rbf', '--init',  '--beta'
-                    ]
-                    if save_model: L.append('--save_model')
-                    print(f'\n{" ".join(L)} \n')
-                    run(L)
-                    L = ['python', f'./test_regression.py', 
-                                    '--method', f'{method}', '--sparse_method', f'{sparse_method}',  '--n_samples', '72', '--n_support', '60', '--n_test_epoch', '10', 
-                                #   '--show_plots_pred',
-                                    '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
-                                    '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
-                                    '--kernel_type', 'rbf', '--init', '--beta'
-                    ]
-                    print(f'\n{" ".join(L)} \n')
-                    # run(L)
+                   
                     lambda_rvm_list = [0.5, 1.0]
                     # lambda_rvm_list = [0.001, 0.01, 0.1, 0.5]
                     for lambda_rvm in lambda_rvm_list:
@@ -69,40 +50,30 @@ for config in config_list:
                         ]
                         print(f'\n{" ".join(L)} \n')
                         # run(L)
-                    lambda_rvm_list = [0.5, 1.0]
-                    for lambda_rvm in lambda_rvm_list:
-                        # rvm ll
-                        L = ['python', f'./train_regression.py',  
-                                        '--method', f'{method}', '--sparse_method', f'{sparse_method}',  '--n_samples', '72', '--n_support', '60', '--stop_epoch', f'{stop_epoch}',
-                                    #   '--show_plots_features',
-                                        '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
-                                        '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
-                                        '--kernel_type', 'rbf', '--init', '--lambda_rvm', f'{lambda_rvm}', '--rvm_ll', '--beta'
-                        ]
-                        if save_model: L.append('--save_model')
-                        print(f'\n{" ".join(L)} \n')
-                        run(L)
-                        L = ['python', f'./test_regression.py', 
-                                        '--method', f'{method}', '--sparse_method', f'{sparse_method}',  '--n_samples', '72', '--n_support', '60', '--n_test_epoch', '10', 
-                                    #   '--show_plots_pred',
-                                        '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
-                                        '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
-                                        '--kernel_type', 'rbf', '--init', '--lambda_rvm', f'{lambda_rvm}', '--rvm_ll', '--beta'
-                        ]
-                        print(f'\n{" ".join(L)} \n')
-                        # run(L)
+                    # lambda_rvm_list = [0.5, 1.0]
+                    # for lambda_rvm in lambda_rvm_list:
+                    #     # rvm ll
+                    #     L = ['python', f'./train_regression.py',  
+                    #                     '--method', f'{method}', '--sparse_method', f'{sparse_method}',  '--n_samples', '72', '--n_support', '60', '--stop_epoch', f'{stop_epoch}',
+                    #                 #   '--show_plots_features',
+                    #                     '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
+                    #                     '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
+                    #                     '--kernel_type', 'rbf', '--init', '--lambda_rvm', f'{lambda_rvm}', '--rvm_ll', '--beta'
+                    #     ]
+                    #     if save_model: L.append('--save_model')
+                    #     print(f'\n{" ".join(L)} \n')
+                    #     run(L)
+                    #     L = ['python', f'./test_regression.py', 
+                    #                     '--method', f'{method}', '--sparse_method', f'{sparse_method}',  '--n_samples', '72', '--n_support', '60', '--n_test_epoch', '10', 
+                    #                 #   '--show_plots_pred',
+                    #                     '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
+                    #                     '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
+                    #                     '--kernel_type', 'rbf', '--init', '--lambda_rvm', f'{lambda_rvm}', '--rvm_ll', '--beta'
+                    #     ]
+                    #     print(f'\n{" ".join(L)} \n')
+                    #     # run(L)
                 
-                #DKT
-                L = ['python', f'./train_regression.py', 
-                                '--method', f'DKT', '--n_samples', '72', '--n_support', '60', '--stop_epoch', f'{stop_epoch}', 
-                            #   '--show_plots_features',
-                                '--seed',  f'{sd}', 
-                                '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
-                                '--kernel_type', 'rbf', '--init'
-                ]
-                if save_model: L.append('--save_model')
-                print(f'\n{" ".join(L)} \n')
-                run(L)
+       
 
                       
           
