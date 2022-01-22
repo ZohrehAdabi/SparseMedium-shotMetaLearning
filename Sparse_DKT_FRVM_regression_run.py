@@ -44,7 +44,7 @@ for config in config_list:
                     ]
                     print(f'\n{" ".join(L)} \n')
                     # run(L)
-                    lambda_rvm_list = [0.1, 0.5, 1.0]
+                    lambda_rvm_list = [0.5, 1.0]
                     # lambda_rvm_list = [0.001, 0.01, 0.1, 0.5]
                     for lambda_rvm in lambda_rvm_list:
                         
@@ -69,7 +69,7 @@ for config in config_list:
                         ]
                         print(f'\n{" ".join(L)} \n')
                         # run(L)
-                    lambda_rvm_list = [0.1, 0.5, 1.0]
+                    lambda_rvm_list = [0.5, 1.0]
                     for lambda_rvm in lambda_rvm_list:
                         # rvm ll
                         L = ['python', f'./train_regression.py',  

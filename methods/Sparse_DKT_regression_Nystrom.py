@@ -383,7 +383,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         mse_ = self.mse(y_pred, y).item()
         y = y.cpu().numpy()
         y_pred = y_pred.cpu().numpy()
-        if self.test_i%5==0:
+        if self.test_i%20==0:
             print(Fore.RED,"="*50, Fore.RESET)
             # print(f'inducing_points count: {inducing_points.count}')
             if False and self.test_i%20==0:
@@ -453,7 +453,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                     mse_unnorm_list = []
                     mse_rvm_list = []
                     sv_count_list = []
-                    val_count = 10
+                    val_count = 80
                     rep = True if val_count > len(val_people) else False
                     val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
                     for t in range(val_count):
@@ -504,7 +504,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                 if epoch%1==0:
                     print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
                     mse_list = []
-                    val_count = 10
+                    val_count = 80
                     rep = True if val_count > len(val_people) else False
                     val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
                     for t in range(val_count):
@@ -737,26 +737,28 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         #**************************************************************
         y = ((y_query.detach().cpu().numpy() + 1) * 60 / 2) + 60
         y_pred = ((pred.mean.detach().cpu().numpy() + 1) * 60 / 2) + 60
-        print(Fore.RED,"="*50, Fore.RESET)
-        print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
-        print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
-        print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
-        print(Fore.LIGHTRED_EX, f'mse:    {mse:.4f}', Fore.RESET)
-        print(Fore.RED,"-"*50, Fore.RESET)
+        if self.test_i%20==0:
+            print(Fore.RED,"="*50, Fore.RESET)
+            print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
+            print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
+            print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
+            print(Fore.LIGHTRED_EX, f'mse:    {mse:.4f}', Fore.RESET)
+            print(Fore.RED,"-"*50, Fore.RESET)
 
-        K = self.model.base_covar_module
-        kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
-        max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
-        y_s = ((y_support.detach().cpu().numpy() + 1) * 60 / 2) + 60
-        print(Fore.LIGHTGREEN_EX, f'target of most similar in support set:       {y_s[max_similar_idx_x_s]}', Fore.RESET)
-        
-        kernel_matrix = K(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
-        max_similar_idx_x_ip = np.argmax(kernel_matrix, axis=1)
-        print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (K kernel): {inducing_points.y[max_similar_idx_x_ip]}', Fore.RESET)
+        if False and self.show_plots_pred:
+            K = self.model.base_covar_module
+            kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
+            max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
+            y_s = ((y_support.detach().cpu().numpy() + 1) * 60 / 2) + 60
+            print(Fore.LIGHTGREEN_EX, f'target of most similar in support set:       {y_s[max_similar_idx_x_s]}', Fore.RESET)
+            
+            kernel_matrix = K(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
+            max_similar_idx_x_ip = np.argmax(kernel_matrix, axis=1)
+            print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (K kernel): {inducing_points.y[max_similar_idx_x_ip]}', Fore.RESET)
 
-        kernel_matrix = self.model.covar_module(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
-        max_similar_index = np.argmax(kernel_matrix, axis=1)
-        print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (Q kernel): {inducing_points.y[max_similar_index]}', Fore.RESET)
+            kernel_matrix = self.model.covar_module(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
+            max_similar_index = np.argmax(kernel_matrix, axis=1)
+            print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (Q kernel): {inducing_points.y[max_similar_index]}', Fore.RESET)
         #**************************************************************
         if (self.show_plots_pred or self.show_plots_features) and  self.random:
             embedded_z_support = TSNE(n_components=2).fit_transform(z_support.detach().cpu().numpy())

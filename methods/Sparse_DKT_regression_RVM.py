@@ -410,7 +410,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
         mse_ = self.mse(y_pred, y).item()
         y = y.cpu().numpy()
         y_pred = y_pred.cpu().numpy()
-        if self.test_i%5==0:
+        if self.test_i%20==0:
             print(Fore.RED,"="*50, Fore.RESET)
             if False and self.test_i%20==0:
                 print(f'inducing_points count: {inducing_points.count}')
@@ -481,7 +481,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
                     mse_unnorm_list = []
                     mse_rvm_list = []
                     sv_count_list = []
-                    val_count = 10
+                    val_count = 80
                     rep = True if val_count > len(val_people) else False
                     val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
                     for t in range(val_count):
