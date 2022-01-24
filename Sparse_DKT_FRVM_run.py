@@ -22,7 +22,7 @@ for config in config_list:
                         "--method","Sparse_DKT_binary_Nystrom", "--sparse_method", "FRVM", "--dataset", "CUB", 
                         "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
                             "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
-                            "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100"
+                            "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100",
                             '--kernel_type', 'linear', "--scale", "--normalize", "--save_model", "--n_task", "50", "--regression"
                             #,"--train_aug"
             ])
@@ -32,7 +32,7 @@ for config in config_list:
                             "--method","Sparse_DKT_binary_Nystrom", "--sparse_method", "FRVM", "--dataset", "CUB", 
                             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
                                 "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
-                                "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100"
+                                "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100",
                                 '--kernel_type', 'linear', "--scale", "--normalize", "--save_model", "--n_task", "50", "--regresion", "--rvm_mll", "--lambda_revm", f"{lambda_rvm}"
                                 #,"--train_aug"
                 ])
@@ -42,7 +42,7 @@ for config in config_list:
                             "--method","Sparse_DKT_binary_Nystrom", "--sparse_method", "FRVM", "--dataset", "CUB", 
                             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
                                 "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
-                                "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100"
+                                "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100",
                                 '--kernel_type', 'linear', "--scale", "--normalize", "--save_model", "--n_task", "50", "--regresion", "--rvm_ll", "--lambda_revm", f"{lambda_rvm}"
                                 #,"--train_aug"
                 ])
