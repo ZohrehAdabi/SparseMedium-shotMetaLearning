@@ -7,8 +7,9 @@ method_list = ['Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_Exact', 'DKT_bina
 lr_gp_list = [0.1, 0.01, 0.001, 0.0001]
 lr_net_list = [0.01, 0.001, 0.0001]
 
-lr_gp_list = [0.1, 0.01, 0.001]
-lr_net_list = [0.01, 0.001]
+lr_gp_list = [0.001]
+lr_net_list = [0.001]
+config_list = ['011']
 for config in config_list:
     for lr_gp in lr_gp_list:
         for lr_net in lr_net_list:
@@ -17,13 +18,33 @@ for config in config_list:
                 align_thr = 0
 
             run(['python', f'./train.py', 
-                        "--method","Sparse_DKT_binary_Nystrom", "--sparse_method", "FRVM", "--dataset", "omniglot", 
-                        "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "15", "--n_query", "5",
+                        "--method","Sparse_DKT_binary_Nystrom", "--sparse_method", "FRVM", "--dataset", "CUB", 
+                        "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
                             "--seed","1", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
-                            "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "200"
+                            "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100"
+                            , "--scale", "--normalize", "--save_model", "--regression"
                             #,"--train_aug"
             ])
-
+            lambda_rvm_list = [0.5, 1.0]
+            for lambda_rvm in lambda_rvm_list:
+                run(['python', f'./train.py', 
+                            "--method","Sparse_DKT_binary_Nystrom", "--sparse_method", "FRVM", "--dataset", "CUB", 
+                            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
+                                "--seed","1", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
+                                "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100"
+                                , "--scale", "--normalize", "--save_model", "--regresion", "--rvm_mll", "--lambda_revm", f"{lambda_rvm}"
+                                #,"--train_aug"
+                ])
+            lambda_rvm_list = [0.5, 1.0]
+            for lambda_rvm in lambda_rvm_list:
+                run(['python', f'./train.py', 
+                            "--method","Sparse_DKT_binary_Nystrom", "--sparse_method", "FRVM", "--dataset", "CUB", 
+                            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
+                                "--seed","1", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
+                                "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100"
+                                , "--scale", "--normalize", "--save_model", "--regresion", "--rvm_ll", "--lambda_revm", f"{lambda_rvm}"
+                                #,"--train_aug"
+                ])
             # run(['python', f'./train.py', 
             #             "--method","Sparse_DKT_binary_Nystrom", "--sparse_method", "FRVM", "--dataset", "omniglot", 
             #             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "15", "--n_query", "5",
