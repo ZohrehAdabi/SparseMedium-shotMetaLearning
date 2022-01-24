@@ -205,7 +205,7 @@ def single_test(params):
 
     if not params.method in ['baseline', 'baseline++'] : 
         best = True
-        last = True
+        last = False
         print(f'\n{checkpoint_dir}\n')
         modelfile = None
         if params.save_iter != -1:
