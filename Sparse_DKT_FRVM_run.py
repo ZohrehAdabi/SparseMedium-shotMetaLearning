@@ -22,7 +22,7 @@ for config in config_list:
                         "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
                             "--seed","1", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
                             "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100"
-                            , "--scale", "--normalize", "--save_model", "--regression"
+                            , "--scale", "--normalize", "--save_model", "--n_task", "50", "--regression"
                             #,"--train_aug"
             ])
             lambda_rvm_list = [0.5, 1.0]
@@ -32,7 +32,7 @@ for config in config_list:
                             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
                                 "--seed","1", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
                                 "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100"
-                                , "--scale", "--normalize", "--save_model", "--regresion", "--rvm_mll", "--lambda_revm", f"{lambda_rvm}"
+                                , "--scale", "--normalize", "--save_model", "--n_task", "50", "--regresion", "--rvm_mll", "--lambda_revm", f"{lambda_rvm}"
                                 #,"--train_aug"
                 ])
             lambda_rvm_list = [0.5, 1.0]
@@ -42,7 +42,7 @@ for config in config_list:
                             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
                                 "--seed","1", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
                                 "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100"
-                                , "--scale", "--normalize", "--save_model", "--regresion", "--rvm_ll", "--lambda_revm", f"{lambda_rvm}"
+                                , "--scale", "--normalize", "--save_model", "--n_task", "50", "--regresion", "--rvm_ll", "--lambda_revm", f"{lambda_rvm}"
                                 #,"--train_aug"
                 ])
             # run(['python', f'./train.py', 
