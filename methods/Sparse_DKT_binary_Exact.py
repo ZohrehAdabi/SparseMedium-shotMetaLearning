@@ -221,7 +221,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
                     rvm_mll = rvm_ML(K_m, target, alpha_m, mu_m, U)
             elif self.add_rvm_mll:
                 if self.regression:
-                    rvm_mll = rvm_ML_regression_full(K_m, target, alpha_m, mu_m)
+                    rvm_mll, penalty = rvm_ML_regression_full(K_m, target, alpha_m, mu_m)
                 else:
                     rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U)
             else: #when rvm is not used this function runs to have rvm_mll  for report in print

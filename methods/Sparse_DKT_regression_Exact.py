@@ -206,11 +206,11 @@ class Sparse_DKT_regression_Exact(nn.Module):
             mu_m = mu_m / scales
             alpha_m = alpha_m / scales**2
             if self.add_rvm_mll:
-                rvm_mll = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
+                rvm_mll, penalty = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
             elif self.add_rvm_ll or self.add_rvm_mse:
                 rvm_mll, rvm_mse = rvm_ML_regression(K_m, labels, alpha_m, mu_m, beta)
             else: #when rvm is not used this function runs to have rvm_mll  for report in print
-                rvm_mll = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
+                rvm_mll, penalty = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
             
             predictions = self.model(ip_values)
             mll = self.mll(predictions, self.model.train_targets)

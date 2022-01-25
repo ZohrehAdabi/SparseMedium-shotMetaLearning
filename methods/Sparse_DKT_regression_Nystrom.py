@@ -48,7 +48,7 @@ eps = torch.finfo(torch.float32).eps
 
 class Sparse_DKT_regression_Nystrom(nn.Module):
     def __init__(self, backbone, kernel_type='rbf', sparse_method='FRVM', add_rvm_mll=False, add_rvm_mll_one=False, add_rvm_ll_one=False, add_rvm_ll=False,
-                        add_rvm_mse=False, lambda_rvm=0.1, maxItr_rvm=1000, beta=False, normalize=False, initialize=False, lr_decay=False, 
+                        add_penalty=False, add_rvm_mse=False, lambda_rvm=0.1, maxItr_rvm=1000, beta=False, normalize=False, initialize=False, lr_decay=False, 
                         f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_regression_Nystrom, self).__init__()
@@ -60,6 +60,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         self.add_rvm_ll = add_rvm_ll
         self.add_rvm_mll_one = add_rvm_mll_one
         self.add_rvm_ll_one = add_rvm_ll_one
+        self.add_penalty = add_penalty
         self.add_rvm_mse = add_rvm_mse
         self.lambda_rvm = lambda_rvm
         self.maxItr_rvm = 1000
@@ -212,7 +213,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             mu_m = mu_m / scales
             alpha_m = alpha_m / scales**2 
             if self.add_rvm_mll or self.add_rvm_mll_one:
-                rvm_mll = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
+                rvm_mll, penalty = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
             elif self.add_rvm_ll or self.add_rvm_ll_one or self.add_rvm_mse:
                 rvm_mll, rvm_mse = rvm_ML_regression(K_m, labels, alpha_m, mu_m, beta)
             else: #when rvm is not used this function runs to have rvm_mll  for report in print
@@ -225,6 +226,8 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                 loss = - mll  - l * rvm_mll
             elif self.add_rvm_mll_one or self.add_rvm_ll_one:
                 loss = -(1-l) * mll  - l * rvm_mll 
+            elif self.add_penalty:
+                loss = - mll  - l * penalty
             elif self.add_rvm_mse:
                 loss =  - mll + l *  rvm_mse
             else: 
@@ -237,12 +240,14 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             mse = self.mse(predictions.mean, labels)
             mll = mll.item()
             rvm_mll = rvm_mll.item()
+            penalty =penalty.item()
             frvm_mse = frvm_mse.item()
             self.iteration = itr+(epoch*len(batch_labels))
             if(self.writer is not None): self.writer.add_scalar('MLL + RVM MLL (Loss)', loss.item(), self.iteration)
             if(self.writer is not None): self.writer.add_scalar('MLL', -mll, self.iteration)
             if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll, self.iteration)
             if(self.writer is not None): self.writer.add_scalar('RVM MSE', frvm_mse, self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('RVM Penalty', -penalty, self.iteration)
             if self.kernel_type=='rbf':
                 if ((epoch%1==0) & (itr%print_freq==0)):
                     print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.4f ML %.4f RVM ML: %.4f RVM MSE: %.4f  MSE: %.3f noise: %.4f outputscale: %.3f lengthscale: %.3f' % (

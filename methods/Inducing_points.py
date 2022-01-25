@@ -92,7 +92,8 @@ def rvm_ML_regression_full(K_m, targets, alpha_m, mu_m, beta=torch.tensor(10.0, 
         # t.T @ C^-1 @ t = beta * ||t - K_m @ mu_m||**2 + mu_m.T @ A_m @ mu_m 
         # log p(t) = -1/2 (log|C| + t.T @ C^-1 @ t ) + const 
         # logML = -1/2 * (beta * ED)  #+ (mu_m**2) @ alpha_m  #+ N * torch.log(beta) + 2*logdetHOver2
-        logML			= dataLikely - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
+        complexity_penalty = - logdetHOver2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
+        logML			= dataLikely - (mu_m**2) @ alpha_m /2 + complexity_penalty
         # logML = -1/2 * beta * ED
     
         # NOTE new loss for rvm
@@ -105,7 +106,7 @@ def rvm_ML_regression_full(K_m, targets, alpha_m, mu_m, beta=torch.tensor(10.0, 
         # new_loss =-1/2 *((e) @ torch.linalg.inv(Sigma_star) @ (e) + torch.log(torch.linalg.det(Sigma_star)+1e-10))
 
         # return logML/N
-        return logML/N
+        return logML/N, complexity_penalty/N
 
 def rvm_ML_full(K_m, targets, alpha_m, mu_m, U):
         
