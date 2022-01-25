@@ -111,6 +111,9 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
         if anyToAdd:
             Q_S             = Q[add]**2 / (S[add] +1e-12)
             deltaML[add]    = (Q_S - 1 - torch.log(Q_S))
+            # alpha_tilde     = s[add]**2 / (Factor[add])
+            # deltaML[add]    = (q[add]**2 / (alpha_tilde + s[add])- torch.log(alpha_tilde/(alpha_tilde + s[add])))
+                            # = (Q[add]**2 / (alpha_tilde + S[add])- torch.log(alpha_tilde/(alpha_tilde + S[add])))
             action[add]     = 1
             
         # Priority of Deletion   
@@ -611,7 +614,7 @@ if __name__=='__main__':
     # scale = torch.sqrt(torch.sum(K) / N ** 2)
     # K = K / scale                                 K, targets, N, config, align_thr
     target = targets.clone()
-    active_m, alpha_m, gamma_m, beta, mu_m, U = Fast_RVM(K, target, N, config, align_thr, gamma, eps, tol, device='cpu')
+    active_m, alpha_m, gamma_m, beta, mu_m, U = Fast_RVM(K, target, N, config, align_thr, gamma, eps, tol, device='cpu', task_id=0)
     print(f'relevant index \n {active_m}')
     print(f'relevant alpha \n {alpha_m}')
     print(f'relevant Gamma \n {gamma_m}')
