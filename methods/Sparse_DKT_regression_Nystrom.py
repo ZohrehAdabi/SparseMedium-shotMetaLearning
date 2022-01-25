@@ -212,7 +212,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             # K_m = K_m / scales
             mu_m = mu_m / scales
             alpha_m = alpha_m / scales**2 
-            if self.add_rvm_mll or self.add_rvm_mll_one:
+            if self.add_rvm_mll or self.add_rvm_mll_one  or self.add_penalty:
                 rvm_mll, penalty = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
             elif self.add_rvm_ll or self.add_rvm_ll_one or self.add_rvm_mse:
                 rvm_mll, rvm_mse = rvm_ML_regression(K_m, labels, alpha_m, mu_m, beta)
