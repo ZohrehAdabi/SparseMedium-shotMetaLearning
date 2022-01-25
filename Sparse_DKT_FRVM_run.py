@@ -35,7 +35,7 @@ for config in config_list:
                             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
                                 "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
                                 "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100",
-                                '--kernel_type', 'linear', "--scale", "--normalize", "--save_model", "--n_task", "50", "--regresion", 
+                                '--kernel_type', 'linear', "--scale", "--normalize", "--save_model", "--n_task", "50", "--regression", 
                                 "--rvm_mll", "--lambda_rvm", f"{lambda_rvm}"
                                 #,"--train_aug"
                 ]
@@ -48,7 +48,7 @@ for config in config_list:
                             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
                                 "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
                                 "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100",
-                                '--kernel_type', 'linear', "--scale", "--normalize", "--save_model", "--n_task", "50", "--regresion", 
+                                '--kernel_type', 'linear', "--scale", "--normalize", "--save_model", "--n_task", "50", "--regression", 
                                 "--rvm_ll", "--lambda_rvm", f"{lambda_rvm}"
                                 #,"--train_aug"
                 ]
