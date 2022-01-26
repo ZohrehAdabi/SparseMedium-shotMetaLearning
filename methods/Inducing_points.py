@@ -88,7 +88,7 @@ def rvm_ML_regression_full(K_m, targets, alpha_m, mu_m, beta=torch.tensor(10.0, 
         logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
         
         # 2001-JMLR-SparseBayesianLearningandtheRelevanceVectorMachine in Appendix:
-        # C = sigma * I + K_m @ A_m @ K_m.T  ,  log|C| = - log|Sigma_m| - N * log(beta) - log|A_m|
+        # C = sigma * I + K @ A @ K.T  ,  log|C| = - log|Sigma_m| - N * log(beta) - log|A_m|
         # t.T @ C^-1 @ t = beta * ||t - K_m @ mu_m||**2 + mu_m.T @ A_m @ mu_m 
         # log p(t) = -1/2 (log|C| + t.T @ C^-1 @ t ) + const 
         # logML = -1/2 * (beta * ED)  #+ (mu_m**2) @ alpha_m  #+ N * torch.log(beta) + 2*logdetHOver2
