@@ -290,7 +290,7 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
             # ss = scales[index]
             K = base_covar_module(inputs, inducing_points).evaluate()
             mu_r = mu_m / scales_m
-            mu_r = mu_r.to(torch.float)
+            mu_r = mu_r.to(torch.float64)
             y_pred = K @ mu_r
             y_pred = torch.sigmoid(y_pred)
             y_pred = (y_pred > 0.5).to(int)
