@@ -21,18 +21,18 @@ for config in config_list:
             align_thr = 1e-3
             if config in ['1000', '1010']:
                 align_thr = 0
-            
-            L = ['python', f'./test_regression.py', 
-                                    '--method', f'DKT',  '--n_samples', '72', '--n_support', '60', '--n_test_epoch', f'{test_epoch}', 
-                                #   '--show_plots_pred',
-                                    '--seed',  f'{sd}'
-                                    '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
-                                    '--kernel_type', 'rbf', '--beta' , '--init'
-                                    
-                    ]
-            if save_result: L.append('--save_result')
-            print(f'\n{" ".join(L)} \n')
-            run(L)
+            for sd in seed_list:
+                L = ['python', f'./test_regression.py', 
+                                        '--method', f'DKT',  '--n_samples', '72', '--n_support', '60', '--n_test_epoch', f'{test_epoch}', 
+                                    #   '--show_plots_pred',
+                                        '--seed',  f'{sd}'
+                                        '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
+                                        '--kernel_type', 'rbf', '--beta' , '--init'
+                                        
+                        ]
+                if save_result: L.append('--save_result')
+                print(f'\n{" ".join(L)} \n')
+                run(L)
             for method in method_list:
                 for sd in seed_list:
                      # just mll of GP
@@ -77,21 +77,21 @@ for config in config_list:
                         print(f'\n{" ".join(L)} \n')
                         run(L)
 
-
-            lambda_rvm_list = [0.5, 1.0]
-            for lambda_rvm in lambda_rvm_list:
-                
-                
-                # rvm mll
-                L = ['python', f'./test_regression.py', 
-                                '--method', f'Sparse_DKT_RVM', '--sparse_method', 'FRVM',  '--n_samples', '72', '--n_support', '60', '--n_test_epoch', f'{test_epoch}', 
-                            #   '--show_plots_pred',
-                                '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
-                                '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
-                                '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_mll_only',  '--init'
-                ]
-                if save_result: L.append('--save_result')
-                print(f'\n{" ".join(L)} \n')
-                run(L)
+            for sd in seed_list:
+                lambda_rvm_list = [0.5, 1.0]
+                for lambda_rvm in lambda_rvm_list:
+                    
+                    
+                    # rvm mll
+                    L = ['python', f'./test_regression.py', 
+                                    '--method', f'Sparse_DKT_RVM', '--sparse_method', 'FRVM',  '--n_samples', '72', '--n_support', '60', '--n_test_epoch', f'{test_epoch}', 
+                                #   '--show_plots_pred',
+                                    '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
+                                    '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
+                                    '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_mll_only',  '--init'
+                    ]
+                    if save_result: L.append('--save_result')
+                    print(f'\n{" ".join(L)} \n')
+                    run(L)
 
 
