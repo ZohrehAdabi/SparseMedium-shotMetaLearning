@@ -335,7 +335,23 @@ for sd in range(seed, seed+repeat):
         print(f"Average MSE, seed {sd}: " + str(np.mean(mse_list_best)) + " +- " + str(np.std(mse_list_best)))
         print("-------------------")
         best_accuracy_list.append(np.mean(mse_list_best))
+    if os.path.isfile(params.checkpoint_dir+'_best_model_rvm.tar'):
+        print(f'\nBest model\n{params.checkpoint_dir}_best_model_rvm.tar')
+        model.load_checkpoint(params.checkpoint_dir +'_best_model_rvm.tar')
+        if params.method=='transfer':
+            mse_list_best, result = model.test(params.n_support, params.n_samples, optimizer, params.fine_tune, params.n_test_epochs)
+        else:
+            mse_list_best, result = model.test(params.n_support, params.n_samples, optimizer, params.n_test_epochs)
+        
+        if params.save_result:
+            f.write('"best model rvm":\n')
+            json.dump(result, f, indent=2) #f.write(json.dumps(result))
+            f.write(',\n')
 
+        print("-------------------")
+        print(f"Average MSE, seed {sd}: " + str(np.mean(mse_list_best)) + " +- " + str(np.std(mse_list_best)))
+        print("-------------------")
+        best_accuracy_list.append(np.mean(mse_list_best))
     if os.path.isfile(params.checkpoint_dir):
         model.load_checkpoint(params.checkpoint_dir)
 

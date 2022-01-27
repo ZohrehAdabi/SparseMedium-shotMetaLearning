@@ -485,8 +485,8 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                         best_mse_rvm = mse_r
                         best_epoch_rvm = epoch
                         model_name = self.best_path + '_best_model_rvm.tar'
-                        self.save_best_checkpoint(epoch+1, best_mse, model_name)
-                        print(Fore.LIGHTRED_EX, f'Best MSE RVM: {best_mse:.4f}', Fore.RESET)
+                        self.save_best_checkpoint(epoch+1, best_mse_rvm, model_name)
+                        print(Fore.LIGHTRED_EX, f'Best MSE RVM: {best_mse_rvm:.4f}', Fore.RESET)
                     print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE RVM: {mse_r:.4f}, MSE(norm): {mse:.4f}, MSE: {mse_:.4f}, SV: {sv_c:.2f} Best MSE: {best_mse:.4f} Best MSE RVM: {best_mse_rvm:.4f}', Fore.RESET)
                     if(self.writer is not None):
                         self.writer.add_scalar('MSE (norm) Val.', mse, epoch)
