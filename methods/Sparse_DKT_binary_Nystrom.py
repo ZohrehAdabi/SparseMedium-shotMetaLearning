@@ -636,6 +636,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
         print(Fore.LIGHTRED_EX,"="*30, Fore.RESET)
         if(self.writer is not None): self.writer.add_scalar('test_accuracy', acc_mean, self.iteration)
         if(self.writer is not None): self.writer.add_scalar('Avg. SVs', mean_num_sv, self.iteration)
+        if(self.writer is not None): self.writer.add_scalar('RVM ACC', acc_mean_rvm, self.iteration)
         result = {'acc': acc_mean, 'rvm acc': acc_mean_rvm, 'std': acc_std, 'rvm std': acc_std_rvm,'SVs':mean_num_sv}
         result = {k: np.around(v, 4) for k, v in result.items()}
         if self.add_rvm_ll: result['rvm_ll'] = True
