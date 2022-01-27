@@ -439,8 +439,10 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
     def train(self, stop_epoch, n_support, n_samples, optimizer, save_model=False, verbose=True):
 
         mll_list = []
-        best_mse = 10e5 #stop_epoch//2
+        best_mse = 10e5
+        best_mse_rvm = 10e5
         best_epoch = 0
+        best_epoch_rvm = 0
         # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5, 50, 80], gamma=0.1)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.1)
         # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
@@ -478,7 +480,14 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                         model_name = self.best_path + '_best_model.tar'
                         self.save_best_checkpoint(epoch+1, best_mse, model_name)
                         print(Fore.LIGHTRED_EX, f'Best MSE: {best_mse:.4f}', Fore.RESET)
-                    print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE RVM: {mse_r:.4f}, MSE(norm): {mse:.4f}, MSE: {mse_:.4f}, SV: {sv_c:.2f} Best MSE: {best_mse:.4f}', Fore.RESET)
+                    
+                    if best_mse_rvm >= mse_r:
+                        best_mse_rvm = mse_r
+                        best_epoch_rvm = epoch
+                        model_name = self.best_path + '_best_model_rvm.tar'
+                        self.save_best_checkpoint(epoch+1, best_mse, model_name)
+                        print(Fore.LIGHTRED_EX, f'Best MSE RVM: {best_mse:.4f}', Fore.RESET)
+                    print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE RVM: {mse_r:.4f}, MSE(norm): {mse:.4f}, MSE: {mse_:.4f}, SV: {sv_c:.2f} Best MSE: {best_mse:.4f} Best MSE RVM: {best_mse_rvm:.4f}', Fore.RESET)
                     if(self.writer is not None):
                         self.writer.add_scalar('MSE (norm) Val.', mse, epoch)
                         self.writer.add_scalar('RVM MSE Val.', mse_r, epoch)
@@ -551,7 +560,8 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             # if (epoch) in [50, 80]:
             #     optimizer.param_groups[1]['lr'] = optimizer.param_groups[1]['lr'] * 0.1
 
-        print(Fore.CYAN,"-"*30, f'\nBest Val MSE {best_mse:4f} at epoch {best_epoch}\n', "-"*30, Fore.RESET)
+        print(Fore.CYAN,"-"*30, f'\nBest Val MSE {best_mse:4f} at epoch {best_epoch}\n', Fore.RESET)
+        print(Fore.CYAN, f'\nBest Val MSE {best_mse_rvm:4f} at epoch {best_epoch_rvm}\n', "-"*30, Fore.RESET)
         mll = np.mean(mll_list)
 
         
