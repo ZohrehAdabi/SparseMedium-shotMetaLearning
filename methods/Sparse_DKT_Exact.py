@@ -549,7 +549,7 @@ class Sparse_DKT_Exact(MetaTemplate):
                 for i in range(self.n_way):
                     c = np.sum(y_pred==i)
                     s += c * ip_count[i]
-                ip_predicted_class = s 
+                ip_predicted_class = s /count_this
 
             #FRVM ACC on query
             y_pred_r = np.vstack(acc_rvm).argmax(axis=0)
