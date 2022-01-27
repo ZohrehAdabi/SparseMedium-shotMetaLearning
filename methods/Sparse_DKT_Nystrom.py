@@ -190,7 +190,7 @@ class Sparse_DKT_Nystrom(MetaTemplate):
             lenghtscale = 0.0
             noise = 0.0
             outputscale = 0.0
-            print(Fore.LIGHTMAGENTA_EX, f'epoch:{epoch+1}', Fore.RESET)
+            # print(Fore.LIGHTMAGENTA_EX, f'epoch:{epoch+1}', Fore.RESET)
             rvm_mll_list = list()
             for idx, single_model in enumerate(self.model.models):
                 # print(Fore.LIGHTMAGENTA_EX, f'model:{idx+1}', Fore.RESET)
