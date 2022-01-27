@@ -88,7 +88,7 @@ for config in config_list:
                             #   '--show_plots_pred',
                                 '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
                                 '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
-                                '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_mll_only', '--beta', '--init'
+                                '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_mll_only',  '--init'
                 ]
                 if save_result: L.append('--save_result')
                 print(f'\n{" ".join(L)} \n')
