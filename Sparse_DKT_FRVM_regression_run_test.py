@@ -25,7 +25,7 @@ for config in config_list:
                 L = ['python', f'./test_regression.py', 
                                         '--method', f'DKT',  '--n_samples', '72', '--n_support', '60', '--n_test_epoch', f'{test_epoch}', 
                                     #   '--show_plots_pred',
-                                        '--seed',  f'{sd}'
+                                        '--seed',  f'{sd}',
                                         '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
                                         '--kernel_type', 'rbf', '--beta' , '--init'
                                         
