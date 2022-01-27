@@ -214,12 +214,12 @@ class Sparse_DKT_Nystrom(MetaTemplate):
                     #                                         num_inducing_points=self.num_inducing_points, verbose=True, device=self.device)
                     if self.regression:
                         self.config = '0' + self.config
-                        inducing_points, frvm_acc = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
+                        inducing_points, frvm_acc = get_inducing_points_regression(single_model.base_covar_module, #.base_kernel,
                                                                 z_train, target_list[idx], sparse_method=self.sparse_method, scale=self.scale, beta=torch.tensor(10.0), 
                                                                 config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
                                                                 num_inducing_points=self.num_inducing_points, verbose=True, task_id=i, device=self.device, classification=True)
                     else:
-                        inducing_points, frvm_acc = get_inducing_points(self.model.base_covar_module, #.base_kernel,
+                        inducing_points, frvm_acc = get_inducing_points(single_model.base_covar_module, #.base_kernel,
                                                                 z_train, target_list[idx], sparse_method=self.sparse_method, scale=self.scale,
                                                                 config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
                                                                 num_inducing_points=self.num_inducing_points, verbose=True, task_id=i, device=self.device)
@@ -231,7 +231,7 @@ class Sparse_DKT_Nystrom(MetaTemplate):
                 mu_m = inducing_points.mu
                 scales = inducing_points.scale
                 U = inducing_points.U
-                K_m = self.model.base_covar_module(z_train, ip_values).evaluate()
+                K_m = single_model.base_covar_module(z_train, ip_values).evaluate()
                 # scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
                 # K = K / scales
                 mu_m = mu_m /scales
@@ -477,12 +477,12 @@ class Sparse_DKT_Nystrom(MetaTemplate):
                 #                                             z_train, target_list[idx], verbose=False)
                 if self.regression:
                     self.config = '0' + self.config
-                    inducing_points, frvm_acc = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
+                    inducing_points, frvm_acc = get_inducing_points_regression(single_model.base_covar_module, #.base_kernel,
                                                             z_train, target, sparse_method=self.sparse_method, scale=self.scale, beta=torch.tensor(10.0), 
                                                             config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
                                                             num_inducing_points=self.num_inducing_points, verbose=False, task_id=i, device=self.device, classification=True)
                 else:
-                    inducing_points, frvm_acc = get_inducing_points(self.model.base_covar_module, #.base_kernel,
+                    inducing_points, frvm_acc = get_inducing_points(single_model.base_covar_module, #.base_kernel,
                                                             z_train, target, sparse_method=self.sparse_method, scale=self.scale,
                                                             config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
                                                             num_inducing_points=self.num_inducing_points, verbose=False, task_id=i, device=self.device)
