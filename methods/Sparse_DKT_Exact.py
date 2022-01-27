@@ -157,6 +157,8 @@ class Sparse_DKT_Exact(MetaTemplate):
         # optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
         #                             {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
         l =  self.lambda_rvm
+        self.frvm_acc = []
+      
         for i, (x,_) in enumerate(train_loader):
             self.n_query = x.size(1) - self.n_support
             if self.change_way: self.n_way  = x.size(0)
@@ -468,6 +470,7 @@ class Sparse_DKT_Exact(MetaTemplate):
                                                             config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
                                                             num_inducing_points=self.num_inducing_points, verbose=False, task_id=i, device=self.device)
             ip_count.append(inducing_points.count)
+            self.frvm_acc.append(frvm_acc)
             ip_values = inducing_points.z_values.cuda()
             ip_labels = target_list[idx][inducing_points.index]
             if self.dirichlet:

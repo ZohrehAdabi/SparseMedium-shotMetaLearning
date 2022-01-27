@@ -157,6 +157,7 @@ class Sparse_DKT_Nystrom(MetaTemplate):
         # optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
         #                             {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
         l = self.lambda_rvm
+        self.frvm_acc = []
         for i, (x,_) in enumerate(train_loader):
             self.n_query = x.size(1) - self.n_support
             if self.change_way: self.n_way  = x.size(0)
@@ -488,6 +489,7 @@ class Sparse_DKT_Nystrom(MetaTemplate):
                                                             num_inducing_points=self.num_inducing_points, verbose=False, task_id=i, device=self.device)
             
             ip_count.append(inducing_points.count)
+            self.frvm_acc.append(frvm_acc)
             ip_values = inducing_points.z_values.cuda()
             single_model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
             single_model.covar_module._clear_cache()
