@@ -16,7 +16,7 @@ import random
 from colorama import Fore
 # from configs import kernel_type
 from methods.Fast_RVM import Fast_RVM
-from methods.Inducing_points import get_inducing_points, rvm_ML, rvm_ML_full, rvm_ML_regression_full, rvm_ML_regression
+from methods.Inducing_points import get_inducing_points, rvm_ML, rvm_ML_full, rvm_ML_regression_full, rvm_ML_regression, get_inducing_points_regression
 #Check if tensorboardx is installed
 try:
     # tensorboard --logdir=./Sparse_DKT_Nystrom_CUB_log/ --host localhost --port 8089
@@ -208,10 +208,21 @@ class Sparse_DKT_Nystrom(MetaTemplate):
                 with torch.no_grad():
                     # inducing_points = self.get_inducing_points(single_model.base_covar_module, #.base_kernel,
                     #                                         z_train, target_list[idx], verbose=False)
-                    inducing_points, frvm_acc = get_inducing_points(single_model.base_covar_module, #.base_kernel,
-                                                            z_train, target_list[idx], sparse_method=self.sparse_method, scale=self.scale,
-                                                            config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-                                                            num_inducing_points=self.num_inducing_points, verbose=True, device=self.device)
+                    # inducing_points, frvm_acc = get_inducing_points(single_model.base_covar_module, #.base_kernel,
+                    #                                         z_train, target_list[idx], sparse_method=self.sparse_method, scale=self.scale,
+                    #                                         config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
+                    #                                         num_inducing_points=self.num_inducing_points, verbose=True, device=self.device)
+                    if self.regression:
+                        self.config = '0' + self.config
+                        inducing_points, frvm_acc = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
+                                                                z_train, target_list[idx], sparse_method=self.sparse_method, scale=self.scale, beta=torch.tensor(10.0), 
+                                                                config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
+                                                                num_inducing_points=self.num_inducing_points, verbose=True, task_id=i, device=self.device, classification=True)
+                    else:
+                        inducing_points, frvm_acc = get_inducing_points(self.model.base_covar_module, #.base_kernel,
+                                                                z_train, target_list[idx], sparse_method=self.sparse_method, scale=self.scale,
+                                                                config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
+                                                                num_inducing_points=self.num_inducing_points, verbose=True, task_id=i, device=self.device)
             
                 ip_values = inducing_points.z_values.cuda()
                 single_model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
@@ -233,12 +244,12 @@ class Sparse_DKT_Nystrom(MetaTemplate):
                         rvm_mll = rvm_ML(K_m, target, alpha_m, mu_m, U)
                 elif self.add_rvm_mll:
                     if self.regression:
-                        rvm_mll = rvm_ML_regression_full(K_m, target, alpha_m, mu_m)
+                        rvm_mll, penalty = rvm_ML_regression_full(K_m, target, alpha_m, mu_m)
                     else:
                         rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U)
                 else: #when rvm is not used this function runs to have rvm_mll  for report in print
                     if self.regression:
-                        rvm_mll = rvm_ML_regression_full(K_m, target, alpha_m, mu_m)
+                        rvm_mll, penalty = rvm_ML_regression_full(K_m, target, alpha_m, mu_m)
                     else:
                         rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U)
 
@@ -398,7 +409,7 @@ class Sparse_DKT_Nystrom(MetaTemplate):
 
         return IP(inducing_points, IP_index, num_IP, None, None, None, None)
   
-    def correct(self, x, N=0, laplace=False):
+    def correct(self, x, i=0, N=0, laplace=False):
         self.model.eval()
         self.likelihood.eval()
         self.feature_extractor.eval()
@@ -442,7 +453,11 @@ class Sparse_DKT_Nystrom(MetaTemplate):
         z_train = self.feature_extractor.forward(x_train).detach() #[340, 64]
         if(self.normalize): z_train = F.normalize(z_train, p=2, dim=1)
         train_list = [z_train]*self.n_way
+        with torch.no_grad(), gpytorch.settings.num_likelihood_samples(32):
+            z_query = self.feature_extractor.forward(x_query).detach()
+            if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
         ip_count =[]
+        acc_rvm = []
         for idx, single_model in enumerate(self.model.models):
 
             if self.dirichlet:
@@ -460,16 +475,35 @@ class Sparse_DKT_Nystrom(MetaTemplate):
             with torch.no_grad():
                 # inducing_points = self.get_inducing_points(single_model.base_covar_module, #.base_kernel,
                 #                                             z_train, target_list[idx], verbose=False)
-                inducing_points, frvm_acc = get_inducing_points(single_model.base_covar_module, #.base_kernel,
-                                                        z_train, target_list[idx], sparse_method=self.sparse_method, scale=self.scale,
-                                                        config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-                                                        num_inducing_points=self.num_inducing_points, verbose=False, device=self.device)
+                if self.regression:
+                    self.config = '0' + self.config
+                    inducing_points, frvm_acc = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
+                                                            z_train, target, sparse_method=self.sparse_method, scale=self.scale, beta=torch.tensor(10.0), 
+                                                            config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
+                                                            num_inducing_points=self.num_inducing_points, verbose=False, task_id=i, device=self.device, classification=True)
+                else:
+                    inducing_points, frvm_acc = get_inducing_points(self.model.base_covar_module, #.base_kernel,
+                                                            z_train, target, sparse_method=self.sparse_method, scale=self.scale,
+                                                            config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
+                                                            num_inducing_points=self.num_inducing_points, verbose=False, task_id=i, device=self.device)
             
             ip_count.append(inducing_points.count)
             ip_values = inducing_points.z_values.cuda()
             single_model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
             single_model.covar_module._clear_cache()
             # single_model.set_train_data(inputs=z_train, targets=target_list[idx], strict=False)
+           
+            # FRVM ACC
+            K_m = single_model.base_covar_module(z_query, ip_values).evaluate()
+            K_m = K_m.to(torch.float64)
+            # scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+            scales_m = inducing_points.scale
+            mu = inducing_points.mu
+            mu_m = mu / scales_m
+            y_pred_ = K_m @ mu_m 
+            y_pred_r = torch.sigmoid(y_pred_)
+            y_pred_r = y_pred_r.detach().cpu().numpy()
+            acc_rvm.append(y_pred_r)
 
         optimizer = torch.optim.Adam([{'params': self.model.parameters()}], lr=1e-3)
 
@@ -487,7 +521,7 @@ class Sparse_DKT_Nystrom(MetaTemplate):
             optimizer.step()
             avg_loss = avg_loss+loss.item()
 
-        with torch.no_grad(): #, gpytorch.settings.num_likelihood_samples(32):
+        with torch.no_grad(), gpytorch.settings.num_likelihood_samples(32):
             self.model.eval()
             self.likelihood.eval()
             self.feature_extractor.eval()
@@ -512,43 +546,66 @@ class Sparse_DKT_Nystrom(MetaTemplate):
             y_pred = np.vstack(predictions_list).argmax(axis=0) #[model, classes]
             top1_correct = np.sum(y_pred == y_query)
             count_this = len(y_query)
-            avg_ip_predicted_class = -1
+            ip_predicted_class = -1
             if True:
                 s=0
                 for i in range(self.n_way):
                     c = np.sum(y_pred==i)
                     s += c * ip_count[i]
-                avg_ip_predicted_class = s / y_pred.shape[0]
-        return float(top1_correct), count_this, avg_loss/float(N+1e-10), avg_ip_predicted_class
+                ip_predicted_class = s 
+
+            #FRVM ACC on query
+            y_pred_r = np.vstack(acc_rvm).argmax(axis=0)
+            top1_correct_r = np.sum(y_pred_r==y_query)
+            acc_rvm = (top1_correct_r / count_this)* 100
+
+
+        return float(top1_correct), count_this, avg_loss/float(N+1e-10), ip_predicted_class, top1_correct_r
 
     def test_loop(self, test_loader, record=None, return_std=False):
         print_freq = 10
         correct =0
         count = 0
         acc_all = []
-        avg_ip = []
+        acc_all_rvm = []
+        num_sv_list = []
         iter_num = len(test_loader)
+        self.show_plot = iter_num < 5
+        self.frvm_acc = []
+        # self.ip_count = []
         for i, (x,_) in enumerate(test_loader):
             self.n_query = x.size(1) - self.n_support
             if self.change_way:
                 self.n_way  = x.size(0)
-            correct_this, count_this, loss_value, avg_ip_predicted = self.correct(x)
-            avg_ip.append(avg_ip_predicted)
+            correct_this, count_this, loss_value, num_sv, correct_this_rvm = self.correct(x, i)
             acc_all.append(correct_this/ count_this*100)
+            acc_all_rvm.append(correct_this_rvm/ count_this*100)
+            num_sv_list.append(num_sv)
             if(i % 10==0):
                 acc_mean = np.mean(np.asarray(acc_all))
-                ip_count_mean = np.mean(np.asarray(avg_ip))
-                print('Test | Batch {:d}/{:d} | Loss {:f} | Acc {:f} | Avg. IP count {:2f}'.format(i, len(test_loader), loss_value, acc_mean, ip_count_mean))
+                acc_mean_rvm = np.mean(np.asarray(acc_all_rvm))
+                print('Test | Batch {:d}/{:d} | Loss {:f} |RVM Acc {:f}| Acc {:f}'.format(i, len(test_loader), loss_value, acc_mean_rvm, acc_mean))
         acc_all  = np.asarray(acc_all)
         acc_mean = np.mean(acc_all)
+        acc_mean_rvm = np.mean(np.asarray(acc_all_rvm))
         acc_std  = np.std(acc_all)
-        print(Fore.LIGHTRED_EX,"="*30,  Fore.RESET)
-        print(f'Avg. IP count {np.mean(np.asarray(avg_ip)):2f}')
-        print(Fore.YELLOW,'\n%d Test Acc = %4.2f%% +- %4.2f%%' %(iter_num,  acc_mean, 1.96* acc_std/np.sqrt(iter_num)), Fore.RESET)
-        print(Fore.LIGHTRED_EX,"="*30,  Fore.RESET)
+        acc_std_rvm  = np.std(acc_all_rvm)
+        mean_num_sv = np.mean(num_sv_list)
+        print(Fore.LIGHTRED_EX,'\n', "="*30, Fore.RESET)
+        print(Fore.CYAN,f'Avg. FRVM ACC on support set: {np.mean(self.frvm_acc):4.2f}%, Avg. SVs {mean_num_sv:.2f}', Fore.RESET)
+        print(Fore.CYAN,f'Avg. FRVM ACC on query set: {acc_mean_rvm:4.2f}%, std: {acc_std_rvm:.2f}', Fore.RESET)
+        print(Fore.YELLOW,'%d Test Acc = %4.2f%% +- %4.2f%%' %(iter_num,  acc_mean, 1.96* acc_std/np.sqrt(iter_num)), Fore.RESET)
+        print(Fore.LIGHTRED_EX,"="*30, Fore.RESET)
         if(self.writer is not None): self.writer.add_scalar('test_accuracy', acc_mean, self.iteration)
-        if(return_std): return acc_mean, acc_std
-        else: return acc_mean
+        if(self.writer is not None): self.writer.add_scalar('Avg. SVs', mean_num_sv, self.iteration)
+        result = {'acc': acc_mean, 'rvm acc': acc_mean_rvm, 'std': acc_std, 'rvm std': acc_std_rvm,'SVs':mean_num_sv}
+        result = {k: np.around(v, 4) for k, v in result.items()}
+        if self.add_rvm_ll: result['rvm_ll'] = True
+        if self.add_rvm_mll: result['rvm_mll'] = True
+        if self.add_rvm_ll or self.add_rvm_mll: result['lambda_rvm'] = self.lambda_rvm
+        if self.regression: result['regression'] = True
+        if(return_std): return acc_mean, acc_std, result
+        else: return acc_mean, result
 
     def get_logits(self, x):
         self.n_query = x.size(1) - self.n_support
