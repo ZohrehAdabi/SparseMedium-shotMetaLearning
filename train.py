@@ -72,7 +72,7 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
         # if (epoch) in [50]:
         #         optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.1
         model.eval()
-        if ((epoch+1)%2==0 and (epoch+1) > 50) or ((epoch+1)%10==0 and (epoch+1)<=50):
+        if True or ((epoch+1)%2==0 and (epoch+1) > 50) or ((epoch+1)%10==0 and (epoch+1)<=50):
             if not os.path.isdir(params.checkpoint_dir):
                 os.makedirs(params.checkpoint_dir)
             print(Fore.GREEN,"-"*50 ,f'\nValidation \n', Fore.RESET)
@@ -176,9 +176,10 @@ if __name__ == '__main__':
 
         if(params.method == 'Sparse_DKT_Nystrom'):
             model = Sparse_DKT_Nystrom(model_dict[params.model], params.kernel_type, **train_few_shot_params, sparse_method=params.sparse_method,
-                                    add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, lambda_rvm=params.lambda_rvm,  
+                                    add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, lambda_rvm=params.lambda_rvm, regression=params.regression, 
                                     num_inducing_points=params.num_ip, 
-                                    normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
+                                    normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, 
+                                    gamma=params.gamma, dirichlet=params.dirichlet)
             if params.dirichlet:
                 id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
@@ -192,6 +193,7 @@ if __name__ == '__main__':
             if params.lr_decay: id += '_lr_decay'
             if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
             if params.rvm_ll: id += f'_rvm_ll_{params.lambda_rvm}'
+            if params.regression: id += f'_regression'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
@@ -202,7 +204,7 @@ if __name__ == '__main__':
         
         elif(params.method == 'Sparse_DKT_Exact'):
             model = Sparse_DKT_Exact(model_dict[params.model], params.kernel_type, **train_few_shot_params, sparse_method=params.sparse_method, 
-                                    add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, lambda_rvm=params.lambda_rvm, 
+                                    add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, lambda_rvm=params.lambda_rvm, regression=params.regression,
                                     num_inducing_points=params.num_ip,
                                     normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
             if params.dirichlet:
@@ -217,6 +219,7 @@ if __name__ == '__main__':
             if params.lr_decay: id += '_lr_decay'
             if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
             if params.rvm_ll: id += f'_rvm_ll_{params.lambda_rvm}'
+            if params.regression: id += f'_regression'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
@@ -227,9 +230,11 @@ if __name__ == '__main__':
 
         elif params.method == 'Sparse_DKT_binary_Nystrom':
             model = Sparse_DKT_binary_Nystrom(model_dict[params.model], params.kernel_type, **train_few_shot_params, sparse_method=params.sparse_method, 
-                                    add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, add_rvm_mll_one=params.rvm_mll_one, lambda_rvm=params.lambda_rvm, regression=params.regression,
+                                    add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, add_rvm_mll_one=params.rvm_mll_one, lambda_rvm=params.lambda_rvm, 
+                                    regression=params.regression,
                                     num_inducing_points=params.num_ip,
-                                    normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
+                                    normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, 
+                                    gamma=params.gamma, dirichlet=params.dirichlet)
             if params.dirichlet:
                 id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
