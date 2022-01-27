@@ -12,7 +12,7 @@ lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['1011']
 seed_list = [1, 2, 3]
-method_list = ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact']
+method_list = ['Sparse_DKT_Exact']
 test_epoch = 100
 save_result = True
 for config in config_list:
@@ -32,7 +32,7 @@ for config in config_list:
                         ]
                 if save_result: L.append('--save_result')
                 print(f'\n{" ".join(L)} \n')
-                run(L)
+                # run(L)
             for method in method_list:
                 for sd in seed_list:
                      # just mll of GP
@@ -89,6 +89,6 @@ for config in config_list:
                 ]
                 if save_result: L.append('--save_result')
                 print(f'\n{" ".join(L)} \n')
-                run(L)
+                # run(L)
 
 

@@ -565,10 +565,10 @@ class Sparse_DKT_regression_Exact(nn.Module):
             mse_list.append(float(mse))
             
             
-        if self.f_rvm:
-            mse_list_.append(float(mse_))
-            num_sv_list.append(num_sv)
-            mse_rvm_list.append(mse_r)
+            if self.f_rvm:
+                mse_list_.append(float(mse_))
+                num_sv_list.append(num_sv)
+                mse_rvm_list.append(mse_r)
 
         if self.show_plots_pred:
             self.mw.finish()
