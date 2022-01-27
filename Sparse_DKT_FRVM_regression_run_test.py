@@ -11,8 +11,8 @@ lr_net_list = [0.01, 0.001, 0.0001]
 lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['1011']
-seed_list = [2]
-method_list = ['Sparse_DKT_Nystrom']
+seed_list = [1, 2, 3]
+method_list = ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact']
 test_epoch = 100
 save_result = True
 for config in config_list:
@@ -21,6 +21,18 @@ for config in config_list:
             align_thr = 1e-3
             if config in ['1000', '1010']:
                 align_thr = 0
+            
+            L = ['python', f'./test_regression.py', 
+                                    '--method', f'DKT',  '--n_samples', '72', '--n_support', '60', '--n_test_epoch', f'{test_epoch}', 
+                                #   '--show_plots_pred',
+                                    '--seed',  f'{sd}'
+                                    '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
+                                    '--kernel_type', 'rbf', '--beta' , '--init'
+                                    
+                    ]
+            if save_result: L.append('--save_result')
+            print(f'\n{" ".join(L)} \n')
+            run(L)
             for method in method_list:
                 for sd in seed_list:
                      # just mll of GP
@@ -30,15 +42,14 @@ for config in config_list:
                                 #   '--show_plots_pred',
                                     '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
                                     '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
-                                    '--kernel_type', 'rbf', '--beta' 
+                                    '--kernel_type', 'rbf', '--beta' , '--init'
                                     
                     ]
                     if save_result: L.append('--save_result')
                     print(f'\n{" ".join(L)} \n')
                     run(L)
 
-                    lambda_rvm_list = [0.1, 0.5, 1.0]
-                    # lambda_rvm_list = [0] # for run: just mll of GP
+                    lambda_rvm_list = [0.5, 1.0]
                     for lambda_rvm in lambda_rvm_list:
                        
                         
@@ -48,7 +59,7 @@ for config in config_list:
                                     #   '--show_plots_pred',
                                         '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
                                         '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
-                                        '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_mll', '--beta'
+                                        '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_mll', '--beta', '--init'
                         ]
                         if save_result: L.append('--save_result')
                         print(f'\n{" ".join(L)} \n')
@@ -60,12 +71,27 @@ for config in config_list:
                                     #   '--show_plots_pred',
                                         '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
                                         '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
-                                        '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_ll', '--beta'
+                                        '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_ll', '--beta' , '--init'
                         ]
                         if save_result: L.append('--save_result')
                         print(f'\n{" ".join(L)} \n')
                         run(L)
 
-          
+
+            lambda_rvm_list = [0.5, 1.0]
+            for lambda_rvm in lambda_rvm_list:
+                
+                
+                # rvm mll
+                L = ['python', f'./test_regression.py', 
+                                '--method', f'Sparse_DKT_RVM', '--sparse_method', 'FRVM',  '--n_samples', '72', '--n_support', '60', '--n_test_epoch', f'{test_epoch}', 
+                            #   '--show_plots_pred',
+                                '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
+                                '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
+                                '--kernel_type', 'rbf', '--lambda_rvm', f'{lambda_rvm}', '--rvm_mll_only', '--beta', '--init'
+                ]
+                if save_result: L.append('--save_result')
+                print(f'\n{" ".join(L)} \n')
+                run(L)
 
 
