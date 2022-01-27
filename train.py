@@ -57,6 +57,7 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
     # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
     max_acc = 0
+    max_acc_rvm = 0
     print(f'num train task {len(base_loader)}')
     print(f'num val task {len(val_loader)}')
 
@@ -83,7 +84,12 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
                 max_acc = acc
                 outfile = os.path.join(params.checkpoint_dir, 'best_model.tar')
                 torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
-
+            acc_rvm = result['rvm acc']
+            if acc_rvm > max_acc_rvm:  # for baseline and baseline++, we don't use validation here so we let acc = -1
+                print("--> Best RVM model! save...")
+                max_acc_rvm = acc_rvm
+                outfile = os.path.join(params.checkpoint_dir, 'best_model_rvm.tar')
+                torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
            
             print(Fore.YELLOW, f'ACC: {acc:4.2f}\n', Fore.RESET)
             print(Fore.YELLOW, f'Avg. Val ACC: {np.mean(acc_val_list):4.2f}\n', Fore.RESET)
