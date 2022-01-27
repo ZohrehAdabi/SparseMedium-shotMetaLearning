@@ -344,7 +344,7 @@ for sd in range(seed, seed+repeat):
             mse_list_best, result = model.test(params.n_support, params.n_samples, optimizer, params.n_test_epochs)
         
         if params.save_result:
-            f.write('"best model rvm":\n')
+            f.write('"best rvm model":\n')
             json.dump(result, f, indent=2) #f.write(json.dumps(result))
             f.write(',\n')
 

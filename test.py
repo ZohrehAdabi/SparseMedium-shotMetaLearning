@@ -206,6 +206,7 @@ def single_test(params):
     if not params.method in ['baseline', 'baseline++'] : 
         best = True
         last = True
+        best_rvm = True
         print(f'\n{checkpoint_dir}\n')
         modelfile = None
         if params.save_iter != -1:
@@ -222,6 +223,10 @@ def single_test(params):
             best_model = deepcopy(model)
             print(f'\nBest model\n')
             best_modelfile   = get_best_file(checkpoint_dir)
+        if best_rvm: #else:
+            best_model_rvm = deepcopy(model)
+            print(f'\nBest model\n')
+            best_modelfile_rvm   = get_best_file(checkpoint_dir)
 
         if modelfile is not None:
             tmp = torch.load(modelfile)
@@ -270,6 +275,22 @@ def single_test(params):
                     tmp['state'][f'mll.mlls.{i}.model.covar_module.inducing_points'] = IP
                     tmp['state'][f'mll.model.models.{i}.covar_module.inducing_points'] = IP
             best_model.load_state_dict(tmp['state'])
+        if best_rvm and (best_modelfile_rvm is not None):
+            tmp = torch.load(best_modelfile_rvm)
+            best_epoch_rvm = tmp['epoch']
+            if params.method in ['Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss']:
+                
+                IP = torch.ones(100, 64).cuda()
+                tmp['state']['model.covar_module.inducing_points'] = IP
+                tmp['state']['mll.model.covar_module.inducing_points'] = IP
+            if params.method in ['Sparse_DKT_Nystrom']:
+                
+                IP = torch.ones(100, 64).cuda()
+                for i in range(params.test_n_way):
+                    tmp['state'][f'model.models.{i}.covar_module.inducing_points'] = IP
+                    tmp['state'][f'mll.mlls.{i}.model.covar_module.inducing_points'] = IP
+                    tmp['state'][f'mll.model.models.{i}.covar_module.inducing_points'] = IP
+            best_model_rvm.load_state_dict(tmp['state'])
 
         else:
             print("[WARNING] Cannot find 'best_file.tar' in: " + str(checkpoint_dir))
@@ -355,10 +376,21 @@ def single_test(params):
             print("-----------------------------")
             print('Test Acc last model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
             print("-----------------------------") 
+        if best_rvm:
+            print(f'\nBest model epoch {best_epoch}\n')
+            best_model_rvm.eval()
+            acc_mean, acc_std, result = best_model_rvm.test_loop(novel_loader, return_std = True)
+            if params.save_result:
+                f.write('"best rvm model":\n')
+                json.dump(result, f, indent=2)
+                f.write('\n}\n]')
+            print("-----------------------------")
+            print('Test Acc best RVM model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
+            print("-----------------------------") 
         if best:
             print(f'\nBest model epoch {best_epoch}\n')
             best_model.eval()
-            acc_mean, acc_std, result = best_model.test_loop( novel_loader, return_std = True)
+            acc_mean, acc_std, result = best_model.test_loop(novel_loader, return_std = True)
             if params.save_result:
                 f.write('"best model":\n')
                 json.dump(result, f, indent=2)
