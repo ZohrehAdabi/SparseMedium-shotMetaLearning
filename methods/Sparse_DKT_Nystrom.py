@@ -443,7 +443,7 @@ class Sparse_DKT_Nystrom(MetaTemplate):
         target_list = list()
         samples_per_model = int(len(y_train) / self.n_way)
         for way in range(self.n_way):
-            target = torch.ones(len(y_train), dtype=torch.float32) * -1.0
+            target = torch.ones(len(y_train), dtype=torch.float64) * -1.0
             # target = torch.zeros(len(y_train), dtype=torch.float32) 
             start_index = way * samples_per_model
             stop_index = start_index+samples_per_model
@@ -478,12 +478,12 @@ class Sparse_DKT_Nystrom(MetaTemplate):
                 if self.regression:
                     self.config = '0' + self.config
                     inducing_points, frvm_acc = get_inducing_points_regression(single_model.base_covar_module, #.base_kernel,
-                                                            z_train, target, sparse_method=self.sparse_method, scale=self.scale, beta=torch.tensor(10.0), 
+                                                            z_train, target_list[idx], sparse_method=self.sparse_method, scale=self.scale, beta=torch.tensor(10.0), 
                                                             config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
                                                             num_inducing_points=self.num_inducing_points, verbose=False, task_id=i, device=self.device, classification=True)
                 else:
                     inducing_points, frvm_acc = get_inducing_points(single_model.base_covar_module, #.base_kernel,
-                                                            z_train, target, sparse_method=self.sparse_method, scale=self.scale,
+                                                            z_train, target_list[idx], sparse_method=self.sparse_method, scale=self.scale,
                                                             config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
                                                             num_inducing_points=self.num_inducing_points, verbose=False, task_id=i, device=self.device)
             
