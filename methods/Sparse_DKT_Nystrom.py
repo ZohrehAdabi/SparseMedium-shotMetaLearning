@@ -193,7 +193,7 @@ class Sparse_DKT_Nystrom(MetaTemplate):
             print(Fore.LIGHTMAGENTA_EX, f'epoch:{epoch+1}', Fore.RESET)
             rvm_mll_list = list()
             for idx, single_model in enumerate(self.model.models):
-                print(Fore.LIGHTMAGENTA_EX, f'model:{idx+1}', Fore.RESET)
+                # print(Fore.LIGHTMAGENTA_EX, f'model:{idx+1}', Fore.RESET)
                 if self.dirichlet:
                     targets = target_list[idx]
                     targets[targets==-1] = 0

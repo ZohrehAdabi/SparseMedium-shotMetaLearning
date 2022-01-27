@@ -72,7 +72,7 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
         # if (epoch) in [50]:
         #         optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.1
         model.eval()
-        if True or ((epoch+1)%2==0 and (epoch+1) > 50) or ((epoch+1)%10==0 and (epoch+1)<=50):
+        if ((epoch+1)%2==0 and (epoch+1) > 50) or ((epoch+1)%10==0 and (epoch+1)<=50):
             if not os.path.isdir(params.checkpoint_dir):
                 os.makedirs(params.checkpoint_dir)
             print(Fore.GREEN,"-"*50 ,f'\nValidation \n', Fore.RESET)

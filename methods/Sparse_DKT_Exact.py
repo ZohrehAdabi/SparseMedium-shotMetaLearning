@@ -194,7 +194,7 @@ class Sparse_DKT_Exact(MetaTemplate):
             print(Fore.LIGHTMAGENTA_EX, f'epoch:{epoch+1}', Fore.RESET)
             rvm_mll_list = list()
             for idx, single_model in enumerate(self.model.models):
-                print(Fore.LIGHTMAGENTA_EX, f'model:{idx+1}', Fore.RESET)
+                # print(Fore.LIGHTMAGENTA_EX, f'model:{idx+1}', Fore.RESET)
                 with torch.no_grad():
                     # inducing_points = self.get_inducing_points(single_model.base_covar_module, #.base_kernel,
                     #                                             z_train, target_list[idx], verbose=False)
