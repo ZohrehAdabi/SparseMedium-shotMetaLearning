@@ -276,7 +276,7 @@ class Sparse_DKT_Nystrom(MetaTemplate):
                 mll = self.mll(output, target_list)
 
                 if self.add_rvm_mll or self.add_rvm_ll:
-                    rvm_mll = torch.sum(rvm_mll_list)
+                    rvm_mll = torch.sum(torch.stack(rvm_mll_list, axis=0))
                     loss = -mll - l * rvm_mll
                     # loss = -(1-l) * mll - l * rvm_mll
                 else:
