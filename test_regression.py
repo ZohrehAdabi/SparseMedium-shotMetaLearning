@@ -349,9 +349,9 @@ for sd in range(seed, seed+repeat):
             f.write(',\n')
 
         print("-------------------")
-        print(f"Average RVM MSE, seed {sd}: " + str(np.mean(mse_list_best_rvm)) + " +- " + str(np.std(mse_list_best_rvm)))
+        print(f"Average GP MSE at RVM best model, seed {sd}: " + str(np.mean(mse_list_best_rvm)) + " +- " + str(np.std(mse_list_best_rvm)))
         print("-------------------")
-        best_accuracy_list_rvm.append(np.mean(mse_list_best))
+        best_accuracy_list_rvm.append(np.mean(mse_list_best_rvm))
     if os.path.isfile(params.checkpoint_dir):
         model.load_checkpoint(params.checkpoint_dir)
 
@@ -384,6 +384,6 @@ if len(best_accuracy_list) >0 and len(last_accuracy_list) >0:
     print("===================")
     print(f"Overall Test Acc [best model] [repeat {repeat}]: " + str(np.mean(best_accuracy_list)) + " +- " + str(np.std(best_accuracy_list)))
     if len(best_accuracy_list_rvm) > 0:
-        print(f"Overall Test Acc [best RVM model] [repeat {repeat}]: " + str(np.mean(best_accuracy_list_rvm)) + " +- " + str(np.std(best_accuracy_list_rvm)))
+        print(f"Overall Test Acc [GP at best RVM model] [repeat {repeat}]: " + str(np.mean(best_accuracy_list_rvm)) + " +- " + str(np.std(best_accuracy_list_rvm)))
     print(f"Overall Test Acc [last model] [repeat {repeat}]: " + str(np.mean(last_accuracy_list)) + " +- " + str(np.std(last_accuracy_list)))
     print("===================")
