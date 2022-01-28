@@ -70,7 +70,7 @@ def Fast_RVM(K, targets, N, config, align_thr, gamma, eps, tol, max_itr=1000, de
     deltaML = torch.zeros(M, dtype=torch.float64).to(device)  
     action = torch.zeros(M)
     tic = time.time()
-    print_freq = 5
+    print_freq = 10
     for itr in range(max_itr):
 
         # 'Relevance Factor' (q^2-s) values for basis functions in model
