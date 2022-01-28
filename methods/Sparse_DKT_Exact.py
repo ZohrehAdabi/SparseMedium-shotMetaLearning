@@ -219,6 +219,7 @@ class Sparse_DKT_Exact(MetaTemplate):
                 scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
                 # K = K / scales
                 mu_m = mu_m /scales
+                alpha_m = alpha_m / scales**2
                 # rvm_mll = rvm_ML(K_m, target_list[idx], alpha_m, mu_m, U)
                 target = target_list[idx]
                 if self.add_rvm_ll:
@@ -489,7 +490,7 @@ class Sparse_DKT_Exact(MetaTemplate):
             # FRVM ACC
             K_m = single_model.base_covar_module(z_query, ip_values).evaluate()
             K_m = K_m.to(torch.float64)
-            # scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+            scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
             scales_m = inducing_points.scale
             mu = inducing_points.mu
             mu_m = mu / scales_m

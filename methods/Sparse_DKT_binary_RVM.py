@@ -249,10 +249,10 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
             scales = inducing_points.scale
             K_m = self.model.base_covar_module(z_train, ip_values).evaluate()
             K_m = K_m.to(torch.float64)
-            # scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+            scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
             # K = K / scales
             mu_m = mu_m /scales
-
+            alpha_m = alpha_m / scales**2
             if self.rvm_mll_only:
                 if self.regression:
                     rvm_mll = rvm_ML_regression_full_rvm(K_m, target, alpha_m, mu_m)

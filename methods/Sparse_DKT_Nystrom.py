@@ -233,9 +233,10 @@ class Sparse_DKT_Nystrom(MetaTemplate):
                 scales = inducing_points.scale
                 U = inducing_points.U
                 K_m = single_model.base_covar_module(z_train, ip_values).evaluate()
-                # scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+                scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
                 # K = K / scales
                 mu_m = mu_m /scales
+                alpha_m = alpha_m / scales**2
                 target = target_list[idx]
                 # rvm_mll = rvm_ML(K_m, target_list[idx], alpha_m, mu_m, U)
                 if self.add_rvm_ll:
