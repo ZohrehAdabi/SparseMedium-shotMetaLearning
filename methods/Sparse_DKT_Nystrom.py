@@ -205,7 +205,7 @@ class Sparse_DKT_Nystrom(MetaTemplate):
                     single_model.set_train_data(inputs=z_train, targets=single_model.likelihood.transformed_targets, strict=False)
                 else: 
                     single_model.set_train_data(inputs=z_train, targets=target_list[idx], strict=False)
-
+                v = (idx==0) or (idx==self.n_way-1) 
                 with torch.no_grad():
                     # inducing_points = self.get_inducing_points(single_model.base_covar_module, #.base_kernel,
                     #                                         z_train, target_list[idx], verbose=False)
@@ -218,12 +218,12 @@ class Sparse_DKT_Nystrom(MetaTemplate):
                         inducing_points, frvm_acc = get_inducing_points_regression(single_model.base_covar_module, #.base_kernel,
                                                                 z_train, target_list[idx], sparse_method=self.sparse_method, scale=self.scale, beta=torch.tensor(10.0), 
                                                                 config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-                                                                num_inducing_points=self.num_inducing_points, verbose=True, task_id=i, device=self.device, classification=True)
+                                                                num_inducing_points=self.num_inducing_points, verbose=v, task_id=i, device=self.device, classification=True)
                     else:
                         inducing_points, frvm_acc = get_inducing_points(single_model.base_covar_module, #.base_kernel,
                                                                 z_train, target_list[idx], sparse_method=self.sparse_method, scale=self.scale,
                                                                 config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-                                                                num_inducing_points=self.num_inducing_points, verbose=True, task_id=i, device=self.device)
+                                                                num_inducing_points=self.num_inducing_points, verbose=v, task_id=i, device=self.device)
             
                 ip_values = inducing_points.z_values.cuda()
                 single_model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)

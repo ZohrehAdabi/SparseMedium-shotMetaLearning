@@ -195,6 +195,7 @@ class Sparse_DKT_Exact(MetaTemplate):
             rvm_mll_list = list()
             for idx, single_model in enumerate(self.model.models):
                 # print(Fore.LIGHTMAGENTA_EX, f'model:{idx+1}', Fore.RESET)
+                v = (idx==0) or (idx==self.n_way-1) 
                 with torch.no_grad():
                     # inducing_points = self.get_inducing_points(single_model.base_covar_module, #.base_kernel,
                     #                                             z_train, target_list[idx], verbose=False)
@@ -203,12 +204,12 @@ class Sparse_DKT_Exact(MetaTemplate):
                         inducing_points, frvm_acc = get_inducing_points_regression(single_model.base_covar_module, #.base_kernel,
                                                                 z_train, target_list[idx], sparse_method=self.sparse_method, scale=self.scale, beta=torch.tensor(10.0), 
                                                                 config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-                                                                num_inducing_points=self.num_inducing_points, verbose=True, task_id=i, device=self.device, classification=True)
+                                                                num_inducing_points=self.num_inducing_points, verbose=v, task_id=i, device=self.device, classification=True)
                     else:
                         inducing_points, frvm_acc = get_inducing_points(single_model.base_covar_module, #.base_kernel,
                                                                 z_train, target_list[idx], sparse_method=self.sparse_method, scale=self.scale,
                                                                 config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-                                                                num_inducing_points=self.num_inducing_points, verbose=True, task_id=i, device=self.device)
+                                                                num_inducing_points=self.num_inducing_points, verbose=v, task_id=i, device=self.device)
                 ip_values = inducing_points.z_values.cuda()
                 ip_labels = target_list[idx][inducing_points.index]
                 alpha_m = inducing_points.alpha
