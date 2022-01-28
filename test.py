@@ -378,7 +378,7 @@ def single_test(params):
             print('Test Acc last model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
             print("-----------------------------") 
         if best_rvm:
-            print(f'\nBest model epoch {best_epoch}\n')
+            print(f'\nBest RVM model epoch {best_epoch}\n')
             best_model_rvm.eval()
             acc_mean, acc_std, result = best_model_rvm.test_loop(novel_loader, return_std = True)
             if params.save_result:
@@ -386,7 +386,7 @@ def single_test(params):
                 json.dump(result, f, indent=2)
                 f.write('\n}\n]')
             print("-----------------------------")
-            print('Test Acc best RVM model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
+            print('Test Acc GP at best RVM model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
             print("-----------------------------") 
         if best:
             print(f'\nBest model epoch {best_epoch}\n')
