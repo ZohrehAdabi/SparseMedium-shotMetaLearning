@@ -226,8 +226,8 @@ def single_test(params):
             best_modelfile   = get_best_file(checkpoint_dir)
         if best_rvm: #else:
             best_model_rvm = deepcopy(model)
-            print(f'\nBest model\n')
-            best_modelfile_rvm   = get_best_file(checkpoint_dir)
+            print(f'\nBest RVM model\n')
+            best_modelfile_rvm   = os.path.join(checkpoint_dir, 'best_model_rvm.tar')
 
         if modelfile is not None:
             tmp = torch.load(modelfile)
@@ -276,6 +276,7 @@ def single_test(params):
                     tmp['state'][f'mll.mlls.{i}.model.covar_module.inducing_points'] = IP
                     tmp['state'][f'mll.model.models.{i}.covar_module.inducing_points'] = IP
             best_model.load_state_dict(tmp['state'])
+        
         if best_rvm and (best_modelfile_rvm is not None):
             tmp = torch.load(best_modelfile_rvm)
             best_epoch_rvm = tmp['epoch']
@@ -377,7 +378,7 @@ def single_test(params):
             print("-----------------------------")
             print('Test Acc last model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
             print("-----------------------------") 
-        if best_rvm:
+        if best_rvm and (best_modelfile_rvm is not None):
             print(f'\nBest RVM model epoch {best_epoch}\n')
             best_model_rvm.eval()
             acc_mean, acc_std, result = best_model_rvm.test_loop(novel_loader, return_std = True)
