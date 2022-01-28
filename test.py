@@ -220,17 +220,18 @@ def single_test(params):
             num = max(nums)
             print(f'\nModel at last epoch {num}\n')
             last_modelfile = os.path.join(checkpoint_dir, '{:d}.tar'.format(num))
+            print(f'\nlast model {last_modelfile}\n')
         if best: #else:
             best_model = deepcopy(model)
-            print(f'\nBest model\n')
             best_modelfile   = get_best_file(checkpoint_dir)
+            print(f'\nBest model {best_modelfile}\n')
         if best_rvm: #else:
             best_model_rvm = deepcopy(model)
-            print(f'\nBest RVM model\n')
-            
+                        
             best_modelfile_rvm   = os.path.join(checkpoint_dir, 'best_model_rvm.tar')
             if not os.path.isfile(best_modelfile_rvm):
                 best_modelfile_rvm = None
+            print(f'\nBest RVM model {best_modelfile_rvm}\n')
 
         if modelfile is not None:
             tmp = torch.load(modelfile)
