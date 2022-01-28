@@ -38,7 +38,7 @@ for config in config_list:
                             
                 ]
                 print(f'\n{" ".join(L)} \n')
-                run(L)
+                # run(L)
                 lambda_rvm_list = [0.5, 1.0]
                 for lambda_rvm in lambda_rvm_list:
                     L = ['python', f'./train.py', 
