@@ -191,7 +191,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             
             mu_m = inducing_points.mu
             U = inducing_points.U
-            scales = inducing_points.scale
+            # scales = inducing_points.scale
             ip_values = z[ip_index]
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
             self.model.train()
@@ -454,7 +454,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                 mll = self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
 
                 
-                if epoch%1==0:
+                if ((epoch>=50) and epoch%1==0) or ((epoch<50) and epoch%10==0):
                     print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
                     mse_list = []
                     mse_unnorm_list = []
