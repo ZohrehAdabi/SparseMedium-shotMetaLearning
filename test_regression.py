@@ -24,7 +24,7 @@ params = parse_args_regression('test_regression')
 
 repeat = params.repeat
 seed = params.seed
-best_accuracy_list, last_accuracy_list = list(), list()
+best_accuracy_list, last_accuracy_list, best_accuracy_list_rvm = list(), list(), list()
 for sd in range(seed, seed+repeat):
     np.random.seed(sd)
     torch.manual_seed(sd)
@@ -332,16 +332,16 @@ for sd in range(seed, seed+repeat):
             f.write(',\n')
 
         print("-------------------")
-        print(f"Average MSE, seed {sd}: " + str(np.mean(mse_list_best)) + " +- " + str(np.std(mse_list_best)))
+        print(f"Average MSE best model, seed {sd}: " + str(np.mean(mse_list_best)) + " +- " + str(np.std(mse_list_best)))
         print("-------------------")
         best_accuracy_list.append(np.mean(mse_list_best))
     if os.path.isfile(params.checkpoint_dir+'_best_model_rvm.tar'):
-        print(f'\nBest model\n{params.checkpoint_dir}_best_model_rvm.tar')
+        print(f'\nBest RVM model\n{params.checkpoint_dir}_best_model_rvm.tar')
         model.load_checkpoint(params.checkpoint_dir +'_best_model_rvm.tar')
         if params.method=='transfer':
-            mse_list_best, result = model.test(params.n_support, params.n_samples, optimizer, params.fine_tune, params.n_test_epochs)
+            mse_list_best_rvm, result = model.test(params.n_support, params.n_samples, optimizer, params.fine_tune, params.n_test_epochs)
         else:
-            mse_list_best, result = model.test(params.n_support, params.n_samples, optimizer, params.n_test_epochs)
+            mse_list_best_rvm, result = model.test(params.n_support, params.n_samples, optimizer, params.n_test_epochs)
         
         if params.save_result:
             f.write('"best rvm model":\n')
@@ -349,9 +349,9 @@ for sd in range(seed, seed+repeat):
             f.write(',\n')
 
         print("-------------------")
-        print(f"Average MSE, seed {sd}: " + str(np.mean(mse_list_best)) + " +- " + str(np.std(mse_list_best)))
+        print(f"Average RVM MSE, seed {sd}: " + str(np.mean(mse_list_best_rvm)) + " +- " + str(np.std(mse_list_best_rvm)))
         print("-------------------")
-        best_accuracy_list.append(np.mean(mse_list_best))
+        best_accuracy_list_rvm.append(np.mean(mse_list_best))
     if os.path.isfile(params.checkpoint_dir):
         model.load_checkpoint(params.checkpoint_dir)
 
@@ -383,5 +383,7 @@ for sd in range(seed, seed+repeat):
 if len(best_accuracy_list) >0 and len(last_accuracy_list) >0:
     print("===================")
     print(f"Overall Test Acc [best model] [repeat {repeat}]: " + str(np.mean(best_accuracy_list)) + " +- " + str(np.std(best_accuracy_list)))
+    if len(best_accuracy_list_rvm) > 0:
+        print(f"Overall Test Acc [best RVM model] [repeat {repeat}]: " + str(np.mean(best_accuracy_list_rvm)) + " +- " + str(np.std(best_accuracy_list_rvm)))
     print(f"Overall Test Acc [last model] [repeat {repeat}]: " + str(np.mean(last_accuracy_list)) + " +- " + str(np.std(last_accuracy_list)))
     print("===================")
