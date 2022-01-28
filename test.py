@@ -227,7 +227,10 @@ def single_test(params):
         if best_rvm: #else:
             best_model_rvm = deepcopy(model)
             print(f'\nBest RVM model\n')
+            
             best_modelfile_rvm   = os.path.join(checkpoint_dir, 'best_model_rvm.tar')
+            if not os.path.isfile(best_modelfile_rvm):
+                best_modelfile_rvm = None
 
         if modelfile is not None:
             tmp = torch.load(modelfile)
