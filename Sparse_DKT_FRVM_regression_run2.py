@@ -11,7 +11,7 @@ save_model = True
 stop_epoch = 100
 lr_gp_list = [0.001]
 lr_net_list = [0.001]
-config_list = ['1011']
+config_list = ['1001']
 seed_list = [1, 2, 3]
 method_list = ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact']
 sparse_method = 'FRVM' # 'random'
@@ -35,15 +35,7 @@ for config in config_list:
                     if save_model: L.append('--save_model')
                     print(f'\n{" ".join(L)} \n')
                     run(L)
-                    L = ['python', f'./test_regression.py', 
-                                    '--method', f'{method}', '--sparse_method', f'{sparse_method}',  '--n_samples', '72', '--n_support', '60', '--n_test_epoch', '10', 
-                                #   '--show_plots_pred',
-                                    '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
-                                    '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
-                                    '--kernel_type', 'rbf', '--init', '--beta'
-                    ]
-                    print(f'\n{" ".join(L)} \n')
-                    # run(L)
+         
                 
                 #DKT
                 L = ['python', f'./train_regression.py', 
@@ -55,7 +47,24 @@ for config in config_list:
                 ]
                 if save_model: L.append('--save_model')
                 print(f'\n{" ".join(L)} \n')
+                # run(L)
+                for in_lr in [10]:
+                    L = ['python', f'./train_regression.py', "--method","MAML", "--n_samples", "72",  "--n_support", "60", "--stop_epoch", f'{stop_epoch}', 
+                            '--seed',  f'{sd}', 
+                            '--lr_net',  f'{lr_net}', "--inner_loop", f"{in_lr}", "--inner_lr", "1e-3"] 
+                    if save_model: L.append('--save_model')
+                    print(f'\n{" ".join(L)} \n')
+                    run(L)
+                
+                
+                L = ['python', f'./train_regression.py', "--method","transfer", "--n_samples", "72", "--n_support", "60", "--stop_epoch",  f'{stop_epoch}',  
+                            '--seed',  f'{sd}', 
+                            '--lr_net',  f'{lr_net}'] 
+                if save_model: L.append('--save_model')
+                print(f'\n{" ".join(L)} \n')
                 run(L)
+
+                    
 
                       
           

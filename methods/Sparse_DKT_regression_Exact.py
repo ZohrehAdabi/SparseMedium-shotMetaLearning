@@ -435,7 +435,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
             if self.f_rvm:
                 mll = self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
                 
-                if epoch%1==0:
+                if((epoch>=50) and epoch%1==0) or ((epoch<50) and epoch%5==0):
                     print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
                     mse_list = []
                     mse_unnorm_list = []
