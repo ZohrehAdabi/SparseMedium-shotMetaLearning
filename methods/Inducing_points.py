@@ -215,7 +215,7 @@ def rvm_ML_regression(K_m, targets, alpha_m, mu_m, beta=10.0):
 
 def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale,
                         config='000', align_threshold='0', gamma=False, 
-                        num_inducing_points=None, maxItr=1000, tol=1e-3, verbose=True, task_id=None, device='cuda'):
+                        num_inducing_points=None, maxItr=1000, tol=1e-4, verbose=True, task_id=None, device='cuda'):
 
         
     IP_index = np.array([])
@@ -446,7 +446,7 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
 
 def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_method, scale, beta,
                         config='0000', align_threshold='0', gamma=False, 
-                        num_inducing_points=None, maxItr=1000, tol=1e-3, verbose=True, task_id=None, device='cuda', classification=False):
+                        num_inducing_points=None, maxItr=1000, tol=1e-4, verbose=True, task_id=None, device='cuda', classification=False):
 
         
     IP_index = np.array([])
