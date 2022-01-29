@@ -337,7 +337,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
             beta = 1/sigma
             inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
                                                             z_support, y_support, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
-                                                            config='1011', align_threshold=self.align_threshold, gamma=self.gamma, 
+                                                            config='1001', align_threshold=self.align_threshold, gamma=self.gamma, 
                                                             num_inducing_points=self.num_inducing_points, maxItr=self.maxItr_rvm, verbose=False, task_id=self.test_i, device=self.device)
         
         ip_values = inducing_points.z_values.cuda()
@@ -475,7 +475,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
                 mll = self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
 
                 
-                if epoch%1==0:
+                if ((epoch>=50) and epoch%1==0) or ((epoch<50) and epoch%10==0):
                     print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
                     mse_list = []
                     mse_unnorm_list = []
