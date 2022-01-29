@@ -35,7 +35,6 @@ for config in config_list:
                     if save_model: L.append('--save_model')
                     print(f'\n{" ".join(L)} \n')
                     run(L)
-         
                 
                 #DKT
                 L = ['python', f'./train_regression.py', 
@@ -48,6 +47,21 @@ for config in config_list:
                 if save_model: L.append('--save_model')
                 print(f'\n{" ".join(L)} \n')
                 # run(L)
+
+                for method in method_list:
+                
+                    # just mll of GP
+                    L = ['python', f'./train_regression.py', 
+                                    '--method', f'{method}', '--sparse_method', f'random',  '--n_samples', '72', '--n_support', '60', '--stop_epoch', f'{stop_epoch}', 
+                                #   '--show_plots_features',
+                                    '--seed',  f'{sd}',  
+                                    '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
+                                    '--kernel_type', 'rbf', '--init'
+                    ]
+                    if save_model: L.append('--save_model')
+                    print(f'\n{" ".join(L)} \n')
+                    run(L)
+
                 for in_lr in [10]:
                     L = ['python', f'./train_regression.py', "--method","MAML", "--n_samples", "72",  "--n_support", "60", "--stop_epoch", f'{stop_epoch}', 
                             '--seed',  f'{sd}', 
