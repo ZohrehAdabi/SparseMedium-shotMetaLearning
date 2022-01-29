@@ -37,7 +37,7 @@ except ImportError:
 IP = namedtuple("inducing_points", "z_values index count x y i_idx j_idx")
 class Sparse_DKT_Exact(MetaTemplate):
     def __init__(self, model_func, kernel_type, n_way, n_support, sparse_method, add_rvm_mll=False, add_rvm_ll=False,  
-                            lambda_rvm=0.1, regression=False, num_inducing_points=None, normalize=False, 
+                            lambda_rvm=0.1, maxItr_rvm=1000, regression=False, num_inducing_points=None, normalize=False, 
                             scale=False, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
         super(Sparse_DKT_Exact, self).__init__(model_func, n_way, n_support)
         self.num_inducing_points = num_inducing_points
@@ -45,6 +45,9 @@ class Sparse_DKT_Exact(MetaTemplate):
         self.add_rvm_mll = add_rvm_mll
         self.add_rvm_ll = add_rvm_ll
         self.lambda_rvm = lambda_rvm
+        self.maxItr_rvm = 1000
+        if maxItr_rvm!=-1:
+            self.maxItr_rvm = maxItr_rvm
         self.regression = regression
         self.config = config
         self.align_threshold = align_threshold
@@ -204,12 +207,12 @@ class Sparse_DKT_Exact(MetaTemplate):
                         inducing_points, frvm_acc = get_inducing_points_regression(single_model.base_covar_module, #.base_kernel,
                                                                 z_train, target_list[idx], sparse_method=self.sparse_method, scale=self.scale, beta=torch.tensor(10.0), 
                                                                 config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-                                                                num_inducing_points=self.num_inducing_points, verbose=v, task_id=i, device=self.device, classification=True)
+                                                                num_inducing_points=self.num_inducing_points, maxItr=self.maxItr_rvm, verbose=v, task_id=i, device=self.device, classification=True)
                     else:
                         inducing_points, frvm_acc = get_inducing_points(single_model.base_covar_module, #.base_kernel,
                                                                 z_train, target_list[idx], sparse_method=self.sparse_method, scale=self.scale,
                                                                 config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-                                                                num_inducing_points=self.num_inducing_points, verbose=v, task_id=i, device=self.device)
+                                                                num_inducing_points=self.num_inducing_points, maxItr=self.maxItr_rvm, verbose=v, task_id=i, device=self.device)
                 ip_values = inducing_points.z_values.cuda()
                 ip_labels = target_list[idx][inducing_points.index]
                 alpha_m = inducing_points.alpha
@@ -465,12 +468,12 @@ class Sparse_DKT_Exact(MetaTemplate):
                     inducing_points, frvm_acc = get_inducing_points_regression(single_model.base_covar_module, #.base_kernel,
                                                             z_train, target_list[idx], sparse_method=self.sparse_method, scale=self.scale, beta=torch.tensor(10.0), 
                                                             config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-                                                            num_inducing_points=self.num_inducing_points, verbose=False, task_id=i, device=self.device, classification=True)
+                                                            num_inducing_points=self.num_inducing_points, maxItr=self.maxItr_rvm, verbose=False, task_id=i, device=self.device, classification=True)
                 else:
                     inducing_points, frvm_acc = get_inducing_points(single_model.base_covar_module, #.base_kernel,
                                                             z_train, target_list[idx], sparse_method=self.sparse_method, scale=self.scale,
                                                             config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
-                                                            num_inducing_points=self.num_inducing_points, verbose=False, task_id=i, device=self.device)
+                                                            num_inducing_points=self.num_inducing_points, maxItr=self.maxItr_rvm, verbose=False, task_id=i, device=self.device)
             ip_count.append(inducing_points.count)
             self.frvm_acc.append(frvm_acc)
             ip_values = inducing_points.z_values.cuda()
