@@ -216,8 +216,9 @@ class Sparse_DKT_Exact(MetaTemplate):
                                                                 config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
                                                                 num_inducing_points=self.num_inducing_points, maxItr=self.maxItr_rvm, tol=self.tol_rvm,
                                                                 verbose=v, task_id=i, device=self.device)
-                ip_values = inducing_points.z_values.cuda()
-                ip_labels = target_list[idx][inducing_points.index]
+                ip_index = inducing_points.index
+                ip_values = z_train[ip_index]
+                ip_labels = target_list[idx][ip_index]
                 alpha_m = inducing_points.alpha
                 mu_m = inducing_points.mu
                 scales = inducing_points.scale

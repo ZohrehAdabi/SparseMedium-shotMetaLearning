@@ -209,7 +209,8 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
                                                             verbose=True, task_id=i, device=self.device)
                 self.frvm_acc.append(frvm_acc)
         
-            ip_values = inducing_points.z_values.cuda()
+            ip_index = inducing_points.index
+            ip_values = z_train[ip_index]
             ip_labels = target[inducing_points.index]
             alpha_m = inducing_points.alpha
             mu_m = inducing_points.mu

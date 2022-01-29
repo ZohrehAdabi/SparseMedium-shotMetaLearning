@@ -212,12 +212,13 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             # K_m = K_m / scales
             mu_m = mu_m / scales
             alpha_m = alpha_m / scales**2 
+            penalty = None
             if self.add_rvm_mll or self.add_rvm_mll_one  or self.add_penalty:
                 rvm_mll, penalty = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
             elif self.add_rvm_ll or self.add_rvm_ll_one or self.add_rvm_mse:
                 rvm_mll, rvm_mse = rvm_ML_regression(K_m, labels, alpha_m, mu_m, beta)
             else: #when rvm is not used this function runs to have rvm_mll  for report in print
-                rvm_mll = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
+                rvm_mll, penalty = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
 
             predictions = self.model(z)
             mll = self.mll(predictions, self.model.train_targets)
@@ -228,6 +229,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                 loss = -(1-l) * mll  - l * rvm_mll 
             elif self.add_penalty:
                 loss = - mll  - l * penalty
+                
             elif self.add_rvm_mse:
                 loss =  - mll + l *  rvm_mse
             else: 
@@ -240,14 +242,15 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             mse = self.mse(predictions.mean, labels)
             mll = mll.item()
             rvm_mll = rvm_mll.item()
-            penalty =penalty.item()
+            if penalty is not None:
+                penalty = penalty.item()
             frvm_mse = frvm_mse.item()
             self.iteration = itr+(epoch*len(batch_labels))
             if(self.writer is not None): self.writer.add_scalar('MLL + RVM MLL (Loss)', loss.item(), self.iteration)
             if(self.writer is not None): self.writer.add_scalar('MLL', -mll, self.iteration)
             if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll, self.iteration)
             if(self.writer is not None): self.writer.add_scalar('RVM MSE', frvm_mse, self.iteration)
-            if(self.writer is not None): self.writer.add_scalar('RVM Penalty', -penalty, self.iteration)
+            if(penalty is not None) and (self.writer is not None): self.writer.add_scalar('RVM Penalty', -penalty, self.iteration)
             if self.kernel_type=='rbf':
                 if ((epoch%1==0) & (itr%print_freq==0)):
                     print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.4f ML %.4f RVM ML: %.4f RVM MSE: %.4f  MSE: %.3f noise: %.4f outputscale: %.3f lengthscale: %.3f' % (
