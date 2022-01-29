@@ -184,8 +184,8 @@ if __name__ == '__main__':
 
         if(params.method == 'Sparse_DKT_Nystrom'):
             model = Sparse_DKT_Nystrom(model_dict[params.model], params.kernel_type, **train_few_shot_params, sparse_method=params.sparse_method,
-                                    add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, lambda_rvm=params.lambda_rvm, regression=params.regression, 
-                                    num_inducing_points=params.num_ip, 
+                                    add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, lambda_rvm=params.lambda_rvm, 
+                                    maxItr_rvm=params.maxItr_rvm, regression=params.regression, num_inducing_points=params.num_ip, 
                                     normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, 
                                     gamma=params.gamma, dirichlet=params.dirichlet)
             if params.dirichlet:
@@ -201,6 +201,7 @@ if __name__ == '__main__':
             if params.lr_decay: id += '_lr_decay'
             if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
             if params.rvm_ll: id += f'_rvm_ll_{params.lambda_rvm}'
+            if params.maxItr_rvm!=-1: id += f'_maxItr_rvm_{params.maxItr_rvm}'
             if params.regression: id += f'_regression'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
@@ -212,8 +213,8 @@ if __name__ == '__main__':
         
         elif(params.method == 'Sparse_DKT_Exact'):
             model = Sparse_DKT_Exact(model_dict[params.model], params.kernel_type, **train_few_shot_params, sparse_method=params.sparse_method, 
-                                    add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, lambda_rvm=params.lambda_rvm, regression=params.regression,
-                                    num_inducing_points=params.num_ip,
+                                    add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, lambda_rvm=params.lambda_rvm, 
+                                    maxItr_rvm=params.maxItr_rvm, regression=params.regression, num_inducing_points=params.num_ip,
                                     normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
             if params.dirichlet:
                 id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
@@ -227,6 +228,7 @@ if __name__ == '__main__':
             if params.lr_decay: id += '_lr_decay'
             if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
             if params.rvm_ll: id += f'_rvm_ll_{params.lambda_rvm}'
+            if params.maxItr_rvm!=-1: id += f'_maxItr_rvm_{params.maxItr_rvm}'
             if params.regression: id += f'_regression'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
@@ -238,7 +240,7 @@ if __name__ == '__main__':
         
         elif(params.method == 'Sparse_DKT_RVM'):
             model = Sparse_DKT_RVM(model_dict[params.model], params.kernel_type, **train_few_shot_params, sparse_method=params.sparse_method,
-                                    add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, lambda_rvm=params.lambda_rvm, regression=params.regression, 
+                                    add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, lambda_rvm=params.lambda_rvm, maxItr_rvm=params.maxItr_rvm, regression=params.regression, 
                                     rvm_mll_only=params.rvm_mll_only, rvm_ll_only=params.rvm_ll_only, num_inducing_points=params.num_ip, 
                                     normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, 
                                     gamma=params.gamma, dirichlet=params.dirichlet)
@@ -255,6 +257,7 @@ if __name__ == '__main__':
             if params.lr_decay: id += '_lr_decay'
             if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
             if params.rvm_ll: id += f'_rvm_ll_{params.lambda_rvm}'
+            if params.maxItr_rvm!=-1: id += f'_maxItr_rvm_{params.maxItr_rvm}'
             if params.regression: id += f'_regression'
             if params.rvm_mll_only: id += f'_rvm_mll_only'
             if params.rvm_ll_only: id += f'_rvm_ll_only'
@@ -269,7 +272,7 @@ if __name__ == '__main__':
         elif params.method == 'Sparse_DKT_binary_Nystrom':
             model = Sparse_DKT_binary_Nystrom(model_dict[params.model], params.kernel_type, **train_few_shot_params, sparse_method=params.sparse_method, 
                                     add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, add_rvm_mll_one=params.rvm_mll_one, lambda_rvm=params.lambda_rvm, 
-                                    regression=params.regression,
+                                    maxItr_rvm=params.maxItr_rvm, regression=params.regression,
                                     num_inducing_points=params.num_ip,
                                     normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, 
                                     gamma=params.gamma, dirichlet=params.dirichlet)
@@ -286,6 +289,7 @@ if __name__ == '__main__':
             if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
             if params.rvm_ll: id += f'_rvm_ll_{params.lambda_rvm}'
             if params.rvm_mll_one: id += f'_rvm_mll_one_{params.lambda_rvm}'
+            if params.maxItr_rvm!=-1: id += f'_maxItr_rvm_{params.maxItr_rvm}'
             if params.regression: id += f'_regression'
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
@@ -298,9 +302,39 @@ if __name__ == '__main__':
                 print(f'\nconstFRVM\n')
                 model.load_constant_model()
         
+        elif params.method == 'Sparse_DKT_binary_Exact':
+            model = Sparse_DKT_binary_Exact(model_dict[params.model], params.kernel_type, **train_few_shot_params, sparse_method=params.sparse_method, 
+                                    add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, add_rvm_mll_one=params.rvm_mll_one, 
+                                    lambda_rvm=params.lambda_rvm, maxItr_rvm=params.maxItr_rvm, regression=params.regression, 
+                                    num_inducing_points=params.num_ip,
+                                    normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
+            if params.dirichlet:
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+            else:
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'           
+            
+            if params.sparse_method in ['FRVM', 'augmFRVM']: 
+                id += f'_confg_{params.config}_{params.align_thr}'
+                if params.gamma: id += '_gamma'
+                if params.scale: id += '_scale'
+            if params.normalize: id += '_norm'
+            if params.lr_decay: id += '_lr_decay'
+            if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
+            if params.rvm_ll: id += f'_rvm_ll_{params.lambda_rvm}'
+            if params.rvm_mll_one: id += f'_rvm_mll_one_{params.lambda_rvm}'
+            if params.maxItr_rvm!=-1: id += f'_maxItr_rvm_{params.maxItr_rvm}'
+            if params.regression: id += f'_regression'
+            if params.train_aug: id += '_aug'
+            if params.warmup:  id += '_warmup'
+            if params.freeze: id += '_freeze'
+            if params.sparse_method in ['Random', 'KMeans', 'augmFRVM']: 
+                if params.num_ip is not None:
+                    id += f'_ip_{params.num_ip}'
+            model.init_summary(id=id, dataset=params.dataset)   
+
         elif params.method == 'Sparse_DKT_binary_RVM':
             model = Sparse_DKT_binary_RVM(model_dict[params.model], params.kernel_type, **train_few_shot_params, sparse_method=params.sparse_method, 
-                                    add_rvm_mll=params.rvm_mll, add_rvm_mll_one=params.rvm_mll_one, lambda_rvm=params.lambda_rvm, regression=params.regression,
+                                    add_rvm_mll=params.rvm_mll, add_rvm_mll_one=params.rvm_mll_one, lambda_rvm=params.lambda_rvm, maxItr_rvm=params.maxItr_rvm, regression=params.regression,
                                      rvm_mll_only=params.rvm_mll_only, rvm_ll_only=params.rvm_ll_only, num_inducing_points=params.num_ip, 
                                     normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
             if params.dirichlet:
@@ -315,6 +349,7 @@ if __name__ == '__main__':
             if params.lr_decay: id += '_lr_decay'
             if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
             if params.rvm_mll_one: id += f'_rvm_mll_one_{params.lambda_rvm}' 
+            if params.maxItr_rvm!=-1: id += f'_maxItr_rvm_{params.maxItr_rvm}'
             if params.regression: id += f'_regression'
             if params.rvm_mll_only: id += f'_rvm_mll_only'
             if params.rvm_ll_only: id += f'_rvm_ll_only'
@@ -328,7 +363,7 @@ if __name__ == '__main__':
             if params.sparse_method=='constFRVM':
                 print(f'\nconstFRVM\n')
                 model.load_constant_model()
-        
+     
 
         elif params.method == 'Sp_DKT_Bin_Nyst_NLoss':
             model = Sparse_DKT_binary_Nystrom_new_loss(model_dict[params.model], params.kernel_type, **train_few_shot_params, sparse_method=params.sparse_method, 
@@ -347,34 +382,6 @@ if __name__ == '__main__':
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
-            model.init_summary(id=id, dataset=params.dataset)
-        
-        elif params.method == 'Sparse_DKT_binary_Exact':
-            model = Sparse_DKT_binary_Exact(model_dict[params.model], params.kernel_type, **train_few_shot_params, sparse_method=params.sparse_method, 
-                                    add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, add_rvm_mll_one=params.rvm_mll_one, lambda_rvm=params.lambda_rvm, regression=params.regression, 
-                                    num_inducing_points=params.num_ip,
-                                    normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
-            if params.dirichlet:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
-            else:
-                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'           
-            
-            if params.sparse_method in ['FRVM', 'augmFRVM']: 
-                id += f'_confg_{params.config}_{params.align_thr}'
-                if params.gamma: id += '_gamma'
-                if params.scale: id += '_scale'
-            if params.normalize: id += '_norm'
-            if params.lr_decay: id += '_lr_decay'
-            if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
-            if params.rvm_ll: id += f'_rvm_ll_{params.lambda_rvm}'
-            if params.rvm_mll_one: id += f'_rvm_mll_one_{params.lambda_rvm}'
-            if params.regression: id += f'_regression'
-            if params.train_aug: id += '_aug'
-            if params.warmup:  id += '_warmup'
-            if params.freeze: id += '_freeze'
-            if params.sparse_method in ['Random', 'KMeans', 'augmFRVM']: 
-                if params.num_ip is not None:
-                    id += f'_ip_{params.num_ip}'
             model.init_summary(id=id, dataset=params.dataset)
 
         elif params.method == 'Sp_DKT_Bin_Exact_NLoss':
@@ -493,6 +500,7 @@ if __name__ == '__main__':
             if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
             if params.rvm_ll: id += f'_rvm_ll_{params.lambda_rvm}'
             if params.rvm_mll_one: id += f'_rvm_mll_one_{params.lambda_rvm}'
+            if params.maxItr_rvm!=-1: id += f'_maxItr_rvm_{params.maxItr_rvm}'
             if params.regression: id += f'_regression'
             if params.rvm_mll_only: id += f'_rvm_mll_only'
             if params.rvm_ll_only: id += f'_rvm_ll_only'
