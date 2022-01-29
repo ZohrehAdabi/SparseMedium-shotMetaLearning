@@ -20,6 +20,7 @@ from methods.DKT_binary import DKT_binary
 from methods.DKT_binary_new_loss import DKT_binary_new_loss
 from methods.Sparse_DKT_Nystrom import Sparse_DKT_Nystrom
 from methods.Sparse_DKT_Exact import Sparse_DKT_Exact
+from methods.Sparse_DKT_RVM import Sparse_DKT_RVM
 from methods.Sparse_DKT_binary_Nystrom import Sparse_DKT_binary_Nystrom
 from methods.Sparse_DKT_binary_RVM import Sparse_DKT_binary_RVM
 from methods.Sparse_DKT_binary_Nystrom_new_loss import Sparse_DKT_binary_Nystrom_new_loss
@@ -164,7 +165,7 @@ if __name__ == '__main__':
         elif params.method == 'baseline++':
             model = BaselineTrain(model_dict[params.model], params.num_classes, loss_type='dist')
 
-    elif params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss', 
+    elif params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_RVM', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss', 
                             'Sparse_DKT_binary_Exact', 'Sp_DKT_Bin_Exact_NLoss', 
                             'DKT', 'DKT_binary', 'DKT_binary_new_loss', 'protonet', 
                             'matchingnet', 'relationnet', 'relationnet_softmax', 'maml', 'maml_approx']:
@@ -234,6 +235,36 @@ if __name__ == '__main__':
                 if params.num_ip is not None:
                     id += f'_ip_{params.num_ip}'
             model.init_summary(id=id, dataset=params.dataset)
+        
+        elif(params.method == 'Sparse_DKT_RVM'):
+            model = Sparse_DKT_RVM(model_dict[params.model], params.kernel_type, **train_few_shot_params, sparse_method=params.sparse_method,
+                                    add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, lambda_rvm=params.lambda_rvm, regression=params.regression, 
+                                    rvm_mll_only=params.rvm_mll_only, rvm_ll_only=params.rvm_ll_only, num_inducing_points=params.num_ip, 
+                                    normalize=params.normalize, scale=params.scale, config=params.config, align_threshold=params.align_thr, 
+                                    gamma=params.gamma, dirichlet=params.dirichlet)
+            if params.dirichlet:
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+            else:
+                id = f'{params.method}_{params.sparse_method}_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'           
+            
+            if params.sparse_method in ['FRVM', 'augmFRVM']: 
+                id += f'_confg_{params.config}_{params.align_thr}'
+                if params.gamma: id += '_gamma'
+                if params.scale: id += '_scale'
+            if params.normalize: id += '_norm'
+            if params.lr_decay: id += '_lr_decay'
+            if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
+            if params.rvm_ll: id += f'_rvm_ll_{params.lambda_rvm}'
+            if params.regression: id += f'_regression'
+            if params.rvm_mll_only: id += f'_rvm_mll_only'
+            if params.rvm_ll_only: id += f'_rvm_ll_only'
+            if params.train_aug: id += '_aug'
+            if params.warmup:  id += '_warmup'
+            if params.freeze: id += '_freeze'
+            if params.sparse_method in ['Random', 'KMeans', 'augmFRVM']: 
+                if params.num_ip is not None:
+                    id += f'_ip_{params.num_ip}'
+            model.init_summary(id=id, dataset=params.dataset)      
 
         elif params.method == 'Sparse_DKT_binary_Nystrom':
             model = Sparse_DKT_binary_Nystrom(model_dict[params.model], params.kernel_type, **train_few_shot_params, sparse_method=params.sparse_method, 
@@ -447,7 +478,7 @@ if __name__ == '__main__':
     #     params.checkpoint_dir += '_aug'
     if not params.method in ['baseline', 'baseline++']:
         
-        if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 
+        if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_RVM', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 
                                 'Sp_DKT_Bin_Nyst_NLoss', 'Sparse_DKT_binary_Exact', 'Sp_DKT_Bin_Exact_NLoss']:
             if params.dirichlet:
                 id = f'_{params.sparse_method}_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'

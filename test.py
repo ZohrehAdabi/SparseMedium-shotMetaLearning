@@ -19,6 +19,7 @@ from methods.baselinefinetune import BaselineFinetune
 from methods.protonet import ProtoNet
 from methods.Sparse_DKT_Nystrom import Sparse_DKT_Nystrom
 from methods.Sparse_DKT_Exact import Sparse_DKT_Exact
+from methods.Sparse_DKT_RVM import Sparse_DKT_RVM
 from methods.Sparse_DKT_binary_Nystrom import Sparse_DKT_binary_Nystrom
 from methods.Sparse_DKT_binary_RVM import Sparse_DKT_binary_RVM
 from methods.Sparse_DKT_binary_Nystrom_new_loss import Sparse_DKT_binary_Nystrom_new_loss
@@ -97,6 +98,12 @@ def single_test(params):
         model           = Sparse_DKT_Nystrom(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
                                 add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, lambda_rvm=params.lambda_rvm, regression=params.regression, 
                                 num_inducing_points=params.num_ip, normalize=params.normalize, scale=params.scale,
+                                config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
+    elif params.method == 'Sparse_DKT_RVM':
+        model           = Sparse_DKT_RVM(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
+                                add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, lambda_rvm=params.lambda_rvm, regression=params.regression, 
+                                rvm_mll_only=params.rvm_mll_only, rvm_ll_only=params.rvm_ll_only, num_inducing_points=params.num_ip, 
+                                normalize=params.normalize, scale=params.scale,
                                 config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
     elif params.method == 'Sparse_DKT_Exact':
         model           = Sparse_DKT_Exact(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
