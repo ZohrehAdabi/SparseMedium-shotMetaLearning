@@ -518,7 +518,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
 
             elif self.random:
                 mll = self.train_loop_random(epoch, n_support, n_samples, optimizer)
-                if epoch%1==0:
+                if ((epoch>=50) and epoch%1==0) or ((epoch<50) and epoch%5==0):
                     print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
                     mse_list = []
                     val_count = 80
@@ -564,7 +564,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             #     optimizer.param_groups[1]['lr'] = optimizer.param_groups[1]['lr'] * 0.1
 
         print(Fore.CYAN,"-"*30, f'\nBest Val MSE {best_mse:4f} at epoch {best_epoch}\n', Fore.RESET)
-        print(Fore.CYAN, f'\nBest Val MSE {best_mse_rvm:4f} at epoch {best_epoch_rvm}\n', "-"*30, Fore.RESET)
+        if  self.f_rvm: print(Fore.CYAN, f'\nBest Val MSE {best_mse_rvm:4f} at epoch {best_epoch_rvm}\n', "-"*30, Fore.RESET)
         mll = np.mean(mll_list)
 
         
