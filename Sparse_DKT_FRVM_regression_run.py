@@ -58,7 +58,7 @@ for config in config_list:
                 L = ['python', f'./train_regression.py',  
                                         '--method', f'Sparse_DKT_RVM', '--sparse_method', f'{sparse_method}',  '--n_samples', '72', '--n_support', '60', '--stop_epoch', f'{stop_epoch}',
                                     #   '--show_plots_features',
-                                        '--seed',  f'{sd}', '--config', f'0001', '--align_thr', f'{align_thr}',  
+                                        '--seed',  f'{sd}', '--config', f'1001', '--align_thr', f'{align_thr}',  
                                         '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
                                         '--kernel_type', 'rbf', '--init',  '--rvm_mll_only'
                         ]
