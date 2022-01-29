@@ -3,6 +3,7 @@ from subprocess import run
 config_list = ['000', '001', '010', '011']
 dataset_list = ['omniglot', 'CUB', 'miniImagenet']
 method_list = ['Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_Exact'] # , 'DKT_binary'
+method_list = ['Sparse_DKT_binary_Exact']
 
 lr_gp_list = [0.1, 0.01, 0.001, 0.0001]
 lr_net_list = [0.01, 0.001, 0.0001]
