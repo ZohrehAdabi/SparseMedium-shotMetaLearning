@@ -537,6 +537,7 @@ def plot_result(rv, X_test, y_test, covar_module, K, N, mu_m, active):
     y_pred = (y_pred > 0.5).to(int)
     # err_var = (1/beta) + K @ Sigma_m @ K.T
     # y_std = torch.sqrt(torch.diag(err_var))
+    targets[targets==-1]=0
     acc = torch.sum(y_pred==targets)
     print(f'FRVM ACC:{(acc/N):.1%}')
 

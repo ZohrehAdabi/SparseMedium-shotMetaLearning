@@ -179,7 +179,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             # target = torch.zeros(len(y_train), dtype=torch.float32) 
             start_index = 0
             stop_index = start_index+samples_per_model
-            target[start_index:stop_index] = -1.0
+            target[start_index:stop_index] = 0 # -1.0
             target = target.cuda()
 
             self.model.train()
@@ -441,7 +441,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         # target = torch.zeros(len(y_train), dtype=torch.float32) 
         start_index = 0
         stop_index = start_index+samples_per_model
-        target[start_index:stop_index] = -1.0
+        target[start_index:stop_index] = 0 #-1.0
         target = target.cuda()
 
         z_train = self.feature_extractor.forward(x_train).detach() #[340, 64]
