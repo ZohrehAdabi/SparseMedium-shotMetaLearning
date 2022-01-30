@@ -483,7 +483,8 @@ if __name__ == '__main__':
                 model.n_task = 32
                 model.task_update_num = 1
                 model.train_lr = 0.1
-    
+        
+        print(f'\n{id}\n')
     else:
         raise ValueError('Unknown method')
 
