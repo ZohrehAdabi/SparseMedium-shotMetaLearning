@@ -13,7 +13,7 @@ lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['1001']
 seed_list = [1, 2, 3]
-method_list = ['Sparse_DKT_Exact', 'Sparse_DKT_Exact']
+method_list = ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact']
 sparse_method = 'FRVM' # 'random'
 for config in config_list:
     for lr_gp in lr_gp_list:
