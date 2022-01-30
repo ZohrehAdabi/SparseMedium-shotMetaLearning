@@ -129,6 +129,9 @@ def rvm_ML_full(K_m, targets, alpha_m, mu_m, U, beta):
         beta_K_m	= (torch.diag(beta) @ K_m) 
         H			= (K_m.T @ beta_K_m + torch.diag(alpha_m))
         U, info =  torch.linalg.cholesky_ex(H, upper=True)
+        y = torch.sigmoid(K_m @ mu_m)
+        e	= (targets-y)
+        g	= K_m.T @ e - (alpha_m * mu_m)
         U_g = U.T.pinverse() @ g  #
         mu_m = U.pinverse() @ U_g #
         K_mu_m = K_m @ mu_m
