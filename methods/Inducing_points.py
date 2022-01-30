@@ -118,7 +118,9 @@ def rvm_ML_full(K_m, targets, alpha_m, mu_m, U, beta):
         # K_m = K_m.to(torch.float32)
         # LogOut	= (targets_pseudo_linear * 0.9 + 1) / 2
         # mu_m	=  K_m.pinverse() @ (torch.log(LogOut / (1 - LogOut))) #
-        
+        K_mu_m = K_m @ mu_m
+        y	= torch.sigmoid(K_mu_m)
+        beta	= y * (1-y)
         # with torch.no_grad():
             # mu_m = torch.linalg.lstsq(K_m, (torch.log(LogOut / (1 - LogOut)))).solution
             # mu_m = mu_m.to(torch.float64)
@@ -129,15 +131,15 @@ def rvm_ML_full(K_m, targets, alpha_m, mu_m, U, beta):
         beta_K_m	= (torch.diag(beta) @ K_m) 
         H			= (K_m.T @ beta_K_m + torch.diag(alpha_m))
         U, info =  torch.linalg.cholesky_ex(H, upper=True)
-        y = torch.sigmoid(K_m @ mu_m)
-        e	= (targets-y)
-        g	= K_m.T @ e - (alpha_m * mu_m)
-        U_g = U.T.pinverse() @ g  #
-        delta_mu = U.pinverse() @ U_g #
-        mu_m = mu_m + 0.01 * delta_mu
-        K_mu_m = K_m @ mu_m
-        y	= torch.sigmoid(K_mu_m)
-        beta	= y * (1-y)
+        # y = torch.sigmoid(K_m @ mu_m)
+        # e	= (targets-y)
+        # g	= K_m.T @ e - (alpha_m * mu_m)
+        # U_g = U.T.pinverse() @ g  #
+        # delta_mu = U.pinverse() @ U_g #
+        # mu_m = mu_m + 0.01 * delta_mu
+        # K_mu_m = K_m @ mu_m
+        # y	= torch.sigmoid(K_mu_m)
+        # beta	= y * (1-y)
         dataLikely = (t[t==1].T @ torch.log(y[t==1]+1e-12) + ((1-t[t==0]).T @ torch.log(1-y[t==0]+1e-12)))
         logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
         # 2001-JMLR-SparseBayesianLearningandtheRelevanceVectorMachine in Appendix:
