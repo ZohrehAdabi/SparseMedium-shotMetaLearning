@@ -107,8 +107,9 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
         # Priority of Addition       
         if anyToAdd and add_priority:
 
-            save_deltaML_recomp = deltaML[recompute].clone() 
-            save_deltaML_del = deltaML[delete].clone() 
+            if check_gamma:
+                save_deltaML_recomp = deltaML[recompute].clone() 
+                save_deltaML_del = deltaML[delete].clone() 
             deltaML[recompute] = 0
             deltaML[delete] = 0
 
