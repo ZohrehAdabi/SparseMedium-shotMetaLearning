@@ -31,6 +31,7 @@ def parse_args(script):
     parser.add_argument('--align_thr'           , default=1e-3, type=float, help='1e-3, larger value leads to more rejection and sparseness')
     parser.add_argument('--num_ip'              , type=int, help='num inducing points for random and Kmeans')
     parser.add_argument('--sparse_method'       , default='FRVM', type=str, help='FRVM|KMeans|Random|augm_FRVM')
+    parser.add_argument('--separate'            , action='store_true', help='Use separeted Dataset in training.') 
     parser.add_argument('--dirichlet'           , action='store_true',  help='perform dirichlet classification')
     parser.add_argument('--gamma'               , action='store_true', help='Delete data with low Gamma in FRVM algorithm') 
     parser.add_argument('--lr_gp'               , default=1e-3, type=float, help='learning rate for [GP] model')
@@ -47,7 +48,7 @@ def parse_args(script):
     parser.add_argument('--rvm_mll_only'        , action='store_true', help='Use MLL of RVM only for loss.') 
     parser.add_argument('--rvm_ll_only'         , action='store_true', help='Use Likelihood of RVM only for loss.') 
     parser.add_argument('--lambda_rvm'          , default=1e-3, type=float, help='Coefficient of RVM MLL in Loss function')
-    parser.add_argument('--regression'          , action='store_true', help='Uae gaussian RVM for classification insted of approximation.') 
+    parser.add_argument('--regression'          , action='store_true', help='Use gaussian RVM for classification insted of approximation.') 
     parser.add_argument('--rvm_mse'             , action='store_true', help='Add MLL of RVM to the outer GP MLL loss.') 
     parser.add_argument('--scale'               , action='store_true', help='normalize kernel matrix, K(z, z) in z space')
     if script == 'train':

@@ -100,6 +100,20 @@
             // python test.py --method "Sparse_DKT_binary_Nystrom"  --sparse_method "FRVM" --dataset "omniglot"   --train_n_way 5 --test_n_way 5 --n_shot 15 --n_query 5 --seed 1 --scale --config "010" --align_thr 1e-3  --lr_gp  1e-1 --lr_net  1e-2 --kernel_type "linear"
         },
         {
+            "name": "Sparse_DKT_binary_Exact [omniglot]: train",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/train.py",
+            "console": "integratedTerminal",
+            "args": ["--method","Sparse_DKT_binary_Exact", "--sparse_method", "FRVM", "--dataset", "omniglot",  
+            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "15", "--n_query", "5",
+                "--seed","1", "--scale", "--config", "011", "--align_thr", "1e-3", "--lr_gp", "1e-3", "--lr_net",  "1e-3",
+                "--kernel_type", "linear", "--rvm_mll", "--lambda_rvm" , "0.1", "--separate"
+                //,"--dirichlet"
+                ]  //--train_aug //  "--normalize" is bad
+//python train.py  --method "Sparse_DKT_binary_Nystrom"  --sparse_method "FRVM" --dataset "omniglot" --train_n_way 2 --test_n_way 2  --n_shot 15 --n_query 5 --seed 1 --scale --config "010" --align_thr 0    --lr_gp 1e-1 --lr_net 1e-3 --kernel_type "linear"
+    },
+        {
             "name": "Sparse_DKT_Nystrom [CUB]: train",
             "type": "python",
             "request": "launch",

@@ -199,6 +199,7 @@ def single_test(params):
            
 
         if params.normalize: id += '_norm'
+        if params.separate: id += '_separate'
         if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
         if params.rvm_ll: id += f'_rvm_ll_{params.lambda_rvm}'
         if params.rvm_mll_one: id += f'_rvm_mll_one_{params.lambda_rvm}'

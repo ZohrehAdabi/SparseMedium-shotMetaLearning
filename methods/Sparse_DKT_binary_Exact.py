@@ -39,12 +39,14 @@ except ImportError:
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=5 --train_aug
 IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j_idx")
 class Sparse_DKT_binary_Exact(MetaTemplate):
-    def __init__(self, model_func, kernel_type, n_way, n_support, sparse_method, add_rvm_mll=False, add_rvm_ll=False, add_rvm_mll_one=False, lambda_rvm=0.1, 
+    def __init__(self, model_func, kernel_type, n_way, n_support, sparse_method, separate=False, add_rvm_mll=False, 
+                            add_rvm_ll=False, add_rvm_mll_one=False, lambda_rvm=0.1, 
                             maxItr_rvm=1000, tol_rvm=1e-4, regression=False, num_inducing_points=None, normalize=False, 
                             scale=False, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
         super(Sparse_DKT_binary_Exact, self).__init__(model_func, n_way, n_support)
         self.num_inducing_points = num_inducing_points
         self.sparse_method = sparse_method
+        self.separated = separate
         self.add_rvm_mll = add_rvm_mll
         self.add_rvm_ll = add_rvm_ll
         self.add_rvm_mll_one = add_rvm_mll_one
@@ -174,18 +176,30 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             x_train = x_all
             y_train = y_all
 
-            samples_per_model = int(len(y_train) / self.n_way) #25 / 5 = 5
-            target = torch.ones(len(y_train), dtype=torch.float32) * 1 
-            # target = torch.zeros(len(y_train), dtype=torch.float32) 
-            start_index = 0
-            stop_index = start_index+samples_per_model
-            target[start_index:stop_index] = -1.0
-            target = target.cuda()
+            if self.separated:
+                samples_per_model = int(len(y_support) / self.n_way) #25 / 5 = 5
+                target = torch.ones(len(y_support), dtype=torch.float32) * 1 
+                # target = torch.zeros(len(y_train), dtype=torch.float32) 
+                start_index = 0
+                stop_index = start_index+samples_per_model
+                target[start_index:stop_index] = -1.0
+                target = target.cuda()
+            else:
+                samples_per_model = int(len(y_train) / self.n_way) #25 / 5 = 5
+                target = torch.ones(len(y_train), dtype=torch.float32) * 1 
+                # target = torch.zeros(len(y_train), dtype=torch.float32) 
+                start_index = 0
+                stop_index = start_index+samples_per_model
+                target[start_index:stop_index] = -1.0
+                target = target.cuda()
 
             self.model.train()
             self.likelihood.train()
             self.feature_extractor.train()
-            z_train = self.feature_extractor.forward(x_train)
+            if self.separated:
+                z_train = self.feature_extractor.forward(x_support)
+            else:
+                z_train = self.feature_extractor.forward(x_train)
             if(self.normalize): z_train = F.normalize(z_train, p=2, dim=1)
 
             # train_list = [z_train]*self.n_way
