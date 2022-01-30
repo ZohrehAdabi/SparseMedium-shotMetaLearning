@@ -448,7 +448,7 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
     else:
         print(f'No method')
 
-    return IP(inducing_points, IP_index, num_IP, alpha, gamma, None, mu_m, scales_m, U, beta), acc
+    return IP(inducing_points, IP_index, num_IP, alpha, gamma, beta, mu_m, scales_m, U), acc
   
 
 def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_method, scale, beta,
