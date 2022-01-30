@@ -609,7 +609,7 @@ if __name__=='__main__':
         Scales	= torch.sqrt(torch.sum(kernel_matrix**2, axis=0))
         K = kernel_matrix.clone() / Scales
 
-    config = "011"
+    config = "001"
     align_thr = 1e-3
     gamma = False
     # scale = torch.sqrt(torch.sum(K) / N ** 2)
