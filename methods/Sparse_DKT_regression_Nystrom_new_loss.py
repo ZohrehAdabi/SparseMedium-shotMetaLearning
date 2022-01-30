@@ -199,6 +199,8 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
            
             ip_index = inducing_points.index
             ip_values = z[ip_index]
+            mu_m = inducing_points.mu
+            U = inducing_points.U
             self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=True)
             self.model.set_train_data(inputs=z, targets=y_support, strict=False)
 
@@ -238,9 +240,7 @@ class Sparse_DKT_regression_Nystrom_new_loss(nn.Module):
                 loss = - mll  - l * rvm_mll
             elif self.add_rvm_mll_one or self.add_rvm_ll_one:
                 loss = -(1-l) * mll  - l * rvm_mll 
-            elif self.add_penalty:
-                loss = - mll  - l * penalty
-                
+                   
             elif self.add_rvm_mse:
                 loss =  - mll + l *  rvm_mse
             else: 

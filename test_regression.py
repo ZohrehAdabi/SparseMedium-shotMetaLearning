@@ -128,10 +128,18 @@ for sd in range(seed, seed+repeat):
             if params.init: id += '_init'
             if params.lr_decay: id += '_lr_decay'
             if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
+            if params.rvm_ll: id += f'_rvm_ll_{params.lambda_rvm}'
+            if params.rvm_mll_one: id += f'_rvm_mll_one_{params.lambda_rvm}'
+            if params.rvm_ll_one:  id += f'_rvm_ll_one_{params.lambda_rvm}'
+            if params.penalty: id += f'_penalty_{params.lambda_rvm}'
+            if params.maxItr_rvm!=-1: id += f'_maxItr_rvm_{params.maxItr_rvm}'
+            if params.beta: id += f'_beta'
             if params.rvm_mse: id += f'_rvm_mse_{params.lambda_rvm}'
             id += f'_{params.kernel_type}_seed_{sd}'
             params.checkpoint_dir = params.checkpoint_dir + id
-            model = Sparse_DKT_regression_Nystrom_new_loss(bb, kernel_type=params.kernel_type, add_rvm_mll=params.rvm_mll, add_rvm_mse=params.rvm_mse, lambda_rvm=params.lambda_rvm, 
+            model = Sparse_DKT_regression_Nystrom_new_loss(bb, kernel_type=params.kernel_type, sparse_method=params.sparse_method, add_rvm_mll=params.rvm_mll, 
+                                add_rvm_ll=params.rvm_ll, add_rvm_mll_one=params.rvm_mll_one, add_rvm_ll_one=params.rvm_ll_one, add_rvm_mse=params.rvm_mse, 
+                                lambda_rvm=params.lambda_rvm, maxItr_rvm=params.maxItr_rvm, beta=params.beta, 
                                 normalize=params.normalize, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
                                 video_path=params.checkpoint_dir, 
                                 show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
@@ -193,10 +201,15 @@ for sd in range(seed, seed+repeat):
             if params.init: id += '_init'
             if params.lr_decay: id += '_lr_decay'
             if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
+            if params.rvm_ll: id += f'_rvm_ll_{params.lambda_rvm}'
+            if params.rvm_mll_one: id += f'_rvm_mll_one_{params.lambda_rvm}'
+            if params.maxItr_rvm!=-1: id += f'_maxItr_rvm_{params.maxItr_rvm}'
+            if params.beta: id += f'_beta'
             if params.rvm_mse: id += f'_rvm_mse_{params.lambda_rvm}'
             id += f'_{params.kernel_type}_seed_{sd}'
             params.checkpoint_dir = params.checkpoint_dir + id
-            model = Sparse_DKT_regression_Exact_new_loss(bb, kernel_type=params.kernel_type, add_rvm_mll=params.rvm_mll, add_rvm_mse=params.rvm_mse, lambda_rvm=params.lambda_rvm,
+            model = Sparse_DKT_regression_Exact_new_loss(bb, kernel_type=params.kernel_type, sparse_method=params.sparse_method, add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, 
+                                add_rvm_mll_one=params.rvm_mll_one, add_rvm_mse=params.rvm_mse, lambda_rvm=params.lambda_rvm, maxItr_rvm=params.maxItr_rvm, beta=params.beta, 
                                 normalize=params.normalize, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
                                 video_path=params.checkpoint_dir, 
                                 show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features, training=False).cuda()
