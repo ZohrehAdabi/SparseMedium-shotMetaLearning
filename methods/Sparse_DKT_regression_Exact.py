@@ -205,6 +205,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
             # K_m = K_m / scales
             mu_m = mu_m / scales
             alpha_m = alpha_m / scales**2
+            penalty = None
             if self.add_rvm_mll:
                 rvm_mll, penalty = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
             elif self.add_rvm_ll or self.add_rvm_mse:
@@ -236,6 +237,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
             if(self.writer is not None): self.writer.add_scalar('MLL', -mll, self.iteration)
             if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll, self.iteration)
             if(self.writer is not None): self.writer.add_scalar('RVM MSE', frvm_mse, self.iteration)
+            if(penalty is not None) and (self.writer is not None): self.writer.add_scalar('RVM Penalty', -penalty, self.iteration)
             if self.kernel_type=='rbf':
                 if ((epoch%1==0) & (itr%print_freq==0)):
                     print(Fore.LIGHTRED_EX,'[%02d/%02d] - Loss: %.4f ML %.4f RVM ML: %.4f RVM MSE: %.4f  MSE: %.3f noise: %.4f outputscale: %.3f lengthscale: %.3f' % (
@@ -425,7 +427,9 @@ class Sparse_DKT_regression_Exact(nn.Module):
 
         mll_list = []
         best_mse = 10e5 #stop_epoch//2
+        best_mse_rvm = 10e5
         best_epoch = 0
+        best_epoch_rvm = 0
         # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5, 50, 80], gamma=0.1)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.1)
         # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
@@ -461,6 +465,12 @@ class Sparse_DKT_regression_Exact(nn.Module):
                         model_name = self.best_path + '_best_model.tar'
                         self.save_best_checkpoint(epoch+1, best_mse, model_name)
                         print(Fore.LIGHTRED_EX, f'Best MSE: {best_mse:.4f}', Fore.RESET)
+                    if best_mse_rvm >= mse_r:
+                        best_mse_rvm = mse_r
+                        best_epoch_rvm = epoch
+                        model_name = self.best_path + '_best_model_rvm.tar'
+                        self.save_best_checkpoint(epoch+1, best_mse_rvm, model_name)
+                        print(Fore.LIGHTRED_EX, f'Best MSE RVM: {best_mse_rvm:.4f}', Fore.RESET)
                     print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => MSE RVM: {mse_r:.4f}, MSE(norm): {mse:.4f}, MSE: {mse_:.4f}, SV: {sv_c:.2f} Best MSE: {best_mse:.4f}', Fore.RESET)
                     if(self.writer is not None):
                         self.writer.add_scalar('MSE (norm) Val.', mse, epoch)
@@ -531,6 +541,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
                     return mll, mll_list
 
         print(Fore.CYAN,"-"*30, f'\nBest Val MSE {best_mse:4f} at epoch {best_epoch}\n', "-"*30, Fore.RESET)
+        if  self.f_rvm: print(Fore.CYAN, f'\nBest Val MSE {best_mse_rvm:4f} at epoch {best_epoch_rvm}\n', "-"*30, Fore.RESET)
         mll = np.mean(mll_list)
 
         

@@ -143,12 +143,21 @@ elif params.method=='Sparse_DKT_Nystrom_new_loss':
         if params.init: id += '_init'
         if params.lr_decay: id += '_lr_decay'
         if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
+        if params.rvm_ll: id += f'_rvm_ll_{params.lambda_rvm}'
+        if params.rvm_mll_one: id += f'_rvm_mll_one_{params.lambda_rvm}'
+        if params.rvm_ll_one:  id += f'_rvm_ll_one_{params.lambda_rvm}'
+        if params.penalty: id += f'_penalty_{params.lambda_rvm}'
+        if params.maxItr_rvm!=-1: id += f'_maxItr_rvm_{params.maxItr_rvm}'
+        if params.beta: id += f'_beta'
         if params.rvm_mse: id += f'_rvm_mse_{params.lambda_rvm}'
         id += f'_{params.kernel_type}_seed_{params.seed}'
         params.checkpoint_dir = params.checkpoint_dir + id
 
-        model = Sparse_DKT_regression_Nystrom_new_loss(bb, kernel_type=params.kernel_type, add_rvm_mll=params.rvm_mll, add_rvm_mse=params.rvm_mse, lambda_rvm=params.lambda_rvm, 
-                            normalize=params.normalize, initialize=params.init, lr_decay=params.lr_decay, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
+        model = Sparse_DKT_regression_Nystrom_new_loss(bb, kernel_type=params.kernel_type, sparse_method=params.sparse_method, add_rvm_mll=params.rvm_mll, 
+                            add_rvm_ll=params.rvm_ll, add_rvm_mll_one=params.rvm_mll_one, add_rvm_ll_one=params.rvm_ll_one, add_rvm_mse=params.rvm_mse, 
+                            lambda_rvm=params.lambda_rvm, maxItr_rvm=params.maxItr_rvm, beta=params.beta, 
+                            normalize=params.normalize, initialize=params.init, lr_decay=params.lr_decay, f_rvm=True, 
+                            config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
                             video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
         model.init_summary(id=id)
@@ -185,6 +194,7 @@ elif params.method=='Sparse_DKT_Exact':
                             video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
         model.init_summary(id=id)
+
     elif params.sparse_method=='random':
         params.checkpoint_dir += '/'
         if not os.path.isdir(params.checkpoint_dir):
@@ -218,11 +228,16 @@ elif params.method=='Sparse_DKT_Exact_new_loss':
         if params.init: id += '_init'
         if params.lr_decay: id += '_lr_decay'
         if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
+        if params.rvm_ll: id += f'_rvm_ll_{params.lambda_rvm}'
+        if params.rvm_mll_one: id += f'_rvm_mll_one_{params.lambda_rvm}'
+        if params.maxItr_rvm!=-1: id += f'_maxItr_rvm_{params.maxItr_rvm}'
+        if params.beta: id += f'_beta'
         if params.rvm_mse: id += f'_rvm_mse_{params.lambda_rvm}'
         id += f'_{params.kernel_type}_seed_{params.seed}'
         params.checkpoint_dir = params.checkpoint_dir + id
 
-        model = Sparse_DKT_regression_Exact_new_loss(bb, kernel_type=params.kernel_type, add_rvm_mll=params.rvm_mll, add_rvm_mse=params.rvm_mse, lambda_rvm=params.lambda_rvm, 
+        model = Sparse_DKT_regression_Exact_new_loss(bb, kernel_type=params.kernel_type, sparse_method=params.sparse_method, add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, 
+                            add_rvm_mll_one=params.rvm_mll_one, add_rvm_mse=params.rvm_mse, lambda_rvm=params.lambda_rvm, maxItr_rvm=params.maxItr_rvm, beta=params.beta, 
                             normalize=params.normalize, initialize=params.init,  lr_decay=params.lr_decay,f_rvm=True, config=params.config, align_threshold=params.align_thr, 
                             gamma=params.gamma, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
@@ -249,8 +264,10 @@ elif params.method=='Sparse_DKT_Sine_Nystrom':
         id += f'_{params.kernel_type}_seed_{params.seed}'
         params.checkpoint_dir = params.checkpoint_dir + id
 
-        model = Sparse_DKT_sine_regression_Nystrom(bb, kernel_type=params.kernel_type, add_rvm_mll=params.rvm_mll, add_rvm_mse=params.rvm_mse, lambda_rvm=params.lambda_rvm, 
-                            normalize=params.normalize, initialize=params.init, lr_decay=params.lr_decay, f_rvm=True, config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
+        model = Sparse_DKT_sine_regression_Nystrom(bb, kernel_type=params.kernel_type, add_rvm_mll=params.rvm_mll, 
+        add_rvm_mse=params.rvm_mse, lambda_rvm=params.lambda_rvm, 
+                            normalize=params.normalize, initialize=params.init, lr_decay=params.lr_decay, f_rvm=True, 
+                            config=params.config, align_threshold=params.align_thr, gamma=params.gamma,
                             video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
         model.init_summary(id=id)
@@ -262,11 +279,10 @@ elif params.method=='Sparse_DKT_Sine_Nystrom':
         id = f'random_{params.lr_gp}_{params.lr_net}_ip_{params.n_centers}_seed_{params.seed}'
         if params.normalize: id += '_norm'
         if params.lr_decay: id += '_lr_decay'
-        if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
-        if params.rvm_mse: id += f'_rvm_mse_{params.lambda_rvm}'
         params.checkpoint_dir = params.checkpoint_dir +  id
-        model = Sparse_DKT_sine_regression_Nystrom(bb, kernel_type=params.kernel_type,  add_rvm_mll=params.rvm_mll, add_rvm_mse=params.rvm_mse, lambda_rvm=params.lambda_rvm, 
-                            normalize=params.normalize, lr_decay=params.lr_decay, f_rvm=False, random=True,  n_inducing_points=params.n_centers, video_path=params.checkpoint_dir, 
+        model = Sparse_DKT_sine_regression_Nystrom(bb, kernel_type=params.kernel_type,  
+                            normalize=params.normalize, lr_decay=params.lr_decay, f_rvm=False, random=True,  
+                            n_inducing_points=params.n_centers, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
         model.init_summary(id=id)
                             
@@ -312,21 +328,17 @@ elif params.method=='Sparse_DKT_RVM':
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
         model.init_summary(id=id)
 
-
-
     elif params.sparse_method=='random':
         params.checkpoint_dir += '/'
         if not os.path.isdir(params.checkpoint_dir):
             os.makedirs(params.checkpoint_dir)
-        id = f'random_{params.lr_gp}_{params.lr_net}_ip_{params.n_centers}_seed_{params.seed}'
+        id = f'random_{params.lr_gp}_{params.lr_net}_ip_{params.n_centers}'
         if params.normalize: id += '_norm'
         if params.init: id += '_init'
         if params.lr_decay: id += '_lr_decay'
-        if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
-        if params.rvm_mll_one: id += f'_rvm_mll_one_{params.lambda_rvm}'
-        if params.rvm_mse: id += f'_rvm_mse_{params.lambda_rvm}'
+        id += f'_{params.kernel_type}_seed_{params.seed}'
         params.checkpoint_dir = params.checkpoint_dir +  id
-        model = Sparse_DKT_regression_RVM(bb, kernel_type=params.kernel_type, sparse_method=params.sparse_method, add_rvm_mll=params.rvm_mll, add_rvm_mll_one=params.rvm_mll_one, add_rvm_mse=params.rvm_mse, lambda_rvm=params.lambda_rvm, 
+        model = Sparse_DKT_regression_RVM(bb, kernel_type=params.kernel_type, sparse_method=params.sparse_method,  
                             normalize=params.normalize, initialize=params.init, lr_decay=params.lr_decay, f_rvm=False, random=True,  
                             n_inducing_points=params.n_centers, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
@@ -355,7 +367,7 @@ else:
     ValueError('Unrecognised method')
 
 
-if params.method in ['DKT', 'DKT_New_Loss', 'Sparse_DKT_Nystrom', 'Sparse_DKT_Nystrom_new_loss', 'Sparse_DKT_Exact', 'Sparse_DKT_Exact_new_loss']:
+if params.method in ['DKT', 'DKT_New_Loss', 'Sparse_DKT_Nystrom', 'Sparse_DKT_Nystrom_new_loss', 'Sparse_DKT_Exact', 'Sparse_DKT_Exact_new_loss', 'Sparse_DKT_RVM']:
 
     optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr': params.lr_gp}, #0.01
                               {'params': model.feature_extractor.parameters(), 'lr': params.lr_net} #0.001
