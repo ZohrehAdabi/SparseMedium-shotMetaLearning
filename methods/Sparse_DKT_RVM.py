@@ -241,6 +241,7 @@ class Sparse_DKT_RVM(MetaTemplate):
                 mu_m = inducing_points.mu
                 scales = inducing_points.scale
                 U = inducing_points.U
+                beta = inducing_points.beta
                 K_m = single_model.base_covar_module(z_train, ip_values).evaluate()
                 scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
                 # K = K / scales
@@ -252,7 +253,7 @@ class Sparse_DKT_RVM(MetaTemplate):
                     if self.regression:
                         rvm_mll = rvm_ML_regression_full_rvm(K_m, target, alpha_m, mu_m)
                     else:
-                        rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U)
+                        rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U, beta)
                 elif self.rvm_ll_only:
                     if self.regression:
                         rvm_mll, _ = rvm_ML_regression(K_m, target, alpha_m, mu_m)
@@ -262,7 +263,7 @@ class Sparse_DKT_RVM(MetaTemplate):
                     if self.regression:
                         rvm_mll, _ = rvm_ML_regression_full_rvm(K_m, target, alpha_m, mu_m)
                     else:
-                        rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U)
+                        rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U, beta)
 
                 rvm_mll_list.append(rvm_mll)
 

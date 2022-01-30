@@ -108,7 +108,7 @@ def rvm_ML_regression_full(K_m, targets, alpha_m, mu_m, beta=torch.tensor(10.0, 
         # return logML/N
         return logML/N, complexity_penalty/N
 
-def rvm_ML_full(K_m, targets, alpha_m, mu_m, U):
+def rvm_ML_full(K_m, targets, alpha_m, mu_m, U, beta):
         
         N = targets.shape[0]
         # alpha_m = alpha_m.to(torch.float64)
@@ -118,18 +118,22 @@ def rvm_ML_full(K_m, targets, alpha_m, mu_m, U):
         # K_m = K_m.to(torch.float32)
         # LogOut	= (targets_pseudo_linear * 0.9 + 1) / 2
         # mu_m	=  K_m.pinverse() @ (torch.log(LogOut / (1 - LogOut))) #
+        
         # with torch.no_grad():
             # mu_m = torch.linalg.lstsq(K_m, (torch.log(LogOut / (1 - LogOut)))).solution
             # mu_m = mu_m.to(torch.float64)
             # mu_m, U, beta, dataLikely, bad_Hess = posterior_mode(K_m, targets, alpha_m, mu_m, max_itr=25, device='cuda')
 
-        K_mu_m = K_m @ mu_m
-        y	= torch.sigmoid(K_mu_m)
-        beta	= y * (1-y)
+        
         #   Compute the Hessian
         beta_K_m	= (torch.diag(beta) @ K_m) 
         H			= (K_m.T @ beta_K_m + torch.diag(alpha_m))
         U, info =  torch.linalg.cholesky_ex(H, upper=True)
+        U_g = U.T.pinverse() @ g  #
+        mu_m = U.pinverse() @ U_g #
+        K_mu_m = K_m @ mu_m
+        y	= torch.sigmoid(K_mu_m)
+        beta	= y * (1-y)
         dataLikely = (t[t==1].T @ torch.log(y[t==1]+1e-12) + ((1-t[t==0]).T @ torch.log(1-y[t==0]+1e-12)))
         logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
         # 2001-JMLR-SparseBayesianLearningandtheRelevanceVectorMachine in Appendix:
@@ -441,7 +445,7 @@ def get_inducing_points(base_covar_module, inputs, targets, sparse_method, scale
     else:
         print(f'No method')
 
-    return IP(inducing_points, IP_index, num_IP, alpha, gamma, None, mu_m, scales_m, U), acc
+    return IP(inducing_points, IP_index, num_IP, alpha, gamma, None, mu_m, scales_m, U, beta), acc
   
 
 def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_method, scale, beta,

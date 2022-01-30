@@ -272,6 +272,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             mu_m = inducing_points.mu
             U = inducing_points.U
             scales = inducing_points.scale
+            beta = inducing_points.beta
             K_m = self.model.base_covar_module(z_train, ip_values).evaluate()
             K_m = K_m.to(torch.float64)
             scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
@@ -287,12 +288,12 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                 if self.regression:
                     rvm_mll, penalty = rvm_ML_regression_full(K_m, target, alpha_m, mu_m)
                 else:
-                    rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U)
+                    rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U, beta)
             else: #when rvm is not used this function runs to have rvm_mll  for report in print
                 if self.regression:
                     rvm_mll, penalty  = rvm_ML_regression_full(K_m, target, alpha_m, mu_m)
                 else:
-                    rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U)
+                    rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U, beta)
 
             if(self.model.covar_module.base_kernel.lengthscale is not None):
                 lenghtscale+=self.model.base_covar_module.base_kernel.lengthscale.mean().cpu().detach().numpy().squeeze()

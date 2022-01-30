@@ -252,6 +252,7 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
             alpha_m = inducing_points.alpha
             mu_m = inducing_points.mu
             U = inducing_points.U
+            beta = inducing_points.beta
             scales = inducing_points.scale
             K_m = self.model.base_covar_module(z_train, ip_values).evaluate()
             K_m = K_m.to(torch.float64)
@@ -263,7 +264,7 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
                 if self.regression:
                     rvm_mll = rvm_ML_regression_full_rvm(K_m, target, alpha_m, mu_m)
                 else:
-                    rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U)
+                    rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U, beta)
             elif self.rvm_ll_only:
                 if self.regression:
                     rvm_mll, _ = rvm_ML_regression(K_m, target, alpha_m, mu_m)
@@ -273,7 +274,7 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
                 if self.regression:
                     rvm_mll, _ = rvm_ML_regression_full_rvm(K_m, target, alpha_m, mu_m)
                 else:
-                    rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U)
+                    rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U, beta)
 
             if(self.model.covar_module.base_kernel.lengthscale is not None):
                 lenghtscale+=self.model.base_covar_module.base_kernel.lengthscale.mean().cpu().detach().numpy().squeeze()

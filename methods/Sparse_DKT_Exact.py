@@ -223,6 +223,7 @@ class Sparse_DKT_Exact(MetaTemplate):
                 mu_m = inducing_points.mu
                 scales = inducing_points.scale
                 U = inducing_points.U
+                beta = inducing_points.beta
                 K_m = single_model.base_covar_module(z_train, ip_values).evaluate()
                 scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
                 # K = K / scales
@@ -239,12 +240,12 @@ class Sparse_DKT_Exact(MetaTemplate):
                     if self.regression:
                         rvm_mll, penalty = rvm_ML_regression_full(K_m, target, alpha_m, mu_m)
                     else:
-                        rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U)
+                        rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U, beta)
                 else: #when rvm is not used this function runs to have rvm_mll  for report in print
                     if self.regression:
                         rvm_mll, penalty = rvm_ML_regression_full(K_m, target, alpha_m, mu_m)
                     else:
-                        rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U)
+                        rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U, beta)
                 rvm_mll_list.append(rvm_mll)
                 if self.dirichlet:
                     # targets = target_list[idx]
