@@ -609,13 +609,13 @@ class Sparse_DKT_regression_Exact(nn.Module):
             self.model.set_train_data(inputs=ip_values, targets=ip_labels, strict=False)
 
             # z = self.feature_extractor(x_query)
-            predictions = self.model(z)
+            predictions = self.model(ip_values)
             loss = -self.mll(predictions, self.model.train_targets)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             mll_list.append(loss.item())
-            mse = self.mse(predictions.mean, labels)
+            mse = self.mse(predictions.mean, ip_labels)
             
             self.iteration = itr+(epoch*len(batch_labels))
             if(self.writer is not None): self.writer.add_scalar('MLL', loss.item(), self.iteration)
@@ -682,7 +682,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
 
         ip_values = z_support[inducing_points_index, :]
         ip_labels = y_support[inducing_points_index]
-        self.model.covar_module._clear_cache()
+     
         self.model.set_train_data(inputs=ip_values, targets=ip_labels, strict=False)
 
 
@@ -717,8 +717,8 @@ class Sparse_DKT_regression_Exact(nn.Module):
         inducing_points = inducing_max_similar_in_support_x(x_support, ip_values, inducing_points_index, y_support)
 
         #**************************************************************
-        y = ((y_query.detach().cpu().numpy() + 1) * 60 / 2) + 60
-        y_pred = ((pred.mean.detach().cpu().numpy() + 1) * 60 / 2) + 60
+        y = get_unnormalized_label(y_query.detach()) #((y_query.detach() + 1) * 60 / 2) + 60
+        y_pred = get_unnormalized_label(pred.mean.detach()) # ((pred.mean.detach() + 1) * 60 / 2) + 60
         if self.test_i%20==0:
             print(Fore.RED,"="*50, Fore.RESET)
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
@@ -731,7 +731,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
             K = self.model.base_covar_module
             kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
             max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
-            y_s = ((y_support.detach().cpu().numpy() + 1) * 60 / 2) + 60
+            y_s = get_unnormalized_label(y_support.detach().cpu().numpy()) #((y_support.detach().cpu().numpy() + 1) * 60 / 2) + 60
             print(Fore.LIGHTGREEN_EX, f'target of most similar in support set:       {y_s[max_similar_idx_x_s]}', Fore.RESET)
             
             kernel_matrix = K(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()

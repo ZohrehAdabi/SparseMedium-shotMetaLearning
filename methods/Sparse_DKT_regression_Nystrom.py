@@ -753,8 +753,9 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
         inducing_points = inducing_max_similar_in_support_x(x_support, inducing_points_z, inducing_points_index, y_support)
 
         #**************************************************************
-        y = ((y_query.detach().cpu().numpy() + 1) * 60 / 2) + 60
-        y_pred = ((pred.mean.detach().cpu().numpy() + 1) * 60 / 2) + 60
+       
+        y = get_unnormalized_label(y_query.detach()) #((y_query.detach() + 1) * 60 / 2) + 60
+        y_pred = get_unnormalized_label(pred.mean.detach()) # ((pred.mean.detach() + 1) * 60 / 2) + 60
         if self.test_i%20==0:
             print(Fore.RED,"="*50, Fore.RESET)
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
@@ -767,7 +768,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             K = self.model.base_covar_module
             kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
             max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
-            y_s = ((y_support.detach().cpu().numpy() + 1) * 60 / 2) + 60
+            y_s = get_unnormalized_label(y_support.detach().cpu().numpy()) #((y_support.detach().cpu().numpy() + 1) * 60 / 2) + 60
             print(Fore.LIGHTGREEN_EX, f'target of most similar in support set:       {y_s[max_similar_idx_x_s]}', Fore.RESET)
             
             kernel_matrix = K(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
