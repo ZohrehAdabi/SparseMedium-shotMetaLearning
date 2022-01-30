@@ -54,7 +54,7 @@ for config in config_list:
                     L = ['python', f'./train_regression.py', 
                                     '--method', f'{method}', '--sparse_method', f'random',  '--n_samples', '72', '--n_support', '60', '--stop_epoch', f'{stop_epoch}', 
                                 #   '--show_plots_features',
-                                    '--seed',  f'{sd}',  
+                                    '--seed',  f'{sd}',  '--n_centers', '10', 
                                     '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
                                     '--kernel_type', 'rbf', '--init'
                     ]
@@ -68,7 +68,7 @@ for config in config_list:
                             '--lr_net',  f'{lr_net}', "--inner_loop", f"{in_lr}", "--inner_lr", "1e-3"] 
                     if save_model: L.append('--save_model')
                     print(f'\n{" ".join(L)} \n')
-                    run(L)
+                    # run(L)
                 
                 
                 L = ['python', f'./train_regression.py', "--method","transfer", "--n_samples", "72", "--n_support", "60", "--stop_epoch",  f'{stop_epoch}',  
@@ -76,7 +76,7 @@ for config in config_list:
                             '--lr_net',  f'{lr_net}'] 
                 if save_model: L.append('--save_model')
                 print(f'\n{" ".join(L)} \n')
-                run(L)
+                # run(L)
 
                     
 
