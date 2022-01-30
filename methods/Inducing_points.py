@@ -133,7 +133,8 @@ def rvm_ML_full(K_m, targets, alpha_m, mu_m, U, beta):
         e	= (targets-y)
         g	= K_m.T @ e - (alpha_m * mu_m)
         U_g = U.T.pinverse() @ g  #
-        mu_m = U.pinverse() @ U_g #
+        delta_mu = U.pinverse() @ U_g #
+        mu_m = mu_m + 0.01 * delta_mu
         K_mu_m = K_m @ mu_m
         y	= torch.sigmoid(K_mu_m)
         beta	= y * (1-y)
