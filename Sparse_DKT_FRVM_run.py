@@ -39,7 +39,7 @@ for config in config_list:
                                 "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
                                 "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100",
                                 '--kernel_type', 'linear', "--scale", "--normalize", "--save_model", "--n_task",  f"{n_task}",
-                                "maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}", "--regression",
+                                "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}", "--regression",
                                 "--train_aug"
                 ]
                 print(f'\n{" ".join(L)} \n')
@@ -54,7 +54,7 @@ for config in config_list:
                                     "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100",
                                     '--kernel_type', 'linear', "--scale", "--normalize", "--save_model", "--n_task",  f"{n_task}",
                                     "--regression", 
-                                    "--rvm_mll", "--lambda_rvm", f"{lambda_rvm}", "maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}",
+                                    "--rvm_mll", "--lambda_rvm", f"{lambda_rvm}", "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}",
                                     "--train_aug"
                     ]
                     print(f'\n{" ".join(L)} \n')
@@ -69,7 +69,7 @@ for config in config_list:
                                     "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100",
                                     '--kernel_type', 'linear', "--scale", "--normalize", "--save_model", "--n_task", f"{n_task}",
                                     "--regression", 
-                                    "--rvm_ll", "--lambda_rvm", f"{lambda_rvm}", "maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}",
+                                    "--rvm_ll", "--lambda_rvm", f"{lambda_rvm}", "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}",
                                     "--train_aug"
                     ]
                     print(f'\n{" ".join(L)} \n')
