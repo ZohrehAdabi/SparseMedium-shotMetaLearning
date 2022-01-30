@@ -222,6 +222,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             # K = K / scales
             mu_m = mu_m /scales
             alpha_m = alpha_m / scales**2
+            target[target==-1]=0
             if self.add_rvm_ll:
                 if self.regression:
                     rvm_mll, _ = rvm_ML_regression(K_m, target, alpha_m, mu_m)
