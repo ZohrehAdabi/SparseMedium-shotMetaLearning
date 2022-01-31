@@ -366,8 +366,8 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
                 K_m = K_m.to(torch.float64)
                 # scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
                 scales_m = inducing_points.scale
-                mu = inducing_points.mu
-                mu_m = mu / scales_m
+                # mu = inducing_points.mu
+                # mu_m = mu / scales_m
                 y_pred_ = K_m @ mu_m 
                 y_pred_r = torch.sigmoid(y_pred_)
                 y_pred_r = (y_pred_r > 0.5).to(int)

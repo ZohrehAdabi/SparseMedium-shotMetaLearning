@@ -344,9 +344,23 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
                    pred = torch.sigmoid(prediction.mean)
                    y_pred = (pred > 0.5).to(int)
                    y_pred = y_pred.cpu().detach().numpy()
+                       #FRVM ACC on query
+                K_m = self.model.base_covar_module(z_query, ip_values).evaluate()
+                K_m = K_m.to(torch.float64)
+                # scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+                # scales_m = inducing_points.scale
+                # mu = inducing_points.mu
+                # mu_m = mu / scales_m
+                y_pred_ = K_m @ mu_m 
+                y_pred_r = torch.sigmoid(y_pred_)
+                y_pred_r = (y_pred_r > 0.5).to(int)
+                y_pred_r = y_pred_r.detach().cpu().numpy()
+                top1_correct_r = np.sum(y_pred_r==y_query)
+                acc_r = (top1_correct_r / len(y_query))* 100
 
                 accuracy_query = (np.sum(y_pred==y_query) / float(len(y_query))) * 100.0
                 if(self.writer is not None): self.writer.add_scalar('GP_query_accuracy', accuracy_query, self.iteration)
+                if(self.writer is not None): self.writer.add_scalar('RVM_query_accuracy', acc_r, self.iteration)
 
             if i % print_freq==0:
                 if(self.writer is not None): self.writer.add_histogram('z_support', z_support, self.iteration)

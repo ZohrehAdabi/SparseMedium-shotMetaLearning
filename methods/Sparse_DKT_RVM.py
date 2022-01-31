@@ -193,13 +193,15 @@ class Sparse_DKT_RVM(MetaTemplate):
             self.feature_extractor.train()
             z_train = self.feature_extractor.forward(x_train)
             if(self.normalize): z_train = F.normalize(z_train, p=2, dim=1)
-
+             z_query = self.feature_extractor.forward(x_query).detach()
+            if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
             # train_list = [z_train]*self.n_way
             lenghtscale = 0.0
             noise = 0.0
             outputscale = 0.0
             # print(Fore.LIGHTMAGENTA_EX, f'epoch:{epoch+1}', Fore.RESET)
             rvm_mll_list = list()
+            acc_rvm = []
             for idx, single_model in enumerate(self.model.models):
                 # print(Fore.LIGHTMAGENTA_EX, f'model:{idx+1}', Fore.RESET)
                 if self.dirichlet:
@@ -268,6 +270,18 @@ class Sparse_DKT_RVM(MetaTemplate):
                         rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U, beta)
 
                 rvm_mll_list.append(rvm_mll)
+                with torch.no_grad():
+                    # FRVM ACC
+                    K_m_q = single_model.base_covar_module(z_query, ip_values).evaluate()
+                    K_m_q = K_m_q.to(torch.float64)
+                    # scales	= torch.sqrt(torch.sum(K_m**2, axis=0))
+                    # scales_m = inducing_points.scale
+                    # mu = inducing_points.mu
+                    # mu_m = mu / scales_m
+                    y_pred_ = K_m_q @ mu_m 
+                    y_pred_r = torch.sigmoid(y_pred_)
+                    y_pred_r = y_pred_r.detach().cpu().numpy()
+                    acc_rvm.append(y_pred_r)
 
                 if(single_model.base_covar_module.base_kernel.lengthscale is not None):
                     lenghtscale+=single_model.base_covar_module.base_kernel.lengthscale.mean().cpu().detach().numpy().squeeze()
@@ -351,7 +365,14 @@ class Sparse_DKT_RVM(MetaTemplate):
 
                 y_pred = np.vstack(predictions_list).argmax(axis=0) #[model, classes]
                 accuracy_query = (np.sum(y_pred==y_query) / float(len(y_query))) * 100.0
+
+                          #FRVM ACC on query
+                y_pred_r = np.vstack(acc_rvm).argmax(axis=0)
+                top1_correct_r = np.sum(y_pred_r==y_query)
+                acc_rvm = (top1_correct_r / len(y_query))* 100
+
                 if(self.writer is not None): self.writer.add_scalar('GP_query_accuracy', accuracy_query, self.iteration)
+                if(self.writer is not None): self.writer.add_scalar('RVM_query_accuracy', acc_rvm, self.iteration)
 
             if i % print_freq==0:
                 if(self.writer is not None): self.writer.add_histogram('z_support', z_support, self.iteration)

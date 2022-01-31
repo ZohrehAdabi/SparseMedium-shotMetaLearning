@@ -194,7 +194,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
             with torch.no_grad():
                 # inducing_points, beta, mu_m, U = self.get_inducing_points(z, y_support, verbose=False)
                 inducing_points, frvm_mse = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
-                                                                z, labels, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
+                                                                z, y_support, sparse_method=self.sparse_method, scale=self.scale, beta=beta,
                                                                 config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
                                                                 num_inducing_points=self.num_inducing_points, maxItr=self.maxItr_rvm, verbose=True, task_id=itr, device=self.device)
            
@@ -407,7 +407,7 @@ class Sparse_DKT_regression_Exact_new_loss(nn.Module):
             print(Fore.LIGHTRED_EX, f'mse: {mse_:.4f}, mse (normed): {mse:.4f}, FRVM mse : {mse_r:0.4f}, num SVs: {inducing_points.count}', Fore.RESET)
             print(Fore.RED,"-"*50, Fore.RESET)
 
-        if verbose or self.show_plots_pred:
+        if self.show_plots_pred:
             K = self.model.base_covar_module
             kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
             max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
