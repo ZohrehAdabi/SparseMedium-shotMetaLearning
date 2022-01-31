@@ -58,6 +58,8 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
         self.tol_rvm = tol_rvm
         self.regression = regression
         self.config = config
+        if self.regression:
+            self.config = '0' + self.config
         self.align_threshold = align_threshold
         self.gamma = gamma
         self.dirichlet = dirichlet
@@ -248,7 +250,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                                                             verbose=True, device=self.device)
                 else:
                     if self.regression:
-                        self.config = '0' + self.config
+                        
                         inducing_points, frvm_acc = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
                                                                 z_train, target, sparse_method=self.sparse_method, scale=self.scale, beta=torch.tensor(10.0),
                                                                 config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
