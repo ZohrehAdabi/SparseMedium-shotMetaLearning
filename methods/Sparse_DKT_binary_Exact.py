@@ -468,7 +468,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         with torch.no_grad():
             
             if self.regression:
-                self.config = '0' + self.config
+             
                 inducing_points, frvm_acc = get_inducing_points_regression(self.model.base_covar_module, #.base_kernel,
                                                         z_train, target, sparse_method=self.sparse_method, scale=self.scale, beta=torch.tensor(10.0),
                                                         config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 

@@ -51,6 +51,8 @@ class Sparse_DKT_Exact(MetaTemplate):
         self.tol_rvm = tol_rvm
         self.regression = regression
         self.config = config
+        if self.regression:
+            self.config = '0' + self.config
         self.align_threshold = align_threshold
         self.gamma = gamma
         self.dirichlet = dirichlet
@@ -204,7 +206,7 @@ class Sparse_DKT_Exact(MetaTemplate):
                     # inducing_points = self.get_inducing_points(single_model.base_covar_module, #.base_kernel,
                     #                                             z_train, target_list[idx], verbose=False)
                     if self.regression:
-                        self.config = '0' + self.config
+                       
                         inducing_points, frvm_acc = get_inducing_points_regression(single_model.base_covar_module, #.base_kernel,
                                                                 z_train, target_list[idx], sparse_method=self.sparse_method, scale=self.scale, beta=torch.tensor(10.0), 
                                                                 config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
@@ -469,7 +471,7 @@ class Sparse_DKT_Exact(MetaTemplate):
                 # inducing_points = self.get_inducing_points(single_model.base_covar_module, #.base_kernel,
                 #                                             z_train, target_list[idx], verbose=False)
                 if self.regression:
-                    self.config = '0' + self.config
+                    
                     inducing_points, frvm_acc = get_inducing_points_regression(single_model.base_covar_module, #.base_kernel,
                                                             z_train, target_list[idx], sparse_method=self.sparse_method, scale=self.scale, beta=torch.tensor(10.0), 
                                                             config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
