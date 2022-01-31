@@ -193,7 +193,7 @@ class Sparse_DKT_RVM(MetaTemplate):
             self.feature_extractor.train()
             z_train = self.feature_extractor.forward(x_train)
             if(self.normalize): z_train = F.normalize(z_train, p=2, dim=1)
-             z_query = self.feature_extractor.forward(x_query).detach()
+            z_query = self.feature_extractor.forward(x_query).detach()
             if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
             # train_list = [z_train]*self.n_way
             lenghtscale = 0.0
