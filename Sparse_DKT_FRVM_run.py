@@ -12,8 +12,8 @@ lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['001']
 n_task = 30
-tol_rvm = 1e-5
-max_itr = 2500
+tol_rvm = 1e-4
+max_itr = -1
 sd = 1
 for config in config_list:
     for lr_gp in lr_gp_list:
@@ -32,6 +32,7 @@ for config in config_list:
             ]
             print(f'\n{" ".join(L)} \n')
             # run(L)
+            align_thr = 8e-2
             for method in method_list:
                 L = ['python', f'./train.py', 
                             "--method",f"{method}", "--sparse_method", "FRVM", "--dataset", "CUB", 
@@ -44,7 +45,8 @@ for config in config_list:
                 ]
                 print(f'\n{" ".join(L)} \n')
                 # run(L)
-            lambda_rvm_list = [0.5, 1.0]
+            lambda_rvm_list = [0.5, 1.0, 5]
+            align_thr = 8e-2
             for lambda_rvm in lambda_rvm_list:
                 for method in method_list:
                     L = ['python', f'./train.py', 
@@ -73,7 +75,7 @@ for config in config_list:
                                     "--train_aug"
                     ]
                     print(f'\n{" ".join(L)} \n')
-                    run(L)
+                    # run(L)
             # run(['python', f'./train.py', 
             #             "--method","Sparse_DKT_binary_Nystrom", "--sparse_method", "FRVM", "--dataset", "omniglot", 
             #             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "15", "--n_query", "5",
