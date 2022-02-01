@@ -45,22 +45,23 @@ for config in config_list:
                 ]
                 print(f'\n{" ".join(L)} \n')
                 # run(L)
-            lambda_rvm_list = [0.5, 1.0, 5]
+            lambda_rvm_list = [0.2, 0.5, 1.0]
             align_thr = 5e-2
-            for lambda_rvm in lambda_rvm_list:
-                for method in method_list:
-                    L = ['python', f'./train.py', 
-                                "--method",f"{method}", "--sparse_method", "FRVM", "--dataset", "CUB", 
-                                "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
-                                    "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
-                                    "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100",
-                                    '--kernel_type', 'linear', "--scale", "--normalize", "--save_model", "--n_task",  f"{n_task}",
-                                    "--regression", 
-                                    "--rvm_mll", "--lambda_rvm", f"{lambda_rvm}", "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}",
-                                    "--train_aug"
-                    ]
-                    print(f'\n{" ".join(L)} \n')
-                    run(L)
+            for align_thr in [0.02, 0.05, 0.08]:
+                for lambda_rvm in lambda_rvm_list:
+                    for method in method_list:
+                        L = ['python', f'./train.py', 
+                                    "--method",f"{method}", "--sparse_method", "FRVM", "--dataset", "CUB", 
+                                    "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
+                                        "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
+                                        "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100",
+                                        '--kernel_type', 'linear', "--scale", "--normalize", "--save_model", "--n_task",  f"{n_task}",
+                                        "--regression", 
+                                        "--rvm_mll", "--lambda_rvm", f"{lambda_rvm}", "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}",
+                                        "--train_aug"
+                        ]
+                        print(f'\n{" ".join(L)} \n')
+                        run(L)
             lambda_rvm_list = [0.5, 1.0]
             for lambda_rvm in lambda_rvm_list:
                 for method in method_list:
