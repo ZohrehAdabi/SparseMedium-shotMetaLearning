@@ -571,7 +571,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             top1_correct_r = np.sum(y_pred_r==y_query)
             acc_r = (top1_correct_r / count_this)* 100
 
-            if i%10==0:
+            if i%25==0:
                 print(Fore.RED,"="*50, Fore.RESET)
                 print(f'inducing_points count: {inducing_points.count}')
                 # print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha.cpu().numpy()}',Fore.RESET)
@@ -605,7 +605,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             acc_all.append((correct_this/ count_this)*100)
             acc_all_rvm.append((correct_this_rvm/ count_this)*100)
             num_sv_list.append(num_sv)
-            if(i % 10==0):
+            if(i % 25==0):
                 acc_mean = np.mean(np.asarray(acc_all))
                 acc_mean_rvm = np.mean(np.asarray(acc_all_rvm))
                 print('Test | Batch {:d}/{:d} | Loss {:f}| RVM Acc {:f} | Acc {:f}'.format(i, len(test_loader), loss_value, acc_mean_rvm, acc_mean))

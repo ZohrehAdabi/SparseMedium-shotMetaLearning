@@ -46,7 +46,7 @@ for config in config_list:
                 print(f'\n{" ".join(L)} \n')
                 # run(L)
             lambda_rvm_list = [0.5, 1.0, 5]
-            align_thr = 8e-2
+            align_thr = 5e-2
             for lambda_rvm in lambda_rvm_list:
                 for method in method_list:
                     L = ['python', f'./train.py', 
