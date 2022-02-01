@@ -254,7 +254,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
                 if self.regression:
                     rvm_mll, penalty = rvm_ML_regression_full(K_m, target, alpha_m, mu_m)
                 else:
-                    rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U)
+                    rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U, beta)
 
             if self.dirichlet:
                 ip_labels[ip_labels==-1] = 0
