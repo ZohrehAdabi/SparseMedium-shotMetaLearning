@@ -10,9 +10,9 @@ lr_net_list = [0.01, 0.001, 0.0001]
 
 lr_gp_list = [0.001]
 lr_net_list = [0.001]
-config_list = ['1011']
+config_list = ['1001']
 seed_list = [1, 2, 3]
-method_list = ['Sparse_DKT_Exact']
+method_list = ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact']
 test_epoch = 100
 save_result = True
 for config in config_list:
@@ -32,9 +32,9 @@ for config in config_list:
                         ]
                 if save_result: L.append('--save_result')
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
-            for method in method_list:
-                for sd in seed_list:
+                run(L)
+            for sd in seed_list:   
+                for method in method_list:
                      # just mll of GP
                        
                     L = ['python', f'./test_regression.py', 
@@ -49,7 +49,7 @@ for config in config_list:
                     print(f'\n{" ".join(L)} \n')
                     run(L)
 
-                    lambda_rvm_list = [0.5, 1.0]
+                    lambda_rvm_list = [0.1, 0.5, 1.0]
                     for lambda_rvm in lambda_rvm_list:
                        
                         
@@ -89,6 +89,35 @@ for config in config_list:
                 ]
                 if save_result: L.append('--save_result')
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
+                run(L)
+                for method in method_list:
+                
+                    # just mll of GP
+                    L = ['python', f'./test_regression.py', 
+                                    '--method', f'{method}', '--sparse_method', f'random',  '--n_samples', '72', '--n_support', '60', '--n_test_epoch', f'{test_epoch}', 
+                                #   '--show_plots_features',
+                                    '--seed',  f'{sd}',  '--n_centers', '10', 
+                                    '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
+                                    '--kernel_type', 'rbf', '--init'
+                    ]
+                if save_result: L.append('--save_result')
+                print(f'\n{" ".join(L)} \n')
+                run(L)
 
+                for in_lr in [10]:
+                    L = ['python', f'./test_regression.py', "--method","MAML", "--n_samples", "72",  "--n_support", "60",'--n_test_epoch', f'{test_epoch}', 
+                            '--seed',  f'{sd}', 
+                            '--lr_net',  f'{lr_net}', "--inner_loop", f"{in_lr}", "--inner_lr", "1e-3"] 
+                if save_result: L.append('--save_result')
+                print(f'\n{" ".join(L)} \n')
+                run(L)
+            
+                for fine_tune in [5, 10]:
+                    L = ['python', f'./test_regression.py', "--method","transfer", "--n_samples", "72", "--n_support", "60", '--n_test_epoch', f'{test_epoch}',   
+                                '--seed',  f'{sd}', 
+                                '--lr_net',  f'{lr_net}', '--fine_tune', f'{fine_tune}'] 
+                    if save_result: L.append('--save_result')
+                    print(f'\n{" ".join(L)} \n')
+                    run(L)
+            
 
