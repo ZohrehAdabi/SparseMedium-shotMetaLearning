@@ -12,7 +12,7 @@ lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['001']
 n_task = 20
-tol_rvm = 1e-3
+tol_rvm = 1e-4
 max_itr = -1
 sd = 1
 for config in config_list:
