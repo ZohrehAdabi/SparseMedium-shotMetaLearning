@@ -42,6 +42,10 @@ except ImportError:
     IS_TBX_INSTALLED = False
     print('[WARNING] install tensorboardX to record simulation logs.')
 
+# python train_regression.py --method "Sparse_DKT_Nystrom" --sparse_method "FRVM"  --n_samples 72 --n_support 60 
+# --stop_epoch 100  --config "1001" --align_thr 1e-3  --lr_gp  1e-3 --lr_net  1e-3 --kernel_type "rbf" 
+# --seed 1 --init  --rvm_mll  --lambda_rvm 1.0 --beta  --save_model
+
 
 IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j_idx")
 eps = torch.finfo(torch.float32).eps 

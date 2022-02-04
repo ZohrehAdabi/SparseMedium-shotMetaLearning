@@ -23,11 +23,16 @@ from methods.Inducing_points import get_inducing_points, rvm_ML, rvm_ML_full, ge
 #Check if tensorboardx is installed
 try:
     #tensorboard --logdir=./Sparse_DKT_binary_Exact_CUB_log/ --host localhost --port 8090
+    #tensorboard --logdir=./Sparse_DKT_binary_Exact_miniImagenet_log/ --host localhost --port 8092
     from tensorboardX import SummaryWriter
     IS_TBX_INSTALLED = True
 except ImportError:
     IS_TBX_INSTALLED = False
     print('[WARNING] install tensorboardX to record simulation logs.')
+
+# python train.py --method "Sparse_DKT_binary_Exact"  --sparse_method "FRVM" --dataset "CUB"  --train_n_way 2 
+# --test_n_way 2 --n_shot 50  --n_query 10 --seed 1 --scale --config "001"  --lr_gp 1e-3 --lr_net 1e-3 --kernel_type "linear"  
+# --normalize  --n_task 30  --rvm_mll --lambda_rvm 1.0  --align_thr 65e-3   --regression --train_aug
 
 ## Training CMD
 #ATTENTION: to test each method use exaclty the same command but replace 'train.py' with 'test.py'
