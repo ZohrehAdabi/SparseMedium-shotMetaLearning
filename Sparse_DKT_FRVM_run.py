@@ -32,19 +32,7 @@ for config in config_list:
             ]
             print(f'\n{" ".join(L)} \n')
             # run(L)
-            align_thr = 0.045
-            for method in method_list:
-                L = ['python', f'./train.py', 
-                            "--method",f"{method}", "--sparse_method", "FRVM", "--dataset", f"{dataset}", 
-                            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
-                                "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
-                                "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100",
-                                '--kernel_type', 'linear', "--scale", "--normalize", "--save_model", "--n_task",  f"{n_task}",
-                                "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}", 
-                                "--train_aug"
-                ]
-                print(f'\n{" ".join(L)} \n')
-                run(L)
+        
             align_thr = 0.045
             for method in method_list:
                 L = ['python', f'./train.py', 
