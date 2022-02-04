@@ -7,7 +7,7 @@ method_list = ['Sparse_DKT_binary_Exact']
 
 lr_gp_list = [0.1, 0.01, 0.001, 0.0001]
 lr_net_list = [0.01, 0.001, 0.0001]
-
+dataset = 'miniImagenet' # 'CUB
 lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['001']
@@ -32,10 +32,23 @@ for config in config_list:
             ]
             print(f'\n{" ".join(L)} \n')
             # run(L)
-            align_thr = 8e-2
+            align_thr = 0.045
             for method in method_list:
                 L = ['python', f'./train.py', 
-                            "--method",f"{method}", "--sparse_method", "FRVM", "--dataset", "CUB", 
+                            "--method",f"{method}", "--sparse_method", "FRVM", "--dataset", f"{dataset}", 
+                            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
+                                "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
+                                "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100",
+                                '--kernel_type', 'linear', "--scale", "--normalize", "--save_model", "--n_task",  f"{n_task}",
+                                "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}", 
+                                "--train_aug"
+                ]
+                print(f'\n{" ".join(L)} \n')
+                run(L)
+            align_thr = 0.045
+            for method in method_list:
+                L = ['python', f'./train.py', 
+                            "--method",f"{method}", "--sparse_method", "FRVM", "--dataset", f"{dataset}", 
                             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
                                 "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
                                 "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100",
@@ -44,14 +57,14 @@ for config in config_list:
                                 "--train_aug"
                 ]
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
+                run(L)
             lambda_rvm_list = [0.2, 0.5, 1.0]
             align_thr = 5e-2
-            for align_thr in [0.02, 0.05, 0.08]:
+            for align_thr in [0.045, 0.065]:
                 for lambda_rvm in lambda_rvm_list:
                     for method in method_list:
                         L = ['python', f'./train.py', 
-                                    "--method",f"{method}", "--sparse_method", "FRVM", "--dataset", "CUB", 
+                                    "--method",f"{method}", "--sparse_method", "FRVM", "--dataset", f"{dataset}", 
                                     "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
                                         "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
                                         "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100",
@@ -66,7 +79,7 @@ for config in config_list:
             for lambda_rvm in lambda_rvm_list:
                 for method in method_list:
                     L = ['python', f'./train.py', 
-                                "--method",f"{method}", "--sparse_method", "FRVM", "--dataset", "CUB", 
+                                "--method",f"{method}", "--sparse_method", "FRVM", "--dataset", f"{dataset}", 
                                 "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
                                     "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
                                     "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100",
