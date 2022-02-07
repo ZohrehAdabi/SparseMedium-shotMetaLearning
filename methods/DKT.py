@@ -161,9 +161,9 @@ class DKT(MetaTemplate):
             lenghtscale = 0.0
             noise = 0.0
             outputscale = 0.0
-            print(Fore.LIGHTMAGENTA_EX, f'epoch:{epoch+1}', Fore.RESET)
+            # print(Fore.LIGHTMAGENTA_EX, f'epoch:{epoch+1}', Fore.RESET)
             for idx, single_model in enumerate(self.model.models):
-                print(Fore.LIGHTMAGENTA_EX, f'model:{idx+1}', Fore.RESET)
+                # print(Fore.LIGHTMAGENTA_EX, f'model:{idx+1}', Fore.RESET)
                 if self.dirichlet:
                     targets = target_list[idx]
                     targets[targets==-1] = 0
