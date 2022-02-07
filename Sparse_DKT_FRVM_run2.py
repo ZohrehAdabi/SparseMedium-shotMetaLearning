@@ -11,6 +11,7 @@ lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['001']
 sd = 1
+method_list = ['Sparse_DKT_Exact']
 for config in config_list:
     for lr_gp in lr_gp_list:
         for lr_net in lr_net_list:
@@ -22,24 +23,24 @@ for config in config_list:
                         "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "15", "--n_query", "5",
                             "--seed",  f"{sd}",  
                             "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100",
-                            '--kernel_type', 'linear', "--save_model", "--n_task", "50"
+                            '--kernel_type', 'linear', "--save_model", "--n_task", "30"
                          
             ]
             print(f'\n{" ".join(L)} \n')
-            # run(L)
+            run(L)
             for method in method_list:
                 L = ['python', f'./train.py', 
                             "--method", f"{method}", "--sparse_method", "FRVM", "--dataset", "omniglot", 
                             "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "15", "--n_query", "5",
                                 "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
                                 "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100",
-                                '--kernel_type', 'linear', "--scale", "--save_model", "--n_task", "50"
+                                '--kernel_type', 'linear', "--scale", "--save_model", "--n_task", "30"
                                 , "--regression"
                             
                 ]
                 print(f'\n{" ".join(L)} \n')
-                run(L)
-            lambda_rvm_list = [0.1, 0.5]
+                # run(L)
+            lambda_rvm_list = [ 0.5, 1.0]
             for lambda_rvm in lambda_rvm_list:
                 for method in method_list:
                     L = ['python', f'./train.py', 
@@ -47,7 +48,7 @@ for config in config_list:
                                  "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "15", "--n_query", "5",
                                     "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
                                     "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100",
-                                    '--kernel_type', 'linear', "--scale", "--save_model", "--n_task", "50",
+                                    '--kernel_type', 'linear', "--scale", "--save_model", "--n_task", "30",
                                     "--regression", 
                                     "--rvm_mll", "--lambda_rvm", f"{lambda_rvm}"
                                   
@@ -55,7 +56,7 @@ for config in config_list:
                     print(f'\n{" ".join(L)} \n')
                     run(L)
                 
-            lambda_rvm_list = [0.1, 0.5]
+            lambda_rvm_list = [0.5, 1.0]
             for lambda_rvm in lambda_rvm_list:
                 for method in method_list:
                     L = ['python', f'./train.py', 
@@ -63,25 +64,25 @@ for config in config_list:
                                  "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "15", "--n_query", "5",
                                     "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
                                     "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100",
-                                    '--kernel_type', 'linear', "--scale", "--save_model", "--n_task", "50",
+                                    '--kernel_type', 'linear', "--scale", "--save_model", "--n_task", "30",
                                     "--regression", 
                                     "--rvm_ll", "--lambda_rvm", f"{lambda_rvm}"
                                 
                     ]
                     print(f'\n{" ".join(L)} \n')
-                    run(L)
+                    # run(L)
             L = ['python', f'./train.py', 
                                 "--method", f"Sparse_DKT_RVM", "--sparse_method", "FRVM", "--dataset", "omniglot", 
                                  "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "15", "--n_query", "5",
                                     "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
                                     "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100",
-                                    '--kernel_type', 'linear', "--scale", "--save_model", "--n_task", "50",
+                                    '--kernel_type', 'linear', "--scale", "--save_model", "--n_task", "30",
                                     "--regression", 
                                     "--rvm_mll_only"
                                 
                     ]
             print(f'\n{" ".join(L)} \n')
-            run(L)
+            # run(L)
             # run(['python', f'./train.py', 
             #             "--method","Sparse_DKT_binary_Nystrom", "--sparse_method", "FRVM", "--dataset", "omniglot", 
             #             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "15", "--n_query", "5",
