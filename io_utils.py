@@ -51,6 +51,9 @@ def parse_args(script):
     parser.add_argument('--regression'          , action='store_true', help='Use gaussian RVM for classification insted of approximation.') 
     parser.add_argument('--rvm_mse'             , action='store_true', help='Add MLL of RVM to the outer GP MLL loss.') 
     parser.add_argument('--scale'               , action='store_true', help='normalize kernel matrix, K(z, z) in z space')
+    parser.add_argument('--inner_loop'         , default=3, type=int, help='Number of adaptation or inner loop in MAML') 
+    parser.add_argument('--inner_lr'           , default=1e-3, type=float, help='learning rate in adaptation or inner loop of MAML') 
+    parser.add_argument('--first_order'        , action='store_true', help='First order approx. of MAML') 
     if script == 'train':
         parser.add_argument('--num_classes'     , default=200, type=int, help='total number of classes in softmax, only used in baseline') #make it larger than the maximum label value in base class
         parser.add_argument('--save_model'      , action='store_true', help='save model in some epochs.')
@@ -110,6 +113,8 @@ def parse_args_regression(script):
         parser.add_argument('--gamma'              , action='store_true', help='Delete data with low Gamma in FRVM algorithm') 
         parser.add_argument('--inner_loop'         , default=3, type=int, help='Number of adaptation or inner loop in MAML') 
         parser.add_argument('--inner_lr'           , default=1e-3, type=float, help='learning rate in adaptation or inner loop of MAML') 
+        parser.add_argument('--first_order'        , action='store_true', help='First order approx. of MAML') 
+        
         # parser.add_argument('--alpha', default=1e3, type=float, help='coefficient for mse loss')
         if script == 'train_regression':
             parser.add_argument('--start_epoch'   , default=0, type=int, help ='Starting epoch')

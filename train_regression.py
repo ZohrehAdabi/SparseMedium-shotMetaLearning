@@ -351,8 +351,9 @@ elif params.method=='Sparse_DKT_RVM':
 elif params.method=='MAML':
     id = f'_{params.lr_net}_loop_{params.inner_loop}_inner_lr_{params.inner_lr}_seed_{params.seed}'
     if params.lr_decay: id += '_lr_decay'
+    if params.first_order: id += '_first_order'
     params.checkpoint_dir += id
-    model = MAML_regression(bb, inner_loop=params.inner_loop, inner_lr=params.inner_lr, lr_decay=params.lr_decay, video_path=params.checkpoint_dir, 
+    model = MAML_regression(bb, inner_loop=params.inner_loop, inner_lr=params.inner_lr, first_order=params.first_order, lr_decay=params.lr_decay, video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
     model.init_summary(id=f'MAML{id}')
 

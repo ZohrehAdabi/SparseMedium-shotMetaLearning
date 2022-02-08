@@ -50,7 +50,7 @@ class Linear_fw(nn.Linear): #used in MAML to forward input with fast weight
 
 
 class MAML_regression(nn.Module):
-    def __init__(self, backbone, inner_loop=3, inner_lr=1e-3, lr_decay=False, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
+    def __init__(self, backbone, inner_loop=3, inner_lr=1e-3, first_order=False, lr_decay=False, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(MAML_regression, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
@@ -68,7 +68,7 @@ class MAML_regression(nn.Module):
         self.n_task     = 4
         self.task_update_num = inner_loop
         self.train_lr = inner_lr
-        self.approx = False
+        self.approx = first_order
         self.mse        = nn.MSELoss()
 
         self.init_summary('MAML')

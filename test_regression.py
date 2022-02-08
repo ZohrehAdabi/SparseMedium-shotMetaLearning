@@ -258,8 +258,9 @@ for sd in range(seed, seed+repeat):
     if params.method=='MAML':
         id = f'_{params.lr_net}_loop_{params.inner_loop}_inner_lr_{params.inner_lr}_seed_{sd}'
         if params.lr_decay: id += '_lr_decay'
+        if params.first_order: id += '_first_order'
         params.checkpoint_dir += id
-        model = MAML_regression(bb, inner_loop=params.inner_loop, inner_lr=params.inner_lr, video_path=params.checkpoint_dir, 
+        model = MAML_regression(bb, inner_loop=params.inner_loop, inner_lr=params.inner_lr, first_order=params.first_order, video_path=params.checkpoint_dir, 
                                 show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features).cuda()
         optimizer = optim.Adam([{'params':model.parameters(),'lr':params.lr_net}])
 
