@@ -175,7 +175,7 @@ class FeatureTransfer(nn.Module):
 
         self.feature_extractor.eval()
         self.model.eval()
-        mse_support = self.criterion(output_support, y_query).item()
+        mse_support = self.criterion(output_support, y_support).item()
         z_query = self.feature_extractor(x_query).detach()
         if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
         output = self.model(z_query).squeeze()
