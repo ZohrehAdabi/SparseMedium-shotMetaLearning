@@ -9,7 +9,7 @@ import torch.nn.functional as F
 from methods.meta_template import MetaTemplate
 
 class MAML(MetaTemplate):
-    def __init__(self, model_func,  n_way, n_support, approx = False):
+    def __init__(self, model_func,  n_way, n_support, inner_loop=5, inner_lr=1e-3, first_order=False):
         super(MAML, self).__init__( model_func,  n_way, n_support, change_way = False)
 
         self.loss_fn = nn.CrossEntropyLoss()
@@ -17,9 +17,9 @@ class MAML(MetaTemplate):
         self.classifier.bias.data.fill_(0)
         
         self.n_task     = 4
-        self.task_update_num = 5
-        self.train_lr = 0.01
-        self.approx = approx #first order approx.        
+        self.task_update_num = inner_loop #5
+        self.train_lr = inner_lr
+        self.approx = first_order #first order approx.        
 
     def forward(self,x):
         out  = self.feature.forward(x)

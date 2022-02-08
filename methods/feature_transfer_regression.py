@@ -36,13 +36,14 @@ class Regressor(nn.Module):
         return out
 
 class FeatureTransfer(nn.Module):
-    def __init__(self, backbone,  lr_decay=False, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
+    def __init__(self, backbone,  lr_decay=False, normalize=False, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(FeatureTransfer, self).__init__()
         regressor = Regressor()
         self.feature_extractor = backbone
         self.model = Regressor()
         self.criterion = nn.MSELoss()
         self.lr_decay = lr_decay
+        self.normalize = normalize
         self.training_  = training
         self.video_path = video_path
         self.best_path = video_path
@@ -60,6 +61,7 @@ class FeatureTransfer(nn.Module):
         for inputs, labels in zip(batch, batch_labels):
             optimizer.zero_grad()
             z = self.feature_extractor(inputs)
+            if(self.normalize): z = F.normalize(z, p=2, dim=1)
             output = self.model(z)
             loss = self.criterion(output.squeeze(), labels)
             loss.backward()
@@ -160,9 +162,12 @@ class FeatureTransfer(nn.Module):
         #fine-tune
         self.feature_extractor.train()
         self.model.train()
+        # NOTE just last layer is fine-tuned
+        optimizer.zero_grad()
+        z_support = self.feature_extractor(x_support).detach()
+        if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1)
         for k in range(self.fine_tune):
             optimizer.zero_grad()
-            z_support = self.feature_extractor(x_support).detach()
             output_support = self.model(z_support).squeeze()
             loss = self.criterion(output_support.squeeze(), y_support)
             loss.backward()
@@ -171,6 +176,7 @@ class FeatureTransfer(nn.Module):
         self.feature_extractor.eval()
         self.model.eval()
         z_query = self.feature_extractor(x_query).detach()
+        if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
         output = self.model(z_query).squeeze()
         mse = self.criterion(output, y_query).item()
 

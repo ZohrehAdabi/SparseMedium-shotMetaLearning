@@ -50,7 +50,7 @@ class Linear_fw(nn.Linear): #used in MAML to forward input with fast weight
 
 
 class MAML_regression(nn.Module):
-    def __init__(self, backbone, inner_loop=3, inner_lr=1e-3, first_order=False, lr_decay=False, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
+    def __init__(self, backbone, inner_loop=3, inner_lr=1e-3, first_order=False, lr_decay=False, normalize=False, video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(MAML_regression, self).__init__()
         ## GP parameters
         self.feature_extractor = backbone
@@ -58,6 +58,7 @@ class MAML_regression(nn.Module):
         self.device = 'cuda'
         self.training_  = training
         self.lr_decay = lr_decay
+        self.normalize = normalize
         self.video_path = video_path
         self.best_path = video_path
         self.show_plots_pred = show_plots_pred
@@ -86,6 +87,7 @@ class MAML_regression(nn.Module):
     def set_forward(self, x, is_feature=False):
         
         z = self.feature_extractor(x)
+        if(self.normalize): z = F.normalize(z, p=2, dim=1)
         pred = self.model(z)
         return pred.squeeze()
 
