@@ -7,9 +7,10 @@ import torch.nn.functional as F
 from methods.meta_template import MetaTemplate
 
 class BaselineFinetune(MetaTemplate):
-    def __init__(self, model_func,  n_way, n_support, loss_type = "softmax"):
+    def __init__(self, model_func,  n_way, n_support, loss_type = "softmax", normalize=False):
         super(BaselineFinetune, self).__init__( model_func,  n_way, n_support)
         self.loss_type = loss_type
+        self.normalize = normalize
 
     def set_forward(self,x,is_feature = True):
         return self.set_forward_adaptation(x,is_feature); #Baseline always do adaptation
@@ -21,6 +22,8 @@ class BaselineFinetune(MetaTemplate):
         z_support   = z_support.contiguous().view(self.n_way* self.n_support, -1 )
         z_query     = z_query.contiguous().view(self.n_way* self.n_query, -1 )
 
+        if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1)
+        if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
         y_support = torch.from_numpy(np.repeat(range( self.n_way ), self.n_support ))
         y_support = Variable(y_support.cuda())
 

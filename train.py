@@ -161,9 +161,9 @@ if __name__ == '__main__':
             assert params.num_classes >= 1597, 'class number need to be larger than max label id in base class'
 
         if params.method == 'baseline':
-            model = BaselineTrain(model_dict[params.model], params.num_classes)
+            model = BaselineTrain(model_dict[params.model], params.num_classes, normalize=params.normalize)
         elif params.method == 'baseline++':
-            model = BaselineTrain(model_dict[params.model], params.num_classes, loss_type='dist')
+            model = BaselineTrain(model_dict[params.model], params.num_classes, normalize=params.normalize, loss_type='dist')
 
     elif params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_RVM', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss', 
                             'Sparse_DKT_binary_Exact', 'Sp_DKT_Bin_Exact_NLoss', 
@@ -478,11 +478,19 @@ if __name__ == '__main__':
             backbone.SimpleBlock.maml = True
             backbone.BottleneckBlock.maml = True
             backbone.ResNet.maml = True
-            model = MAML(model_dict[params.model], approx=(params.method == 'maml_approx'), **train_few_shot_params)
+            id=f'MAML_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}_loop_{params.inner_loop}_inner_lr_{params.inner_lr}'
+         
+            if params.normalize: id += '_norm'
+            if params.lr_decay: id += '_lr_decay'
+            if params.train_aug: id += '_aug'
+            if params.first_order: id += '_first_order'
+            model = MAML(model_dict[params.model], inner_loop=params.inner_loop, inner_lr=params.inner_lr, first_order=params.first_order, normalize=params.normalize, **train_few_shot_params)
             if params.dataset in ['omniglot', 'cross_char']:  # maml use different parameter in omniglot
                 model.n_task = 32
                 model.task_update_num = 1
                 model.train_lr = 0.1
+            
+            model.init_summary(id=id)
         
         print(f'\n{id}\n')
     else:
@@ -517,6 +525,7 @@ if __name__ == '__main__':
             if params.rvm_mll_only: id += f'_rvm_mll_only'
             if params.rvm_ll_only: id += f'_rvm_ll_only'
             if params.train_aug: id += '_aug'
+   
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
             if params.sparse_method in ['Random', 'KMeans', 'augmFRVM', 'constFRVM']:  
@@ -531,6 +540,7 @@ if __name__ == '__main__':
         
             if params.normalize: id += '_norm'
             if params.train_aug: id += '_aug'
+            if params.first_order: id += '_first_order'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
             params.checkpoint_dir += id

@@ -7,26 +7,48 @@ from torch.autograd import Variable
 import numpy as np
 import torch.nn.functional as F
 from methods.meta_template import MetaTemplate
+from time import gmtime, strftime
+import os
+#Check if tensorboardx is installed
+try:
+    #tensorboard --logdir=./MAML_Loss/ --host localhost --port 8091
+    from tensorboardX import SummaryWriter
+    IS_TBX_INSTALLED = True
+except ImportError:
+    IS_TBX_INSTALLED = False
 
 class MAML(MetaTemplate):
-    def __init__(self, model_func,  n_way, n_support, inner_loop=5, inner_lr=1e-3, first_order=False):
+    def __init__(self, model_func,  n_way, n_support, inner_loop=5, inner_lr=1e-3, first_order=False, normalize=False):
         super(MAML, self).__init__( model_func,  n_way, n_support, change_way = False)
 
         self.loss_fn = nn.CrossEntropyLoss()
         self.classifier = backbone.Linear_fw(self.feat_dim, n_way)
         self.classifier.bias.data.fill_(0)
-        
+
+        self.normalize = normalize
         self.n_task     = 4
         self.task_update_num = inner_loop #5
         self.train_lr = inner_lr
-        self.approx = first_order #first order approx.        
+        self.approx = first_order #first order approx.       
+
+        self.init_summary('MAML')
+
+        
+    def init_summary(self, id):
+        if(IS_TBX_INSTALLED):
+            time_string = strftime("%d%m%Y_%H%M", gmtime())
+            if not os.path.isdir('./MAML_Loss'):
+                os.makedirs('./MAML_Loss')
+            writer_path = './MAML_Loss/' + id #+'_'+ time_string
+            self.writer = SummaryWriter(log_dir=writer_path)
 
     def forward(self,x):
         out  = self.feature.forward(x)
+        if(self.normalize): out = F.normalize(out, p=2, dim=1)
         scores  = self.classifier.forward(out)
         return scores
 
-    def set_forward(self,x, is_feature = False):
+    def set_forward(self, x, is_feature = False):
         assert is_feature == False, 'MAML do not support fixed feature' 
         x = x.cuda()
         x_var = Variable(x)

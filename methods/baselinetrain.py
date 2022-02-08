@@ -8,7 +8,7 @@ import numpy as np
 import torch.nn.functional as F
 
 class BaselineTrain(nn.Module):
-    def __init__(self, model_func, num_class, loss_type = 'softmax'):
+    def __init__(self, model_func, num_class, normalize=False, loss_type = 'softmax'):
         super(BaselineTrain, self).__init__()
         self.feature    = model_func()
         if loss_type == 'softmax':
@@ -17,12 +17,15 @@ class BaselineTrain(nn.Module):
         elif loss_type == 'dist': #Baseline ++
             self.classifier = backbone.distLinear(self.feature.final_feat_dim, num_class)
         self.loss_type = loss_type  #'softmax' #'dist'
+        self.normalize = normalize
         self.num_class = num_class
         self.loss_fn = nn.CrossEntropyLoss()
+
 
     def forward(self,x):
         x    = Variable(x.cuda())
         out  = self.feature.forward(x)
+        if(self.normalize): out = F.normalize(out, p=2, dim=1)
         scores  = self.classifier.forward(out)
         return scores
 
