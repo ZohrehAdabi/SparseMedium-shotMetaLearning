@@ -63,9 +63,9 @@ class MAML(MetaTemplate):
 
         for task_step in range(self.task_update_num):
             
-            with torch.autocast('cuda'):
-                scores = self.forward(x_a_i)
-                set_loss = self.loss_fn( scores, y_a_i) 
+         
+            scores = self.forward(x_a_i)
+            set_loss = self.loss_fn( scores, y_a_i) 
             grad = torch.autograd.grad(set_loss, fast_parameters, create_graph=True) #build full graph support gradient of gradient
             if self.approx:
                 grad = [ g.detach()  for g in grad ] #do not calculate gradient of gradient if using first order approximation
@@ -77,16 +77,16 @@ class MAML(MetaTemplate):
                 else:
                     weight.fast = weight.fast - self.train_lr * grad[k] #create an updated weight.fast, note the '-' is not merely minus value, but to create a new weight.fast 
                 fast_parameters.append(weight.fast) #gradients calculated in line 45 are based on newest fast weight, but the graph will retain the link to old weight.fasts
-
-        loss = nn.CrossEntropyLoss()
-        input = torch.randn(3, 5, requires_grad=True)
-        target = torch.empty(3, dtype=torch.long).random_(5)
-        output = loss(input, target)
-        output.backward()
-        # Example of target with class probabilities
-        input = torch.randn(3, 5, requires_grad=True)
-        target = torch.randn(3, 5).softmax(dim=1)
-        output = loss(input, target)   
+        #torch.long solved the error of cross_entropy
+        # loss = nn.CrossEntropyLoss()
+        # input = torch.randn(3, 5, requires_grad=True)
+        # target = torch.empty(3, dtype=torch.long).random_(5)
+        # output = loss(input, target)
+        # output.backward()
+        # # Example of target with class probabilities
+        # input = torch.randn(3, 5, requires_grad=True)
+        # target = torch.randn(3, 5).softmax(dim=1)
+        # output = loss(input, target)   
 
         scores = self.forward(x_b_i)
         return scores
