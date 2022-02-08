@@ -266,26 +266,26 @@ class MAML_regression(nn.Module):
         for epoch in range(stop_epoch):
             train_mse = self.train_loop(epoch, n_support, n_samples, optimizer)
             train_mse_list.append(train_mse)
-            with torch.no_grad():
-                if ((epoch>=50) and epoch%1==0) or ((epoch<50) and epoch%5==0):
-                    print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
-                    val_mse_list = []
-                    val_count = 80
-                    rep = True if val_count > len(val_people) else False
-                    val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
-                    for t in range(val_count):
-                        mse, mse_ = self.test_loop(n_support, n_samples, val_person[t],  optimizer)
-                        val_mse_list.append(mse)
-                    mse = np.mean(val_mse_list)
-                    if best_mse >= mse:
-                        best_mse = mse
-                        model_name = self.best_path + '_best_model.tar'
-                        self.save_best_checkpoint(epoch+1, best_mse, model_name)
-                        print(Fore.LIGHTRED_EX, f'Best MSE: {best_mse:.4f}', Fore.RESET)
-                    print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => Val. MSE: {mse:.4f}, Best MSE: {best_mse:.4f}', Fore.RESET)
-                    if(self.writer is not None):
-                        self.writer.add_scalar('MSE Val.', mse, epoch)
-                    print(Fore.GREEN,"-"*30, Fore.RESET)
+            
+            if ((epoch>=50) and epoch%1==0) or ((epoch<50) and epoch%5==0):
+                print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
+                val_mse_list = []
+                val_count = 80
+                rep = True if val_count > len(val_people) else False
+                val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
+                for t in range(val_count):
+                    mse, mse_ = self.test_loop(n_support, n_samples, val_person[t],  optimizer)
+                    val_mse_list.append(mse)
+                mse = np.mean(val_mse_list)
+                if best_mse >= mse:
+                    best_mse = mse
+                    model_name = self.best_path + '_best_model.tar'
+                    self.save_best_checkpoint(epoch+1, best_mse, model_name)
+                    print(Fore.LIGHTRED_EX, f'Best MSE: {best_mse:.4f}', Fore.RESET)
+                print(Fore.LIGHTRED_EX, f'\nepoch {epoch+1} => Val. MSE: {mse:.4f}, Best MSE: {best_mse:.4f}', Fore.RESET)
+                if(self.writer is not None):
+                    self.writer.add_scalar('MSE Val.', mse, epoch)
+                print(Fore.GREEN,"-"*30, Fore.RESET)
             if self.lr_decay:
                 scheduler.step()
             if(self.writer is not None): self.writer.add_scalar('Train MSE per epoch', train_mse, epoch)
