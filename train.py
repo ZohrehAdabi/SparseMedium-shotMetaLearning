@@ -50,7 +50,10 @@ def _set_seed(seed, verbose=True):
 def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch, lr_gp, lr_net, params):
     print("Tot epochs: " + str(stop_epoch))
     if optimization == 'Adam':
-        optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr': lr_gp},
+        if params.method=='MAML':
+            optimizer = torch.optim.Adam([{'params': model.parameters(), 'lr': lr_net}])
+        else:
+            optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr': lr_gp},
                                       {'params': filter(lambda p: p.requires_grad, model.feature_extractor.parameters()), 'lr': lr_net}])
                                       
     else:
@@ -168,7 +171,7 @@ if __name__ == '__main__':
     elif params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_RVM', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss', 
                             'Sparse_DKT_binary_Exact', 'Sp_DKT_Bin_Exact_NLoss', 
                             'DKT', 'DKT_binary', 'DKT_binary_new_loss', 'protonet', 
-                            'matchingnet', 'relationnet', 'relationnet_softmax', 'maml', 'maml_approx']:
+                            'matchingnet', 'relationnet', 'relationnet_softmax', 'MAML', 'maml_approx']:
         # for fewshot setting
         # n_query = max(1, int(
         #     16 * params.test_n_way / params.train_n_way))  # if test_n_way is smaller than train_n_way, reduce n_query to keep batch size small
@@ -473,7 +476,7 @@ if __name__ == '__main__':
             loss_type = 'mse' if params.method == 'relationnet' else 'softmax'
 
             model = RelationNet(feature_model, loss_type=loss_type, **train_few_shot_params)
-        elif params.method in ['maml', 'maml_approx']:
+        elif params.method in ['MAML', 'maml_approx']:
             backbone.ConvBlock.maml = True
             backbone.SimpleBlock.maml = True
             backbone.BottleneckBlock.maml = True
@@ -551,7 +554,7 @@ if __name__ == '__main__':
 
     start_epoch = params.start_epoch
     stop_epoch = params.stop_epoch
-    if params.method == 'maml' or params.method == 'maml_approx':
+    if params.method == 'MAML' or params.method == 'maml_approx':
         stop_epoch = params.stop_epoch * model.n_task  # maml use multiple tasks in one update
 
     if params.resume:

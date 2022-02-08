@@ -51,10 +51,10 @@ class MAML(MetaTemplate):
     def set_forward(self, x, is_feature = False):
         assert is_feature == False, 'MAML do not support fixed feature' 
         x = x.cuda()
-        x_var = Variable(x)
+        x_var = x
         x_a_i = x_var[:,:self.n_support,:,:,:].contiguous().view( self.n_way* self.n_support, *x.size()[2:]) #support data 
         x_b_i = x_var[:,self.n_support:,:,:,:].contiguous().view( self.n_way* self.n_query,   *x.size()[2:]) #query data
-        y_a_i = Variable( torch.from_numpy( np.repeat(range( self.n_way ), self.n_support ) )).cuda() #label for support data
+        y_a_i = torch.from_numpy( np.repeat(range( self.n_way ), self.n_support ) ).to(torch.float64).cuda() #label for support data
         
         fast_parameters = list(self.parameters()) #the first gradient calcuated in line 45 is based on original weight
         for weight in self.parameters():
@@ -62,8 +62,10 @@ class MAML(MetaTemplate):
         self.zero_grad()
 
         for task_step in range(self.task_update_num):
-            scores = self.forward(x_a_i)
-            set_loss = self.loss_fn( scores, y_a_i) 
+            
+            with torch.autocast('cuda'):
+                scores = self.forward(x_a_i)
+                set_loss = self.loss_fn( scores, y_a_i) 
             grad = torch.autograd.grad(set_loss, fast_parameters, create_graph=True) #build full graph support gradient of gradient
             if self.approx:
                 grad = [ g.detach()  for g in grad ] #do not calculate gradient of gradient if using first order approximation
@@ -85,7 +87,7 @@ class MAML(MetaTemplate):
 
     def set_forward_loss(self, x):
         scores = self.set_forward(x, is_feature = False)
-        y_b_i = Variable( torch.from_numpy( np.repeat(range( self.n_way ), self.n_query   ) )).cuda()
+        y_b_i = Variable( torch.from_numpy( np.repeat(range( self.n_way ), self.n_query   ) )).to(torch.float).cuda()
         loss = self.loss_fn(scores, y_b_i)
 
         return loss
