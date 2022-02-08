@@ -11,11 +11,11 @@ lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['001']
 sd = 1
-method_list = ['Sparse_DKT_Exact']
+method_list = ['Sparse_DKT_Nystrom']
 for config in config_list:
     for lr_gp in lr_gp_list:
         for lr_net in lr_net_list:
-            align_thr = 1e-3
+            align_thr = 2e-3
             if config in ['000', '010']:
                 align_thr = 0
             L = ['python', f'./train.py', 
@@ -27,7 +27,8 @@ for config in config_list:
                          
             ]
             print(f'\n{" ".join(L)} \n')
-            run(L)
+            # run(L)
+            method_list = ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact']
             for method in method_list:
                 L = ['python', f'./train.py', 
                             "--method", f"{method}", "--sparse_method", "FRVM", "--dataset", "omniglot", 
@@ -39,8 +40,8 @@ for config in config_list:
                             
                 ]
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
-            lambda_rvm_list = [ 0.5, 1.0]
+                run(L)
+            lambda_rvm_list = [1.0]
             for lambda_rvm in lambda_rvm_list:
                 for method in method_list:
                     L = ['python', f'./train.py', 
@@ -54,7 +55,7 @@ for config in config_list:
                                   
                     ]
                     print(f'\n{" ".join(L)} \n')
-                    run(L)
+                    # run(L)
                 
             lambda_rvm_list = [0.5, 1.0]
             for lambda_rvm in lambda_rvm_list:
