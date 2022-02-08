@@ -31,9 +31,7 @@ class MAML(MetaTemplate):
         self.train_lr = inner_lr
         self.approx = first_order #first order approx.       
 
-        self.init_summary('MAML')
-
-        
+               
     def init_summary(self, id):
         if(IS_TBX_INSTALLED):
             time_string = strftime("%d%m%Y_%H%M", gmtime())
