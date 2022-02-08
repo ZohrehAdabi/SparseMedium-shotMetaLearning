@@ -33,6 +33,7 @@ class MAML(MetaTemplate):
 
                
     def init_summary(self, id):
+        self.id = id
         if(IS_TBX_INSTALLED):
             time_string = strftime("%d%m%Y_%H%M", gmtime())
             if not os.path.isdir('./MAML_Loss'):
