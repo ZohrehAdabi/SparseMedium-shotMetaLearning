@@ -227,11 +227,12 @@ class MAML_regression(nn.Module):
         mse_ = self.mse(y_pred, y).item()
         y = y.cpu().numpy()
         y_pred = y_pred.detach().cpu().numpy()
-        print(Fore.RED,"="*50, Fore.RESET)
-        print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
-        print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
-        print(Fore.LIGHTRED_EX, f'mse:    {mse_:.4f}, mse (normed):    {mse:.4f}', Fore.RESET)
-        print(Fore.RED,"-"*50, Fore.RESET)
+        if self.test_i%20==0:
+            print(Fore.RED,"="*50, Fore.RESET)
+            print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
+            print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
+            print(Fore.LIGHTRED_EX, f'mse:    {mse_:.4f}, mse (normed):    {mse:.4f}', Fore.RESET)
+            print(Fore.RED,"-"*50, Fore.RESET)
 
         
         #**************************************************
@@ -311,7 +312,9 @@ class MAML_regression(nn.Module):
 
         test_person = np.random.choice(np.arange(len(test_people)), size=test_count, replace=rep)
         for t in range(test_count):
-            print(f'test #{t}')
+            
+            if t%20==0:print(f'test #{t}')
+            self.test_i = t
             
             mse, mse_ = self.test_loop(n_support, n_samples, test_person[t],  optimizer)
             
