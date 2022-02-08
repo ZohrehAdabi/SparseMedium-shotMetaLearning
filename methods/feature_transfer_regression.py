@@ -175,6 +175,7 @@ class FeatureTransfer(nn.Module):
 
         self.feature_extractor.eval()
         self.model.eval()
+        mse_support = self.criterion(output_support, y_query).item()
         z_query = self.feature_extractor(x_query).detach()
         if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
         output = self.model(z_query).squeeze()
@@ -189,7 +190,7 @@ class FeatureTransfer(nn.Module):
             print(Fore.RED,"-"*50, Fore.RESET)
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
             print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
-            print(Fore.LIGHTRED_EX, f'mse:    {mse_:.4f}, mse (normed):{mse:.4f}', Fore.RESET)
+            print(Fore.LIGHTRED_EX, f'mse:    {mse_:.4f}, mse (normed):{mse:.4f}, support mse: {mse_support:.4f}', Fore.RESET)
             print(Fore.RED,"-"*50, Fore.RESET)
 
 
