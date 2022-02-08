@@ -186,7 +186,7 @@ class FeatureTransfer(nn.Module):
         mse_ = self.criterion(y_pred, y).item()
         y = y.cpu().numpy()
         y_pred = y_pred.cpu().numpy()
-        if self.test_i%20==0:
+        if self.test_i%2==0:
             print(Fore.RED,"-"*50, Fore.RESET)
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
             print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
