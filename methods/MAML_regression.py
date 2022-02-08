@@ -335,6 +335,7 @@ class MAML_regression(nn.Module):
         #result = {'mse':np.around(np.mean(mse_list), 3), 'std':np.around(np.std(mse_list),3)}
         result['inner_loop'] = self.task_update_num
         result['inner_lr'] = self.train_lr
+        result['first_order'] = self.approx
         return mse_list, result
 
     def save_checkpoint(self, checkpoint):

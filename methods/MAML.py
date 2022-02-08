@@ -147,10 +147,16 @@ class MAML(MetaTemplate):
         acc_mean = np.mean(acc_all)
         acc_std  = np.std(acc_all)
         print('%d Test Acc = %4.2f%% +- %4.2f%%' %(iter_num,  acc_mean, 1.96* acc_std/np.sqrt(iter_num)))
+        result = {'acc':acc_mean,  'std':acc_std}
+        result = {k: np.around(v, 4) for k, v in result.items()}
+        #result = {'mse':np.around(np.mean(mse_list), 3), 'std':np.around(np.std(mse_list),3)}
+        result['inner_loop'] = self.task_update_num
+        result['inner_lr'] = self.train_lr
+        result['first_order'] = self.approx
         if return_std:
-            return acc_mean, acc_std
+            return acc_mean, acc_std, result
         else:
-            return acc_mean
+            return acc_mean, result
 
     def get_logits(self, x):
         self.n_query = x.size(1) - self.n_support
