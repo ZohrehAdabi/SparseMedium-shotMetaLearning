@@ -269,7 +269,7 @@ def single_test(params):
                 IP = torch.ones(100, 64).cuda()
                 tmp['state']['model.covar_module.inducing_points'] = IP
                 tmp['state']['mll.model.covar_module.inducing_points'] = IP
-            if params.method in ['Sparse_DKT_Nystrom']:
+            if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_RVM']:
                 IP = torch.ones(100, 64).cuda()
                 for i in range(params.test_n_way):
                     tmp['state'][f'model.models.{i}.covar_module.inducing_points'] = IP
@@ -285,7 +285,7 @@ def single_test(params):
                 IP = torch.ones(100, 64).cuda()
                 tmp['state']['model.covar_module.inducing_points'] = IP
                 tmp['state']['mll.model.covar_module.inducing_points'] = IP
-            if params.method in ['Sparse_DKT_Nystrom']:
+            if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_RVM']:
                 
                 IP = torch.ones(100, 64).cuda()
                 for i in range(params.test_n_way):
@@ -302,7 +302,7 @@ def single_test(params):
                 IP = torch.ones(100, 64).cuda()
                 tmp['state']['model.covar_module.inducing_points'] = IP
                 tmp['state']['mll.model.covar_module.inducing_points'] = IP
-            if params.method in ['Sparse_DKT_Nystrom']:
+            if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_RVM']:
                 
                 IP = torch.ones(100, 64).cuda()
                 for i in range(params.test_n_way):
