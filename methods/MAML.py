@@ -54,7 +54,7 @@ class MAML(MetaTemplate):
         x_var = x
         x_a_i = x_var[:,:self.n_support,:,:,:].contiguous().view( self.n_way* self.n_support, *x.size()[2:]) #support data 
         x_b_i = x_var[:,self.n_support:,:,:,:].contiguous().view( self.n_way* self.n_query,   *x.size()[2:]) #query data
-        y_a_i = torch.from_numpy( np.repeat(range( self.n_way ), self.n_support ) ).to(torch.float64).cuda() #label for support data
+        y_a_i = torch.tensor( np.repeat(range( self.n_way ), self.n_support ), dtype=torch.long ).cuda() #label for support data
         
         fast_parameters = list(self.parameters()) #the first gradient calcuated in line 45 is based on original weight
         for weight in self.parameters():
@@ -78,6 +78,16 @@ class MAML(MetaTemplate):
                     weight.fast = weight.fast - self.train_lr * grad[k] #create an updated weight.fast, note the '-' is not merely minus value, but to create a new weight.fast 
                 fast_parameters.append(weight.fast) #gradients calculated in line 45 are based on newest fast weight, but the graph will retain the link to old weight.fasts
 
+        loss = nn.CrossEntropyLoss()
+        input = torch.randn(3, 5, requires_grad=True)
+        target = torch.empty(3, dtype=torch.long).random_(5)
+        output = loss(input, target)
+        output.backward()
+        # Example of target with class probabilities
+        input = torch.randn(3, 5, requires_grad=True)
+        target = torch.randn(3, 5).softmax(dim=1)
+        output = loss(input, target)   
+
         scores = self.forward(x_b_i)
         return scores
 
@@ -87,7 +97,7 @@ class MAML(MetaTemplate):
 
     def set_forward_loss(self, x):
         scores = self.set_forward(x, is_feature = False)
-        y_b_i = Variable( torch.from_numpy( np.repeat(range( self.n_way ), self.n_query   ) )).to(torch.float).cuda()
+        y_b_i = torch.tensor( np.repeat(range( self.n_way ), self.n_query), dtype=torch.long ).cuda()
         loss = self.loss_fn(scores, y_b_i)
 
         return loss
