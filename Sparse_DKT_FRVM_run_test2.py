@@ -18,7 +18,7 @@ for config in config_list:
             align_thr = 2e-3
             if config in ['000', '010']:
                 align_thr = 0
-            L = ['python', f'./train.py', 
+            L = ['python', f'./test.py', 
                         "--method","DKT", "--dataset", "omniglot", 
                         "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "15", "--n_query", "5",
                             "--seed",  f"{sd}",  
@@ -31,7 +31,7 @@ for config in config_list:
             run(L)
             
             for method in method_list:
-                L = ['python', f'./train.py', 
+                L = ['python', f'./test.py', 
                             "--method", f"{method}", "--sparse_method", "FRVM", "--dataset", "omniglot", 
                             "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "15", "--n_query", "5",
                                 "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
@@ -46,7 +46,7 @@ for config in config_list:
             lambda_rvm_list = [1.0]
             for lambda_rvm in lambda_rvm_list:
                 for method in method_list:
-                    L = ['python', f'./train.py', 
+                    L = ['python', f'./test.py', 
                                 "--method", f"{method}", "--sparse_method", "FRVM", "--dataset", "omniglot", 
                                  "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "15", "--n_query", "5",
                                     "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
@@ -63,7 +63,7 @@ for config in config_list:
             lambda_rvm_list = [1.0]
             for lambda_rvm in lambda_rvm_list:
                 for method in method_list:
-                    L = ['python', f'./train.py', 
+                    L = ['python', f'./test.py', 
                                 "--method", f"{method}", "--sparse_method", "FRVM", "--dataset", "omniglot", 
                                  "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "15", "--n_query", "5",
                                     "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
@@ -77,7 +77,7 @@ for config in config_list:
                     print(f'\n{" ".join(L)} \n')
                     # run(L)
 
-            L = ['python', f'./train.py', 
+            L = ['python', f'./test.py', 
                                 "--method", f"Sparse_DKT_RVM", "--sparse_method", "FRVM", "--dataset", "omniglot", 
                                  "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "15", "--n_query", "5",
                                     "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
