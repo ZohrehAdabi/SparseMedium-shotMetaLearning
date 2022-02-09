@@ -10,7 +10,7 @@ lr_net_list = [0.01, 0.001, 0.0001]
 lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['001']
-sd = 2
+sd = 3
 save_result = True
 for config in config_list:
     for lr_gp in lr_gp_list:
