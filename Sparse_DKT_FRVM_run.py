@@ -3,7 +3,7 @@ from subprocess import run
 config_list = ['000', '001', '010', '011']
 dataset_list = ['omniglot', 'CUB', 'miniImagenet']
 method_list = ['Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_Exact'] # , 'DKT_binary'
-method_list = ['Sparse_DKT_binary_Exact']
+
 
 lr_gp_list = [0.1, 0.01, 0.001, 0.0001]
 lr_net_list = [0.01, 0.001, 0.0001]
@@ -46,7 +46,6 @@ for config in config_list:
                 print(f'\n{" ".join(L)} \n')
                 # run(L)
             lambda_rvm_list = [2.0]
-            method_list = ['Sparse_DKT_binary_Nystrom']
             for lambda_rvm in lambda_rvm_list:
                 for method in method_list:
                     L = ['python', f'./train.py', 
@@ -60,10 +59,10 @@ for config in config_list:
                                     "--train_aug"
                     ]
                     print(f'\n{" ".join(L)} \n')
-                    run(L)
+                    # run(L)
 
 
-            lambda_rvm_list = [0.5, 1.0]
+         
             for lambda_rvm in lambda_rvm_list:
                 for method in method_list:
                     L = ['python', f'./train.py', 
