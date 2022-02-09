@@ -18,9 +18,9 @@ sd = 1
 for config in config_list:
     for lr_gp in lr_gp_list:
         for lr_net in lr_net_list:
-            align_thr = 1e-3
+            align_thr = 0.03
             if config in ['000', '010']:
-                align_thr = 0.03
+                align_thr = 0
             L = ['python', f'./train.py', 
                         "--method","DKT_binary", "--dataset", "CUB", 
                         "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
