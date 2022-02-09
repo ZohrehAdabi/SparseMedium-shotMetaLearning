@@ -32,7 +32,7 @@ for config in config_list:
             ]
             print(f'\n{" ".join(L)} \n')
             # run(L)
-            # method_list = ['Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_Exact']
+            method_list = ['Sparse_DKT_binary_Nystrom']
             for method in method_list:
                 L = ['python', f'./train.py', 
                             "--method",f"{method}", "--sparse_method", "FRVM", "--dataset", f"{dataset}", 
@@ -45,7 +45,7 @@ for config in config_list:
                 ]
                 print(f'\n{" ".join(L)} \n')
                 run(L)
-                
+
             lambda_rvm_list = [2.0]
             for lambda_rvm in lambda_rvm_list:
                 for method in method_list:
