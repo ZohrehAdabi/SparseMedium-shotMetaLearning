@@ -325,6 +325,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
 
             mll = mll.item()
             rvm_mll = rvm_mll.item()
+            penalty = penalty.item()
             self.iteration = i+(epoch*len(train_loader))
             if(self.writer is not None): self.writer.add_scalar('Loss', loss.item(), self.iteration)
             if(self.writer is not None): self.writer.add_scalar('MLL', -mll, self.iteration)
