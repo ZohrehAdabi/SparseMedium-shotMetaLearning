@@ -654,7 +654,7 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
             self.writer.add_scalar('test_accuracy', acc_mean, self.iteration)
 
         if(self.writer is not None): self.writer.add_scalar('Avg. SVs', mean_num_sv, self.iteration)
-        result = {'acc': acc_mean, 'rvm acc': acc_mean_rvm, 'std': acc_std, 'rvm std': acc_std_rvm,'SVs':mean_num_sv}
+        result = {'acc': acc_mean, 'rvm acc': acc_mean_rvm, 'std': acc_std, 'rvm std': acc_std_rvm,'SVs':mean_num_sv, 'SVs std':np.std(num_sv_list)}
         result = {k: np.around(v, 4) for k, v in result.items()}
         if self.rvm_ll_only: result['rvm_ll_only'] = True
         if self.rvm_mll_only: result['rvm_mll_only'] = True
