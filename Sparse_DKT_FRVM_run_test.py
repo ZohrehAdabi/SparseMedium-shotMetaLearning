@@ -11,8 +11,8 @@ lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['001']
 n_task = 20
-n_shot = 150 # 50
-n_query = 25 # 10
+n_shot = 100 # 50
+n_query = 15 # 10
 
 tol_rvm = 1e-4
 max_itr = -1
