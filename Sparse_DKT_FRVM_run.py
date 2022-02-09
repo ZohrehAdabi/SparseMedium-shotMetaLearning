@@ -32,7 +32,7 @@ for config in config_list:
             ]
             print(f'\n{" ".join(L)} \n')
             # run(L)
-            method_list = ['Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_Exact']
+            # method_list = ['Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_Exact']
             for method in method_list:
                 L = ['python', f'./train.py', 
                             "--method",f"{method}", "--sparse_method", "FRVM", "--dataset", f"{dataset}", 
@@ -44,7 +44,7 @@ for config in config_list:
                                 "--train_aug"
                 ]
                 print(f'\n{" ".join(L)} \n')
-                run(L)
+                # run(L)
             lambda_rvm_list = [2.0]
             method_list = ['Sparse_DKT_binary_Nystrom']
             for lambda_rvm in lambda_rvm_list:
@@ -91,7 +91,7 @@ for config in config_list:
                             "--train_aug"
             ]
             print(f'\n{" ".join(L)} \n')
-            run(L)
+            # run(L)
 
             # run(['python', f'./train.py', 
             #             "--method","Sparse_DKT_binary_Nystrom", "--sparse_method", "FRVM", "--dataset", "omniglot", 
