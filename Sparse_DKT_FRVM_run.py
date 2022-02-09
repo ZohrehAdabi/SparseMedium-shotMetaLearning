@@ -52,7 +52,7 @@ for config in config_list:
 
             lambda_rvm_list = [5.0]
             method_list = ['Sparse_DKT_binary_Exact']
-            for align_thr in [0.01, 0.009, 0.008, 0.006, 0.003]:
+            for align_thr in [0.01, 0.009, 0.008, 0.006, 0.003, 0.02]:
                 for lambda_rvm in lambda_rvm_list:
                     for method in method_list:
                         L = ['python', f'./train.py', 
