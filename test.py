@@ -403,7 +403,7 @@ def single_test(params):
             if params.save_result:
                 f.write('"best rvm model":\n')
                 json.dump(result, f, indent=2)
-                f.write('\n}\n]')
+                f.write(',\n')
             print("-----------------------------")
             print('Test Acc GP at best RVM model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
             print("-----------------------------") 
