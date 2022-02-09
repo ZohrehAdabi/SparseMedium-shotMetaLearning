@@ -15,6 +15,7 @@ n_task = 20
 tol_rvm = 1e-4
 max_itr = -1
 sd = 1
+save_result = True
 for config in config_list:
     for lr_gp in lr_gp_list:
         for lr_net in lr_net_list:
@@ -26,23 +27,25 @@ for config in config_list:
                         "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
                             "--seed",  f"{sd}",  
                             "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", 
-                            '--kernel_type', 'linear', "--normalize", "--save_model", "--n_task",  f"{n_task}",
+                            '--kernel_type', 'linear', "--normalize", "--n_task",  f"{n_task}",
                          
                             "--train_aug"
             ]
+            if save_result: L.append('--save_result')
             print(f'\n{" ".join(L)} \n')
             run(L)
-            
+
             for method in method_list:
                 L = ['python', f'./test.py', 
                             "--method",f"{method}", "--sparse_method", "FRVM", "--dataset", f"{dataset}", 
                             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
                                 "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
                                 "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", 
-                                '--kernel_type', 'linear', "--scale", "--normalize", "--save_model", "--n_task",  f"{n_task}",
+                                '--kernel_type', 'linear', "--scale", "--normalize", "--n_task",  f"{n_task}",
                                 "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}", "--regression",
                                 "--train_aug"
                 ]
+                if save_result: L.append('--save_result')
                 print(f'\n{" ".join(L)} \n')
                 run(L)
 
@@ -54,11 +57,12 @@ for config in config_list:
                                 "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
                                     "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
                                     "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", 
-                                    '--kernel_type', 'linear', "--scale", "--normalize", "--save_model", "--n_task",  f"{n_task}",
+                                    '--kernel_type', 'linear', "--scale", "--normalize",  "--n_task",  f"{n_task}",
                                     "--regression", 
                                     "--rvm_mll", "--lambda_rvm", f"{lambda_rvm}", "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}",
                                     "--train_aug"
                     ]
+                    if save_result: L.append('--save_result')
                     print(f'\n{" ".join(L)} \n')
                     run(L)
 
@@ -70,11 +74,12 @@ for config in config_list:
                                 "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
                                     "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
                                     "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", 
-                                    '--kernel_type', 'linear', "--scale", "--normalize", "--save_model", "--n_task", f"{n_task}",
+                                    '--kernel_type', 'linear', "--scale", "--normalize",  "--n_task", f"{n_task}",
                                     "--regression", 
                                     "--rvm_ll", "--lambda_rvm", f"{lambda_rvm}", "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}",
                                     "--train_aug"
                     ]
+                    if save_result: L.append('--save_result')
                     print(f'\n{" ".join(L)} \n')
                     # run(L)
              
@@ -84,11 +89,12 @@ for config in config_list:
                         "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
                             "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
                             "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", 
-                            '--kernel_type', 'linear', "--scale", "--normalize", "--save_model", "--n_task",  f"{n_task}",
+                            '--kernel_type', 'linear', "--scale", "--normalize", "--n_task",  f"{n_task}",
                             "--regression", 
                             "--rvm_mll_only", "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}",
                             "--train_aug"
             ]
+            if save_result: L.append('--save_result')
             print(f'\n{" ".join(L)} \n')
             run(L)
 
