@@ -11,7 +11,7 @@ lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['001']
 n_task = 20
-n_shot = 100 # 50
+n_shot = 125 # 50
 n_query = 15 # 10
 
 tol_rvm = 1e-4
@@ -21,7 +21,7 @@ save_result = True
 for config in config_list:
     for lr_gp in lr_gp_list:
         for lr_net in lr_net_list:
-            align_thr = 0.03
+            align_thr = 0.02 # 0.03
             if config in ['000', '010']:
                 align_thr = 0
             L = ['python', f'./test.py', 
@@ -51,7 +51,7 @@ for config in config_list:
                 print(f'\n{" ".join(L)} \n')
                 run(L)
 
-            lambda_rvm_list = [2.0]
+            lambda_rvm_list = [4.0]
             for lambda_rvm in lambda_rvm_list:
                 for method in method_list:
                     L = ['python', f'./test.py', 
