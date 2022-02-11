@@ -103,7 +103,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
     def init_summary(self, id):
         self.id = id
         if(IS_TBX_INSTALLED):
-            path = './Sparse_DKT_QMUL_Eaxct_Loss'
+            path = './Sparse_DKT_QMUL_Excat_Loss'
             time_string = strftime("%d%m%Y_%H%M", gmtime())
             if not os.path.isdir(path):
                 os.makedirs(path)
