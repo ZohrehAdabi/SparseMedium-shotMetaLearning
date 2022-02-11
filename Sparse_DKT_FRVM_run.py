@@ -50,9 +50,7 @@ for config in config_list:
                 print(f'\n{" ".join(L)} \n')
                 run(L)
 
-            lambda_rvm_list = [4.0]
-            method_list = ['Sparse_DKT_binary_Exact']
-     
+            lambda_rvm_list = [4.0]     
             for lambda_rvm in lambda_rvm_list:
                 for method in method_list:
                     L = ['python', f'./train.py', 
