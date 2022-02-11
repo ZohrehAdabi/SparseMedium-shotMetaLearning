@@ -32,7 +32,7 @@ for config in config_list:
                 ]
                 if save_model: L.append('--save_model')
                 print(f'\n{" ".join(L)} \n')
-                run(L)  
+                # run(L)  
 
                 for method in method_list:
                 
@@ -46,10 +46,10 @@ for config in config_list:
                     ]
                     if save_model: L.append('--save_model')
                     print(f'\n{" ".join(L)} \n')
-                    # run(L)
+                    run(L)
                             
                    
-                lambda_rvm_list = [0.5, 1.0]
+                lambda_rvm_list = [1.0]
                 for lambda_rvm in lambda_rvm_list:
                     for method in method_list:    
                         
