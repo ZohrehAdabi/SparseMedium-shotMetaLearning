@@ -268,7 +268,7 @@ class MAML_regression(nn.Module):
             train_mse = self.train_loop(epoch, n_support, n_samples, optimizer)
             train_mse_list.append(train_mse)
             
-            if ((epoch>=50) and epoch%1==0) or ((epoch<50) and epoch%5==0):
+            if ((epoch>=50) and epoch%1==0) or ((epoch<50) and epoch%10==0):
                 print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
                 val_mse_list = []
                 val_count = 80
