@@ -30,8 +30,8 @@ for config in config_list:
             # run(L)
             
             method_list = ['Sparse_DKT_Exact']
-            lambda_rvm_list = [1.0]
-            for align_thr in [0.0025, 0.003]:
+            lambda_rvm_list = [1.5]
+            for align_thr in [0.001, 0.0015, 0.002]:
                 for lambda_rvm in lambda_rvm_list:
                     for method in method_list:
                         L = ['python', f'./train.py', 
