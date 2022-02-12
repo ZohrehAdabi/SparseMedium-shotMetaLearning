@@ -15,7 +15,7 @@ save_result = True
 for config in config_list:
     for lr_gp in lr_gp_list:
         for lr_net in lr_net_list:
-            align_thr = 2e-3
+            align_thr = 0.0015
             if config in ['000', '010']:
                 align_thr = 0
             L = ['python', f'./test.py', 
