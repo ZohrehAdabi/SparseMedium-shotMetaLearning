@@ -12,7 +12,7 @@ stop_epoch = 100
 lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['1001']
-seed_list = [4]
+seed_list = [5]
 method_list = ['Sparse_DKT_Nystrom','Sparse_DKT_Exact'] #
 sparse_method = 'FRVM' # 'random'
 for config in config_list:
@@ -32,7 +32,7 @@ for config in config_list:
                 ]
                 if save_model: L.append('--save_model')
                 print(f'\n{" ".join(L)} \n')
-                # run(L)  
+                run(L)  
 
                 for method in method_list:
                 
