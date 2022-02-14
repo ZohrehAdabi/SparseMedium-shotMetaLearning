@@ -283,7 +283,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             alpha_m = alpha_m / scales**2
             if self.add_rvm_ll:
                 if self.regression:
-                    rvm_mll, _ = rvm_ML_regression(K_m, target, alpha_m, mu_m)
+                    rvm_mll, penalty = rvm_ML_regression(K_m, target, alpha_m, mu_m)
                 else:
                     rvm_mll = rvm_ML(K_m, target, alpha_m, mu_m, U)
             elif self.add_rvm_mll or self.add_rvm_mll_one:

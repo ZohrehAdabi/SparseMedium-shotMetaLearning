@@ -269,12 +269,12 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
                     rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U, beta)
             elif self.rvm_ll_only:
                 if self.regression:
-                    rvm_mll, _ = rvm_ML_regression(K_m, target, alpha_m, mu_m)
+                    rvm_mll, mse = rvm_ML_regression(K_m, target, alpha_m, mu_m)
                 else:
                     rvm_mll = rvm_ML(K_m, target, alpha_m, mu_m, U)
             else:# for classification, equal to rvm_mll_only now.
                 if self.regression:
-                    rvm_mll, _ = rvm_ML_regression_full_rvm(K_m, target, alpha_m, mu_m)
+                    rvm_mll = rvm_ML_regression_full_rvm(K_m, target, alpha_m, mu_m)
                 else:
                     rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U, beta)
 
