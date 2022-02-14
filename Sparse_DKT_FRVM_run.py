@@ -21,7 +21,7 @@ if dataset=='miniImagenet':
 
 tol_rvm = 1e-4
 max_itr = -1
-seed_list = [3]
+seed_list = [1, 2, 3]
 for config in config_list:
     for lr_gp in lr_gp_list:
         for lr_net in lr_net_list:
@@ -42,7 +42,7 @@ for config in config_list:
                                 "--train_aug"
                 ]
                 print(f'\n{" ".join(L)} \n')
-                run(L)
+                # run(L)
 
                 
                 for method in method_list:
@@ -56,7 +56,7 @@ for config in config_list:
                                     "--train_aug"
                     ]
                     print(f'\n{" ".join(L)} \n')
-                    run(L)
+                    # run(L)
 
         
                 if dataset=='CUB':
@@ -77,7 +77,7 @@ for config in config_list:
                                         "--train_aug"
                         ]
                         print(f'\n{" ".join(L)} \n')
-                        run(L)
+                        # run(L)
 
 
             
@@ -94,7 +94,7 @@ for config in config_list:
                                         "--train_aug"
                         ]
                         print(f'\n{" ".join(L)} \n')
-                        # run(L)
+                        run(L)
                 
                     
                 L = ['python', f'./train.py', 
@@ -108,7 +108,7 @@ for config in config_list:
                                 "--train_aug"
                 ]
                 print(f'\n{" ".join(L)} \n')
-                run(L)
+                # run(L)
 
                 # L = ['python', f'./Sparse_DKT_FRVM_run_test.py'
                 # ]
