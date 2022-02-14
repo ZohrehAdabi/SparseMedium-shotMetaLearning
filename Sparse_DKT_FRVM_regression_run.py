@@ -12,7 +12,7 @@ stop_epoch = 100
 lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['1001']
-seed_list = [5]
+seed_list = [1, 2, 3, 4, 5]
 method_list = ['Sparse_DKT_Nystrom','Sparse_DKT_Exact'] #
 sparse_method = 'FRVM' # 'random'
 for config in config_list:
@@ -49,7 +49,7 @@ for config in config_list:
                     # run(L)
                             
                    
-                lambda_rvm_list = [0.5]
+                lambda_rvm_list = [0.5, 1.0]
                 for lambda_rvm in lambda_rvm_list:
                     for method in method_list:    
                         
@@ -63,7 +63,7 @@ for config in config_list:
                         ]
                         if save_model: L.append('--save_model')
                         print(f'\n{" ".join(L)} \n')
-                        run(L)
+                        # run(L)
                     
                 lambda_rvm_list = [0.5, 1.0]
                 for lambda_rvm in lambda_rvm_list:
@@ -78,7 +78,7 @@ for config in config_list:
                         ]
                         if save_model: L.append('--save_model')
                         print(f'\n{" ".join(L)} \n')
-                        # run(L)
+                        run(L)
 
                 L = ['python', f'./train_regression.py',  
                                         '--method', f'Sparse_DKT_RVM', '--sparse_method', f'{sparse_method}',  '--n_samples', '72', '--n_support', '60', '--stop_epoch', f'{stop_epoch}',
