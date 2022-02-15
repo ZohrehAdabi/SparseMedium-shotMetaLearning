@@ -42,7 +42,7 @@ for config in config_list:
                                 "--train_aug"
                 ]
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
+                run(L)
 
                 
                 for method in method_list:
@@ -56,7 +56,7 @@ for config in config_list:
                                     "--train_aug"
                     ]
                     print(f'\n{" ".join(L)} \n')
-                    # run(L)
+                    run(L)
 
         
                 if dataset=='CUB':
@@ -77,7 +77,7 @@ for config in config_list:
                                         "--train_aug"
                         ]
                         print(f'\n{" ".join(L)} \n')
-                        # run(L)
+                        run(L)
 
 
             
@@ -94,7 +94,7 @@ for config in config_list:
                                         "--train_aug"
                         ]
                         print(f'\n{" ".join(L)} \n')
-                        run(L)
+                        # run(L)
                 
                     
                 L = ['python', f'./train.py', 
@@ -108,11 +108,11 @@ for config in config_list:
                                 "--train_aug"
                 ]
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
+                run(L)
 
-                # L = ['python', f'./Sparse_DKT_FRVM_run_test.py'
-                # ]
-                # print(f'\n{" ".join(L)} \n')
-                # run(L)
+            L = ['python', f'./Sparse_DKT_FRVM_run_test.py'
+            ]
+            print(f'\n{" ".join(L)} \n')
+            run(L)
 
            

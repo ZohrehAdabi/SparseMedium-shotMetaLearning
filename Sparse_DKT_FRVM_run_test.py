@@ -6,7 +6,7 @@ method_list = ['Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_Exact'] # , 'DKT_
 
 lr_gp_list = [0.1, 0.01, 0.001, 0.0001]
 lr_net_list = [0.01, 0.001, 0.0001]
-dataset =  'CUB' #'miniImagenet' # 'CUB
+dataset =  'miniImagenet' #'miniImagenet' # 'CUB
 lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['001']
@@ -20,7 +20,7 @@ if dataset=='miniImagenet':
 
 tol_rvm = 1e-4
 max_itr = -1
-seed_list = [1, 2, 3]
+seed_list = [2, 3]
 save_result = True
 for config in config_list:
     for lr_gp in lr_gp_list:
@@ -44,7 +44,7 @@ for config in config_list:
                 ]
                 if save_result: L.append('--save_result')
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
+                run(L)
 
                 for method in method_list:
                     L = ['python', f'./test.py', 
@@ -58,7 +58,7 @@ for config in config_list:
                     ]
                     if save_result: L.append('--save_result')
                     print(f'\n{" ".join(L)} \n')
-                    # run(L)
+                    run(L)
 
                 if dataset=='CUB':
                     lambda_rvm_list = [2.0] 
@@ -78,7 +78,7 @@ for config in config_list:
                         ]
                         if save_result: L.append('--save_result')
                         print(f'\n{" ".join(L)} \n')
-                        # run(L)
+                        run(L)
 
 
                 for lambda_rvm in lambda_rvm_list:
@@ -95,7 +95,7 @@ for config in config_list:
                         ]
                         if save_result: L.append('--save_result')
                         print(f'\n{" ".join(L)} \n')
-                        run(L)
+                        # run(L)
                 
                     
                 L = ['python', f'./test.py', 
@@ -110,6 +110,6 @@ for config in config_list:
                 ]
                 if save_result: L.append('--save_result')
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
+                run(L)
 
      
