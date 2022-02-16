@@ -529,13 +529,14 @@ class Sparse_DKT_regression_RVM(nn.Module):
             
             elif self.random:
                 mll = self.train_loop_random(epoch, n_support, n_samples, optimizer)
-                if epoch%1==0:
+                if ((epoch>=50) and epoch%1==0) or ((epoch<50) and epoch%10==0):
                     print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
                     mse_list = []
-                    val_count = 10
+                    val_count = 80
                     rep = True if val_count > len(val_people) else False
                     val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
                     for t in range(val_count):
+                        self.test_i = t
                         mse = self.test_loop_random(n_support, n_samples, val_person[t],  optimizer)
                         mse_list.append(mse)
                         
