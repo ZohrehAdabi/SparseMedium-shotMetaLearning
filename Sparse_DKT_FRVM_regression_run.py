@@ -51,7 +51,7 @@ for config in config_list:
                    
                 lambda_rvm_list = [0.2, 5]
                 method_list = ['Sparse_DKT_Exact']
-                for align_thr in [0.0015, 0.002]:
+                for align_thr in [0.0015, 0.001]:
                     for lambda_rvm in lambda_rvm_list:
                         for method in method_list:    
                             
