@@ -555,8 +555,9 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             # self.ip_count.append(inducing_points.count) 
             
     
-        ip_values = inducing_points.z_values.cuda()
-        # ip_values = z_train[inducing_points.index].cuda()
+        ip_index = inducing_points.index
+        ip_values = z_train[ip_index]
+        ip_labels = target[ip_index]
         self.model.covar_module.inducing_points = nn.Parameter(ip_values, requires_grad=False)
         self.model.covar_module._clear_cache()
 
@@ -614,6 +615,11 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             top1_correct_r = np.sum(y_pred_r==y_query)
             acc_r = (top1_correct_r / count_this)* 100
 
+            max_similar_idx_q_ip = np.argmax(K_m.detach().cpu().numpy(), axis=1)
+            most_sim_y_ip = ip_labels[max_similar_idx_q_ip].detach().cpu().numpy().squeeze()
+            most_sim_y_ip[most_sim_y_ip==-1] = 0
+            acc_most_sim = np.sum(most_sim_y_ip == y_query)
+
             if i%25==0:
                 print(Fore.RED,"="*50, Fore.RESET)
                 print(f'inducing_points count: {inducing_points.count}')
@@ -636,6 +642,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
         count = 0
         acc_all = []
         acc_all_rvm = []
+        acc_most_sim_all = []
         num_sv_list = []
         iter_num = len(test_loader)
         self.show_plot = iter_num < 5
@@ -645,13 +652,16 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
             self.n_query = x.size(1) - self.n_support
             if self.change_way:
                 self.n_way  = x.size(0)
-            correct_this, count_this, loss_value, num_sv, correct_this_rvm = self.correct(x, i)
+            correct_this, count_this, loss_value, num_sv, correct_this_rvm, acc_most_sim = self.correct(x, i)
             acc_all.append(correct_this/ count_this*100)
             acc_all_rvm.append(correct_this_rvm/ count_this*100)
+            acc_most_sim_all.append((acc_most_sim/ count_this)*100)
             num_sv_list.append(num_sv)
             if(i % 25==0):
                 acc_mean = np.mean(np.asarray(acc_all))
                 acc_mean_rvm = np.mean(np.asarray(acc_all_rvm))
+                acc_most_sim_mean = np.mean(np.asarray(acc_most_sim_all))
+                print(f'ACC based on most similar ip: {acc_most_sim_mean:.4f}')
                 print('Test | Batch {:d}/{:d} | Loss {:f} |RVM Acc {:f}| Acc {:f}'.format(i, len(test_loader), loss_value, acc_mean_rvm, acc_mean))
         acc_all  = np.asarray(acc_all)
         acc_mean = np.mean(acc_all)
@@ -659,7 +669,11 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
         acc_std  = np.std(acc_all)
         acc_std_rvm  = np.std(acc_all_rvm)
         mean_num_sv = np.mean(num_sv_list)
+        acc_most_sim_mean = np.mean(np.asarray(acc_most_sim_all))
+
         print(Fore.LIGHTRED_EX,'\n', "="*30, Fore.RESET)
+        
+        print(Fore.CYAN,f'ACC based on most similar ip: {acc_most_sim_mean:.2f}', Fore.RESET)
         print(Fore.CYAN,f'Avg. FRVM ACC on support set: {np.mean(self.frvm_acc):4.2f}%, Avg. SVs {mean_num_sv:.2f}', Fore.RESET)
         print(Fore.CYAN,f'Avg. FRVM ACC on query set: {acc_mean_rvm:4.2f}%, std: {acc_std_rvm:.2f}', Fore.RESET)
         print(Fore.YELLOW,'%d Test Acc = %4.2f%% +- %4.2f%%' %(iter_num,  acc_mean, 1.96* acc_std/np.sqrt(iter_num)), Fore.RESET)
