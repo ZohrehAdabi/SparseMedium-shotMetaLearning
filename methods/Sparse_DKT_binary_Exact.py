@@ -578,7 +578,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             acc_r = (top1_correct_r / count_this)* 100
 
             max_similar_idx_q_ip = np.argmax(K_m.detach().cpu().numpy(), axis=1)
-            most_sim_y_ip = y_support[ip_index]
+            most_sim_y_ip = y_support[max_similar_idx_q_ip]
             acc_most_sim = np.sum(most_sim_y_ip == y_query)
 
             if i%25==0:
