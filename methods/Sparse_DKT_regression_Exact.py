@@ -395,18 +395,22 @@ class Sparse_DKT_regression_Exact(nn.Module):
             kernel_matrix = K(z_query, z_support).evaluate().detach().cpu().numpy()
             max_similar_idx_x_s = np.argmax(kernel_matrix, axis=1)
             y_s = get_unnormalized_label(y_support.detach().cpu().numpy()) #((y_support.detach().cpu().numpy() + 1) * 60 / 2) + 60
-            print(Fore.LIGHTGREEN_EX, f'target of most similar in support set:       {y_s[max_similar_idx_x_s]}', Fore.RESET)
+            if self.test_i%20==0:
+                print(Fore.LIGHTGREEN_EX, f'target of most similar in support set:       {y_s[max_similar_idx_x_s]}', Fore.RESET)
             
             kernel_matrix = K(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
             max_similar_idx_x_ip = np.argmax(kernel_matrix, axis=1)
-            print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (K kernel): {inducing_points.y[max_similar_idx_x_ip]}', Fore.RESET)
+            if self.test_i%20==0:
+                print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (K kernel): {inducing_points.y[max_similar_idx_x_ip]}', Fore.RESET)
 
         # kernel_matrix = self.model.covar_module(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
         # max_similar_index = np.argmax(kernel_matrix, axis=1)
         # print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (Q kernel): {inducing_points.y[max_similar_index]}', Fore.RESET)
         #**************************************************************
         if (self.show_plots_pred or self.show_plots_features) and self.f_rvm:
-            embedded_z_support = TSNE(n_components=2).fit_transform(z_support.detach().cpu().numpy())
+            embedded_z_support = None
+            if self.show_plots_features:
+                embedded_z_support = TSNE(n_components=2).fit_transform(z_support.detach().cpu().numpy())
             self.update_plots_test_fast_rvm(self.plots, x_support, y_support.detach().cpu().numpy(), 
                                             z_support.detach(), z_query.detach(), embedded_z_support,
                                             inducing_points, x_query, y_query.detach().cpu().numpy(), pred, 
