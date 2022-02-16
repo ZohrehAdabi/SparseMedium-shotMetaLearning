@@ -11,7 +11,7 @@ lr_net_list = [0.01, 0.001, 0.0001]
 lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['1001']
-seed_list = [5]
+seed_list = [1, 2, 3, 4, 5]
 method_list = ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact']
 test_epoch = 100
 save_result = True
@@ -32,7 +32,7 @@ for config in config_list:
                         ]
                 if save_result: L.append('--save_result')
                 print(f'\n{" ".join(L)} \n')
-                run(L)
+                # run(L)
               
                 for method in method_list:
                      # just mll of GP
@@ -47,7 +47,7 @@ for config in config_list:
                     ]
                     if save_result: L.append('--save_result')
                     print(f'\n{" ".join(L)} \n')
-                    run(L)
+                    # run(L)
 
                     lambda_rvm_list = [0.5, 1.0]
                     for lambda_rvm in lambda_rvm_list:
@@ -63,7 +63,7 @@ for config in config_list:
                         ]
                         if save_result: L.append('--save_result')
                         print(f'\n{" ".join(L)} \n')
-                        run(L)
+                        # run(L)
 
                         # rvm ll
                         L = ['python', f'./test_regression.py', 
@@ -75,11 +75,11 @@ for config in config_list:
                         ]
                         if save_result: L.append('--save_result')
                         print(f'\n{" ".join(L)} \n')
-                        # run(L)
+                        run(L)
 
             
               
-                # rvm mll
+                # rvm mll 
                 L = ['python', f'./test_regression.py', 
                                 '--method', f'Sparse_DKT_RVM', '--sparse_method', 'FRVM',  '--n_samples', '72', '--n_support', '60', '--n_test_epoch', f'{test_epoch}', 
                             #   '--show_plots_pred',
@@ -89,12 +89,12 @@ for config in config_list:
                 ]
                 if save_result: L.append('--save_result')
                 print(f'\n{" ".join(L)} \n')
-                run(L)
+                # run(L)
 
 
                 for method in method_list:
                 
-                    # just mll of GP
+                    # just mll of GP + random
                     L = ['python', f'./test_regression.py', 
                                     '--method', f'{method}', '--sparse_method', f'random',  '--n_samples', '72', '--n_support', '60', '--n_test_epoch', f'{test_epoch}', 
                                 #   '--show_plots_features',
