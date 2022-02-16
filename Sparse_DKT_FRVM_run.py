@@ -21,14 +21,14 @@ if dataset=='miniImagenet':
 
 tol_rvm = 1e-4
 max_itr = -1
-seed_list = [2, 3]
+seed_list = [1, 2, 3]
 for config in config_list:
     for lr_gp in lr_gp_list:
         for lr_net in lr_net_list:
             if dataset=='CUB':
                 align_thr = 0.03 
             if dataset=='miniImagenet':
-                align_thr = 0.02 
+                align_thr = 0.03
             if config in ['000', '010']:
                 align_thr = 0
             for sd in seed_list:
@@ -42,7 +42,7 @@ for config in config_list:
                                 "--train_aug"
                 ]
                 print(f'\n{" ".join(L)} \n')
-                run(L)
+                # run(L)
 
                 
                 for method in method_list:

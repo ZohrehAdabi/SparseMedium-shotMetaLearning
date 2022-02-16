@@ -28,7 +28,7 @@ for config in config_list:
             if dataset=='CUB':
                 align_thr = 0.03 
             if dataset=='miniImagenet':
-                align_thr = 0.02 
+                align_thr = 0.03
             if config in ['000', '010']:
                 align_thr = 0
 

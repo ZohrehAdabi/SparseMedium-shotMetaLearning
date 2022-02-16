@@ -309,12 +309,14 @@ class Sparse_DKT_regression_Exact(nn.Module):
                                                             config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
                                                             num_inducing_points=self.num_inducing_points, maxItr=self.maxItr_rvm, verbose=False, task_id=self.test_i, device=self.device)
         
-        ip_values = inducing_points.z_values.cuda()
+        ip_index = inducing_points.index
+        ip_values = z_support[ip_index]
+        ip_labels = y_support[ip_index]
         alpha_m = inducing_points.alpha
         beta = inducing_points.beta
         mu_m = inducing_points.mu
         scales = inducing_points.scale
-        self.model.set_train_data(inputs=ip_values, targets=y_support[inducing_points.index], strict=False)
+        self.model.set_train_data(inputs=ip_values, targets=y_support[ip_index], strict=False)
 
         self.model.eval()
         self.feature_extractor.eval()
@@ -342,6 +344,10 @@ class Sparse_DKT_regression_Exact(nn.Module):
             S = torch.ones(z_query.shape[0]).to(self.device) *1/beta
             K_star_Sigma = torch.diag(K_m @ Sigma_m @ K_m.T)
             rvm_var = S + K_star_Sigma
+
+            max_similar_idx_q_ip = np.argmax(K_m.detach().cpu().numpy(), axis=1)
+            most_sim_y_ip = ip_labels[max_similar_idx_q_ip]
+            mse_most_sim = self.mse(most_sim_y_ip, y_query).item()
             
         
 
@@ -382,10 +388,13 @@ class Sparse_DKT_regression_Exact(nn.Module):
                 print(f'inducing_points count: {inducing_points.count}')
                 print(f'inducing_points alpha: {Fore.LIGHTGREEN_EX}{inducing_points.alpha}',Fore.RESET)
                 print(f'inducing_points gamma: {Fore.LIGHTMAGENTA_EX}{inducing_points.gamma}',Fore.RESET)
+             
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
             print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
             print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
             print(Fore.LIGHTWHITE_EX, f'FRVM var: {rvm_var.detach().cpu().numpy()}', Fore.RESET)
+            print(f'inducing_points count: {inducing_points.count}')
+            print(Fore.YELLOW, f'MSE based on most similar ip: {mse_most_sim:.4f}', Fore.RESET)
             print(Fore.LIGHTRED_EX, f'mse: {mse_:.4f}, mse (normed): {mse:.4f}, FRVM mse : {mse_r:0.4f}, num SVs: {inducing_points.count}', Fore.RESET)
             
             print(Fore.RED,"-"*50, Fore.RESET)
@@ -424,7 +433,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
                 self.plots.fig_feature.canvas.flush_events()
                 self.mw_feature.grab_frame()
 
-        return mse, mse_, inducing_points.count, mse_r
+        return mse, mse_, inducing_points.count, mse_r, mse_most_sim
 
   
     def train(self, stop_epoch, n_support, n_samples, optimizer, save_model=False, verbose=True):
@@ -454,7 +463,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
                     val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
                     for t in range(val_count):
                         self.test_i = t
-                        mse, mse_, sv_count, mse_r = self.test_loop_fast_rvm(n_support, n_samples, val_person[t],  optimizer, verbose)
+                        mse, mse_, sv_count, mse_r, mse_most_sim = self.test_loop_fast_rvm(n_support, n_samples, val_person[t],  optimizer, verbose)
                         mse_list.append(mse)
                         mse_unnorm_list.append(mse_)
                         sv_count_list.append(sv_count)
@@ -561,6 +570,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
         mse_list_ = []
         num_sv_list = []
         mse_rvm_list = []
+        mse_most_sim_list = []
         # choose a random test person
         rep = True if test_count > len(test_people) else False
 
@@ -569,7 +579,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
             self.test_i = t
             if t%20==0: print(f'test #{t}')
             if self.f_rvm:
-                mse, mse_, num_sv, mse_r = self.test_loop_fast_rvm(n_support, n_samples, test_person[t],  optimizer, verbose)
+                mse, mse_, num_sv, mse_r, mse_most_sim = self.test_loop_fast_rvm(n_support, n_samples, test_person[t],  optimizer, verbose)
             elif self.random:
                 mse = self.test_loop_random(n_support, n_samples, test_person[t],  optimizer)
             elif not self.f_rvm:
@@ -584,6 +594,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
                 mse_list_.append(float(mse_))
                 num_sv_list.append(num_sv)
                 mse_rvm_list.append(mse_r)
+                mse_most_sim_list.append(mse_most_sim)
 
         if self.show_plots_pred:
             self.mw.finish()
@@ -591,6 +602,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
             self.mw_feature.finish()
         if self.f_rvm: 
             print('\n-----------------------------------------')
+            print(Fore.YELLOW, f'MSE based on most similar ip: {np.mean(mse_most_sim_list):.4f}', Fore.RESET)
             print(Fore.YELLOW, f'MSE (unnormed): {np.mean(mse_list_):.4f}', Fore.RESET)
             print(Fore.YELLOW, f'MSE RVM: {np.mean(mse_rvm_list):.5f}, std: {np.std(mse_rvm_list):.5f}', Fore.RESET)
             print(Fore.YELLOW,f'Avg. SVs: {np.mean(num_sv_list):.2f}, std: {np.std(num_sv_list):.2f}', Fore.RESET)
