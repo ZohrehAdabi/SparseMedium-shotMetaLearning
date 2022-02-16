@@ -596,8 +596,8 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
             self.test_i = t
             if t%20==0: print(f'test #{t}')
             if self.f_rvm:
-                mse_most_sim_list.append(mse_most_sim)
-                mse, mse_, num_sv, mse_r,  = self.test_loop_fast_rvm(n_support, n_samples, test_person[t],  optimizer, verbose)
+                
+                mse, mse_, num_sv, mse_r, mse_most_sim = self.test_loop_fast_rvm(n_support, n_samples, test_person[t],  optimizer, verbose)
                 num_sv_list.append(num_sv)
                 
             elif self.random:
