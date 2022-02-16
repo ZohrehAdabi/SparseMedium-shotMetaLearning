@@ -577,6 +577,10 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             top1_correct_r = np.sum(y_pred_r==y_query)
             acc_r = (top1_correct_r / count_this)* 100
 
+            max_similar_idx_q_ip = np.argmax(K_m.detach().cpu().numpy(), axis=1)
+            most_sim_y_ip = y_support[ip_index]
+            acc_most_sim = np.sum(most_sim_y_ip == y_query)
+
             if i%25==0:
                 print(Fore.RED,"="*50, Fore.RESET)
                 print(f'inducing_points count: {inducing_points.count}')
@@ -591,7 +595,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
                 self.plot_test(x_query, y_query, y_pred, inducing_points, i)
 
 
-        return float(top1_correct), count_this, avg_loss/float(N+1e-10), inducing_points.count, float(top1_correct_r)
+        return float(top1_correct), count_this, avg_loss/float(N+1e-10), inducing_points.count, float(top1_correct_r), acc_most_sim
 
     def test_loop(self, test_loader, record=None, return_std=False):
         print_freq = 10
@@ -599,6 +603,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         count = 0
         acc_all = []
         acc_all_rvm = []
+        acc_most_sim_all = []
         num_sv_list  = []
         iter_num = len(test_loader)
         self.show_plot = iter_num < 5
@@ -607,13 +612,16 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             self.n_query = x.size(1) - self.n_support
             if self.change_way:
                 self.n_way  = x.size(0)
-            correct_this, count_this, loss_value, num_sv, correct_this_rvm = self.correct(x, i)
+            correct_this, count_this, loss_value, num_sv, correct_this_rvm, acc_most_sim = self.correct(x, i)
             acc_all.append((correct_this/ count_this)*100)
             acc_all_rvm.append((correct_this_rvm/ count_this)*100)
+            acc_most_sim_all.append((acc_most_sim/ count_this)*100)
             num_sv_list.append(num_sv)
             if(i % 25==0):
                 acc_mean = np.mean(np.asarray(acc_all))
                 acc_mean_rvm = np.mean(np.asarray(acc_all_rvm))
+                acc_most_sim_mean = np.mean(np.asarray(acc_most_sim_all))
+                print(f'ACC based on most similar ip: {acc_most_sim_mean:.4f}')
                 print('Test | Batch {:d}/{:d} | Loss {:f}| RVM Acc {:f} | Acc {:f}'.format(i, len(test_loader), loss_value, acc_mean_rvm, acc_mean))
         acc_all  = np.asarray(acc_all)
         acc_mean = np.mean(acc_all)
@@ -621,6 +629,8 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         acc_std  = np.std(acc_all)
         acc_std_rvm  = np.std(acc_all_rvm)
         mean_num_sv = np.mean(num_sv_list)
+        acc_most_sim_mean = np.mean(np.asarray(acc_most_sim_all))
+        print(f'ACC based on most similar ip: {acc_most_sim_mean:.4f}')
         print(Fore.LIGHTRED_EX,'\n', "="*30, Fore.RESET)
         print(Fore.CYAN,f'Avg. FRVM ACC on support set: {np.mean(self.frvm_acc):4.2f}%, Avg. SVs {mean_num_sv:.2f}', Fore.RESET)
         print(Fore.CYAN,f'Avg. FRVM ACC on query set: {acc_mean_rvm:4.2f}%, std: {acc_std_rvm:.2f}', Fore.RESET)
