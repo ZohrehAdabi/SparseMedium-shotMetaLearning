@@ -44,7 +44,7 @@ for config in config_list:
                 ]
                 if save_result: L.append('--save_result')
                 print(f'\n{" ".join(L)} \n')
-                run(L)
+                # run(L)
 
                 for method in method_list:
                     L = ['python', f'./test.py', 
@@ -78,7 +78,7 @@ for config in config_list:
                         ]
                         if save_result: L.append('--save_result')
                         print(f'\n{" ".join(L)} \n')
-                        run(L)
+                        # run(L)
 
 
                 for lambda_rvm in lambda_rvm_list:
@@ -110,6 +110,6 @@ for config in config_list:
                 ]
                 if save_result: L.append('--save_result')
                 print(f'\n{" ".join(L)} \n')
-                run(L)
+                # run(L)
 
      
