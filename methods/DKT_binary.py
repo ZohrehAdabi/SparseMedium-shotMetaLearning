@@ -351,7 +351,7 @@ class DKT_binary(MetaTemplate):
             if(i % 10==0):
                 acc_mean = np.mean(np.asarray(acc_all))
                 acc_most_sim_mean = np.mean(np.asarray(acc_most_sim_all))
-                print(f'ACC based on most similar ip: {acc_most_sim_mean:.4f}')
+                print(f'ACC based on most similar support: {acc_most_sim_mean:.4f}')
                 print('Test | Batch {:d}/{:d} | Loss {:f} | Acc {:f}'.format(i, len(test_loader), loss_value, acc_mean))
         acc_all  = np.asarray(acc_all)
         acc_mean = np.mean(acc_all)
