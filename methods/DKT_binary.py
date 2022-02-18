@@ -325,26 +325,39 @@ class DKT_binary(MetaTemplate):
 
             top1_correct = np.sum(y_pred == y_query)
             count_this = len(y_query)
-        return float(top1_correct), count_this, avg_loss/float(N+1e-10)
+
+            K = self.model.covar_module(z_query, z_support).evaluate()
+            max_similar_idx_q_s = np.argmax(K.detach().cpu().numpy(), axis=1)
+            most_sim_y_s = ip_labels[max_similar_idx_q_s].detach().cpu().numpy().squeeze()
+            most_sim_y_s[most_sim_y_s==-1] = 0
+            acc_most_sim = np.sum(most_sim_y_s == y_query)
+
+        return float(top1_correct), count_this, avg_loss/float(N+1e-10), acc_most_sim
 
     def test_loop(self, test_loader, record=None, return_std=False):
         print_freq = 10
         correct =0
         count = 0
         acc_all = []
+        acc_most_sim_all = []
         iter_num = len(test_loader)
         for i, (x,_) in enumerate(test_loader):
             self.n_query = x.size(1) - self.n_support
             if self.change_way:
                 self.n_way  = x.size(0)
-            correct_this, count_this, loss_value = self.correct(x)
+            correct_this, count_this, loss_value, acc_most_sim = self.correct(x)
             acc_all.append(correct_this/ count_this*100)
+            acc_most_sim_all.append((acc_most_sim/ count_this)*100)
             if(i % 10==0):
                 acc_mean = np.mean(np.asarray(acc_all))
+                acc_most_sim_mean = np.mean(np.asarray(acc_most_sim_all))
+                print(f'ACC based on most similar ip: {acc_most_sim_mean:.4f}')
                 print('Test | Batch {:d}/{:d} | Loss {:f} | Acc {:f}'.format(i, len(test_loader), loss_value, acc_mean))
         acc_all  = np.asarray(acc_all)
         acc_mean = np.mean(acc_all)
         acc_std  = np.std(acc_all)
+        acc_most_sim_mean = np.mean(np.asarray(acc_most_sim_all))
+        print(Fore.CYAN,f'ACC based on most similar support: {acc_most_sim_mean:.2f}', Fore.RESET)
         print('%d Test Acc = %4.2f%% +- %4.2f%%' %(iter_num,  acc_mean, 1.96* acc_std/np.sqrt(iter_num)))
         if(self.writer is not None): self.writer.add_scalar('test_accuracy', acc_mean, self.iteration)
         result = {'acc': acc_mean, 'std': acc_std}

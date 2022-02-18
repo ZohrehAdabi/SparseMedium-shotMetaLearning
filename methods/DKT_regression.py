@@ -191,6 +191,7 @@ class DKT_regression(nn.Module):
             lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
 
         mse = self.mse(pred.mean, y_query).item()
+        
         K = self.model.covar_module(z_query, z_support).evaluate()
         max_similar_idx_q_s = np.argmax(K.detach().cpu().numpy(), axis=1)
         most_sim_y_s = y_support[max_similar_idx_q_s]
@@ -207,6 +208,7 @@ class DKT_regression(nn.Module):
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
             print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
             print(Fore.LIGHTWHITE_EX, f'y_var: {pred.variance.detach().cpu().numpy()}', Fore.RESET)
+            print(Fore.YELLOW, f'MSE based on most similar support: {mse_most_sim:.4f}', Fore.RESET)
             print(Fore.LIGHTRED_EX, f'mse:    {mse_:.4f}, mse (normed): {mse:.4f}', Fore.RESET)
             print(Fore.RED,"-"*50, Fore.RESET)
         if self.show_plots_pred:
@@ -316,7 +318,7 @@ class DKT_regression(nn.Module):
         if self.show_plots_features:
             self.mw_feature.finish()
         print(f'MSE (unnormed): {np.mean(mse_list_):.4f}')
-        print(Fore.YELLOW, f'MSE based on most similar ip: {np.mean(mse_most_sim_list):.4f}', Fore.RESET)
+        print(Fore.YELLOW, f'MSE based on most similar support: {np.mean(mse_most_sim_list):.4f}', Fore.RESET)
         result = {'mse':f'{np.mean(mse_list):.3f}', 'std':f'{np.std(mse_list):.3f}'} #  
         result = {'mse':np.mean(mse_list),  'std':np.std(mse_list)}
         result = {k: np.around(v, 4) for k, v in result.items()}
