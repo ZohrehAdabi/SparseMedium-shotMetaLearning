@@ -326,9 +326,9 @@ class DKT_binary(MetaTemplate):
             top1_correct = np.sum(y_pred == y_query)
             count_this = len(y_query)
 
-            K = self.model.covar_module(z_query, z_support).evaluate()
+            K = self.model.covar_module(z_query, z_train).evaluate()
             max_similar_idx_q_s = np.argmax(K.detach().cpu().numpy(), axis=1)
-            most_sim_y_s = ip_labels[max_similar_idx_q_s].detach().cpu().numpy().squeeze()
+            most_sim_y_s = target[max_similar_idx_q_s].detach().cpu().numpy().squeeze()
             most_sim_y_s[most_sim_y_s==-1] = 0
             acc_most_sim = np.sum(most_sim_y_s == y_query)
 
