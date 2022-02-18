@@ -326,7 +326,9 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                                                             config=self.config, align_threshold=self.align_threshold, gamma=self.gamma, 
                                                             num_inducing_points=self.num_inducing_points, maxItr=self.maxItr_rvm, verbose=False, task_id=self.test_i, device=self.device)
         
-        ip_values = inducing_points.z_values.cuda()
+        ip_index = inducing_points.index
+        ip_values = z_support[ip_index]
+        ip_labels = y_support[ip_index]
         alpha_m = inducing_points.alpha
         beta = inducing_points.beta
         mu_m = inducing_points.mu
@@ -464,7 +466,7 @@ class Sparse_DKT_regression_Nystrom(nn.Module):
                 mll = self.train_loop_fast_rvm(epoch, n_support, n_samples, optimizer)
 
                 
-                if ((epoch>=50) and epoch%1==0) or ((epoch<50) and epoch%10==0):
+                if ((epoch>=60) and epoch%3==0) or ((epoch<60) and epoch%10==0):
                     print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
                     mse_list = []
                     mse_unnorm_list = []

@@ -191,6 +191,10 @@ class DKT_regression(nn.Module):
             lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
 
         mse = self.mse(pred.mean, y_query).item()
+        K = self.model.covar_module(z_query, z_support).evaluate()
+        max_similar_idx_q_s = np.argmax(K.detach().cpu().numpy(), axis=1)
+        most_sim_y_s = y_support[max_similar_idx_q_s]
+        mse_most_sim = self.mse(most_sim_y_s, y_query).item()
         #***************************************************
         y = get_unnormalized_label(y_query.detach()) #((y_query.detach() + 1) * 60 / 2) + 60
         y_pred = get_unnormalized_label(pred.mean.detach()) # ((pred.mean.detach() + 1) * 60 / 2) + 60
@@ -230,7 +234,7 @@ class DKT_regression(nn.Module):
                 self.mw_feature.grab_frame()
 
 
-        return mse, mse_
+        return mse, mse_, mse_most_sim
 
     def train(self, stop_epoch, n_support, n_samples, optimizer, save_model=False):
 
@@ -250,7 +254,7 @@ class DKT_regression(nn.Module):
                 val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
                 for t in range(val_count):
                     self.test_i = t
-                    mse, mse_ = self.test_loop(n_support, n_samples, val_person[t],  optimizer)
+                    mse, mse_, mse_most_sim = self.test_loop(n_support, n_samples, val_person[t],  optimizer)
                     mse_list.append(mse)
                     mse_unnorm_list.append(mse_)
                 mse = np.mean(mse_list)
@@ -292,6 +296,7 @@ class DKT_regression(nn.Module):
 
         mse_list = []
         mse_list_ = []
+        mse_most_sim_list = []
         # choose a random test person
         rep = True if test_count > len(test_people) else False
 
@@ -300,16 +305,18 @@ class DKT_regression(nn.Module):
             self.test_i = t
             if t%20==0: print(f'test #{t}')
             
-            mse, mse_ = self.test_loop(n_support, n_samples, test_person[t],  optimizer)
+            mse, mse_, mse_most_sim = self.test_loop(n_support, n_samples, test_person[t],  optimizer)
             
             mse_list.append(float(mse))
             mse_list_.append(float(mse_))
+            mse_most_sim_list.append(mse_most_sim)
 
         if self.show_plots_pred:
             self.mw.finish()
         if self.show_plots_features:
             self.mw_feature.finish()
         print(f'MSE (unnormed): {np.mean(mse_list_):.4f}')
+        print(Fore.YELLOW, f'MSE based on most similar ip: {np.mean(mse_most_sim_list):.4f}', Fore.RESET)
         result = {'mse':f'{np.mean(mse_list):.3f}', 'std':f'{np.std(mse_list):.3f}'} #  
         result = {'mse':np.mean(mse_list),  'std':np.std(mse_list)}
         result = {k: np.around(v, 4) for k, v in result.items()}
