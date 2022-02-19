@@ -12,7 +12,7 @@ stop_epoch = 100
 lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['1001']
-seed_list = [1, 2, 3, 4, 5]
+seed_list = [ 4, 5]
 method_list = ['Sparse_DKT_Nystrom','Sparse_DKT_Exact'] #
 sparse_method = 'FRVM' # 'random'
 for config in config_list:
@@ -49,7 +49,7 @@ for config in config_list:
                     # run(L)
                             
                    
-                lambda_rvm_list = [0.2]
+                lambda_rvm_list = [0.1]
            
                 # for align_thr in [0.0015, 0.001]:
                 for lambda_rvm in lambda_rvm_list:
