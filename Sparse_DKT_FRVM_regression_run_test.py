@@ -49,7 +49,7 @@ for config in config_list:
                     print(f'\n{" ".join(L)} \n')
                     # run(L)
 
-                    lambda_rvm_list = [0.5, 1.0]
+                    lambda_rvm_list = [0.2]
                     for lambda_rvm in lambda_rvm_list:
                        
                         
@@ -63,7 +63,7 @@ for config in config_list:
                         ]
                         if save_result: L.append('--save_result')
                         print(f'\n{" ".join(L)} \n')
-                        # run(L)
+                        run(L)
 
                         # rvm ll
                         L = ['python', f'./test_regression.py', 
@@ -75,7 +75,7 @@ for config in config_list:
                         ]
                         if save_result: L.append('--save_result')
                         print(f'\n{" ".join(L)} \n')
-                        run(L)
+                        # run(L)
 
             
               
