@@ -634,7 +634,7 @@ class Sparse_DKT_binary_Nystrom(MetaTemplate):
                 self.plot_test(x_query, y_query, y_pred, inducing_points, i)
 
 
-        return float(top1_correct), count_this, avg_loss/float(N+1e-10), inducing_points.count, top1_correct_r
+        return float(top1_correct), count_this, avg_loss/float(N+1e-10), inducing_points.count, top1_correct_r, acc_most_sim
 
     def test_loop(self, test_loader, record=None, return_std=False):
         print_freq = 10
