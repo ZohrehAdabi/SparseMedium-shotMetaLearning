@@ -21,14 +21,14 @@ if dataset=='miniImagenet':
 
 tol_rvm = 1e-4
 max_itr = -1
-seed_list = [2]
+seed_list = [1, 2, 3]
 for config in config_list:
     for lr_gp in lr_gp_list:
         for lr_net in lr_net_list:
             if dataset=='CUB':
                 align_thr = 0.03 
             if dataset=='miniImagenet':
-                align_thr = 0.025
+                align_thr = 0.01
             if config in ['000', '010']:
                 align_thr = 0
             for sd in seed_list:
@@ -56,32 +56,32 @@ for config in config_list:
                                     "--train_aug"
                     ]
                     print(f'\n{" ".join(L)} \n')
-                    # run(L)
+                    run(L)
 
         
                 if dataset=='CUB':
                     lambda_rvm_list = [2.0] 
                 if dataset=='miniImagenet':
-                    lambda_rvm_list = [2.0] 
+                    lambda_rvm_list = [100.0] 
 
                 # lambda_rvm_list = [4.0, 5.0] 
                 # method_list = ['Sparse_DKT_binary_Exact'] 
                 
-                for align_thr in [0.065, 0.06, 0.055, 0.05, 0.045]:
-                    for lambda_rvm in lambda_rvm_list:
-                            for method in method_list:
-                                L = ['python', f'./train.py', 
-                                            "--method",f"{method}", "--sparse_method", "FRVM", "--dataset", f"{dataset}", 
-                                            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", f"{n_shot}", "--n_query", f"{n_query}",
-                                                "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
-                                                "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100",
-                                                '--kernel_type', 'linear', "--scale", "--normalize", "--save_model", "--n_task",  f"{n_task}",
-                                                "--regression", 
-                                                "--rvm_mll", "--lambda_rvm", f"{lambda_rvm}", "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}",
-                                                "--train_aug"
-                                ]
-                                print(f'\n{" ".join(L)} \n')
-                                run(L)
+                # for align_thr in [0.065, 0.06, 0.055, 0.05, 0.045]:
+                for lambda_rvm in lambda_rvm_list:
+                        for method in method_list:
+                            L = ['python', f'./train.py', 
+                                        "--method",f"{method}", "--sparse_method", "FRVM", "--dataset", f"{dataset}", 
+                                        "--train_n_way", "2", "--test_n_way", "2", "--n_shot", f"{n_shot}", "--n_query", f"{n_query}",
+                                            "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
+                                            "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100",
+                                            '--kernel_type', 'linear', "--scale", "--normalize", "--save_model", "--n_task",  f"{n_task}",
+                                            "--regression", 
+                                            "--rvm_mll", "--lambda_rvm", f"{lambda_rvm}", "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}",
+                                            "--train_aug"
+                            ]
+                            print(f'\n{" ".join(L)} \n')
+                            run(L)
             
             
                 for lambda_rvm in lambda_rvm_list:

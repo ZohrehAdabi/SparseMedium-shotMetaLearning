@@ -28,7 +28,7 @@ for config in config_list:
             if dataset=='CUB':
                 align_thr = 0.03 
             if dataset=='miniImagenet':
-                align_thr = 0.03
+                align_thr = 0.01
             if config in ['000', '010']:
                 align_thr = 0
 
@@ -63,7 +63,7 @@ for config in config_list:
                 if dataset=='CUB':
                     lambda_rvm_list = [2.0] 
                 if dataset=='miniImagenet':
-                    lambda_rvm_list = [4.0] 
+                    lambda_rvm_list = [100.0] 
                 for lambda_rvm in lambda_rvm_list:
                     for method in method_list:
                         L = ['python', f'./test.py', 
@@ -78,7 +78,7 @@ for config in config_list:
                         ]
                         if save_result: L.append('--save_result')
                         print(f'\n{" ".join(L)} \n')
-                        # run(L)
+                        run(L)
 
 
                 for lambda_rvm in lambda_rvm_list:
