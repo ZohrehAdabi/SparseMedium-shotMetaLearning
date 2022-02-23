@@ -58,7 +58,7 @@ for config in config_list:
                     ]
                     if save_result: L.append('--save_result')
                     print(f'\n{" ".join(L)} \n')
-                    run(L)
+                    # run(L)
 
                 if dataset=='CUB':
                     lambda_rvm_list = [2.0] 
@@ -78,7 +78,7 @@ for config in config_list:
                         ]
                         if save_result: L.append('--save_result')
                         print(f'\n{" ".join(L)} \n')
-                        run(L)
+                        # run(L)
 
 
                 for lambda_rvm in lambda_rvm_list:
@@ -110,6 +110,6 @@ for config in config_list:
                 ]
                 if save_result: L.append('--save_result')
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
+                run(L)
 
      

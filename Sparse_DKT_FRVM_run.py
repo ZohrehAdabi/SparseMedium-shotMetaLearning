@@ -57,7 +57,7 @@ for config in config_list:
                                     "--train_aug"
                     ]
                     print(f'\n{" ".join(L)} \n')
-                    run(L)
+                    # run(L)
 
         
                 if dataset=='CUB':
@@ -82,7 +82,7 @@ for config in config_list:
                                             "--train_aug"
                             ]
                             print(f'\n{" ".join(L)} \n')
-                            run(L)
+                            # run(L)
             
             
                 for lambda_rvm in lambda_rvm_list:
@@ -112,7 +112,7 @@ for config in config_list:
                                 "--train_aug"
                 ]
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
+                run(L)
 
             L = ['python', f'./Sparse_DKT_FRVM_run_test.py'
             ]
