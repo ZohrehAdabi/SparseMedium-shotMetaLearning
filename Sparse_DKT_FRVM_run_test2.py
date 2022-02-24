@@ -65,7 +65,7 @@ for config in config_list:
                         ]
                         if save_result: L.append('--save_result')
                         print(f'\n{" ".join(L)} \n')
-                        # run(L)
+                        run(L)
                     
                 lambda_rvm_list = [1.0]
                 for lambda_rvm in lambda_rvm_list:
