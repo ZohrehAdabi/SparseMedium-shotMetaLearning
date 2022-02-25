@@ -10,7 +10,7 @@ lr_net_list = [0.01, 0.001, 0.0001]
 lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['001']
-seed_list = [3]
+seed_list = [1, 3]
 save_result = True
 for config in config_list:
     for lr_gp in lr_gp_list:
@@ -50,7 +50,7 @@ for config in config_list:
 
                 lambda_rvm_list = [1.0]
                 method_list = ['Sparse_DKT_Exact']
-                lambda_rvm_list = [0.2, 0.4, 0.6, 0.8]
+                lambda_rvm_list = [1.0]
                 for align_thr in [ 0.0]:
                     for lambda_rvm in lambda_rvm_list:
                         L = ['python', f'./test.py', 
