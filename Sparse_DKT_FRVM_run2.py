@@ -10,7 +10,7 @@ lr_net_list = [0.01, 0.001, 0.0001]
 lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['001']
-sd = 3
+sd = 1
 # method_list = ['Sparse_DKT_Nystrom']
 for config in config_list:
     for lr_gp in lr_gp_list:
@@ -30,7 +30,7 @@ for config in config_list:
             # run(L)
             
             method_list = ['Sparse_DKT_Exact']
-            lambda_rvm_list = [0.6, 0.8]
+            lambda_rvm_list = [0.1]
             for align_thr in [ 0.0]:
                 for lambda_rvm in lambda_rvm_list:
                     for method in method_list:
