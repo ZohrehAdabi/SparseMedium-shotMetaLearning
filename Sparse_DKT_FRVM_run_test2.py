@@ -49,9 +49,9 @@ for config in config_list:
 
 
                 lambda_rvm_list = [1.0]
-                lambda_rvm_list = [0.1, 1.0]
                 method_list = ['Sparse_DKT_Exact']
-                for align_thr in [0.0, 0.0008, 0.001, 0.002]:
+                lambda_rvm_list = [0.01, 0.5]
+                for align_thr in [ 0.0008, 0.001, 0.002, 0.003]:
                     for lambda_rvm in lambda_rvm_list:
                         L = ['python', f'./test.py', 
                                     "--method", f"{method}", "--sparse_method", "FRVM", "--dataset", "omniglot", 
