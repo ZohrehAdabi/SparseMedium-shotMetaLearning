@@ -59,7 +59,7 @@ for config in config_list:
                             
                 ]
                 print(f'\n{" ".join(L)} \n')
-                run(L) 
+                # run(L) 
                 
             # rvm ll
             lambda_rvm_list = [1.0]
@@ -89,10 +89,23 @@ for config in config_list:
                                 
                     ]
             print(f'\n{" ".join(L)} \n')
-            run(L)
+            # run(L)
 
             L = ['python', f'./Sparse_DKT_FRVM_run_test2.py'
                 ]
+            print(f'\n{" ".join(L)} \n')
+            # run(L)
+
+            inner_lr = 0.01
+            L = ['python', f'./train.py', 
+                        "--method","MAML", "--dataset", "omniglot", 
+                        "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "15", "--n_query", "5",
+                            "--seed",  f"{sd}",  
+                             "--lr_net", f"{lr_net}", "--inner_lr", f"{inner_lr}", '--inner_loop', '3',
+                              "--stop_epoch", "100",
+                             "--save_model", "--n_task", "30"
+                         
+            ]
             print(f'\n{" ".join(L)} \n')
             run(L)
 
