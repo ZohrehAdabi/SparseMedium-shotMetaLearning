@@ -11,11 +11,12 @@ lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['001']
 seed_list = [1, 2, 3]
+method_list = ['Sparse_DKT_Exact']
 save_result = True
 for config in config_list:
     for lr_gp in lr_gp_list:
         for lr_net in lr_net_list:
-            align_thr = 0.001
+            align_thr = 0.0
             if config in ['000', '010']:
                 align_thr = 0
 
@@ -45,7 +46,7 @@ for config in config_list:
                     ]
                     if save_result: L.append('--save_result')
                     print(f'\n{" ".join(L)} \n')
-                    # run(L)
+                    run(L)
 
 
                 lambda_rvm_list = [1.0]
@@ -65,7 +66,7 @@ for config in config_list:
                         ]
                         if save_result: L.append('--save_result')
                         print(f'\n{" ".join(L)} \n')
-                        run(L)
+                        # run(L)
                     
                 lambda_rvm_list = [1.0]
                 for lambda_rvm in lambda_rvm_list:
@@ -96,5 +97,5 @@ for config in config_list:
                         ]
                 if save_result: L.append('--save_result')
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
+                run(L)
      
