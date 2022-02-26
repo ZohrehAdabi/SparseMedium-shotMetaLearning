@@ -10,12 +10,12 @@ lr_net_list = [0.01, 0.001, 0.0001]
 lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['001']
-sd = 2
+sd = 1
 # method_list = ['Sparse_DKT_Nystrom']
 for config in config_list:
     for lr_gp in lr_gp_list:
         for lr_net in lr_net_list:
-            align_thr = 0.001
+            align_thr = 0.0
             if config in ['000', '010']:
                 align_thr = 0
             L = ['python', f'./train.py', 
@@ -45,7 +45,7 @@ for config in config_list:
                                     
                         ]
                         print(f'\n{" ".join(L)} \n')
-                        run(L)  
+                        # run(L)  
 
 
             for method in method_list:
@@ -59,7 +59,7 @@ for config in config_list:
                             
                 ]
                 print(f'\n{" ".join(L)} \n')
-                # run(L) 
+                run(L) 
                 
             # rvm ll
             lambda_rvm_list = [1.0]
@@ -89,11 +89,11 @@ for config in config_list:
                                 
                     ]
             print(f'\n{" ".join(L)} \n')
-            # run(L)
+            run(L)
 
             L = ['python', f'./Sparse_DKT_FRVM_run_test2.py'
                 ]
             print(f'\n{" ".join(L)} \n')
-            run(L)
+            # run(L)
 
      
