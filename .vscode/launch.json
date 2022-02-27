@@ -480,7 +480,7 @@
             "console": "integratedTerminal",
         "args": ["--method","MAML", "--dataset", "omniglot", 
             "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "15",  "--n_query", "5",
-             "--seed","3",   "--lr_net",  "1e-3", "--inner_lr", "1e-2", "--inner_loop", "10"]
+             "--seed","3",   "--lr_net",  "1e-3", "--inner_lr", "1e-2", "--inner_loop", "10", "--n_task", "30"]
             // python test.py --method "MAML"  --dataset="omniglot"  --train_n_way 5 --test_n_way 5 --n_shot 15  --n_query 5 --seed 1  --lr_net  1e-3  --inner_lr 1e-3  --inner_loop 5
         },
 
