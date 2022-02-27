@@ -110,8 +110,8 @@ class MetaOptNet_binary(MetaTemplate):
                
                
                 logit_query, num_SV = single_model(z_query, z_support, target_list[j], n_way,  self.n_support)
-                logit_query_list.append(logit_query.detach().max(axis=2)[0])
-
+                # logit_query_list.append(logit_query.detach().max(axis=2)[0])
+                logit_query_list.append(logit_query.detach()[:, :, 1])
               
                 smoothed_one_hot = one_hot(target_list_query[j].reshape(-1), n_way)
                 eps = 0
@@ -188,7 +188,8 @@ class MetaOptNet_binary(MetaTemplate):
             for j, single_model in enumerate(self.SVM):
                 
                 logit_query, num_SV = single_model(z_query, z_support, target_list[j], n_way,  self.n_support)
-                logit_query_list.append(logit_query.detach().max(axis=2)[0])
+                # logit_query_list.append(logit_query.detach().max(axis=2)[0])
+                logit_query_list.append(logit_query.detach()[:, :, 1])
                 sv_count.append(num_SV)
 
             y_pred = torch.vstack(logit_query_list).argmax(axis=0)
