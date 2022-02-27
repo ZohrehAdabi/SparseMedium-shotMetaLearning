@@ -484,6 +484,17 @@
             // python test.py --method "MAML"  --dataset="omniglot"  --train_n_way 5 --test_n_way 5 --n_shot 15  --n_query 5 --seed 1  --lr_net  1e-3  --inner_lr 1e-3  --inner_loop 5
         },
 
+        {
+            "name": "MetaOptNet [omniglot]: train ",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/train.py",
+            "console": "integratedTerminal",
+           "args": ["--method","MetaOptNet", "--dataset", "omniglot", 
+            "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "15", "--n_query", "5",
+            "--seed","1" ]  //
+         // python train.py --method "MetaOptNet"  --dataset "omniglot"  --train_n_way 5 --test_n_way 5 --n_shot 15 --n_query 5 --seed 1  --lr_net  1e-3 
+         },
 
 
 
