@@ -166,10 +166,10 @@ def single_test(params):
         backbone.BottleneckBlock.maml = True
         backbone.ResNet.maml = True
         model = MAML(  model_dict[params.model], inner_loop=params.inner_loop, inner_lr=params.inner_lr, first_order=params.first_order, normalize=params.normalize, **few_shot_params )
-        if params.dataset in ['omniglot', 'cross_char']: #maml use different parameter in omniglot
-            model.n_task     = 32
-            model.task_update_num = 1
-            model.train_lr = 0.1
+        # if params.dataset in ['omniglot', 'cross_char']: #maml use different parameter in omniglot
+        #     model.n_task     = 32
+        #     model.task_update_num = 1
+        #     model.train_lr = 0.1
     elif params.method in ['MetaOptNet']:
             
             id=f'MetaOptNet_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}'

@@ -490,10 +490,10 @@ if __name__ == '__main__':
             if params.train_aug: id += '_aug'
             if params.first_order: id += '_first_order'
             model = MAML(model_dict[params.model], inner_loop=params.inner_loop, inner_lr=params.inner_lr, first_order=params.first_order, normalize=params.normalize, **train_few_shot_params)
-            if params.dataset in ['omniglot', 'cross_char']:  # maml use different parameter in omniglot
-                model.n_task = 32
-                model.task_update_num = 1
-                model.train_lr = 0.1
+            # if params.dataset in ['omniglot', 'cross_char']:  # maml use different parameter in omniglot
+            #     model.n_task = 32
+            #     model.task_update_num = 1
+            #     model.train_lr = 0.1
             
             model.init_summary(id=id)
         elif params.method in ['MetaOptNet']:
