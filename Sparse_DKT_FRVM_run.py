@@ -144,4 +144,9 @@ for config in config_list:
             print(f'\n{" ".join(L)} \n')
             run(L)
 
+            L = ['python', f'./Sparse_DKT_FRVM_run2.py'
+            ]
+            print(f'\n{" ".join(L)} \n')
+            run(L)
+
            
