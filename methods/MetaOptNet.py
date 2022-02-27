@@ -62,7 +62,7 @@ class MetaOptNet(MetaTemplate):
 
         update = 4
         loss_list = []
-        mean_loss = 0
+     
         for i, (x,_) in enumerate(train_loader):
             self.n_query = x.size(1) - self.n_support
             if self.change_way: self.n_way  = x.size(0)
@@ -93,13 +93,11 @@ class MetaOptNet(MetaTemplate):
             loss = loss.mean()
             
             loss_list.append(loss)
-            # mean_loss += loss
+           
             if update==4:
                 ## Optimize
                 loss = torch.stack(loss_list).mean()
                 loss_list = []
-                # loss = mean_loss/ update
-                # mean_loss = 0
                 update = 0
                 
                 optimizer.zero_grad()
