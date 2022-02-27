@@ -96,6 +96,7 @@ class MetaOptNet(MetaTemplate):
                 ## Optimize
                 loss = torch.stack(loss_list).mean()
                 loss_list = []
+                update = 0
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
