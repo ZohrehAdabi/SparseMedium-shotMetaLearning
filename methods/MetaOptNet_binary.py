@@ -106,14 +106,14 @@ class MetaOptNet_binary(MetaTemplate):
             z_query = self.feature_extractor.forward(x_query)
             if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
 
-            for i, single_model in enumerate(self.SVM):
+            for j, single_model in enumerate(self.SVM):
                
                
-                logit_query, num_SV = single_model(z_query, z_support, target_list[i], n_way,  self.n_support)
+                logit_query, num_SV = single_model(z_query, z_support, target_list[j], n_way,  self.n_support)
                 logit_query_list.append(logit_query.detach().max(axis=2)[0])
 
               
-                smoothed_one_hot = one_hot(target_list_query[i].reshape(-1), n_way)
+                smoothed_one_hot = one_hot(target_list_query[j].reshape(-1), n_way)
                 eps = 0
                 smoothed_one_hot = smoothed_one_hot * (1 - eps) + (1 - smoothed_one_hot) * eps / (n_way - 1)
 
@@ -185,9 +185,9 @@ class MetaOptNet_binary(MetaTemplate):
             logit_query_list = []
             n_way = 2
             sv_count = []
-            for i, single_model in enumerate(self.SVM):
+            for j, single_model in enumerate(self.SVM):
                 
-                logit_query, num_SV = single_model(z_query, z_support, target_list[i], n_way,  self.n_support)
+                logit_query, num_SV = single_model(z_query, z_support, target_list[j], n_way,  self.n_support)
                 logit_query_list.append(logit_query.detach().max(axis=2)[0])
                 sv_count.append(num_SV)
 
@@ -196,9 +196,9 @@ class MetaOptNet_binary(MetaTemplate):
 
             if True:
                 s=0
-                for i in range(self.n_way):
-                    c = np.sum(y_pred.cpu().numpy()==i)
-                    s += c * sv_count[i]
+                for t in range(self.n_way):
+                    c = np.sum(y_pred.cpu().numpy()==t)
+                    s += c * sv_count[t]
                 sv_predicted_class = s /y_pred.shape[0]
         return accuracy_query, sv_predicted_class
 
