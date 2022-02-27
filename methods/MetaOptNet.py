@@ -92,7 +92,7 @@ class MetaOptNet(MetaTemplate):
             loss = loss.mean()
             
             loss_list.append(loss)
-            if update==4:
+            if update==2:
                 ## Optimize
                 loss = torch.stack(loss_list).mean()
                 loss_list = []
