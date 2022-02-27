@@ -197,7 +197,7 @@ class MetaOptNet_binary(MetaTemplate):
             if True:
                 s=0
                 for i in range(self.n_way):
-                    c = np.sum(y_pred==i)
+                    c = np.sum(y_pred.cpu().numpy()==i)
                     s += c * sv_count[i]
                 sv_predicted_class = s /y_pred.shape[0]
         return accuracy_query, sv_predicted_class
