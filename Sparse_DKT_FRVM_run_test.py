@@ -112,4 +112,17 @@ for config in config_list:
                 print(f'\n{" ".join(L)} \n')
                 run(L)
 
+                L = ['python', f'./test.py', 
+                            "--method","MetaOptNet", "--dataset", "CUB", 
+                            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
+                                "--seed",  f"{sd}",  
+                                "--lr_net", f"{lr_net}", 
+                                
+                                "--n_task", "20", '--train_aug'
+                            
+                ]
+                if save_result: L.append('--save_result')
+                print(f'\n{" ".join(L)} \n')
+                # run(L)
+
      
