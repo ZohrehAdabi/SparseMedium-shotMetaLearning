@@ -1,4 +1,5 @@
 ## Original packages
+from sklearn.metrics import accuracy_score
 import backbone
 import torch
 import torch.nn as nn
@@ -61,8 +62,7 @@ class MetaOptNet_binary(MetaTemplate):
     def train_loop(self, epoch, train_loader, optimizer, print_freq=5):
         # optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
         #                               {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
-
-        update = 0
+        update = 4
         loss_list = []
         for i, (x,_) in enumerate(train_loader):
             self.n_query = x.size(1) - self.n_support
@@ -101,7 +101,6 @@ class MetaOptNet_binary(MetaTemplate):
             all_loss = []
             logit_query_list = []
             n_way = 2
-            loss = 0
             for i, single_model in enumerate(self.SVM):
                 z_support = self.feature_extractor.forward(x_support)
                 if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1)
@@ -135,7 +134,9 @@ class MetaOptNet_binary(MetaTemplate):
             if(self.writer is not None): self.writer.add_scalar('loss', loss.item(), self.iteration)
 
             with torch.no_grad():
-                accuracy_query = self.count_accuracy(logit_query.reshape(-1, n_way), y_query.reshape(-1)).item()
+                y_pred = torch.vstack(logit_query_list).argmax(axis=0)
+                accuracy_query = torch.sum(y_pred==y_query.reshape(-1)).item()
+                # accuracy_query = self.count_accuracy(logit_query.reshape(-1, n_way), y_query.reshape(-1)).item()
       
             if i % print_freq==0:
                 if(self.writer is not None): self.writer.add_histogram('z_support', z_support, self.iteration)
@@ -159,10 +160,49 @@ class MetaOptNet_binary(MetaTemplate):
             z_query = self.feature_extractor.forward(x_query)
             if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
 
-            logit_query, num_SV = self.SVM(z_query, z_support, y_support, self.n_way,  self.n_support)
-            accuracy_query = self.count_accuracy(logit_query.reshape(-1, self.n_way), y_query.reshape(-1)).item()
-           
-        return accuracy_query, num_SV
+            target_list = list()
+            samples_per_model = int(len(y_support) / self.n_way) #25 / 5 = 5
+            for way in range(self.n_way):
+                target = torch.zeros(len(y_support), dtype=torch.float32) 
+                # target = torch.zeros(len(y_train), dtype=torch.float32) 
+                start_index = way * samples_per_model
+                stop_index = start_index+samples_per_model
+                target[start_index:stop_index] = 1.0
+                target_list.append(target.cuda())
+
+            target_list_query = list()
+            samples_per_model = int(len(y_query) / self.n_way) #25 / 5 = 5
+            for way in range(self.n_way):
+                target = torch.zeros(len(y_query), dtype=torch.float32) 
+                # target = torch.zeros(len(y_train), dtype=torch.float32) 
+                start_index = way * samples_per_model
+                stop_index = start_index+samples_per_model
+                target[start_index:stop_index] = 1.0
+                target_list_query.append(target.cuda())
+
+            logit_query_list = []
+            n_way = 2
+            sv_count = []
+            for i, single_model in enumerate(self.SVM):
+                z_support = self.feature_extractor.forward(x_support)
+                if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1)
+                z_query = self.feature_extractor.forward(x_query)
+                if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
+                
+                logit_query, num_SV = single_model(z_query, z_support, target_list[i], n_way,  self.n_support)
+                logit_query_list.append(logit_query.detach().max(axis=2)[0])
+                sv_count.append(num_SV)
+
+            y_pred = torch.vstack(logit_query_list).argmax(axis=0)
+            accuracy_query = (torch.sum(y_pred==y_query.reshape(-1)).item() / y_pred.shape[0]) * 100
+
+            if True:
+                s=0
+                for i in range(self.n_way):
+                    c = np.sum(y_pred==i)
+                    s += c * sv_count[i]
+                sv_predicted_class = s /y_pred.shape[0]
+        return accuracy_query, sv_predicted_class
 
     def test_loop(self, test_loader, record=None, return_std=False):
         print_freq = 10
