@@ -60,7 +60,7 @@ class MetaOptNet(MetaTemplate):
         # optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
         #                               {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
 
-        update = 2
+        update = 1
         loss_list = []
         mean_loss = 0
         for i, (x,_) in enumerate(train_loader):
@@ -94,7 +94,7 @@ class MetaOptNet(MetaTemplate):
             
             # loss_list.append(loss)
             mean_loss += loss
-            if update==2:
+            if update==1:
                 ## Optimize
                 # loss = torch.stack(loss_list).mean()
                 # loss_list = []
