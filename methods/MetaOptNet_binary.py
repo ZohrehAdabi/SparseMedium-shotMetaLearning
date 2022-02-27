@@ -101,11 +101,13 @@ class MetaOptNet_binary(MetaTemplate):
             all_loss = []
             logit_query_list = []
             n_way = 2
+            z_support = self.feature_extractor.forward(x_support)
+            if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1)
+            z_query = self.feature_extractor.forward(x_query)
+            if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
+
             for i, single_model in enumerate(self.SVM):
-                z_support = self.feature_extractor.forward(x_support)
-                if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1)
-                z_query = self.feature_extractor.forward(x_query)
-                if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
+               
                
                 logit_query, num_SV = single_model(z_query, z_support, target_list[i], n_way,  self.n_support)
                 logit_query_list.append(logit_query.detach().max(axis=2)[0])
@@ -184,10 +186,6 @@ class MetaOptNet_binary(MetaTemplate):
             n_way = 2
             sv_count = []
             for i, single_model in enumerate(self.SVM):
-                z_support = self.feature_extractor.forward(x_support)
-                if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1)
-                z_query = self.feature_extractor.forward(x_query)
-                if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
                 
                 logit_query, num_SV = single_model(z_query, z_support, target_list[i], n_way,  self.n_support)
                 logit_query_list.append(logit_query.detach().max(axis=2)[0])
