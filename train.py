@@ -590,8 +590,8 @@ if __name__ == '__main__':
 
     start_epoch = params.start_epoch
     stop_epoch = params.stop_epoch
-    if params.method == 'MAML' or params.method == 'maml_approx':
-        stop_epoch = params.stop_epoch * model.n_task  # maml use multiple tasks in one update
+    # if params.method == 'MAML' or params.method == 'maml_approx':
+    #     stop_epoch = params.stop_epoch * model.n_task  # maml use multiple tasks in one update
 
     if params.resume:
         resume_file = get_resume_file(params.checkpoint_dir)
