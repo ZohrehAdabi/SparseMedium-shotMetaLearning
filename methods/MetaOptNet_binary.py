@@ -137,7 +137,7 @@ class MetaOptNet_binary(MetaTemplate):
 
             with torch.no_grad():
                 y_pred = torch.vstack(logit_query_list).argmax(axis=0)
-                accuracy_query = torch.sum(y_pred==y_query.reshape(-1)).item()
+                accuracy_query = (torch.sum(y_pred==y_query.reshape(-1)).item() / y_pred.shape[0]) * 100
                 # accuracy_query = self.count_accuracy(logit_query.reshape(-1, n_way), y_query.reshape(-1)).item()
       
             if i % print_freq==0:
