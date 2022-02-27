@@ -134,7 +134,7 @@ for config in config_list:
             
                 L = ['python', f'./train.py', 
                             "--method","MetaOptNet", "--dataset", "CUB", 
-                            "--train_n_way", "5", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
+                            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
                                 "--seed",  f"{sd}",  
                                 "--lr_net", f"{lr_net}", 
                                 "--stop_epoch", "100",
