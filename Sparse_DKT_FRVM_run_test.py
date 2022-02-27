@@ -123,6 +123,19 @@ for config in config_list:
                 ]
                 if save_result: L.append('--save_result')
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
+                run(L)
+
+                  L = ['python', f'./test.py', 
+                            "--method","MetaOptNet", "--dataset", "miniImagenet", 
+                            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "125", "--n_query", "15",
+                                "--seed",  f"{sd}",  
+                                "--lr_net", f"{lr_net}", 
+                                
+                                "--n_task", "20", '--train_aug'
+                            
+                ]
+                if save_result: L.append('--save_result')
+                print(f'\n{" ".join(L)} \n')
+                run(L)
 
      
