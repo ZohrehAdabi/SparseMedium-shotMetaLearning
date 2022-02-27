@@ -31,6 +31,7 @@ from methods.matchingnet import MatchingNet
 from methods.relationnet import RelationNet
 from methods.MAML import MAML
 from methods.MetaOptNet import MetaOptNet
+from methods.MetaOptNet_binary import MetaOptNet_binary
 from io_utils import model_dict, parse_args, get_resume_file
 from configs import run_float64
 
@@ -51,7 +52,7 @@ def _set_seed(seed, verbose=True):
 def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch, lr_gp, lr_net, params):
     print("Tot epochs: " + str(stop_epoch))
     if optimization == 'Adam':
-        if params.method in ['MAML', 'MetaOptNet']:
+        if params.method in ['MAML', 'MetaOptNet', 'MetaOptNet_binary']:
             optimizer = torch.optim.Adam([{'params': model.parameters(), 'lr': lr_net}])
         else:
             optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr': lr_gp},
@@ -172,7 +173,7 @@ if __name__ == '__main__':
     elif params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_RVM', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss', 
                             'Sparse_DKT_binary_Exact', 'Sp_DKT_Bin_Exact_NLoss', 
                             'DKT', 'DKT_binary', 'DKT_binary_new_loss', 'protonet', 
-                            'matchingnet', 'relationnet', 'relationnet_softmax', 'MAML', 'maml_approx', 'MetaOptNet']:
+                            'matchingnet', 'relationnet', 'relationnet_softmax', 'MAML', 'maml_approx', 'MetaOptNet', 'MetaOptNet_binary']:
         # for fewshot setting
         # n_query = max(1, int(
         #     16 * params.test_n_way / params.train_n_way))  # if test_n_way is smaller than train_n_way, reduce n_query to keep batch size small
@@ -505,6 +506,15 @@ if __name__ == '__main__':
             model = MetaOptNet(model_dict[params.model], normalize=params.normalize, **train_few_shot_params)
     
             model.init_summary(id=id)
+        elif params.method in ['MetaOptNet_binary']: 
+            id=f'MetaOptNet_binary_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}'
+         
+            if params.normalize: id += '_norm'
+            if params.lr_decay: id += '_lr_decay'
+            if params.train_aug: id += '_aug'
+            model = MetaOptNet_binary(model_dict[params.model], normalize=params.normalize, **train_few_shot_params)
+    
+            model.init_summary(id=id)
         print(f'\n{id}\n')
     else:
         raise ValueError('Unknown method')
@@ -556,8 +566,17 @@ if __name__ == '__main__':
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
             params.checkpoint_dir += id
+        #MAML, MetaOptNet
+        elif params.method in ['MAML']:
+            id=f'_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}_loop_{params.inner_loop}_inner_lr_{params.inner_lr}'
+            if params.normalize: id += '_norm'
+            if params.train_aug: id += '_aug'
+            if params.first_order: id += '_first_order'
+            if params.warmup:  id += '_warmup'
+            if params.freeze: id += '_freeze'
+            params.checkpoint_dir += id
         
-        else: #MAML, MetaOptNet
+        else: 
             id=f'_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}'
             if params.normalize: id += '_norm'
             if params.train_aug: id += '_aug'

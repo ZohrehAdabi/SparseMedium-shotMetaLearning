@@ -31,6 +31,8 @@ from methods.DKT_binary_new_loss import DKT_binary_new_loss
 from methods.matchingnet import MatchingNet
 from methods.relationnet import RelationNet
 from methods.MAML import MAML
+from methods.MetaOptNet import MetaOptNet
+from methods.MetaOptNet_binary import MetaOptNet_binary
 from io_utils import model_dict, get_resume_file, parse_args, get_best_file , get_assigned_file
 from configs import run_float64
 
@@ -168,6 +170,24 @@ def single_test(params):
             model.n_task     = 32
             model.task_update_num = 1
             model.train_lr = 0.1
+    elif params.method in ['MetaOptNet']:
+            
+            id=f'MetaOptNet_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}'
+         
+            if params.normalize: id += '_norm'
+            if params.lr_decay: id += '_lr_decay'
+            if params.train_aug: id += '_aug'
+            model = MetaOptNet(model_dict[params.model], normalize=params.normalize, **few_shot_params)
+    
+            model.init_summary(id=id)
+    elif params.method in ['MetaOptNet_binary']: 
+            id=f'MetaOptNet_binary_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}'
+         
+            if params.normalize: id += '_norm'
+            if params.lr_decay: id += '_lr_decay'
+            if params.train_aug: id += '_aug'
+            model = MetaOptNet_binary(model_dict[params.model], normalize=params.normalize, **few_shot_params)
+    
     else:
        raise ValueError('Unknown method')
 
@@ -190,13 +210,19 @@ def single_test(params):
                 if params.gamma: id += '_gamma'
                 if params.scale: id += '_scale'
             
-        else:
+        elif  params.method in ['DKT', 'DKT_binary']:
             if params.dirichlet:
                 id=f'_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
                 id=f'_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
-            
-           
+         
+         #MAML, MetaOptNet
+        elif  params.method in ['MAML']: 
+            id=f'_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}_loop_{params.inner_loop}_inner_lr_{params.inner_lr}'
+        else:
+
+            id=f'_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}'
+       
 
         if params.normalize: id += '_norm'
         if params.separate: id += '_separate'
@@ -320,7 +346,7 @@ def single_test(params):
         split_str = split + "_" +str(params.save_iter)
     else:
         split_str = split
-    if params.method in ['MAML', 'maml_approx', 'DKT', 'DKT_binary', 'DKT_binary_new_loss', 'Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_RVM',
+    if params.method in ['MAML', 'maml_approx', 'MetaOptNet', 'MetaOptNet_binary', 'DKT', 'DKT_binary', 'DKT_binary_new_loss', 'Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_RVM',
                             'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss', 'Sparse_DKT_binary_Exact', 'Sp_DKT_Bin_Exact_NLoss']: #maml do not support testing with feature
         if 'Conv' in params.model:
             if params.dataset in ['omniglot', 'cross_char']:

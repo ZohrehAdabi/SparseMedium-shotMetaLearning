@@ -29,17 +29,19 @@ except ImportError:
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=1 --train_aug
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=5 --train_aug
 
-class MetaOptNet(MetaTemplate):
+class MetaOptNet_binary(MetaTemplate):
     def __init__(self, model_func, n_way, n_support, normalize=False):
-        super(MetaOptNet, self).__init__(model_func, n_way, n_support)
+        super(MetaOptNet_binary, self).__init__(model_func, n_way, n_support)
         ## GP parameters
        
         self.iteration = 0
         self.writer=None
         self.feature_extractor = self.feature
         self.normalize = normalize
-        self.SVM = ClassificationHead().cuda()
-       
+        model_list = []
+        for i in range(self.n_way):
+             model_list.append(ClassificationHead().cuda())
+        self.SVM = torch.nn.ModuleList(model_list)
 
     def init_summary(self, id):
         self.id = id
@@ -74,24 +76,40 @@ class MetaOptNet(MetaTemplate):
             x_train = x_all
             y_train = y_all
 
+            target_list = list()
+            samples_per_model = int(len(y_support) / self.n_way) #25 / 5 = 5
+            for way in range(self.n_way):
+                target = torch.ones(len(y_support), dtype=torch.float32) * -1.0
+                # target = torch.zeros(len(y_train), dtype=torch.float32) 
+                start_index = way * samples_per_model
+                stop_index = start_index+samples_per_model
+                target[start_index:stop_index] = 1.0
+                target_list.append(target.cuda())
+
             self.SVM.train()
             self.feature_extractor.train()
-            z_support = self.feature_extractor.forward(x_support)
-            if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1)
-            z_query = self.feature_extractor.forward(x_query)
-            if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
+            all_loss = []
+            logit_query_list = []
+            n_way = 2
+            for i, single_model in enumerate(self.SVM):
+                z_support = self.feature_extractor.forward(x_support)
+                if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1)
+                z_query = self.feature_extractor.forward(x_query)
+                if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
 
-            logit_query, num_SV = self.SVM(z_query, z_support, y_support, self.n_way,  self.n_support)
+                logit_query, num_SV = single_model(z_query, z_support, target_list[i], n_way,  self.n_support)
+                logit_query_list.append(logit_query.detach())
 
-            smoothed_one_hot = one_hot(y_query.reshape(-1), self.n_way)
-            eps = 0
-            smoothed_one_hot = smoothed_one_hot * (1 - eps) + (1 - smoothed_one_hot) * eps / (self.n_way - 1)
+                smoothed_one_hot = one_hot(y_query.reshape(-1), n_way)
+                eps = 0
+                smoothed_one_hot = smoothed_one_hot * (1 - eps) + (1 - smoothed_one_hot) * eps / (n_way - 1)
 
-            log_prb = F.log_softmax(logit_query.reshape(-1, self.n_way), dim=1)
-            loss = -(smoothed_one_hot * log_prb).sum(dim=1)
-            loss = loss.mean()
+                log_prb = F.log_softmax(logit_query.reshape(-1, n_way), dim=1)
+                single_loss = -(smoothed_one_hot * log_prb).sum(dim=1)
+                single_loss = single_loss.mean()
+                all_loss.append(single_loss)
             
-            loss_list.append(loss)
+            loss_list.append(torch.stack(all_loss).mean())
             if update==4:
                 ## Optimize
                 loss = torch.stack(loss_list).mean()
@@ -104,7 +122,7 @@ class MetaOptNet(MetaTemplate):
             if(self.writer is not None): self.writer.add_scalar('loss', loss.item(), self.iteration)
 
             with torch.no_grad():
-                accuracy_query = self.count_accuracy(logit_query.reshape(-1, self.n_way), y_query.reshape(-1)).item()
+                accuracy_query = self.count_accuracy(logit_query.reshape(-1, n_way), y_query.reshape(-1)).item()
       
             if i % print_freq==0:
                 if(self.writer is not None): self.writer.add_histogram('z_support', z_support, self.iteration)
@@ -124,7 +142,7 @@ class MetaOptNet(MetaTemplate):
             self.SVM.eval()
             self.feature_extractor.eval()
             z_support = self.feature_extractor.forward(x_support)
-            if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1)
+            if(self.normalize): z_train = F.normalize(z_train, p=2, dim=1)
             z_query = self.feature_extractor.forward(x_query)
             if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
 
