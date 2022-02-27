@@ -60,7 +60,7 @@ class MetaOptNet(MetaTemplate):
         # optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
         #                               {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
 
-        update = 0
+        update = 4
         loss_list = []
         for i, (x,_) in enumerate(train_loader):
             self.n_query = x.size(1) - self.n_support
