@@ -125,7 +125,7 @@ for config in config_list:
                 print(f'\n{" ".join(L)} \n')
                 run(L)
 
-                  L = ['python', f'./test.py', 
+                L = ['python', f'./test.py', 
                             "--method","MetaOptNet", "--dataset", "miniImagenet", 
                             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "125", "--n_query", "15",
                                 "--seed",  f"{sd}",  
