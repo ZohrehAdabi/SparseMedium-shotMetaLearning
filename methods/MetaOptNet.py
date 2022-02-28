@@ -104,7 +104,7 @@ class MetaOptNet(MetaTemplate):
                 loss.backward()
                 optimizer.step()
 
-            update +=1
+            # update +=1
 
             self.iteration = i+(epoch*len(train_loader))
             if(self.writer is not None): self.writer.add_scalar('loss', loss.item(), self.iteration)
