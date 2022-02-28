@@ -12,7 +12,7 @@ stop_epoch = 100
 lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['1001']
-seed_list = [1, 2, 3, 4, 5]
+seed_list = [1, 2, 3]
 method_list = ['Sparse_DKT_Exact', 'Sparse_DKT_Nystrom']
 sparse_method = 'FRVM' # 'random'
 for config in config_list:
@@ -62,13 +62,13 @@ for config in config_list:
                     print(f'\n{" ".join(L)} \n')
                     # run(L)
 
-                for in_lr in [5]:
+                for in_lr in [3, 5]:
                     L = ['python', f'./train_regression.py', "--method","MAML", "--n_samples", "72",  "--n_support", "60", "--stop_epoch", f'{stop_epoch}', 
                             '--seed',  f'{sd}', 
-                            '--lr_net',  f'{lr_net}', "--inner_loop", f"{in_lr}", "--inner_lr", "1e-3"] 
+                            '--lr_net',  f'{lr_net}', "--inner_loop", f"{in_lr}", "--inner_lr", "1e-2"] 
                     if save_model: L.append('--save_model')
                     print(f'\n{" ".join(L)} \n')
-                    # run(L)
+                    run(L)
                 
                 
                 L = ['python', f'./train_regression.py', "--method","transfer", "--n_samples", "72", "--n_support", "60", "--stop_epoch",  f'{stop_epoch}',  
