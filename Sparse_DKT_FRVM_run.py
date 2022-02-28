@@ -124,7 +124,7 @@ for config in config_list:
                             
                 ]
                 print(f'\n{" ".join(L)} \n')
-                run(L)
+                # run(L)
 
                 L = ['python', f'./train.py', 
                             "--method","MetaOptNet", "--dataset", "miniImagenet", 
@@ -136,7 +136,7 @@ for config in config_list:
                             
                 ]
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
+                run(L)
 
 
             L = ['python', f'./Sparse_DKT_FRVM_run_test.py'

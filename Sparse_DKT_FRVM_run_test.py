@@ -123,7 +123,7 @@ for config in config_list:
                 ]
                 if save_result: L.append('--save_result')
                 print(f'\n{" ".join(L)} \n')
-                run(L)
+                # run(L)
 
                 L = ['python', f'./test.py', 
                             "--method","MetaOptNet", "--dataset", "miniImagenet", 
@@ -136,6 +136,6 @@ for config in config_list:
                 ]
                 if save_result: L.append('--save_result')
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
+                run(L)
 
      
