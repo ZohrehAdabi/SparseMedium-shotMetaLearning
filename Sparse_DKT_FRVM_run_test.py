@@ -118,7 +118,7 @@ for config in config_list:
                                 "--seed",  f"{sd}",  
                                 "--lr_net", f"{lr_net}", 
                                 
-                                "--n_task", "20", '--train_aug'
+                                "--n_task", "20", '--normalize', '--train_aug'
                             
                 ]
                 if save_result: L.append('--save_result')
@@ -131,7 +131,7 @@ for config in config_list:
                                 "--seed",  f"{sd}",  
                                 "--lr_net", f"{lr_net}", 
                                 
-                                "--n_task", "20", '--train_aug'
+                                "--n_task", "20", '--normalize', '--train_aug'
                             
                 ]
                 if save_result: L.append('--save_result')
