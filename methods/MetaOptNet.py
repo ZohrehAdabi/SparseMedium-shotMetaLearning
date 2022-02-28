@@ -82,7 +82,7 @@ class MetaOptNet(MetaTemplate):
             z_query = self.feature_extractor.forward(x_query)
             if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
 
-            logit_query, num_SV = self.SVM(z_query, z_support, y_support, self.n_way,  self.n_support)
+            logit_query, num_SV = self.SVM(query=z_query, support=z_support, support_labels=y_support, n_way=self.n_way,  n_shot=self.n_support)
 
             smoothed_one_hot = one_hot(y_query.reshape(-1), self.n_way)
             eps = 0
@@ -134,7 +134,7 @@ class MetaOptNet(MetaTemplate):
             z_query = self.feature_extractor.forward(x_query)
             if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
 
-            logit_query, num_SV = self.SVM(z_query, z_support, y_support, self.n_way,  self.n_support)
+            logit_query, num_SV = self.SVM(query=z_query, support=z_support, support_labels=y_support, n_way=self.n_way,  n_shot=self.n_support)
             accuracy_query = self.count_accuracy(logit_query.reshape(-1, self.n_way), y_query.reshape(-1)).item()
            
         return accuracy_query, num_SV

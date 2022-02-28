@@ -109,7 +109,7 @@ class MetaOptNet_binary(MetaTemplate):
             for j, single_model in enumerate(self.SVM):
                
                
-                logit_query, num_SV = single_model(z_query, z_support, target_list[j], n_way,  self.n_support)
+                logit_query, num_SV = single_model(query=z_query, support=z_support,  support_labels=target_list[j], n_way=n_way,  n_shot=self.n_support)
                 # logit_query_list.append(logit_query.detach().max(axis=2)[0])
                 logit_query_list.append(logit_query.detach()[:, :, 1][0])
               
@@ -174,22 +174,22 @@ class MetaOptNet_binary(MetaTemplate):
                 target[start_index:stop_index] = 1.0
                 target_list.append(target.cuda())
 
-            target_list_query = list()
-            samples_per_model = int(len(y_query) / self.n_way) #25 / 5 = 5
-            for way in range(self.n_way):
-                target = torch.zeros(len(y_query), dtype=torch.float32) 
-                # target = torch.zeros(len(y_train), dtype=torch.float32) 
-                start_index = way * samples_per_model
-                stop_index = start_index+samples_per_model
-                target[start_index:stop_index] = 1.0
-                target_list_query.append(target.cuda())
+            # target_list_query = list()
+            # samples_per_model = int(len(y_query) / self.n_way) #25 / 5 = 5
+            # for way in range(self.n_way):
+            #     target = torch.zeros(len(y_query), dtype=torch.float32) 
+            #     # target = torch.zeros(len(y_train), dtype=torch.float32) 
+            #     start_index = way * samples_per_model
+            #     stop_index = start_index+samples_per_model
+            #     target[start_index:stop_index] = 1.0
+            #     target_list_query.append(target.cuda())
 
             logit_query_list = []
             n_way = 2
             sv_count = []
             for j, single_model in enumerate(self.SVM):
-                
-                logit_query, num_SV = single_model(z_query, z_support, target_list[j], n_way,  self.n_support)
+               
+                logit_query, num_SV = single_model(query=z_query, support=z_support,  support_labels=target_list[j], n_way=n_way,  n_shot=self.n_support)
                 # logit_query_list.append(logit_query.detach().max(axis=2)[0])
                 logit_query_list.append(logit_query.detach()[:, :, 1][0])
                 sv_count.append(num_SV)
