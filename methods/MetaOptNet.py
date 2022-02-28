@@ -182,7 +182,7 @@ class MetaOptNet(MetaTemplate):
         return accuracy
 
 
-def MetaOptNetHead_SVM_CS(query, support, support_labels, n_way, n_shot, C_reg=0.1, double_precision=False, maxIter=25):
+def MetaOptNetHead_SVM_CS(query, support, support_labels, n_way, n_shot, C_reg=0.1, double_precision=False, maxIter=20):
     """
     Fits the support set with multi-class SVM and 
     returns the classification score on the query set.
