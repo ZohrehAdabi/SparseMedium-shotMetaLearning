@@ -178,8 +178,9 @@ def single_test(params):
             if params.lr_decay: id += '_lr_decay'
             if params.train_aug: id += '_aug'
             model = MetaOptNet(model_dict[params.model], normalize=params.normalize, **few_shot_params)
-    
-            model.init_summary(id=id)
+            last_model = MetaOptNet(model_dict[params.model], normalize=params.normalize, **few_shot_params)
+            best_model = MetaOptNet(model_dict[params.model], normalize=params.normalize, **few_shot_params)
+            
     elif params.method in ['MetaOptNet_binary']: 
             id=f'MetaOptNet_binary_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}'
          
@@ -187,6 +188,8 @@ def single_test(params):
             if params.lr_decay: id += '_lr_decay'
             if params.train_aug: id += '_aug'
             model = MetaOptNet_binary(model_dict[params.model], normalize=params.normalize, **few_shot_params)
+            last_model = MetaOptNet_binary(model_dict[params.model], normalize=params.normalize, **few_shot_params)
+            best_model = MetaOptNet_binary(model_dict[params.model], normalize=params.normalize, **few_shot_params)
     
     else:
        raise ValueError('Unknown method')
@@ -254,7 +257,10 @@ def single_test(params):
             print(f'\nModel at epoch {params.save_iter}\n')
             modelfile   = get_assigned_file(checkpoint_dir, params.save_iter)
         if last:
-            last_model = deepcopy(model)
+            if  params.method in ['MetaOptNet_binary', 'MetaOptNet']:
+                last_model = last_model.cuda()
+            else:
+                last_model = deepcopy(model)
             files = os.listdir(checkpoint_dir)
             nums =  [int(f.split('.')[0]) for f in files if 'best' not in f]
             num = max(nums)
@@ -262,7 +268,10 @@ def single_test(params):
             last_modelfile = os.path.join(checkpoint_dir, '{:d}.tar'.format(num))
             print(f'\nlast model {last_modelfile}\n')
         if best: #else:
-            best_model = deepcopy(model)
+            if  params.method in ['MetaOptNet_binary', 'MetaOptNet']:
+                best_model = best_model.cuda()
+            else:
+                best_model = deepcopy(model)
             best_modelfile   = get_best_file(checkpoint_dir)
             print(f'\nBest model {best_modelfile}\n')
         if best_rvm: #else:

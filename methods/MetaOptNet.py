@@ -269,7 +269,7 @@ def MetaOptNetHead_SVM_CS(query, support, support_labels, n_way, n_shot, C_reg=0
     logits = torch.sum(logits, 1)
     
     idx = qp_sol_> 0.001
-    idx_zero = torch.where((idx==False).all(axis=2))[1]
+    # idx_zero = torch.where((idx==False).all(axis=2))[1]
     idx_nonzero = torch.where((idx==True).any(axis=2))[1]
 
     return logits, idx_nonzero.shape[0]
