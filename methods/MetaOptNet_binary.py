@@ -131,7 +131,7 @@ class MetaOptNet_binary(MetaTemplate):
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
-                
+
             update +=1
 
             self.iteration = i+(epoch*len(train_loader))
@@ -248,7 +248,7 @@ class MetaOptNet_binary(MetaTemplate):
         return accuracy
 
 
-def MetaOptNetHead_SVM_CS(query, support, support_labels, n_way, n_shot, C_reg=0.1, double_precision=True, maxIter=15):
+def MetaOptNetHead_SVM_CS(query, support, support_labels, n_way, n_shot, C_reg=0.1, double_precision=True, maxIter=25):
     """
     Fits the support set with multi-class SVM and 
     returns the classification score on the query set.
