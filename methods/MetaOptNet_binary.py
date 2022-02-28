@@ -413,7 +413,7 @@ class ClassificationHead(nn.Module):
         # Add a learnable scale
         self.enable_scale = enable_scale
         if self.enable_scale:
-            self.scale = nn.Parameter(torch.FloatTensor([0.6931]))
+            self.scale = nn.Parameter(torch.FloatTensor([0.6931]))  #1.0
         
     def forward(self, query, support, support_labels, n_way, n_shot, **kwargs):
         if self.enable_scale:
