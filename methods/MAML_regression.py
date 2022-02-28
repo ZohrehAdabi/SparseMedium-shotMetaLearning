@@ -268,10 +268,10 @@ class MAML_regression(nn.Module):
             train_mse = self.train_loop(epoch, n_support, n_samples, optimizer)
             train_mse_list.append(train_mse)
             
-            if ((epoch>=50) and epoch%1==0) or ((epoch<50) and epoch%10==0):
+            if ((epoch>=65) and epoch%1==0) or ((epoch<65) and epoch%10==0):
                 print(Fore.GREEN,"-"*30, f'\nValidation:', Fore.RESET)
                 val_mse_list = []
-                val_count = 80
+                val_count = 50
                 rep = True if val_count > len(val_people) else False
                 val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
                 for t in range(val_count):
