@@ -111,11 +111,11 @@ class MetaOptNet(MetaTemplate):
 
             with torch.no_grad():
                 accuracy_query = self.count_accuracy(logit_query.reshape(-1, self.n_way), y_query.reshape(-1)).item()
-      
+            scale = self.SVM.scale.item()
             if i % print_freq==0:
                 if(self.writer is not None): self.writer.add_histogram('z_support', z_support, self.iteration)
-                print(Fore.LIGHTRED_EX, 'Epoch [{:d}] [{:d}/{:d}] | Loss {:f} | Supp. {:f} | Query {:f}'.format(epoch, i, len(train_loader), 
-                                loss.item(), 0, accuracy_query), Fore.RESET)
+                print(Fore.LIGHTRED_EX, 'Epoch [{:d}] [{:d}/{:d}] | Loss {:f} | OutScale {:f} | Supp. {:f} | Query {:f}'.format(epoch, i, len(train_loader), 
+                                loss.item(), scale, 0, accuracy_query), Fore.RESET)
 
     def correct(self, x, N=0, laplace=False):
         self.SVM.eval()

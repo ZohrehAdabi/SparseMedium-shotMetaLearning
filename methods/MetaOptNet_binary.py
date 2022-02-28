@@ -100,12 +100,13 @@ class MetaOptNet_binary(MetaTemplate):
             self.feature_extractor.train()
             all_loss = []
             logit_query_list = []
-            n_way = 2
+            
             z_support = self.feature_extractor.forward(x_support)
             if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1)
             z_query = self.feature_extractor.forward(x_query)
             if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
-
+            scale = 0
+            n_way = 2
             for j, single_model in enumerate(self.SVM):
                
                
@@ -121,7 +122,10 @@ class MetaOptNet_binary(MetaTemplate):
                 single_loss = -(smoothed_one_hot * log_prb).sum(dim=1)
                 single_loss = single_loss.mean()
                 all_loss.append(single_loss)
-            
+
+                scale += single_model.scale
+            scale /= self.n_way
+
             loss_list.append(torch.stack(all_loss).mean())
             if update==4:
                 ## Optimize
@@ -144,8 +148,8 @@ class MetaOptNet_binary(MetaTemplate):
       
             if i % print_freq==0:
                 if(self.writer is not None): self.writer.add_histogram('z_support', z_support, self.iteration)
-                print(Fore.LIGHTRED_EX, 'Epoch [{:d}] [{:d}/{:d}] | Loss {:f} | Supp. {:f} | Query {:f}'.format(epoch, i, len(train_loader), 
-                                loss.item(), 0, accuracy_query), Fore.RESET)
+                print(Fore.LIGHTRED_EX, 'Epoch [{:d}] [{:d}/{:d}] | Loss {:f} | OutScale {:f} | Supp. {:f} | Query {:f}'.format(epoch, i, len(train_loader), 
+                                loss.item(), scale.item(), 0, accuracy_query), Fore.RESET)
 
     def correct(self, x, N=0, laplace=False):
         self.SVM.eval()
@@ -409,7 +413,7 @@ class ClassificationHead(nn.Module):
         # Add a learnable scale
         self.enable_scale = enable_scale
         if self.enable_scale:
-            self.scale = nn.Parameter(torch.FloatTensor([1.0]))
+            self.scale = nn.Parameter(torch.FloatTensor([0.6931]))
         
     def forward(self, query, support, support_labels, n_way, n_shot, **kwargs):
         if self.enable_scale:
