@@ -120,7 +120,7 @@ for config in config_list:
                                 "--seed",  f"{sd}",  
                                 "--lr_net", f"{lr_net}", 
                                 "--stop_epoch", "100",
-                                "--save_model", "--n_task", "20", '--normalize', '--train_aug'
+                                "--save_model", "--n_task", "20",  '--train_aug'  #'--normalize',
                             
                 ]
                 print(f'\n{" ".join(L)} \n')
@@ -132,7 +132,7 @@ for config in config_list:
                                 "--seed",  f"{sd}",  
                                 "--lr_net", f"{lr_net}", 
                                 "--stop_epoch", "100",
-                                "--save_model", "--n_task", "20", '--normalize', '--train_aug'
+                                "--save_model", "--n_task", "20",  '--train_aug' #'--normalize',
                             
                 ]
                 print(f'\n{" ".join(L)} \n')
@@ -144,9 +144,9 @@ for config in config_list:
             print(f'\n{" ".join(L)} \n')
             run(L)
 
-            # L = ['python', f'./Sparse_DKT_FRVM_run2.py'
-            # ]
-            # print(f'\n{" ".join(L)} \n')
-            # run(L)
+            L = ['python', f'./Sparse_DKT_FRVM_run2.py'
+            ]
+            print(f'\n{" ".join(L)} \n')
+            run(L)
 
            
