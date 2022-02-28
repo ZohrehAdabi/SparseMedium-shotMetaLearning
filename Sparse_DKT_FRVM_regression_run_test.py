@@ -11,7 +11,7 @@ lr_net_list = [0.01, 0.001, 0.0001]
 lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['1001']
-seed_list = [ 4, 5]
+seed_list = [1, 2, 3]
 method_list = ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact']
 test_epoch = 100
 save_result = True
@@ -114,12 +114,12 @@ for config in config_list:
                 print(f'\n{" ".join(L)} \n')
                 # run(L)
             
-                for fine_tune in [5, 10]:
+                for fine_tune in [10, 16, 32]:
                     L = ['python', f'./test_regression.py', "--method","transfer", "--n_samples", "72", "--n_support", "60", '--n_test_epoch', f'{test_epoch}',   
                                 '--seed',  f'{sd}', 
                                 '--lr_net',  f'{lr_net}', '--fine_tune', f'{fine_tune}'] 
                     if save_result: L.append('--save_result')
                     print(f'\n{" ".join(L)} \n')
-                    # run(L)
+                    run(L)
             
 

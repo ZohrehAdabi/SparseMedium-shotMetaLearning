@@ -68,7 +68,7 @@ for config in config_list:
                             '--lr_net',  f'{lr_net}', "--inner_loop", f"{in_lr}", "--inner_lr", "1e-2"] 
                     if save_model: L.append('--save_model')
                     print(f'\n{" ".join(L)} \n')
-                    run(L)
+                    # run(L)
                 
                 
                 L = ['python', f'./train_regression.py', "--method","transfer", "--n_samples", "72", "--n_support", "60", "--stop_epoch",  f'{stop_epoch}',  

@@ -271,7 +271,8 @@ for sd in range(seed, seed+repeat):
         model = FeatureTransfer(bb, video_path=params.checkpoint_dir, 
                                 show_plots_pred=params.show_plots_pred, show_plots_features=params.show_plots_features).cuda()
                                 
-        optimizer = optim.Adam([{'params':model.parameters(),'lr':params.lr_net}])
+        # optimizer = optim.Adam([{'params':model.parameters(),'lr':params.lr_net}])
+        optimizer = optim.Adam([{'params':model.parameters(),'lr':0.01}])
 
     else:
         ValueError('Unrecognised method')
