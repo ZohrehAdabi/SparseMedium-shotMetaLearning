@@ -60,7 +60,7 @@ class MetaOptNet(MetaTemplate):
         # optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
         #                               {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
 
-        update = 0
+        update = 1
         loss_list = []
      
         for i, (x,_) in enumerate(train_loader):
@@ -85,7 +85,7 @@ class MetaOptNet(MetaTemplate):
             logit_query, num_SV = self.SVM(query=z_query, support=z_support, support_labels=y_support, n_way=self.n_way,  n_shot=self.n_support)
 
             smoothed_one_hot = one_hot(y_query.reshape(-1), self.n_way)
-            eps = 0
+            eps = 0.1
             smoothed_one_hot = smoothed_one_hot * (1 - eps) + (1 - smoothed_one_hot) * eps / (self.n_way - 1)
 
             log_prb = F.log_softmax(logit_query.reshape(-1, self.n_way), dim=1)
@@ -94,7 +94,7 @@ class MetaOptNet(MetaTemplate):
             
             loss_list.append(loss)
            
-            if update==0:
+            if update==1:
                 ## Optimize
                 loss = torch.stack(loss_list).mean()
                 loss_list = []
@@ -104,7 +104,7 @@ class MetaOptNet(MetaTemplate):
                 loss.backward()
                 optimizer.step()
 
-            # update +=1
+            update +=1
 
             self.iteration = i+(epoch*len(train_loader))
             if(self.writer is not None): self.writer.add_scalar('loss', loss.item(), self.iteration)
