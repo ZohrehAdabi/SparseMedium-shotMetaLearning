@@ -127,6 +127,8 @@ class MAML(MetaTemplate):
                 task_count = 0
                 loss_all = []
             optimizer.zero_grad()
+            self.iteration = i+(epoch*len(train_loader))
+            if(self.writer is not None): self.writer.add_scalar('Loss', loss.item(), self.iteration)
             if i % print_freq==0:
                 print('Epoch {:d} | Batch {:d}/{:d} | Loss {:f}'.format(epoch, i, len(train_loader), avg_loss/float(i+1)))
                       
@@ -146,6 +148,7 @@ class MAML(MetaTemplate):
         acc_mean = np.mean(acc_all)
         acc_std  = np.std(acc_all)
         print('%d Test Acc = %4.2f%% +- %4.2f%%' %(iter_num,  acc_mean, 1.96* acc_std/np.sqrt(iter_num)))
+        if(self.writer is not None): self.writer.add_scalar('Acc val', acc_mean, self.iteration)
         result = {'acc':acc_mean,  'std':acc_std}
         result = {k: np.around(v, 4) for k, v in result.items()}
         #result = {'mse':np.around(np.mean(mse_list), 3), 'std':np.around(np.std(mse_list),3)}
