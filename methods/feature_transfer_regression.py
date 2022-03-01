@@ -104,7 +104,7 @@ class FeatureTransfer(nn.Module):
                 rep = True if val_count > len(val_people) else False
                 val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
                 for t in range(val_count):
-                    mse, mse_ = self.test_loop(n_support, n_samples, val_person[t],  optimizer)
+                    mse, mse_, _ = self.test_loop(n_support, n_samples, val_person[t],  optimizer)
                     val_mse_list.append(mse)
                 mse = np.mean(val_mse_list)
                 if best_mse >= mse:
@@ -175,7 +175,7 @@ class FeatureTransfer(nn.Module):
 
         self.feature_extractor.eval()
         self.model.eval()
-        mse_support = self.criterion(output_support, y_support).item()
+        mse_support = self.criterion(output_support.squeeze(), y_support).item()
         z_query = self.feature_extractor(x_query).detach()
         if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
         output = self.model(z_query).squeeze()
@@ -209,12 +209,13 @@ class FeatureTransfer(nn.Module):
                 self.plots.fig_feature.canvas.draw()
                 self.plots.fig_feature.canvas.flush_events()
                 self.mw_feature.grab_frame()
-        return mse, mse_
+        return mse, mse_, mse_support
 
     def test(self, n_support, n_samples, optimizer, fine_tune=3, test_count=None):
 
         self.fine_tune = fine_tune
         mse_list = []
+        mse_support_list = []
         # choose a random test person
         rep = True if test_count > len(test_people) else False
 
@@ -224,18 +225,19 @@ class FeatureTransfer(nn.Module):
             self.test_i = t
             weights_1 = self.feature_extractor.return_clones()
             weights_2 = self.model.return_clones()
-            mse, mse_ = self.test_loop(n_support, n_samples, test_person[t],  optimizer)
+            mse, mse_, mse_support = self.test_loop(n_support, n_samples, test_person[t],  optimizer)
             self.feature_extractor.assign_clones(weights_1)
             self.model.assign_clones(weights_2)
             mse_list.append(float(mse))
-        
+            mse_support_list.append(float(mse_support))
+
         if self.show_plots_pred:
             self.mw.finish()
         if self.show_plots_features:
             self.mw_feature.finish()
 
         # result = {'mse':f'{np.mean(mse_list):.4f}', 'std':f'{np.std(mse_list):.4f}'} #  
-        result = {'mse':np.mean(mse_list),  'std':np.std(mse_list)}
+        result = {'mse':np.mean(mse_list),  'std':np.std(mse_list), 'support mse':np.mean(mse_support_list),  'support std':np.std(mse_support_list)}
         result = {k: np.around(v, 4) for k, v in result.items()}
         result['fine_tune'] = self.fine_tune
         #result = {'mse':np.around(np.mean(mse_list), 3), 'std':np.around(np.std(mse_list),3)}

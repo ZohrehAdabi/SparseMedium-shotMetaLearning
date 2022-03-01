@@ -106,13 +106,13 @@ for config in config_list:
                 print(f'\n{" ".join(L)} \n')
                 # run(L)
 
-                for in_lr in [10]:
+                for in_lr in [3, 5]:
                     L = ['python', f'./test_regression.py', "--method","MAML", "--n_samples", "72",  "--n_support", "60",'--n_test_epoch', f'{test_epoch}', 
                             '--seed',  f'{sd}', 
                             '--lr_net',  f'{lr_net}', "--inner_loop", f"{in_lr}", "--inner_lr", "1e-3"] 
-                if save_result: L.append('--save_result')
-                print(f'\n{" ".join(L)} \n')
-                # run(L)
+                    if save_result: L.append('--save_result')
+                    print(f'\n{" ".join(L)} \n')
+                    run(L)
             
                 for fine_tune in [10, 16, 32]:
                     L = ['python', f'./test_regression.py', "--method","transfer", "--n_samples", "72", "--n_support", "60", '--n_test_epoch', f'{test_epoch}',   
@@ -120,6 +120,6 @@ for config in config_list:
                                 '--lr_net',  f'{lr_net}', '--fine_tune', f'{fine_tune}'] 
                     if save_result: L.append('--save_result')
                     print(f'\n{" ".join(L)} \n')
-                    run(L)
+                    # run(L)
             
 
