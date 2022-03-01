@@ -136,7 +136,7 @@ for config in config_list:
                             
                 ]
                 print(f'\n{" ".join(L)} \n')
-                run(L)
+                # run(L)
 
                 inner_lr = 0.01
                 L = ['python', f'./train.py', 
