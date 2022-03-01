@@ -109,7 +109,7 @@ for config in config_list:
                 for in_lr in [3, 5]:
                     L = ['python', f'./test_regression.py', "--method","MAML", "--n_samples", "72",  "--n_support", "60",'--n_test_epoch', f'{test_epoch}', 
                             '--seed',  f'{sd}', 
-                            '--lr_net',  f'{lr_net}', "--inner_loop", f"{in_lr}", "--inner_lr", "1e-3"] 
+                            '--lr_net',  f'{lr_net}', "--inner_loop", f"{in_lr}", "--inner_lr", "1e-2"] 
                     if save_result: L.append('--save_result')
                     print(f'\n{" ".join(L)} \n')
                     run(L)
