@@ -92,6 +92,7 @@ class MAML(MetaTemplate):
         # self.feature.eval()
         # self.classifier.eval()
         scores = self.forward(x_b_i)
+        # self.support_scores = self.forward(x_a_i)
         return scores
 
     def set_forward_adaptation(self,x, is_feature = False): #overwrite parrent function
