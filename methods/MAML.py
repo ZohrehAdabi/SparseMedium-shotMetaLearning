@@ -61,7 +61,8 @@ class MAML(MetaTemplate):
         for weight in self.parameters():
             weight.fast = None
         self.zero_grad()
-
+        # self.feature.train()
+        # self.classifier.train()
         for task_step in range(self.task_update_num):
             
          
@@ -88,7 +89,8 @@ class MAML(MetaTemplate):
         # input = torch.randn(3, 5, requires_grad=True)
         # target = torch.randn(3, 5).softmax(dim=1)
         # output = loss(input, target)   
-
+        # self.feature.eval()
+        # self.classifier.eval()
         scores = self.forward(x_b_i)
         return scores
 
@@ -109,7 +111,7 @@ class MAML(MetaTemplate):
         task_count = 0
         loss_all = []
         optimizer.zero_grad()
-
+             
         #train
         for i, (x,_) in enumerate(train_loader):        
             self.n_query = x.size(1) - self.n_support

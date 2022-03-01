@@ -95,7 +95,8 @@ class MAML_regression(nn.Module):
         for weight in self.parameters():
             weight.fast = None
         self.zero_grad()
-
+        # self.feature_extractor.train()
+        # self.model.train()
         for task_step in range(self.task_update_num):
             y_pred = self.set_forward(x_support)
             set_loss = self.mse(y_pred, y_support) 
@@ -111,6 +112,8 @@ class MAML_regression(nn.Module):
                     weight.fast = weight.fast - self.train_lr * grad[k] #create an updated weight.fast, note the '-' is not merely minus value, but to create a new weight.fast 
                 fast_parameters.append(weight.fast) #gradients calculated in line 45 are based on newest fast weight, but the graph will retain the link to old weight.fasts
 
+        # self.feature_extractor.eval()
+        # self.model.eval()
         y_pred = self.set_forward(x_query)
         return y_pred
 
@@ -215,11 +218,12 @@ class MAML_regression(nn.Module):
         x_query   = x_all[test_person,query_ind,:,:,:]
         y_query   = y_all[test_person,query_ind]
 
-        self.model.eval()
-        self.feature_extractor.eval()
+        
         output = self.set_forward_loss(x_support, y_support, x_query)
         mse = self.mse(output, y_query).item()
 
+        y_pred = self.set_forward(x_support)
+        mse_support = self.mse(y_pred, y_support)
 
         #***************************************************
         y = get_unnormalized_label(y_query.detach()) #((y_query.detach() + 1) * 60 / 2) + 60
@@ -231,7 +235,7 @@ class MAML_regression(nn.Module):
             print(Fore.RED,"="*50, Fore.RESET)
             print(Fore.YELLOW, f'y_pred: {y_pred}', Fore.RESET)
             print(Fore.LIGHTCYAN_EX, f'y:      {y}', Fore.RESET)
-            print(Fore.LIGHTRED_EX, f'mse:    {mse_:.4f}, mse (normed):    {mse:.4f}', Fore.RESET)
+            print(Fore.LIGHTRED_EX, f'mse:    {mse_:.4f}, mse (normed):    {mse:.4f}, support mse:    {mse_support:.4f}', Fore.RESET)
             print(Fore.RED,"-"*50, Fore.RESET)
 
         
@@ -255,7 +259,7 @@ class MAML_regression(nn.Module):
                 self.mw_feature.grab_frame()
 
 
-        return mse, mse_
+        return mse, mse_, mse_support
 
     def train(self, stop_epoch, n_support, n_samples, optimizer, save_model=False):
         
@@ -276,7 +280,7 @@ class MAML_regression(nn.Module):
                 val_person = np.random.choice(np.arange(len(val_people)), size=val_count, replace=rep)
                 for t in range(val_count):
                     self.test_i = t
-                    mse, mse_ = self.test_loop(n_support, n_samples, val_person[t],  optimizer)
+                    mse, mse_, _ = self.test_loop(n_support, n_samples, val_person[t],  optimizer)
                     val_mse_list.append(mse)
                 mse = np.mean(val_mse_list)
                 if best_mse >= mse:
@@ -308,6 +312,7 @@ class MAML_regression(nn.Module):
 
         mse_list = []
         mse_list_ = []
+        mse_support_list = []
         # choose a random test person
         rep = True if test_count > len(test_people) else False
 
@@ -317,10 +322,11 @@ class MAML_regression(nn.Module):
             if t%20==0:print(f'test #{t}')
             self.test_i = t
             
-            mse, mse_ = self.test_loop(n_support, n_samples, test_person[t],  optimizer)
+            mse, mse_, mse_support = self.test_loop(n_support, n_samples, test_person[t],  optimizer)
             
             mse_list.append(float(mse))
             mse_list_.append(float(mse_))
+            mse_support_list.append(float(mse_support))
 
         if self.show_plots_pred:
             self.mw.finish()
@@ -328,7 +334,7 @@ class MAML_regression(nn.Module):
             self.mw_feature.finish()
         print(f'MSE (unnormed): {np.mean(mse_list_):.4f}')
         # result = {'mse':f'{np.mean(mse_list):.3f}', 'std':f'{np.std(mse_list):.3f}'} #  
-        result = {'mse':np.mean(mse_list),  'std':np.std(mse_list)}
+        result = {'mse':np.mean(mse_list),  'std':np.std(mse_list), 'support mse':np.mean(mse_support_list),  'support std':np.std(mse_support_list)}
         result = {k: np.around(v, 4) for k, v in result.items()}
         #result = {'mse':np.around(np.mean(mse_list), 3), 'std':np.around(np.std(mse_list),3)}
         result['inner_loop'] = self.task_update_num
