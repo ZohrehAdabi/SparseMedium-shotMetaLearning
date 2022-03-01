@@ -10,7 +10,7 @@ lr_net_list = [0.01, 0.001, 0.0001]
 lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['001']
-seed_list = [1, 2]
+seed_list = [1, 2, 3]
 # method_list = ['Sparse_DKT_Nystrom']
 for config in config_list:
     for lr_gp in lr_gp_list:
@@ -100,7 +100,7 @@ for config in config_list:
                             "--method","MAML", "--dataset", "omniglot", 
                             "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "15", "--n_query", "5",
                                 "--seed",  f"{sd}",  
-                                "--lr_net", f"{lr_net}", "--inner_lr", f"{inner_lr}", '--inner_loop', '5',
+                                "--lr_net", f"{lr_net}", "--inner_lr", f"{inner_lr}", '--inner_loop', '10',
                                 "--stop_epoch", "100",
                                 "--save_model", "--n_task", "30"
                             

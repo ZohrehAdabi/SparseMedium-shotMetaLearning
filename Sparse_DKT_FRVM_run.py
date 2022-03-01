@@ -138,15 +138,40 @@ for config in config_list:
                 print(f'\n{" ".join(L)} \n')
                 run(L)
 
+                inner_lr = 0.01
+                L = ['python', f'./train.py', 
+                            "--method","MAML", "--dataset", "CUB", 
+                            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
+                                "--seed",  f"{sd}",  
+                                "--lr_net", f"{lr_net}", "--inner_lr", f"{inner_lr}", '--inner_loop', '10',
+                                "--stop_epoch", "100",
+                                "--save_model", "--n_task", "20",  '--train_aug', '--normalize',
+                            
+                ]
+                print(f'\n{" ".join(L)} \n')
+                run(L)
+
+                inner_lr = 0.01
+                L = ['python', f'./train.py', 
+                            "--method","MAML", "--dataset", "miniImagenet", 
+                            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "125", "--n_query", "15",
+                                "--seed",  f"{sd}",  
+                                "--lr_net", f"{lr_net}", "--inner_lr", f"{inner_lr}", '--inner_loop', '10',
+                                "--stop_epoch", "100",
+                                "--save_model", "--n_task", "20",  '--train_aug', '--normalize',
+                            
+                ]
+                print(f'\n{" ".join(L)} \n')
+                run(L)
 
             L = ['python', f'./Sparse_DKT_FRVM_run_test.py'
             ]
             print(f'\n{" ".join(L)} \n')
             run(L)
 
-            # L = ['python', f'./Sparse_DKT_FRVM_run2.py'
-            # ]
-            # print(f'\n{" ".join(L)} \n')
-            # run(L)
+            L = ['python', f'./Sparse_DKT_FRVM_run2.py'
+            ]
+            print(f'\n{" ".join(L)} \n')
+            run(L)
 
            
