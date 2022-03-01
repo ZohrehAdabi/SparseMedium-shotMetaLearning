@@ -29,7 +29,9 @@ class MAML(MetaTemplate):
         self.n_task     = 4
         self.task_update_num = inner_loop #5
         self.train_lr = inner_lr
-        self.approx = first_order #first order approx.       
+        self.approx = first_order #first order approx.
+
+        self.writer = None       
 
                
     def init_summary(self, id):
