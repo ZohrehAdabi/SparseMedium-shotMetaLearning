@@ -68,6 +68,7 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
     print(f'num val task {len(val_loader)}')
 
     acc_val_list = []
+    tic = time.process_time()
     for epoch in range(start_epoch, stop_epoch):
         #model.eval()
         #acc = model.test_loop(val_loader)
@@ -101,9 +102,13 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
             print(Fore.YELLOW, f'ACC: {acc:4.2f}\n', Fore.RESET)
             print(Fore.YELLOW, f'Avg. Val ACC: {np.mean(acc_val_list):4.2f}\n', Fore.RESET)
             print(Fore.GREEN,"-"*50 ,'\n', Fore.RESET)
+        toc = time.process_time()
+        eTime = toc - tic 
+        print(f'Elapsed time during the whole program in seconds: {eTime}')
+        print(f'Elapsed time during the whole program in minutes: {eTime/60}')
         if ((epoch % params.save_freq==0) or (epoch == stop_epoch - 1)):
             outfile = os.path.join(params.checkpoint_dir, '{:d}.tar'.format(epoch))
-            torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
+            torch.save({'epoch': epoch, 'state': model.state_dict(), 'e_time': eTime}, outfile)
     print(f'\n{model.id}\n')
     return model
 
