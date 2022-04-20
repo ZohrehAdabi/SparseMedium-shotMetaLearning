@@ -3,7 +3,7 @@
 import torch
 
 file = './99.tar'
-d = torch.load(f)
+d = torch.load(file)
 s = d['e_time']
 m = s/60
 h = m / 60
