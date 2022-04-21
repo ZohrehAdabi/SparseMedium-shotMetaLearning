@@ -34,6 +34,8 @@ for config in config_list:
             if config in ['000', '010']:
                 align_thr = 0
             for sd in seed_list:
+
+                # DKT_binary
                 L = ['python', f'./train.py', 
                             "--method","DKT_binary", "--dataset", f"{dataset}",
                             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", f"{n_shot}", "--n_query", f"{n_query}",
@@ -46,7 +48,7 @@ for config in config_list:
                 print(f'\n{" ".join(L)} \n')
                 run(L)
 
-                
+                # Sparse DKT_binary
                 for method in method_list:
                     L = ['python', f'./train.py', 
                                 "--method",f"{method}", "--sparse_method", "FRVM", "--dataset", f"{dataset}", 
@@ -69,6 +71,7 @@ for config in config_list:
                 # lambda_rvm_list = [4.0, 5.0] 
                 # method_list = ['Sparse_DKT_binary_Exact'] 
                 
+                # rvm_mll
                 # for align_thr in [0.065, 0.06, 0.055, 0.05, 0.045]:
                 for lambda_rvm in lambda_rvm_list:
                         for method in method_list:
@@ -85,7 +88,7 @@ for config in config_list:
                             print(f'\n{" ".join(L)} \n')
                             run(L)
             
-            
+                # rvm_ll
                 for lambda_rvm in lambda_rvm_list:
                     for method in method_list:
                         L = ['python', f'./train.py', 
@@ -115,6 +118,7 @@ for config in config_list:
                 print(f'\n{" ".join(L)} \n')
                 run(L)
 
+                # MetaOptNet
                 L = ['python', f'./train.py', 
                             "--method","MetaOptNet", "--dataset", "CUB", 
                             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
@@ -139,6 +143,7 @@ for config in config_list:
                 print(f'\n{" ".join(L)} \n')
                 # run(L)
 
+                # MAML
                 inner_lr = 0.01
                 L = ['python', f'./train.py', 
                             "--method","MAML", "--dataset", "CUB", 

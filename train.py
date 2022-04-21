@@ -83,7 +83,7 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
         if ((epoch+1)%2==0 and (epoch+1) > 50) or ((epoch+1)%10==0 and (epoch+1)<=50):
             if not os.path.isdir(params.checkpoint_dir):
                 os.makedirs(params.checkpoint_dir)
-            print(Fore.GREEN,"-"*50 ,f'\nValidation \n', Fore.RESET)
+            print(Fore.GREEN,"-"*50 ,f'\nValidation {params.method}\n', Fore.RESET)
             acc, result = model.test_loop(val_loader)
             acc_val_list.append(acc)
             if acc > max_acc:  # for baseline and baseline++, we don't use validation here so we let acc = -1
