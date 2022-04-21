@@ -27,7 +27,7 @@ for config in config_list:
     for lr_gp in lr_gp_list:
         for lr_net in lr_net_list:
             if dataset=='CUB':
-                align_thr = 0.01
+                align_thr = 0.03
             if dataset=='miniImagenet':
                 align_thr = 0.01
             if config in ['000', '010']:
@@ -47,7 +47,7 @@ for config in config_list:
                 ]
                 if save_result: L.append('--save_result')
                 print(f'\n{" ".join(L)} \n')
-                run(L)
+                # run(L)
 
                 # Sparse DKT_binary
                 for method in method_list:
