@@ -28,7 +28,7 @@ for config in config_list:
     for lr_gp in lr_gp_list:
         for lr_net in lr_net_list:
             if dataset=='CUB':
-                align_thr = 0.03 
+                align_thr = 0.01 
             if dataset=='miniImagenet':
                 align_thr = 0.01
             if config in ['000', '010']:
@@ -60,11 +60,11 @@ for config in config_list:
                                     "--train_aug"
                     ]
                     print(f'\n{" ".join(L)} \n')
-                    # run(L)
+                    run(L)
 
         
                 if dataset=='CUB':
-                    lambda_rvm_list = [2.0] 
+                    lambda_rvm_list = [100.0] 
                 if dataset=='miniImagenet':
                     lambda_rvm_list = [100.0] 
 
@@ -129,7 +129,7 @@ for config in config_list:
                             
                 ]
                 print(f'\n{" ".join(L)} \n')
-                run(L)
+                # run(L)
 
                 L = ['python', f'./train.py', 
                             "--method","MetaOptNet", "--dataset", "miniImagenet", 
@@ -173,7 +173,7 @@ for config in config_list:
             L = ['python', f'./Sparse_DKT_FRVM_run_test.py'
             ]
             print(f'\n{" ".join(L)} \n')
-            # run(L)
+            run(L)
 
             # L = ['python', f'./Sparse_DKT_FRVM_run2.py'
             # ]
