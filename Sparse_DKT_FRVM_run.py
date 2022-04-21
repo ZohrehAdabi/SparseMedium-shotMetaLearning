@@ -104,7 +104,7 @@ for config in config_list:
                         print(f'\n{" ".join(L)} \n')
                         # run(L)
                 
-                    
+                # rvm_only   
                 L = ['python', f'./train.py', 
                             "--method", "Sparse_DKT_binary_RVM", "--sparse_method", "FRVM", "--dataset", f"{dataset}", 
                             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", f"{n_shot}", "--n_query", f"{n_query}",
@@ -125,7 +125,7 @@ for config in config_list:
                                 "--seed",  f"{sd}",  
                                 "--lr_net", f"{lr_net}", 
                                 "--stop_epoch", f"{stop_epoch}",
-                                "--save_model", "--n_task", "20",  '--train_aug'  #'--normalize',
+                                "--save_model", "--n_task",  f"{n_task}",  '--train_aug'  #'--normalize',
                             
                 ]
                 print(f'\n{" ".join(L)} \n')
@@ -137,7 +137,7 @@ for config in config_list:
                                 "--seed",  f"{sd}",  
                                 "--lr_net", f"{lr_net}", 
                                 "--stop_epoch", f"{stop_epoch}",
-                                "--save_model", "--n_task", "20",  '--train_aug' #'--normalize',
+                                "--save_model", "--n_task",  f"{n_task}",  '--train_aug' #'--normalize',
                             
                 ]
                 print(f'\n{" ".join(L)} \n')
@@ -151,7 +151,7 @@ for config in config_list:
                                 "--seed",  f"{sd}",  
                                 "--lr_net", f"{lr_net}", "--inner_lr", f"{inner_lr}", '--inner_loop', '10', '--first_order',
                                 "--stop_epoch", f"{stop_epoch}",
-                                "--save_model", "--n_task", "20",  '--train_aug', '--normalize',
+                                "--save_model", "--n_task",  f"{n_task}",  '--train_aug', '--normalize',
                             
                 ]
                 print(f'\n{" ".join(L)} \n')

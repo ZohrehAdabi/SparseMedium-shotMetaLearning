@@ -10,7 +10,7 @@ dataset =  'miniImagenet' #'miniImagenet' # 'CUB
 lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['001']
-n_task = 20
+n_task = 100#20
 if dataset=='CUB':
     n_shot = 50 
     n_query = 10 
@@ -20,8 +20,9 @@ if dataset=='miniImagenet':
 
 tol_rvm = 1e-4
 max_itr = -1
-seed_list = [1, 2, 3]
+seed_list = [1]
 save_result = True
+method_list = ['Sparse_DKT_binary_Exact'] 
 for config in config_list:
     for lr_gp in lr_gp_list:
         for lr_net in lr_net_list:
@@ -33,6 +34,8 @@ for config in config_list:
                 align_thr = 0
 
             for sd in seed_list:
+
+                # DKT_binary
                 L = ['python', f'./test.py', 
                             "--method","DKT_binary", "--dataset", f"{dataset}", 
                             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", f"{n_shot}", "--n_query", f"{n_query}",
@@ -46,6 +49,7 @@ for config in config_list:
                 print(f'\n{" ".join(L)} \n')
                 # run(L)
 
+                # Sparse DKT_binary
                 for method in method_list:
                     L = ['python', f'./test.py', 
                                 "--method",f"{method}", "--sparse_method", "FRVM", "--dataset", f"{dataset}", 
@@ -64,6 +68,7 @@ for config in config_list:
                     lambda_rvm_list = [2.0] 
                 if dataset=='miniImagenet':
                     lambda_rvm_list = [100.0] 
+                #rvm_mll
                 for lambda_rvm in lambda_rvm_list:
                     for method in method_list:
                         L = ['python', f'./test.py', 
@@ -80,7 +85,7 @@ for config in config_list:
                         print(f'\n{" ".join(L)} \n')
                         # run(L)
 
-
+                # rvm_ll
                 for lambda_rvm in lambda_rvm_list:
                     for method in method_list:
                         L = ['python', f'./test.py', 
@@ -97,7 +102,7 @@ for config in config_list:
                         print(f'\n{" ".join(L)} \n')
                         # run(L)
                 
-                    
+                # rvm_only
                 L = ['python', f'./test.py', 
                             "--method", "Sparse_DKT_binary_RVM", "--sparse_method", "FRVM", "--dataset", f"{dataset}", 
                             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", f"{n_shot}", "--n_query", f"{n_query}",
@@ -112,13 +117,14 @@ for config in config_list:
                 print(f'\n{" ".join(L)} \n')
                 # run(L)
 
+                # MetaOptNet
                 L = ['python', f'./test.py', 
                             "--method","MetaOptNet", "--dataset", "CUB", 
                             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
                                 "--seed",  f"{sd}",  
                                 "--lr_net", f"{lr_net}", 
                                 
-                                "--n_task", "20",  '--train_aug'  #'--normalize', 
+                                "--n_task",  f"{n_task}",  '--train_aug'  #'--normalize', 
                             
                 ]
                 if save_result: L.append('--save_result')
@@ -131,7 +137,21 @@ for config in config_list:
                                 "--seed",  f"{sd}",  
                                 "--lr_net", f"{lr_net}", 
                                 
-                                "--n_task", "20", '--train_aug'  #'--normalize', 
+                                "--n_task",  f"{n_task}", '--train_aug'  #'--normalize', 
+                            
+                ]
+                if save_result: L.append('--save_result')
+                print(f'\n{" ".join(L)} \n')
+                # run(L)
+
+                #MAML
+                inner_lr = 0.01
+                L = ['python', f'./test.py', 
+                            "--method","MAML", "--dataset", "CUB", 
+                            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
+                                "--seed",  f"{sd}",  
+                                "--lr_net", f"{lr_net}", "--inner_lr", f"{inner_lr}", '--inner_loop', '10', '--first_order',
+                                "--n_task",  f"{n_task}",  '--train_aug', '--normalize',
                             
                 ]
                 if save_result: L.append('--save_result')
@@ -140,24 +160,11 @@ for config in config_list:
 
                 inner_lr = 0.01
                 L = ['python', f'./test.py', 
-                            "--method","MAML", "--dataset", "CUB", 
-                            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
-                                "--seed",  f"{sd}",  
-                                "--lr_net", f"{lr_net}", "--inner_lr", f"{inner_lr}", '--inner_loop', '10', '--first_order',
-                                "--n_task", "20",  '--train_aug', '--normalize',
-                            
-                ]
-                if save_result: L.append('--save_result')
-                print(f'\n{" ".join(L)} \n')
-                run(L)
-
-                inner_lr = 0.01
-                L = ['python', f'./test.py', 
                             "--method","MAML", "--dataset", "miniImagenet", 
                             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "125", "--n_query", "15",
                                 "--seed",  f"{sd}",  
                                 "--lr_net", f"{lr_net}", "--inner_lr", f"{inner_lr}", '--inner_loop', '10', '--first_order',
-                                "--n_task", "20",  '--train_aug', '--normalize',
+                                "--n_task",  f"{n_task}",  '--train_aug', '--normalize',
                             
                 ]
                 if save_result: L.append('--save_result')
