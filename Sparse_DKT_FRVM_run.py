@@ -46,7 +46,7 @@ for config in config_list:
                                 "--train_aug"
                 ]
                 print(f'\n{" ".join(L)} \n')
-                run(L)
+                # run(L)
 
                 # Sparse DKT_binary
                 for method in method_list:
