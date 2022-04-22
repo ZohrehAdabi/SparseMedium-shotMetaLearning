@@ -596,10 +596,10 @@ class Sparse_DKT_regression_Exact(nn.Module):
                 mse_rvm_list.append(mse_r)
                 mse_most_sim_list.append(mse_most_sim)
 
-        if self.show_plots_pred:
-            self.mw.finish()
-        if self.show_plots_features:
-            self.mw_feature.finish()
+        # if self.show_plots_pred:
+        #     self.mw.finish()
+        # if self.show_plots_features:
+        #     self.mw_feature.finish()
         if self.f_rvm: 
             print('\n-----------------------------------------')
             print(Fore.YELLOW, f'MSE based on most similar ip: {np.mean(mse_most_sim_list):.4f}', Fore.RESET)

@@ -339,6 +339,7 @@ for sd in range(seed, seed+repeat):
         print(f"Average MSE best model, seed {sd}: " + str(np.mean(mse_list_best)) + " +- " + str(np.std(mse_list_best)))
         print("-------------------")
         best_accuracy_list.append(np.mean(mse_list_best))
+    
     if os.path.isfile(params.checkpoint_dir+'_best_model_rvm.tar'):
         print(f'\nBest RVM model\n{params.checkpoint_dir}_best_model_rvm.tar')
         model.load_checkpoint(params.checkpoint_dir +'_best_model_rvm.tar')
@@ -356,6 +357,7 @@ for sd in range(seed, seed+repeat):
         print(f"Average GP MSE at RVM best model, seed {sd}: " + str(np.mean(mse_list_best_rvm)) + " +- " + str(np.std(mse_list_best_rvm)))
         print("-------------------")
         best_accuracy_list_rvm.append(np.mean(mse_list_best_rvm))
+    
     if os.path.isfile(params.checkpoint_dir):
         model.load_checkpoint(params.checkpoint_dir)
 
@@ -374,6 +376,10 @@ for sd in range(seed, seed+repeat):
             json.dump(result, f, indent=2)
             f.write('\n}\n]')
 
+    if model.show_plots_pred:
+        model.mw.finish()
+    if model.show_plots_features:
+        model.mw_feature.finish()
     if params.save_result: f.close()
     if mse_list is not None and mse_list_best is not None:
         print(f'\n{id}\n')
