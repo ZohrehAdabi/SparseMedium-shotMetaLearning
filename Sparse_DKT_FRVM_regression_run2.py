@@ -12,8 +12,8 @@ stop_epoch = 100
 lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['1001']
-seed_list = [1, 2, 3]
-method_list = ['Sparse_DKT_Exact', 'Sparse_DKT_Nystrom']
+seed_list = [1]
+method_list = ['Sparse_DKT_Exact']
 sparse_method = 'FRVM' # 'random'
 for config in config_list:
     for lr_gp in lr_gp_list:
@@ -22,32 +22,9 @@ for config in config_list:
             if config in ['1000', '1010']:
                 align_thr = 0
             for sd in seed_list:
-                for method in method_list:
-                
-                    # just mll of GP
-                    L = ['python', f'./train_regression.py', 
-                                    '--method', f'{method}', '--sparse_method', f'{sparse_method}',  '--n_samples', '72', '--n_support', '60', '--stop_epoch', f'{stop_epoch}', 
-                                #   '--show_plots_features',
-                                    '--seed',  f'{sd}', '--config', f'{config}', '--align_thr', f'{align_thr}',  
-                                    '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
-                                    '--kernel_type', 'rbf', '--init',  '--beta'
-                    ]
-                    if save_model: L.append('--save_model')
-                    print(f'\n{" ".join(L)} \n')
-                    # run(L)
-                
-                #DKT
-                L = ['python', f'./train_regression.py', 
-                                '--method', f'DKT', '--n_samples', '72', '--n_support', '60', '--stop_epoch', f'{stop_epoch}', 
-                            #   '--show_plots_features',
-                                '--seed',  f'{sd}', 
-                                '--lr_gp',  f'{lr_gp}', '--lr_net',  f'{lr_net}',
-                                '--kernel_type', 'rbf', '--init'
-                ]
-                if save_model: L.append('--save_model')
-                print(f'\n{" ".join(L)} \n')
-                # run(L)
+              
 
+                # random
                 for method in method_list:
                 
                     # just mll of GP
@@ -62,6 +39,7 @@ for config in config_list:
                     print(f'\n{" ".join(L)} \n')
                     # run(L)
 
+                # MAML
                 for in_lr in [3, 5]:
                     L = ['python', f'./train_regression.py', "--method","MAML", "--n_samples", "72",  "--n_support", "60", "--stop_epoch", f'{stop_epoch}', 
                             '--seed',  f'{sd}', 
@@ -70,7 +48,7 @@ for config in config_list:
                     print(f'\n{" ".join(L)} \n')
                     # run(L)
                 
-                
+                # transfer learning
                 L = ['python', f'./train_regression.py', "--method","transfer", "--n_samples", "72", "--n_support", "60", "--stop_epoch",  f'{stop_epoch}',  
                             '--seed',  f'{sd}', 
                             '--lr_net',  f'{lr_net}'] 

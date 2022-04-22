@@ -11,8 +11,8 @@ lr_net_list = [0.01, 0.001, 0.0001]
 lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['1001']
-seed_list = [1, 2, 3]
-method_list = ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact']
+seed_list = [1]
+method_list = ['Sparse_DKT_Exact']
 test_epoch = 100
 save_result = True
 for config in config_list:
@@ -22,6 +22,8 @@ for config in config_list:
             if config in ['1000', '1010']:
                 align_thr = 0
             for sd in seed_list:
+
+                # DKT
                 L = ['python', f'./test_regression.py', 
                                         '--method', f'DKT',  '--n_samples', '72', '--n_support', '60', '--n_test_epoch', f'{test_epoch}', 
                                     #   '--show_plots_pred',
@@ -33,7 +35,8 @@ for config in config_list:
                 if save_result: L.append('--save_result')
                 print(f'\n{" ".join(L)} \n')
                 # run(L)
-              
+
+                # Sparse DKT
                 for method in method_list:
                      # just mll of GP
                        
@@ -79,7 +82,7 @@ for config in config_list:
 
             
               
-                # rvm mll 
+                # rvm only 
                 L = ['python', f'./test_regression.py', 
                                 '--method', f'Sparse_DKT_RVM', '--sparse_method', 'FRVM',  '--n_samples', '72', '--n_support', '60', '--n_test_epoch', f'{test_epoch}', 
                             #   '--show_plots_pred',
@@ -92,9 +95,10 @@ for config in config_list:
                 # run(L)
 
 
+                # just mll of GP + random
                 for method in method_list:
                 
-                    # just mll of GP + random
+                    
                     L = ['python', f'./test_regression.py', 
                                     '--method', f'{method}', '--sparse_method', f'random',  '--n_samples', '72', '--n_support', '60', '--n_test_epoch', f'{test_epoch}', 
                                 #   '--show_plots_features',
@@ -106,6 +110,7 @@ for config in config_list:
                 print(f'\n{" ".join(L)} \n')
                 # run(L)
 
+                # MAML
                 for in_lr in [3, 5]:
                     L = ['python', f'./test_regression.py', "--method","MAML", "--n_samples", "72",  "--n_support", "60",'--n_test_epoch', f'{test_epoch}', 
                             '--seed',  f'{sd}', 
@@ -113,13 +118,14 @@ for config in config_list:
                     if save_result: L.append('--save_result')
                     print(f'\n{" ".join(L)} \n')
                     # run(L)
-            
+
+                # Transfer Learning
                 for fine_tune in [10, 16, 32]:
                     L = ['python', f'./test_regression.py', "--method","transfer", "--n_samples", "72", "--n_support", "60", '--n_test_epoch', f'{test_epoch}',   
                                 '--seed',  f'{sd}', 
                                 '--lr_net',  f'{lr_net}', '--fine_tune', f'{fine_tune}'] 
                     if save_result: L.append('--save_result')
                     print(f'\n{" ".join(L)} \n')
-                    run(L)
+                    # run(L)
             
 
