@@ -21,7 +21,7 @@ if dataset=='miniImagenet':
 
 tol_rvm = 1e-4
 max_itr = -1
-stop_epoch = 200
+stop_epoch = 400
 seed_list = [1]
 method_list = ['Sparse_DKT_binary_Exact'] 
 for config in config_list:
@@ -46,7 +46,7 @@ for config in config_list:
                                 "--train_aug"
                 ]
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
+                run(L)
 
                 # Sparse DKT_binary
                 # Exact GP
