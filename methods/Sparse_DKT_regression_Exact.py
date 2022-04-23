@@ -44,7 +44,7 @@ except ImportError:
 IP = namedtuple("inducing_points", "z_values index count alpha gamma  x y i_idx j_idx")
 class Sparse_DKT_regression_Exact(nn.Module):
     def __init__(self, backbone, kernel_type, sparse_method='FRVM', add_rvm_mll=False, add_rvm_mll_one=False, add_rvm_ll=False,
-                    add_rvm_mse=False, lambda_rvm=0.1, maxItr_rvm=1000, beta=False, detU=False, normalize=False, initialize=False, lr_decay=False, 
+                    add_rvm_mse=False, lambda_rvm=0.1, maxItr_rvm=1000, beta=False, normalize=False, initialize=False, lr_decay=False, 
                     f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_regression_Exact, self).__init__()
@@ -61,7 +61,6 @@ class Sparse_DKT_regression_Exact(nn.Module):
         if maxItr_rvm!=-1:
             self.maxItr_rvm = maxItr_rvm
         self.beta = beta
-        self.add_detU = detU
         self.normalize = normalize
         self.initialize = initialize
         self.lr_decay = lr_decay
@@ -208,11 +207,11 @@ class Sparse_DKT_regression_Exact(nn.Module):
             alpha_m = alpha_m / scales**2
             penalty = None
             if self.add_rvm_mll:
-                rvm_mll, penalty = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta, add_detU=self.add_detU)
+                rvm_mll, penalty = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
             elif self.add_rvm_ll or self.add_rvm_mse:
-                rvm_mll, rvm_mse = rvm_ML_regression(K_m, labels, alpha_m, mu_m, beta, add_detU=self.add_detU)
+                rvm_mll, rvm_mse = rvm_ML_regression(K_m, labels, alpha_m, mu_m, beta)
             else: #when rvm is not used this function runs to have rvm_mll  for report in print
-                rvm_mll, penalty = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta, add_detU=self.add_detU)
+                rvm_mll, penalty = rvm_ML_regression_full(K_m, labels, alpha_m, mu_m, beta)
             
             predictions = self.model(ip_values)
             mll = self.mll(predictions, self.model.train_targets)

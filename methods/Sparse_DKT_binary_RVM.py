@@ -44,7 +44,7 @@ except ImportError:
 IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j_idx")
 class Sparse_DKT_binary_RVM(MetaTemplate):
     def __init__(self, model_func, kernel_type, n_way, n_support, sparse_method='FRVM', add_rvm_mll=False, add_rvm_mll_one=False, lambda_rvm=0.1, 
-                        maxItr_rvm=1000, tol_rvm=1e-4, detU=False, regression=False, rvm_mll_only=False, rvm_ll_only=False, num_inducing_points=None, normalize=False, 
+                        maxItr_rvm=1000, tol_rvm=1e-4, regression=False, rvm_mll_only=False, rvm_ll_only=False, num_inducing_points=None, normalize=False, 
                         scale=False, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
         super(Sparse_DKT_binary_RVM, self).__init__(model_func, n_way, n_support)
 
@@ -57,7 +57,7 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
         if maxItr_rvm!=-1:
             self.maxItr_rvm = maxItr_rvm
         self.tol_rvm = tol_rvm
-        self.tol_rvm = detU
+       
         self.regression = regression
         self.rvm_mll_only = rvm_mll_only
         self.rvm_ll_only = rvm_ll_only
@@ -265,17 +265,17 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
             alpha_m = alpha_m / scales**2
             if self.rvm_mll_only:
                 if self.regression:
-                    rvm_mll = rvm_ML_regression_full_rvm(K_m, target, alpha_m, mu_m, self.tol_rvm)
+                    rvm_mll = rvm_ML_regression_full_rvm(K_m, target, alpha_m, mu_m)
                 else:
                     rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U, beta)
             elif self.rvm_ll_only:
                 if self.regression:
-                    rvm_mll, mse = rvm_ML_regression(K_m, target, alpha_m, mu_m, self.tol_rvm)
+                    rvm_mll, mse = rvm_ML_regression(K_m, target, alpha_m, mu_m)
                 else:
                     rvm_mll = rvm_ML(K_m, target, alpha_m, mu_m, U)
             else:# for classification, equal to rvm_mll_only now.
                 if self.regression:
-                    rvm_mll = rvm_ML_regression_full_rvm(K_m, target, alpha_m, mu_m, self.tol_rvm)
+                    rvm_mll = rvm_ML_regression_full_rvm(K_m, target, alpha_m, mu_m)
                 else:
                     rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U, beta)
 

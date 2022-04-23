@@ -46,7 +46,7 @@ IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j
 class Sparse_DKT_binary_Exact(MetaTemplate):
     def __init__(self, model_func, kernel_type, n_way, n_support, sparse_method, separate=False, add_rvm_mll=False, 
                             add_rvm_ll=False, add_rvm_mll_one=False, lambda_rvm=0.1, 
-                            maxItr_rvm=1000, tol_rvm=1e-4, detU=False, regression=False, num_inducing_points=None, normalize=False, 
+                            maxItr_rvm=1000, tol_rvm=1e-4, regression=False, num_inducing_points=None, normalize=False, 
                             scale=False, config="010", align_threshold=1e-3, gamma=False, dirichlet=False):
         super(Sparse_DKT_binary_Exact, self).__init__(model_func, n_way, n_support)
         self.num_inducing_points = num_inducing_points
@@ -60,7 +60,6 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         if maxItr_rvm!=-1:
             self.maxItr_rvm = maxItr_rvm
         self.tol_rvm = tol_rvm
-        self.sdd_detU = detU
         self.regression = regression
         self.config = config
         if self.regression:
@@ -248,17 +247,17 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             # target[target==-1]=0
             if self.add_rvm_ll:
                 if self.regression:
-                    rvm_mll, penalty = rvm_ML_regression(K_m, target, alpha_m, mu_m, self.tol_rvm)
+                    rvm_mll, penalty = rvm_ML_regression(K_m, target, alpha_m, mu_m)
                 else:
                     rvm_mll = rvm_ML(K_m, target, alpha_m, mu_m, U)
             elif self.add_rvm_mll or self.add_rvm_mll_one:
                 if self.regression:
-                    rvm_mll, penalty = rvm_ML_regression_full(K_m, target, alpha_m, mu_m, self.tol_rvm)
+                    rvm_mll, penalty = rvm_ML_regression_full(K_m, target, alpha_m, mu_m)
                 else:
                     rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U, beta)
             else: #when rvm is not used this function runs to have rvm_mll  for report in print
                 if self.regression:
-                    rvm_mll, penalty = rvm_ML_regression_full(K_m, target, alpha_m, mu_m, self.tol_rvm)
+                    rvm_mll, penalty = rvm_ML_regression_full(K_m, target, alpha_m, mu_m)
                 else:
                     rvm_mll = rvm_ML_full(K_m, target, alpha_m, mu_m, U, beta)
 

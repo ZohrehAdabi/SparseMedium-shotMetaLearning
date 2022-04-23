@@ -65,7 +65,7 @@ def rvm_ML_regression_full_rvm(K_m, targets, alpha_m, mu_m, beta=torch.tensor(10
         return logML/N
 
 
-def rvm_ML_regression_full(K_m, targets, alpha_m, mu_m, beta=torch.tensor(10.0, device='cuda'), add_detU=False):
+def rvm_ML_regression_full(K_m, targets, alpha_m, mu_m, beta=torch.tensor(10.0, device='cuda')):
         
         N = targets.shape[0]
         targets = targets.to(torch.float64)
@@ -84,7 +84,7 @@ def rvm_ML_regression_full(K_m, targets, alpha_m, mu_m, beta=torch.tensor(10.0, 
         # DiagC	= torch.sum(U_inv**2, axis=1)
         # Gamma	= 1 - alpha_m * DiagC
         # beta	= (N - torch.sum(Gamma))/ED   
-        dataLikely	= (N * torch.log(beta) - beta * ED)/2
+        # dataLikely	= (N * torch.log(beta) - beta * ED)/2
         logdetHOver2	= torch.sum(torch.log(torch.diag(U)))
         
         # 2001-JMLR-SparseBayesianLearningandtheRelevanceVectorMachine in Appendix:
@@ -94,10 +94,9 @@ def rvm_ML_regression_full(K_m, targets, alpha_m, mu_m, beta=torch.tensor(10.0, 
         # logML = -1/2 * (beta * ED)  #+ (mu_m**2) @ alpha_m  #+ N * torch.log(beta) + 2*logdetHOver2
         complexity_penalty =  - 2* logdetHOver2 + N * torch.log(beta)  + torch.sum(torch.log(alpha_m)) 
         # logML			= dataLikely - (mu_m**2) @ alpha_m /2 + complexity_penalty
-        if add_detU:
-            logML = -1/2 * (beta * ED + (mu_m**2) @ alpha_m + complexity_penalty)   
-        else:
-            logML = -1/2 * (beta * ED + (mu_m**2) @ alpha_m) 
+       
+        logML = -1/2 * (beta * ED + (mu_m**2) @ alpha_m + complexity_penalty)   
+   
         # logML = -1/2 * beta * ED
     
         # NOTE new loss for rvm
@@ -210,10 +209,9 @@ def rvm_ML_regression(K_m, targets, alpha_m, mu_m, beta=10.0, add_detU=False):
         # C = sigma * I + K_m @ A_m @ K_m.T  ,  log|C| = - log|Sigma_m| - N * log(beta) - log|A_m|
         # t.T @ C^-1 @ t = beta * ||t - K_m @ mu_m||**2 + mu_m.T @ A_m @ mu_m 
         # log p(t) = -1/2 (log|C| + t.T @ C^-1 @ t ) + const 
-        if add_detU:
-            logML = -1/2 * (beta * ED + (mu_m**2) @ alpha_m - 2* logdetHOver2 + N * torch.log(beta) + torch.sum(torch.log(alpha_m)))    #+ N * torch.log(beta) + 2*logdetHOver2
-        else:
-            logML = -1/2 * (beta * ED + (mu_m**2) @ alpha_m)    
+        
+        # logML = -1/2 * (beta * ED + (mu_m**2) @ alpha_m - 2* logdetHOver2 + N * torch.log(beta) + torch.sum(torch.log(alpha_m)))   
+        logML = -1/2 * (beta * ED + (mu_m**2) @ alpha_m)    
         # logML			= dataLikely - (mu_m**2) @ alpha_m /2 + torch.sum(torch.log(alpha_m))/2 - logdetHOver2
         # logML = -1/2 * beta * ED
     
