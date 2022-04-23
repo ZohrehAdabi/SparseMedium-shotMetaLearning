@@ -183,7 +183,6 @@ elif params.method=='Sparse_DKT_Exact':
         if params.rvm_mll_one: id += f'_rvm_mll_one_{params.lambda_rvm}'
         if params.maxItr_rvm!=-1: id += f'_maxItr_rvm_{params.maxItr_rvm}'
         if params.beta: id += f'_beta'
-        if params.detU: id += f'_detU'
         if params.rvm_mse: id += f'_rvm_mse_{params.lambda_rvm}'
         id += f'_{params.kernel_type}_seed_{params.seed}'
         params.checkpoint_dir = params.checkpoint_dir + id
@@ -191,7 +190,7 @@ elif params.method=='Sparse_DKT_Exact':
         model = Sparse_DKT_regression_Exact(bb, kernel_type=params.kernel_type, sparse_method=params.sparse_method, add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, 
                             add_rvm_mll_one=params.rvm_mll_one, add_rvm_mse=params.rvm_mse, lambda_rvm=params.lambda_rvm, maxItr_rvm=params.maxItr_rvm, beta=params.beta,
                             normalize=params.normalize, initialize=params.init, lr_decay=params.lr_decay, f_rvm=True, config=params.config, 
-                            detU=params.detU, align_threshold=params.align_thr, gamma=params.gamma,
+                            align_threshold=params.align_thr, gamma=params.gamma,
                             video_path=params.checkpoint_dir, 
                             show_plots_pred=False, show_plots_features=params.show_plots_features, training=True).cuda()
         model.init_summary(id=id)
@@ -313,7 +312,6 @@ elif params.method=='Sparse_DKT_RVM':
         if params.rvm_ll_only: id += f'_rvm_ll_only'
         if params.sparse_kernel: id += f'_sparse_kernel' 
         if params.beta: id += f'_beta'
-        if params.detU: id += f'_detU'
         if params.beta_trajectory: id += f'_beta_trajectory'
         if params.rvm_mse: id += f'_rvm_mse_{params.lambda_rvm}'
         id += f'_{params.kernel_type}_seed_{params.seed}'
@@ -323,7 +321,7 @@ elif params.method=='Sparse_DKT_RVM':
                             add_rvm_mll=params.rvm_mll, add_rvm_mll_one=params.rvm_mll_one, 
                             add_rvm_mse=params.rvm_mse, lambda_rvm=params.lambda_rvm, rvm_mll_only=params.rvm_mll_only, 
                             rvm_ll_only=params.rvm_ll_only, sparse_kernel=params.sparse_kernel, 
-                            maxItr_rvm=params.maxItr_rvm, beta=params.beta,  detU=params.detU, beta_trajectory=params.beta_trajectory,
+                            maxItr_rvm=params.maxItr_rvm, beta=params.beta, beta_trajectory=params.beta_trajectory,
                             normalize=params.normalize, initialize=params.init, lr_decay=params.lr_decay, f_rvm=True, config=params.config, 
                             align_threshold=params.align_thr, gamma=params.gamma,
                             video_path=params.checkpoint_dir, 
