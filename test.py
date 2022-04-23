@@ -124,13 +124,13 @@ def single_test(params):
     elif params.method == 'Sparse_DKT_binary_Exact':
         model           = Sparse_DKT_binary_Exact(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
                                 add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, add_rvm_mll_one=params.rvm_mll_one, lambda_rvm=params.lambda_rvm, 
-                                maxItr_rvm=params.maxItr_rvm, tol_rvm=params.tol_rvm, regression=params.regression, num_inducing_points=params.num_ip,
+                                maxItr_rvm=params.maxItr_rvm, tol_rvm=params.tol_rvm, detU=params.detU, regression=params.regression, num_inducing_points=params.num_ip,
                                 normalize=params.normalize, scale=params.scale,
                                 config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
     elif params.method == 'Sparse_DKT_binary_RVM':
         model           = Sparse_DKT_binary_RVM(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
                                 add_rvm_mll=params.rvm_mll, add_rvm_mll_one=params.rvm_mll_one, lambda_rvm=params.lambda_rvm, 
-                                maxItr_rvm=params.maxItr_rvm, tol_rvm=params.tol_rvm, regression=params.regression, 
+                                maxItr_rvm=params.maxItr_rvm, tol_rvm=params.tol_rvm, detU=params.detU, regression=params.regression, 
                                 rvm_mll_only=params.rvm_mll_only, rvm_ll_only=params.rvm_ll_only, num_inducing_points=params.num_ip,
                                 normalize=params.normalize, scale=params.scale,
                                 config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
@@ -234,6 +234,7 @@ def single_test(params):
         if params.rvm_mll_one: id += f'_rvm_mll_one_{params.lambda_rvm}'
         if params.maxItr_rvm!=-1: id += f'_maxItr_rvm_{params.maxItr_rvm}'
         if params.tol_rvm!=1e-4: id += f'_tol_rvm_{params.tol_rvm}'
+        if params.detU: id += f'_detU'
         if params.regression: id += f'_regression'
         if params.rvm_mll_only: id += f'_rvm_mll_only'
         if params.rvm_ll_only: id += f'_rvm_ll_only'

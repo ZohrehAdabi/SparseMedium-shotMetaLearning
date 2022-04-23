@@ -50,7 +50,7 @@ IP = namedtuple("inducing_points", "z_values index count alpha gamma x y i_idx j
 
 class Sparse_DKT_regression_RVM(nn.Module):
     def __init__(self, backbone, kernel_type='rbf', sparse_method='FRVM', add_rvm_mll=False, add_rvm_mll_one=False, add_rvm_mse=False, lambda_rvm=0.1, rvm_mll_only=False, 
-                        rvm_ll_only=False, sparse_kernel=False,  maxItr_rvm=1000, beta=False, beta_trajectory=False, normalize=False, initialize=False, lr_decay=False, 
+                        rvm_ll_only=False, sparse_kernel=False,  maxItr_rvm=1000, beta=False, detU=False, beta_trajectory=False, normalize=False, initialize=False, lr_decay=False, 
                         f_rvm=True, scale=True, config="0000", align_threshold=1e-3, gamma=False, n_inducing_points=12, random=False, 
                     video_path=None, show_plots_pred=False, show_plots_features=False, training=False):
         super(Sparse_DKT_regression_RVM, self).__init__()
@@ -67,6 +67,7 @@ class Sparse_DKT_regression_RVM(nn.Module):
         if maxItr_rvm!=-1:
             self.maxItr_rvm = maxItr_rvm
         self.beta = beta
+        self.add_detU = detU
         self.beta_trajectory = beta_trajectory
         self.add_rvm_mse = add_rvm_mse
         self.lambda_rvm = lambda_rvm
@@ -236,16 +237,16 @@ class Sparse_DKT_regression_RVM(nn.Module):
                 if self.beta_trajectory or self.beta:
                     # alpha_m = alpha_m.detach()
                     # mu_m = mu_m.detach()
-                    rvm_mll, rvm_mse = rvm_ML_regression(K_m, labels, alpha_m, mu_m, beta)
+                    rvm_mll, rvm_mse = rvm_ML_regression(K_m, labels, alpha_m, mu_m, beta, add_detU=self.add_detU)
                 else:
-                    rvm_mll, rvm_mse = rvm_ML_regression(K_m, labels, alpha_m, mu_m, 1/sigma)
+                    rvm_mll, rvm_mse = rvm_ML_regression(K_m, labels, alpha_m, mu_m, 1/sigma, add_detU=self.add_detU)
             else:
                 if self.beta_trajectory or self.beta:
                     # alpha_m = alpha_m.detach()
-                    rvm_mll = rvm_ML_regression_full_rvm(K_m, labels, alpha_m, mu_m, beta)
+                    rvm_mll = rvm_ML_regression_full_rvm(K_m, labels, alpha_m, mu_m, beta, add_detU=self.add_detU)
                 else:
                     
-                    rvm_mll = rvm_ML_regression_full_rvm(K_m, labels, alpha_m, mu_m, 1/sigma)
+                    rvm_mll = rvm_ML_regression_full_rvm(K_m, labels, alpha_m, mu_m, 1/sigma, add_detU=self.add_detU)
 
             predictions = self.model(z)
             mll = self.mll(predictions, self.model.train_targets)
