@@ -21,7 +21,6 @@ if dataset=='miniImagenet':
 
 tol_rvm = 1e-4
 max_itr = -1
-add_detU = True
 stop_epoch = 200
 seed_list = [1]
 method_list = ['Sparse_DKT_binary_Exact'] 
@@ -62,7 +61,7 @@ for config in config_list:
                                     "--train_aug"
                     ]
                     print(f'\n{" ".join(L)} \n')
-                    # run(L)
+                    run(L)
 
         
                 if dataset=='CUB':
@@ -85,7 +84,6 @@ for config in config_list:
                                             '--kernel_type', 'linear', "--scale", "--normalize", "--save_model", "--n_task",  f"{n_task}",
                                             "--regression", 
                                             "--rvm_mll", "--lambda_rvm", f"{lambda_rvm}", "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}", 
-                                            "--detU", f'{add_detU}',
                                             "--train_aug"
                             ]
                             print(f'\n{" ".join(L)} \n')
@@ -115,7 +113,7 @@ for config in config_list:
                                 "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", f"{stop_epoch}",
                                 '--kernel_type', 'linear', "--scale", "--normalize", "--save_model", "--n_task",  f"{n_task}",
                                 "--regression", 
-                                "--rvm_mll_only", "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}",  "--detU", f'{add_detU}',
+                                "--rvm_mll_only", "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}",
                                 "--train_aug"
                 ]
                 print(f'\n{" ".join(L)} \n')

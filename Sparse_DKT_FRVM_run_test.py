@@ -20,7 +20,6 @@ if dataset=='miniImagenet':
 
 tol_rvm = 1e-4
 max_itr = -1
-add_detU = False
 seed_list = [1]
 save_result = True
 method_list = ['Sparse_DKT_binary_Exact'] 
@@ -80,7 +79,7 @@ for config in config_list:
                                         "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", 
                                         '--kernel_type', 'linear', "--scale", "--normalize",  "--n_task",  f"{n_task}",
                                         "--regression", 
-                                        "--rvm_mll", "--lambda_rvm", f"{lambda_rvm}", "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}",  "--detU", f'{add_detU}',
+                                        "--rvm_mll", "--lambda_rvm", f"{lambda_rvm}", "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}", 
                                         "--train_aug"
                         ]
                         if save_result: L.append('--save_result')
@@ -112,7 +111,7 @@ for config in config_list:
                                 "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", 
                                 '--kernel_type', 'linear', "--scale", "--normalize", "--n_task",  f"{n_task}",
                                 "--regression", 
-                                "--rvm_mll_only", "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}",  "--detU", f'{add_detU}',
+                                "--rvm_mll_only", "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}",
                                 "--train_aug"
                 ]
                 if save_result: L.append('--save_result')
