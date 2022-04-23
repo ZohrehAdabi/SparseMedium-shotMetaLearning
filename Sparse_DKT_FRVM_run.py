@@ -21,7 +21,7 @@ if dataset=='miniImagenet':
 
 tol_rvm = 1e-4
 max_itr = -1
-stop_epoch = 400
+stop_epoch = 200
 resume = True
 seed_list = [1]
 method_list = ['Sparse_DKT_binary_Exact'] 
