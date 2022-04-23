@@ -22,6 +22,7 @@ if dataset=='miniImagenet':
 tol_rvm = 1e-4
 max_itr = -1
 stop_epoch = 400
+resume = True
 seed_list = [1]
 method_list = ['Sparse_DKT_binary_Exact'] 
 for config in config_list:
@@ -45,6 +46,7 @@ for config in config_list:
                             
                                 "--train_aug"
                 ]
+                if resume: L.append('--resume')
                 print(f'\n{" ".join(L)} \n')
                 run(L)
 
@@ -60,6 +62,7 @@ for config in config_list:
                                     "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}", "--regression",
                                     "--train_aug"
                     ]
+                    if resume: L.append('--resume')
                     print(f'\n{" ".join(L)} \n')
                     run(L)
 
@@ -86,6 +89,7 @@ for config in config_list:
                                             "--rvm_mll", "--lambda_rvm", f"{lambda_rvm}", "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}", 
                                             "--train_aug"
                             ]
+                            if resume: L.append('--resume')
                             print(f'\n{" ".join(L)} \n')
                             run(L)
             
@@ -102,6 +106,7 @@ for config in config_list:
                                         "--rvm_ll", "--lambda_rvm", f"{lambda_rvm}", "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}",
                                         "--train_aug"
                         ]
+                        if resume: L.append('--resume')
                         print(f'\n{" ".join(L)} \n')
                         # run(L)
                 
@@ -116,6 +121,7 @@ for config in config_list:
                                 "--rvm_mll_only", "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}",
                                 "--train_aug"
                 ]
+                if resume: L.append('--resume')
                 print(f'\n{" ".join(L)} \n')
                 run(L)
 
@@ -129,6 +135,7 @@ for config in config_list:
                                 "--save_model", "--n_task",  f"{n_task}",  '--train_aug'  #'--normalize',
                             
                 ]
+                if resume: L.append('--resume')
                 print(f'\n{" ".join(L)} \n')
                 # run(L)
 
@@ -141,6 +148,7 @@ for config in config_list:
                                 "--save_model", "--n_task",  f"{n_task}",  '--train_aug' #'--normalize',
                             
                 ]
+                if resume: L.append('--resume')
                 print(f'\n{" ".join(L)} \n')
                 # run(L)
 
@@ -155,6 +163,7 @@ for config in config_list:
                                 "--save_model", "--n_task",  f"{n_task}",  '--train_aug', '--normalize',
                             
                 ]
+                
                 print(f'\n{" ".join(L)} \n')
                 # run(L)
 

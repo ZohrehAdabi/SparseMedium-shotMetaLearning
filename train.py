@@ -602,11 +602,24 @@ if __name__ == '__main__':
         resume_file = get_resume_file(params.checkpoint_dir)
         if resume_file is not None:
             tmp = torch.load(resume_file)
-            if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss']:
+            # if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss']:
+                
+            #     IP = torch.ones(100, 64).cuda()
+            #     tmp['state']['model.covar_module.inducing_points'] = IP
+            #     tmp['state']['mll.model.covar_module.inducing_points'] = IP
+            if params.method in ['Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss']:
                 
                 IP = torch.ones(100, 64).cuda()
                 tmp['state']['model.covar_module.inducing_points'] = IP
                 tmp['state']['mll.model.covar_module.inducing_points'] = IP
+
+            if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_RVM']:
+                IP = torch.ones(100, 64).cuda()
+                for i in range(params.test_n_way):
+                    tmp['state'][f'model.models.{i}.covar_module.inducing_points'] = IP
+                    tmp['state'][f'mll.mlls.{i}.model.covar_module.inducing_points'] = IP
+                    tmp['state'][f'mll.model.models.{i}.covar_module.inducing_points'] = IP
+                    
             start_epoch = tmp['epoch'] + 1
             stop_epoch = start_epoch + stop_epoch
             model.load_state_dict(tmp['state'])
