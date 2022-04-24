@@ -127,7 +127,8 @@ class DKT_binary(MetaTemplate):
     def train_loop(self, epoch, train_loader, optimizer, print_freq=5):
         # optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-3},
         #                               {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
-
+        self.acc_test_list = []
+        self.mll_list = []
         for i, (x,_) in enumerate(train_loader):
             self.n_query = x.size(1) - self.n_support
             if self.change_way: self.n_way  = x.size(0)
@@ -185,7 +186,8 @@ class DKT_binary(MetaTemplate):
                 loss = -self.mll(output, self.model.train_targets)
             loss.backward()
             optimizer.step()
-
+            loss = loss.item()
+            self.mll_list.append(loss)
             self.iteration = i+(epoch*len(train_loader))
             if(self.writer is not None): self.writer.add_scalar('loss', loss, self.iteration)
 
@@ -227,12 +229,17 @@ class DKT_binary(MetaTemplate):
                    y_pred = y_pred.cpu().detach().numpy()
                
                 accuracy_query = (np.sum(y_pred==y_query) / float(len(y_query))) * 100.0
-                if(self.writer is not None): self.writer.add_scalar('GP_query_accuracy', accuracy_query, self.iteration)
+                self.acc_test_list.append(accuracy_query)
+                
 
             if i % print_freq==0:
                 if(self.writer is not None): self.writer.add_histogram('z_support', z_support, self.iteration)
                 print(Fore.LIGHTRED_EX, 'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} | Noise {:f} | Loss {:f} | Supp. {:f} | Query {:f}'.format(epoch, i, len(train_loader), 
                                 outputscale, lenghtscale, noise, loss.item(), 0, accuracy_query), Fore.RESET)
+
+        
+        if(self.writer is not None): self.writer.add_scalar('Loss', loss, self.iteration)
+        if(self.writer is not None): self.writer.add_scalar('GP_query_accuracy', np.mean(self.acc_test_list), self.iteration)
 
     def correct(self, x, N=0, laplace=False):
         self.model.eval()

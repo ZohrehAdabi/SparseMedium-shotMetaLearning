@@ -169,7 +169,9 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         # else:
         #     optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
         #         #                              {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
-        self.frvm_acc = []
+        self.frvm_acc_ = []
+        self.frvm_acc_test_list = []
+        self.acc_test_list = []
         l =  self.lambda_rvm
         for i, (x,_) in enumerate(train_loader):
             self.n_query = x.size(1) - self.n_support
@@ -363,10 +365,10 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
                 y_pred_r = y_pred_r.detach().cpu().numpy()
                 top1_correct_r = np.sum(y_pred_r==y_query)
                 acc_r = (top1_correct_r / len(y_query))* 100
-
+                self.frvm_acc_test_list.append(acc_r)
                 accuracy_query = (np.sum(y_pred==y_query) / float(len(y_query))) * 100.0
-                if(self.writer is not None): self.writer.add_scalar('GP_query_accuracy', accuracy_query, self.iteration)
-                if(self.writer is not None): self.writer.add_scalar('RVM_query_accuracy', acc_r, self.iteration)
+                self.acc_test_list.append(accuracy_query)
+                
 
             if i % print_freq==0:
                 if(self.writer is not None): self.writer.add_histogram('z_support', z_support, self.iteration)
@@ -376,6 +378,9 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
                 else:
                     print(Fore.LIGHTRED_EX,'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} | Noise {:f} | Loss {:f} | MLL {:f} | RVM ML {:f}| Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
                         outputscale, lenghtscale, noise, loss.item(),  -mll, -rvm_mll, 0, accuracy_query), Fore.RESET)
+
+        if(self.writer is not None): self.writer.add_scalar('GP_query_accuracy', np.mean(self.acc_test_list), self.iteration)
+        if(self.writer is not None): self.writer.add_scalar('RVM_query_accuracy', np.mean(self.frvm_acc_test_list), self.iteration)
 
     def get_inducing_points(self, base_covar_module, inputs, targets, verbose=True):
 

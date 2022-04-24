@@ -178,7 +178,7 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
         
         l = self.lambda_rvm
         self.frvm_acc = []
-        
+        self.frvm_acc_test_list = []
         for i, (x,_) in enumerate(train_loader):
     
             self.n_query = x.size(1) - self.n_support
@@ -375,7 +375,8 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
                 y_pred_r = y_pred_r.detach().cpu().numpy()
                 top1_correct_r = np.sum(y_pred_r==y_query)
                 acc_rvm = (top1_correct_r / float(len(y_query)))* 100
-                if(self.writer is not None): self.writer.add_scalar('RVM_query_accuracy', acc_rvm, self.iteration)
+                self.frvm_acc_test_list.append(acc_rvm)
+                
             if i % print_freq==0:
                 if(self.writer is not None): self.writer.add_histogram('z_support', z_support, self.iteration)
                 if self.dirichlet:
@@ -384,6 +385,8 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
                 else:
                     print(Fore.LIGHTRED_EX,'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} | Noise {:f} | Loss {:f} | MLL {:f} | RVM ML {:f} | Supp. acc {:f} | Query acc {:f}|  Query RVM acc {:f}'.format(epoch, i, len(train_loader),
                         outputscale, lenghtscale, noise, loss.item(), -mll, -rvm_mll, 0, accuracy_query, acc_rvm), Fore.RESET)
+
+        if(self.writer is not None): self.writer.add_scalar('RVM_query_accuracy', np.mean(self.frvm_acc_test_list), self.iteration)
 
     def get_inducing_points(self, base_covar_module, inputs, targets, verbose=True):
 

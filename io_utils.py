@@ -141,7 +141,7 @@ def get_resume_file(checkpoint_dir):
     if len(filelist) == 0:
         return None
 
-    filelist =  [ x  for x in filelist if os.path.basename(x) != 'best_model.tar' ]
+    filelist =  [ x  for x in filelist if os.path.basename(x) not in ['best_model.tar', 'best_model_rvm.tar'] ]
     epochs = np.array([int(os.path.splitext(os.path.basename(x))[0]) for x in filelist])
     max_epoch = np.max(epochs)
     resume_file = os.path.join(checkpoint_dir, '{:d}.tar'.format(max_epoch))
