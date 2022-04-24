@@ -238,7 +238,7 @@ class DKT_binary(MetaTemplate):
                                 outputscale, lenghtscale, noise, loss.item(), 0, accuracy_query), Fore.RESET)
 
         
-        if(self.writer is not None): self.writer.add_scalar('Loss', loss, self.iteration)
+        if(self.writer is not None): self.writer.add_scalar('Loss', np.mean(self.mll_list), self.iteration)
         if(self.writer is not None): self.writer.add_scalar('GP_query_accuracy', np.mean(self.acc_test_list), self.iteration)
 
     def correct(self, x, N=0, laplace=False):

@@ -172,6 +172,9 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         self.frvm_acc = []
         self.frvm_acc_test_list = []
         self.acc_test_list = []
+        self.mll_list = []
+        self.rvm_mll_list = []
+        self.loss_list = []
         l =  self.lambda_rvm
         for i, (x,_) in enumerate(train_loader):
             self.n_query = x.size(1) - self.n_support
@@ -306,6 +309,9 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             mll = mll.item()
             rvm_mll = rvm_mll.item()
             penalty =penalty.item()
+            self.mll_list.append(-mll)
+            self.rvm_mll_list.append(-rvm_mll)
+            self.loss_list.append(loss)
             self.iteration = i+(epoch*len(train_loader))
             if(self.writer is not None): self.writer.add_scalar('Loss', loss, self.iteration)
             if(self.writer is not None): self.writer.add_scalar('MLL', -mll, self.iteration)
@@ -381,6 +387,9 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
 
         if(self.writer is not None): self.writer.add_scalar('GP_query_accuracy', np.mean(self.acc_test_list), self.iteration)
         if(self.writer is not None): self.writer.add_scalar('RVM_query_accuracy', np.mean(self.frvm_acc_test_list), self.iteration)
+        if(self.writer is not None): self.writer.add_scalar('Loss [mean]', np.mean(self.loss_list), self.iteration)
+        if(self.writer is not None): self.writer.add_scalar('MLL [mean]', np.mean(self.mll_list), self.iteration)
+        if(self.writer is not None): self.writer.add_scalar('RVM MLL [mean]', np.mean(self.rvm_mll_list), self.iteration)
 
     def get_inducing_points(self, base_covar_module, inputs, targets, verbose=True):
 
