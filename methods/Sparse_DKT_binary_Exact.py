@@ -169,7 +169,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         # else:
         #     optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
         #         #                              {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
-        self.frvm_acc_ = []
+        self.frvm_acc = []
         self.frvm_acc_test_list = []
         self.acc_test_list = []
         l =  self.lambda_rvm
