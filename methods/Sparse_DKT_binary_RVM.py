@@ -179,6 +179,8 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
         l = self.lambda_rvm
         self.frvm_acc = []
         self.frvm_acc_test_list = []
+        self.rvm_mll_list = []
+        self.loss_list = []
         for i, (x,_) in enumerate(train_loader):
     
             self.n_query = x.size(1) - self.n_support
@@ -312,6 +314,8 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
 
             rvm_mll = rvm_mll.item()
             mll = mll.item()
+            self.rvm_mll_list.append(-rvm_mll)
+            self.loss_list.append(loss.item())
             self.iteration = i+(epoch*len(train_loader))
             if(self.writer is not None): self.writer.add_scalar('Loss', loss.item(), self.iteration)
             if(self.writer is not None): self.writer.add_scalar('MLL', -mll, self.iteration)
@@ -387,6 +391,8 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
                         outputscale, lenghtscale, noise, loss.item(), -mll, -rvm_mll, 0, accuracy_query, acc_rvm), Fore.RESET)
 
         if(self.writer is not None): self.writer.add_scalar('RVM_query_accuracy', np.mean(self.frvm_acc_test_list), self.iteration)
+        if(self.writer is not None): self.writer.add_scalar('Loss [mean]', np.mean(self.loss_list), self.iteration)
+        if(self.writer is not None): self.writer.add_scalar('RVM MLL [mean]', np.mean(self.rvm_mll_list), self.iteration)
 
     def get_inducing_points(self, base_covar_module, inputs, targets, verbose=True):
 

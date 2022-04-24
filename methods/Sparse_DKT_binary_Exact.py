@@ -311,9 +311,9 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             penalty =penalty.item()
             self.mll_list.append(-mll)
             self.rvm_mll_list.append(-rvm_mll)
-            self.loss_list.append(loss)
+            self.loss_list.append(loss.item())
             self.iteration = i+(epoch*len(train_loader))
-            if(self.writer is not None): self.writer.add_scalar('Loss', loss, self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('Loss', loss.item(), self.iteration)
             if(self.writer is not None): self.writer.add_scalar('MLL', -mll, self.iteration)
             if(self.writer is not None): self.writer.add_scalar('RVM MLL', -rvm_mll, self.iteration)
 
