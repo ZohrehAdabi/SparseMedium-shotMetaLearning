@@ -235,7 +235,7 @@ class DKT_binary(MetaTemplate):
             if i % print_freq==0:
                 if(self.writer is not None): self.writer.add_histogram('z_support', z_support, self.iteration)
                 print(Fore.LIGHTRED_EX, 'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} | Noise {:f} | Loss {:f} | Supp. {:f} | Query {:f}'.format(epoch, i, len(train_loader), 
-                                outputscale, lenghtscale, noise, loss.item(), 0, accuracy_query), Fore.RESET)
+                                outputscale, lenghtscale, noise, loss, 0, accuracy_query), Fore.RESET)
 
         
         if(self.writer is not None): self.writer.add_scalar('Loss', np.mean(self.mll_list), self.iteration)
