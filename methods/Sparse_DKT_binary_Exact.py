@@ -308,7 +308,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             
             mll = mll.item()
             rvm_mll = rvm_mll.item()
-            penalty =penalty.item()
+            penalty = penalty.item()
             self.mll_list.append(-mll)
             self.rvm_mll_list.append(-rvm_mll)
             self.loss_list.append(loss.item())
