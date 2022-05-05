@@ -48,7 +48,7 @@ for config in config_list:
                 ]
                 if resume: L.append('--resume')
                 print(f'\n{" ".join(L)} \n')
-                run(L)
+                # run(L)
 
                 # Sparse DKT_binary
                 # Exact GP
@@ -64,7 +64,7 @@ for config in config_list:
                     ]
                     if resume: L.append('--resume')
                     print(f'\n{" ".join(L)} \n')
-                    run(L)
+                    # run(L)
 
         
                 if dataset=='CUB':
@@ -72,7 +72,7 @@ for config in config_list:
                 if dataset=='miniImagenet':
                     lambda_rvm_list = [100.0] 
 
-                # lambda_rvm_list = [4.0, 5.0] 
+                lambda_rvm_list = [1.0, 5.0, 10, 50] 
                 # method_list = ['Sparse_DKT_binary_Exact'] 
                 
                 # rvm_mll
@@ -123,7 +123,7 @@ for config in config_list:
                 ]
                 if resume: L.append('--resume')
                 print(f'\n{" ".join(L)} \n')
-                run(L)
+                # run(L)
 
                 # MetaOptNet
                 L = ['python', f'./train.py', 
