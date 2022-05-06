@@ -29,7 +29,7 @@ for config in config_list:
     for lr_gp in lr_gp_list:
         for lr_net in lr_net_list:
             if dataset=='CUB':
-                align_thr = 0.01
+                align_thr = 0.001
             if dataset=='miniImagenet':
                 align_thr = 0.01
             if config in ['000', '010']:
