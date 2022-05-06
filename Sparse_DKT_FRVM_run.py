@@ -72,7 +72,7 @@ for config in config_list:
                 if dataset=='miniImagenet':
                     lambda_rvm_list = [100.0] 
 
-                lambda_rvm_list = [1.0, 5.0, 10, 50] 
+                lambda_rvm_list = [1.0, 5.0, 10, 50, 100] 
                 # method_list = ['Sparse_DKT_binary_Exact'] 
                 
                 # rvm_mll
