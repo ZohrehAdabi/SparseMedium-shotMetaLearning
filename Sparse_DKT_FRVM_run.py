@@ -64,7 +64,7 @@ for config in config_list:
                     ]
                     if resume: L.append('--resume')
                     print(f'\n{" ".join(L)} \n')
-                    # run(L)
+                    run(L)
 
         
                 if dataset=='CUB':
