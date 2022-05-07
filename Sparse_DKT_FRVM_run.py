@@ -11,7 +11,7 @@ dataset =  'CUB' #'miniImagenet' # 'CUB
 lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['001']
-n_task = 100 #20
+n_task = 50 #20
 if dataset=='CUB':
     n_shot = 50 
     n_query = 10 
@@ -48,7 +48,7 @@ for config in config_list:
                 ]
                 if resume: L.append('--resume')
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
+                run(L)
 
                 # Sparse DKT_binary
                 # Exact GP
@@ -66,13 +66,27 @@ for config in config_list:
                     print(f'\n{" ".join(L)} \n')
                     run(L)
 
+                 # rvm_only   
+                L = ['python', f'./train.py', 
+                            "--method", "Sparse_DKT_binary_RVM", "--sparse_method", "FRVM", "--dataset", f"{dataset}", 
+                            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", f"{n_shot}", "--n_query", f"{n_query}",
+                                "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
+                                "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", f"{stop_epoch}",
+                                '--kernel_type', 'linear', "--scale", "--normalize", "--save_model", "--n_task",  f"{n_task}",
+                                "--regression", 
+                                "--rvm_mll_only", "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}",
+                                "--train_aug"
+                ]
+                if resume: L.append('--resume')
+                print(f'\n{" ".join(L)} \n')
+                run(L)
         
                 if dataset=='CUB':
                     lambda_rvm_list = [100.0] 
                 if dataset=='miniImagenet':
                     lambda_rvm_list = [100.0] 
 
-                lambda_rvm_list = [1.0, 5.0, 10, 50, 100] 
+                lambda_rvm_list = [0.5, 1.0, 5.0, 10, 50, 100] 
                 # method_list = ['Sparse_DKT_binary_Exact'] 
                 
                 # rvm_mll
@@ -110,20 +124,7 @@ for config in config_list:
                         print(f'\n{" ".join(L)} \n')
                         # run(L)
                 
-                # rvm_only   
-                L = ['python', f'./train.py', 
-                            "--method", "Sparse_DKT_binary_RVM", "--sparse_method", "FRVM", "--dataset", f"{dataset}", 
-                            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", f"{n_shot}", "--n_query", f"{n_query}",
-                                "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
-                                "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", f"{stop_epoch}",
-                                '--kernel_type', 'linear', "--scale", "--normalize", "--save_model", "--n_task",  f"{n_task}",
-                                "--regression", 
-                                "--rvm_mll_only", "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}",
-                                "--train_aug"
-                ]
-                if resume: L.append('--resume')
-                print(f'\n{" ".join(L)} \n')
-                # run(L)
+               
 
                 # MetaOptNet
                 L = ['python', f'./train.py', 
