@@ -70,6 +70,7 @@ for config in config_list:
                 if dataset=='miniImagenet':
                     lambda_rvm_list = [100.0] 
                 #rvm_mll
+                lambda_rvm_list = [1.0, 5.0, 10, 50, 100] 
                 for lambda_rvm in lambda_rvm_list:
                     for method in method_list:
                         L = ['python', f'./test.py', 
