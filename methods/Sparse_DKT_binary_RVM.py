@@ -300,7 +300,7 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
                 if self.add_rvm_mll_one:
                     #  
                     loss = -(1-l) * mll  - l * rvm_mll 
-                if self.add_rvm_mll:
+                elif self.add_rvm_mll:
                     loss = - mll  - l * rvm_mll
                  
                 elif self.rvm_mll_only or self.rvm_ll_only:

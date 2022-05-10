@@ -67,7 +67,7 @@ for config in config_list:
                     # run(L)
 
                  # rvm_only  
-                for align_thr in [0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.1]: 
+                for align_thr in [0.008]: 
                     L = ['python', f'./train.py', 
                                 "--method", "Sparse_DKT_binary_RVM", "--sparse_method", "FRVM", "--dataset", f"{dataset}", 
                                 "--train_n_way", "2", "--test_n_way", "2", "--n_shot", f"{n_shot}", "--n_query", f"{n_query}",
