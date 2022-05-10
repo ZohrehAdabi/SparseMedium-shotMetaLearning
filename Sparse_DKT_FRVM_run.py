@@ -106,7 +106,7 @@ for config in config_list:
                             ]
                             if resume: L.append('--resume')
                             print(f'\n{" ".join(L)} \n')
-                            # run(L)
+                            run(L)
             
                 # rvm_ll
                 for lambda_rvm in lambda_rvm_list:
