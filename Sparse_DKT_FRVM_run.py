@@ -29,7 +29,7 @@ for config in config_list:
     for lr_gp in lr_gp_list:
         for lr_net in lr_net_list:
             if dataset=='CUB':
-                align_thr = 0.001
+                align_thr = 0.01
             if dataset=='miniImagenet':
                 align_thr = 0.01
             if config in ['000', '010']:
@@ -80,14 +80,14 @@ for config in config_list:
                     ]
                     if resume: L.append('--resume')
                     print(f'\n{" ".join(L)} \n')
-                    run(L)
+                    # run(L)
         
                 if dataset=='CUB':
                     lambda_rvm_list = [100.0] 
                 if dataset=='miniImagenet':
                     lambda_rvm_list = [100.0] 
 
-                lambda_rvm_list = [0.5, 1.0, 5.0, 10, 50, 100] 
+                lambda_rvm_list = [0.5, 1.0, 5.0, 10, 25, 50, 80, 100] 
                 # method_list = ['Sparse_DKT_binary_Exact'] 
                 
                 # rvm_mll
