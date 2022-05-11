@@ -67,20 +67,20 @@ for config in config_list:
                     # run(L)
 
                  # rvm_only  
-                for align_thr in [0.008]: 
-                    L = ['python', f'./train.py', 
-                                "--method", "Sparse_DKT_binary_RVM", "--sparse_method", "FRVM", "--dataset", f"{dataset}", 
-                                "--train_n_way", "2", "--test_n_way", "2", "--n_shot", f"{n_shot}", "--n_query", f"{n_query}",
-                                    "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
-                                    "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", f"{stop_epoch}",
-                                    '--kernel_type', 'linear', "--scale", "--normalize", "--save_model", "--n_task",  f"{n_task}",
-                                    "--regression", 
-                                    "--rvm_mll_only", "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}",
-                                    "--train_aug"
-                    ]
-                    if resume: L.append('--resume')
-                    print(f'\n{" ".join(L)} \n')
-                    # run(L)
+                 
+                L = ['python', f'./train.py', 
+                            "--method", "Sparse_DKT_binary_RVM", "--sparse_method", "FRVM", "--dataset", f"{dataset}", 
+                            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", f"{n_shot}", "--n_query", f"{n_query}",
+                                "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
+                                "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", f"{stop_epoch}",
+                                '--kernel_type', 'linear', "--scale", "--normalize", "--save_model", "--n_task",  f"{n_task}",
+                                "--regression", 
+                                "--rvm_mll_only", "--maxItr_rvm", f"{max_itr}", "--tol_rvm", f"{tol_rvm}",
+                                "--train_aug"
+                ]
+                if resume: L.append('--resume')
+                print(f'\n{" ".join(L)} \n')
+                # run(L)
         
                 if dataset=='CUB':
                     lambda_rvm_list = [100.0] 
