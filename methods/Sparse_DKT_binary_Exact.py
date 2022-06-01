@@ -572,6 +572,9 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
                 pred = torch.sigmoid(prediction.mean)
                 y_pred = (pred > 0.5).to(int)
                 y_pred = y_pred.cpu().detach().numpy()
+                y_var = prediction.variance.cpu().detach().numpy()
+                y_std = np.sqrt(y_var)
+                y_std/ np.max(y_std)
 
             top1_correct = np.sum(y_pred == y_query)
             count_this = len(y_query)
@@ -584,18 +587,36 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             scales_m = inducing_points.scale
             mu = inducing_points.mu
             mu_m = mu / scales_m
-            y_pred_ = K_m @ mu_m 
+            y_pred_ = K_m @ mu_m
+            
+            alpha_m = inducing_points.alpha
+            alpha_m = alpha_m / scales_m**2
+            A_m = torch.diag(alpha_m)
+            H = A_m + inducing_points.beta * K_m.T @ K_m
+            U, info =  torch.linalg.cholesky_ex(H, upper=True)
+            # # if info>0:
+            # #     print('pd_err of Hessian')
+            U_inv = torch.linalg.inv(U)
+            Sigma_m = U_inv @ U_inv.T  
+            err_var = (1/inducing_points.beta) + K_m @ Sigma_m @ K_m.T
+            err_var = torch.diag(err_var)
+            err_var = err_var.cpu().detach().numpy()
+            y_std_r = np.sqrt(err_var)
+            y_std_r/ np.max(y_std_r)
+
             y_pred_r = torch.sigmoid(y_pred_)
             y_pred_r = (y_pred_r > 0.5).to(int)
             y_pred_r = y_pred_r.detach().cpu().numpy()
             top1_correct_r = np.sum(y_pred_r==y_query)
             acc_r = (top1_correct_r / count_this)* 100
-
-            max_similar_idx_q_ip = np.argmax(K_m.detach().cpu().numpy(), axis=1)
+            K_m = K_m.detach().cpu().numpy()
+            max_similar_idx_q_ip = np.argmax(K_m, axis=1)
             most_sim_y_ip = ip_labels[max_similar_idx_q_ip].detach().cpu().numpy().squeeze()
             most_sim_y_ip[most_sim_y_ip==-1] = 0
             acc_most_sim = np.sum(most_sim_y_ip == y_query)
 
+            K_m_idx_sorted = np.argsort(K_m, axis=1)
+            # K_m[0, K_m_idx_sorted[0][::-1]]
             if i%25==0:
                 print(Fore.RED,"="*50, Fore.RESET)
                 print(f'inducing_points count: {inducing_points.count}')
@@ -607,7 +628,8 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
                 inducing_points = IP(inducing_points.z_values, inducing_points.index, inducing_points.count,
                                 inducing_points.alpha, inducing_points.gamma, 
                                 x_support[inducing_points.index], y_support[inducing_points.index], None, None)
-                self.plot_test(x_query, y_query, y_pred, inducing_points, i)
+                self.plot_test_train(x_support, y_support, inducing_points.index, i)
+                self.plot_test(x_query, y_query, y_pred, inducing_points, acc, acc_r, K_m, K_m_idx_sorted, i)
 
 
         return float(top1_correct), count_this, avg_loss/float(N+1e-10), inducing_points.count, float(top1_correct_r), acc_most_sim
@@ -621,7 +643,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         acc_most_sim_all = []
         num_sv_list  = []
         iter_num = len(test_loader)
-        self.show_plot = iter_num < 5
+        self.show_plot = True #iter_num < 5
         self.frvm_acc = []
         for i, (x,_) in enumerate(test_loader):
             self.n_query = x.size(1) - self.n_support
@@ -665,7 +687,330 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         else: return acc_mean, result
 
     
-    def plot_test(self, x_query, y_query, y_pred, inducing_points, k):
+    def plot_test(self, x_query, y_query, y_pred, inducing_points, acc, acc_rvm, K_m, K_m_idx_sorted, k):
+        def clear_ax(ax):
+            ax.clear()
+            ax.set_xticks([])
+            ax.set_xticklabels([])
+            ax.set_yticks([])
+            ax.set_yticklabels([])
+            ax.set_aspect('equal')
+            for axis in ['top','bottom','left','right']:
+                ax.spines[axis].set_linewidth(0)
+            return ax
+        
+        
+        
+        if y_query.shape[0] > 30:
+            x_q       = torch.vstack([x_query[0:5], x_query[15:20]])
+            y_q       = np.hstack([y_query[0:5], y_query[15:20]])
+            y_pred_   = np.hstack([y_pred[0:5], y_pred[15:20]])
+        else:
+            x_q     = x_query    
+            y_q     = y_query
+            y_pred_ = y_pred
+        r = 2
+        c = 10
+        fig: plt.Figure = plt.figure(1, figsize=(10, 4), tight_layout=False, dpi=150, frameon=True)
+        for i in range(r*c):
+            x = self.denormalize(x_q[i])
+            y = y_q[i]
+            y_p = y_pred_[i]
+            ax: plt.Axes = fig.add_subplot(r, c, i+1)
+            ax = clear_ax(ax)
+            # ax.axis('off')
+            ax.axes.get_yaxis().set_visible(False)
+            ax.axes.get_xaxis().set_visible(False)
+            img = transforms.ToPILImage()(x.cpu()).convert("RGB")
+            ax.imshow(img)
+            if i==0: 
+                ax.axes.get_yaxis().set_visible(True)
+                # ax.spines['left'].set_visible(True)
+                ax.set_ylabel('real: 0', fontsize=7)
+            if i==10: 
+                ax.axes.get_yaxis().set_visible(True)
+                # ax.spines['left'].set_visible(True)
+                ax.set_ylabel('real: 1', fontsize=7)
+                
+            ax.set_title(f'pred: {y_p:.0f}', fontsize=7, pad=2)
+        
+        fig.suptitle(f'RVM ACC: {acc_rvm:.2f}%, ACC: {acc:.2f}%')
+        mngr = plt.get_current_fig_manager()
+        mngr.window.setGeometry(200, 200, 1500, 600) 
+        # plt.show()
+        fig.subplots_adjust(
+        # top=0.955,
+        # bottom=0.445,
+        # left=0.055,
+        # right=0.965,
+        top=0.855,
+        bottom=0.250,
+        left=0.055,
+        right=0.975,
+        hspace=0.001,
+        wspace=0.001
+        )
+     
+        os.makedirs(f'./save_img/task_{k}', exist_ok=True)
+        fig.savefig(f'./save_img/task_{k}/query_images.png', bbox_inches='tight')
+        # fig.savefig(f'./save_img/task_{k}/query_images.png')
+        # plt.show()
+        plt.close(1)
+        
+        
+        fig: plt.Figure = plt.figure(2, figsize=(4, 4), tight_layout=False, dpi=150)
+        # subpfigs = fig.subfigures(1, 2, wspace=0.005, width_ratios=[1, 1])
+        # ax_0 = subpfigs[0]#.subplots(4, 15, sharex=True, sharey=True)
+        indc_x, indc_y = inducing_points.x, inducing_points.y
+        idx_0 = indc_y==0
+        indc_x_0 = indc_x[idx_0]
+        indc_y_0 = indc_y[idx_0]
+        m = indc_y_0.shape[0]
+        r = int(np.ceil(m/5))
+        c = 5
+        # for i in range(m):
+        #     x = self.denormalize(indc_x_0[i].squeeze())
+        #     y = indc_y_0[i]
+        #     ax: plt.Axes = fig.add_subplot(r, c, i+1)
+        #     ax = clear_ax(ax)
+        #     img = transforms.ToPILImage()(x.cpu()).convert("RGB")
+        #     ax.imshow(img)
+        #     # ax.set_title(f'{y:.0f}')
+
+        # fig.suptitle(f'{m}/100', fontsize=8) 
+        fig: plt.Figure = plt.figure(2, figsize=(10, 10), tight_layout=False, dpi=150)
+        all_imgs = np.ones(indc_x[0].shape[::-1] * np.array([r, c, 1]))
+        s = indc_x_0[0].shape[2]
+        for i in range(r):
+            for j in range(c):
+                if i*c+j>=indc_x_0.shape[0]:
+                    x = torch.ones(indc_x[0].shape) 
+                    img = transforms.ToPILImage()(x).convert("RGB")
+                    all_imgs[s*i:s*(i+1), s*j:s*(j+1), :] = img
+                else:
+                    x = self.denormalize(indc_x_0[i*c+j])
+                    # y = indc_y_0[i]
+                    img = transforms.ToPILImage()(x.cpu()).convert("RGB")
+                    all_imgs[s*i:s*(i+1), s*j:s*(j+1), :] = img
+             
+        ax: plt.Axes = fig.add_subplot(1, 1, 1)
+        ax = clear_ax(ax)
+        ax.axis("off")
+        ax.imshow(all_imgs.astype('uint8'))
+        fig.suptitle(f'class 0, [{m}/100]', fontsize=8)
+        mngr = plt.get_current_fig_manager()
+        mngr.window.setGeometry(50, 200, 800, 500) 
+        fig.subplots_adjust(
+        top=0.932,
+        bottom=0.044,
+        left=0.025,
+        right=0.975,
+        hspace=0.002,
+        wspace=0.002
+        )
+        os.makedirs(f'./save_img/task_{k}', exist_ok=True)
+        fig.savefig(f'./save_img/task_{k}/SV_images_0.png')
+        # plt.show()
+        plt.close(2)
+
+        fig: plt.Figure = plt.figure(3, figsize=(4, 4), tight_layout=False, dpi=150)
+        idx_1 = indc_y==1
+        indc_x_1 = indc_x[idx_1]
+        indc_y_1 = indc_y[idx_1]
+        m = indc_y_1.shape[0]
+        r = int(np.ceil(m/5))
+        c = 5
+        # for i in range(m):
+        #     x = self.denormalize(indc_x_1[i].squeeze())
+        #     y = indc_y_1[i]
+        #     ax: plt.Axes = fig.add_subplot(r, c, i+1)
+        #     ax = clear_ax(ax)
+        #     img = transforms.ToPILImage()(x.cpu()).convert("RGB")
+        #     ax.imshow(img)
+        #     # ax.set_title(f'{y:.0f}')
+            
+        # fig.suptitle(f'{m}/100', fontsize=8) 
+        fig: plt.Figure = plt.figure(3, figsize=(10, 10), tight_layout=False, dpi=150)
+        all_imgs = np.ones(indc_x[0].shape[::-1] * np.array([r, c, 1]))
+        s = indc_x_1[0].shape[2]
+        for i in range(r):
+            for j in range(c):
+                if i*c+j>=indc_x_1.shape[0]:
+                    x = torch.ones(indc_x[0].shape) 
+                    img = transforms.ToPILImage()(x).convert("RGB")
+                    all_imgs[s*i:s*(i+1), s*j:s*(j+1), :] = img
+                else:
+                    x = self.denormalize(indc_x_1[i*c+j])
+                    # y = indc_y_1[i]
+                    img = transforms.ToPILImage()(x.cpu()).convert("RGB")
+                    all_imgs[s*i:s*(i+1), s*j:s*(j+1), :] = img
+             
+        ax: plt.Axes = fig.add_subplot(1, 1, 1)
+        ax = clear_ax(ax)
+        ax.axis("off")
+        ax.imshow(all_imgs.astype('uint8'))
+        fig.suptitle(f'class 1, [{m}/100]', fontsize=8)
+        mngr = plt.get_current_fig_manager()
+        mngr.window.setGeometry(50, 200, 800, 500) 
+        fig.subplots_adjust(
+        top=0.932,
+        bottom=0.100,
+        left=0.025,
+        right=0.975,
+        hspace=0.002,
+        wspace=0.002
+        )
+        os.makedirs(f'./save_img/task_{k}', exist_ok=True)
+        fig.savefig(f'./save_img/task_{k}/SV_images_1.png')
+        # plt.show()
+        plt.close(3)
+
+        
+
+
+
+        # subpfigs = fig.subfigures(1, 2, wspace=0.005, width_ratios=[1, 1])
+        # ax_0 = subpfigs[0]#.subplots(4, 15, sharex=True, sharey=True)
+        indc_x, indc_y = inducing_points.x, inducing_points.y
+        d = 3
+        top_red = torch.zeros([3, d, 84])
+        top_red[0, :, :] = 1
+        top_red = transforms.ToPILImage()(top_red).convert("RGB")
+        top_grn = torch.zeros([3, d, 84])
+        top_grn[1, :, :] = 1
+        top_grn = transforms.ToPILImage()(top_grn).convert("RGB")
+        rigt_red = torch.zeros([3, 84, d])
+        rigt_red[0, :, :] = 1
+        rigt_red = transforms.ToPILImage()(rigt_red).convert("RGB")
+        rigt_grn = torch.zeros([3, 84, d])
+        rigt_grn[1, :, :] = 1
+        rigt_grn = transforms.ToPILImage()(rigt_grn).convert("RGB")
+
+        m = indc_y.shape[0]
+        r = y_q.shape[0] // 2
+        c = m + 1
+        c = int(np.ceil(m/3)) + 1
+      
+        fig: plt.Figure = plt.figure(4, figsize=(10, 10), tight_layout=False, dpi=200)
+        all_imgs = np.ones(indc_x[0].shape[::-1] * np.array([r, c, 1]))
+        gap = 5
+        x_gap = torch.ones([3, all_imgs.shape[0], gap])
+        gap_img = transforms.ToPILImage()(x_gap).convert("RGB")
+        all_imgs = np.concatenate([all_imgs, np.ones([all_imgs.shape[0], gap, 3])], axis=1)
+        s = indc_x[0].shape[2]
+        for i in range(r):
+            idx_sim = K_m_idx_sorted[i, :]
+            idx_sim = idx_sim[::-1]
+            # query_i_sim = indc_x[idx_sim[::-1]]
+            for j in range(c):
+                if j==0:
+                    x = self.denormalize(x_q[i])
+                    y = y_q[i]
+                    y_p = y_pred_[i]
+                    img = transforms.ToPILImage()(x.cpu()).convert("RGB")
+                    all_imgs[s*i:s*(i+1), s*j:s*(j+1), :] = img
+                    if y==y_p:
+                        all_imgs[s*i:s*(i+1), s*(j+1)-d:s*(j+1), :] = rigt_grn
+                    else:
+                        all_imgs[s*i:s*(i+1), s*(j+1)-d:s*(j+1), :] = rigt_red
+                else:
+                    jj = idx_sim[j-1]
+                    x = self.denormalize(indc_x[jj])
+                    # y = indc_y_0[i]
+                    img = transforms.ToPILImage()(x.cpu()).convert("RGB")
+                    all_imgs[s*i:s*(i+1), (s*j) + gap:(s*(j+1))+gap, :] = img
+                    if indc_y[jj]==y:
+                        all_imgs[s*i:s*i+d, (s*j) + gap:(s*(j+1)) + gap, :] = top_grn
+                    else:
+                        all_imgs[s*i:s*i+d, (s*j) + gap:(s*(j+1)) + gap, :] = top_red
+        
+        all_imgs[:, s: s + gap, :] = gap_img
+        ax: plt.Axes = fig.add_subplot(1, 1, 1)
+        ax = clear_ax(ax)
+        ax.axis("off")
+        ax.imshow(all_imgs.astype('uint8'))
+        fig.suptitle(f'Similarity between Query and SV images [{m}/100]', fontsize=8)
+        mngr = plt.get_current_fig_manager()
+        mngr.window.setGeometry(50, 200, 800, 500) 
+        fig.subplots_adjust(
+        top=0.995,
+        bottom=0.044,
+        left=0.025,
+        right=0.975,
+        hspace=0.002,
+        wspace=0.002
+        )
+        os.makedirs(f'./save_img/task_{k}', exist_ok=True)
+        fig.savefig(f'./save_img/task_{k}/Query_SV_sim_1.png', bbox_inches='tight')
+        # plt.show()
+        plt.close(4)
+
+
+        indc_x, indc_y = inducing_points.x, inducing_points.y
+       
+        m = indc_y.shape[0]
+        r = y_q.shape[0] //2
+        c = m + 1
+        c = int(np.ceil(m/3)) + 1
+      
+        fig: plt.Figure = plt.figure(5, figsize=(10, 10), tight_layout=False, dpi=200)
+        all_imgs = np.ones(indc_x[0].shape[::-1] * np.array([r, c, 1]))
+        gap = 5
+        x_gap = torch.ones([3, all_imgs.shape[0], gap])
+        gap_img = transforms.ToPILImage()(x_gap).convert("RGB")
+        all_imgs = np.concatenate([all_imgs, np.ones([all_imgs.shape[0], gap, 3])], axis=1)
+        s = indc_x[0].shape[2]
+        for i in range(r):
+            idx_sim = K_m_idx_sorted[i+r, :]
+            idx_sim = idx_sim[::-1]
+            # query_i_sim = indc_x[idx_sim[::-1]]
+            for j in range(c):
+                if j==0:
+                    x = self.denormalize(x_q[i+r])
+                    # y = indc_y_1[i]
+                    y = y_q[i+r]
+                    y_p = y_pred_[i+r]
+                    img = transforms.ToPILImage()(x.cpu()).convert("RGB")
+                    all_imgs[s*i:s*(i+1), s*j:s*(j+1), :] = img
+                    if y==y_p:
+                        all_imgs[s*i:s*(i+1), s*(j+1)-d:s*(j+1), :] = rigt_grn
+                    else:
+                        all_imgs[s*i:s*(i+1), s*(j+1)-d:s*(j+1), :] = rigt_red
+                else:
+                    jj = idx_sim[j-1]
+                    x = self.denormalize(indc_x[jj])
+                    # y = indc_y_0[i]
+                    img = transforms.ToPILImage()(x.cpu()).convert("RGB")
+                    all_imgs[s*i:s*(i+1), (s*j) + gap:(s*(j+1))+gap, :] = img
+                    if indc_y[jj]==y:
+                        all_imgs[s*i:s*i+d, (s*j) + gap:(s*(j+1)) + gap, :] = top_grn
+                    else:
+                        all_imgs[s*i:s*i+d, (s*j) + gap:(s*(j+1)) + gap, :] = top_red
+        
+        all_imgs[:, s: s + gap, :] = gap_img
+        ax: plt.Axes = fig.add_subplot(1, 1, 1)
+        ax = clear_ax(ax)
+        ax.axis("off")
+        ax.imshow(all_imgs.astype('uint8'))
+        fig.suptitle(f'Similarity between Query and SV images [{m}/100]', fontsize=8)
+        mngr = plt.get_current_fig_manager()
+        mngr.window.setGeometry(50, 200, 800, 500) 
+        fig.subplots_adjust(
+        top=0.995,
+        bottom=0.044,
+        left=0.025,
+        right=0.975,
+        hspace=0.002,
+        wspace=0.002
+        )
+        os.makedirs(f'./save_img/task_{k}', exist_ok=True)
+        fig.savefig(f'./save_img/task_{k}/Query_SV_sim_2.png', bbox_inches='tight')
+        # plt.show()
+        plt.close(5)
+
+
+
+    def plot_test_train(self, x_support, y_support, indc_idx, k):
         def clear_ax(ax):
             ax.clear()
             ax.set_xticks([])
@@ -674,44 +1019,172 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             ax.set_yticklabels([])
             ax.set_aspect('equal')
             return ax
-        fig: plt.Figure = plt.figure(1, figsize=(8, 4), tight_layout=True, dpi=125)
-        
-        r = 3
-        c = 5
-        i = 1
-        if y_query.shape[0] >10:
-            x_q       = torch.vstack([x_query[0:5], x_query[10:15]])
-            y_q       = np.hstack([y_query[0:5], y_query[10:15]])
-            y_pred_   = np.hstack([y_pred[0:5], y_pred[10:15]])
-        else:
-            x_q     = x_query    
-            y_q     = y_query
-            y_pred_ = y_pred
-        for i in range(10):
-            x = self.denormalize(x_q[i])
-            y = y_q[i]
-            y_p = y_pred_[i]
-            ax: plt.Axes = fig.add_subplot(r, c, i+1)
-            ax = clear_ax(ax)
-            img = transforms.ToPILImage()(x.cpu()).convert("RGB")
-            ax.imshow(img)
-            ax.set_title(f'pred: {y_p:.0f}, real: {y:.0f}')
-        inducing_x, inducing_y = inducing_points.x, inducing_points.y
-        j = 5
-        if j > inducing_y.shape[0]: j = inducing_y.shape[0]
-        for i in range(j):
-            x = self.denormalize(inducing_x[i].squeeze())
-            y = inducing_y[i]
-            ax: plt.Axes = fig.add_subplot(r, c, i+11)
-            ax = clear_ax(ax)
-            img = transforms.ToPILImage()(x.cpu()).convert("RGB")
-            ax.imshow(img)
-            ax.set_title(f'{y:.0f}')
+                
+        r = 5
+        c = 10
+        # i = 1
+        if y_support.shape[0] > 100:
+            x_s       = torch.vstack([x_support[0:5], x_support[10:15]])
+            y_s       = np.hstack([y_support[0:5], y_support[10:15]])
             
-        os.makedirs('./save_img', exist_ok=True)
-        fig.savefig(f'./save_img/test_images_{k}.png')
-
+        else:
+            x_s     = x_support.detach().cpu()  
+            y_s     = y_support.detach().cpu()
+        idx_0 = y_s==0  
+        x_s_0 = x_s[idx_0]
+        y_s_0 = y_s[idx_0]
+        indc_idx_0 = indc_idx[idx_0[indc_idx]]
+        # fig: plt.Figure = plt.figure(1, figsize=(2, 2), tight_layout=False, dpi=100)
+        # for i in range(r*c):
+        #     x = self.denormalize(x_s_0[i])
+        #     y = y_s_0[i]
+            
+        #     ax: plt.Axes = fig.add_subplot(r, c, i+1)
+        #     ax = clear_ax(ax)
+        #     img = transforms.ToPILImage()(x.cpu()).convert("RGB")
+        #     ax.imshow(img)
+            # #ax.set_title(f'real: {y:.0f}', fontsize=7)
         
+        # fig.suptitle(f'class 0, [50/100]', fontsize=8)  
+        # mngr = plt.get_current_fig_manager()
+        # # (Distance from left, distance from above, width, height)
+        # mngr.window.setGeometry(50, 200, 1000, 500) 
+        # fig.subplots_adjust(
+        # top=0.45,
+        # bottom=0.12,
+        # left=0.12,
+        # right=0.5,
+        # hspace=0.001,
+        # wspace=0.001
+        # )
+        # os.makedirs('./save_img', exist_ok=True)
+        # fig.savefig(f'./save_img/support_images_{k}_0.png')
+        # plt.close(fig=1)
+        fig: plt.Figure = plt.figure(2, figsize=(10, 10), tight_layout=False, dpi=100)
+        all_imgs = np.ones(x_s[0].shape[::-1] * np.array([r, c, 1]))
+        s = x_s[0].shape[2]
+        d = 1
+        top_bot = torch.zeros([3, d, 84])
+        top_bot[0, :, :] = 1
+        top_bot = transforms.ToPILImage()(top_bot).convert("RGB")
+        lef_rigt = torch.zeros([3, 84, d])
+        lef_rigt[0, :, :] = 1
+        lef_rigt = transforms.ToPILImage()(lef_rigt).convert("RGB")
+        for i in range(r):
+            for j in range(c):
+                x = self.denormalize(x_s_0[i*c+j])
+                # y = y_s_0[i]
+                img = transforms.ToPILImage()(x).convert("RGB")
+                all_imgs[s*i:s*(i+1), s*j:s*(j+1), :] = img
+                if i*c+j in indc_idx_0:
+                    all_imgs[s*i:s*i+d, s*j:s*(j+1), :] = top_bot
+                    all_imgs[s*(i+1)-d:s*(i+1), s*j:s*(j+1), :] = top_bot
+                    all_imgs[s*i:s*(i+1), s*j:s*j+d, :] = lef_rigt
+                    all_imgs[s*i:s*(i+1), s*(j+1)-d:s*(j+1), :] = lef_rigt
+
+             
+        ax: plt.Axes = fig.add_subplot(1, 1, 1)
+        ax = clear_ax(ax)
+        ax.axis("off")
+        ax.imshow(all_imgs.astype('uint8'))
+        fig.suptitle(f'class 0, [50/100]', fontsize=8) 
+         # (Distance from left, distance from above, width, height)
+        mngr = plt.get_current_fig_manager()
+        mngr.window.setGeometry(50, 200, 800, 500) 
+        fig.subplots_adjust(
+        top=0.882,
+        bottom=0.044,
+        left=0.025,
+        right=0.975,
+        hspace=0.2,
+        wspace=0.2
+        )
+     
+        os.makedirs(f'./save_img/task_{k}', exist_ok=True)
+        fig.savefig(f'./save_img/task_{k}/support_images_0.png')
+        # plt.show()
+        plt.close(2)
+        # fig: plt.Figure = plt.figure(3, figsize=(2, 2), tight_layout=False, dpi=100)
+        
+        # r = 5
+        # c = 10
+        # idx_1 = y_s==1  
+        # x_s_1 = x_s[idx_1]
+        # y_s_1 = y_s[idx_1]
+        # for i in range(50):
+        #     x = self.denormalize(x_s_1[i])
+        #     y = y_s_1[i]
+            
+        #     ax: plt.Axes = fig.add_subplot(r, c, i+1)
+        #     ax = clear_ax(ax)
+        #     img = transforms.ToPILImage()(x.cpu()).convert("RGB")
+        #     ax.imshow(img)
+        #     # ax.set_title(f'real: {y:.0f}', fontsize=7)
+        
+        # fig.suptitle(f'class 1, [50/100]', fontsize=8) 
+        # mngr = plt.get_current_fig_manager()
+        # #(Distance from left, distance from above, width, height)
+        # mngr.window.setGeometry(50, 50, 1000, 500) 
+        # fig.subplots_adjust(
+        # top=0.85,
+        # bottom=0.12,
+        # left=0.12,
+        # right=0.92,
+        # hspace=0.001,
+        # wspace=0.001
+        # )   
+        # os.makedirs('./save_img', exist_ok=True)
+        # fig.savefig(f'./save_img/support_images_{k}_1.png')
+
+        fig: plt.Figure = plt.figure(4, figsize=(10, 10), tight_layout=False, dpi=100)
+        all_imgs = np.ones(x_s[0].shape[::-1] * np.array([r, c, 1]))
+        s = x_s[0].shape[2]
+        r = 5
+        c = 10
+        idx_1 = y_s==1  
+        x_s_1 = x_s[idx_1]
+        y_s_1 = y_s[idx_1]
+        indc_idx_1 = indc_idx[idx_1[indc_idx]]
+        d = 1
+        top_bot = torch.zeros([3, d, 84])
+        top_bot[0, :, :] = 1
+        top_bot = transforms.ToPILImage()(top_bot).convert("RGB")
+        lef_rigt = torch.zeros([3, 84, d])
+        lef_rigt[0, :, :] = 1
+        lef_rigt = transforms.ToPILImage()(lef_rigt).convert("RGB")
+        for i in range(r):
+            for j in range(c):
+                x = self.denormalize(x_s_1[i*c+j])
+                # y = y_s_1[i]
+                img = transforms.ToPILImage()(x).convert("RGB")
+                all_imgs[s*i:s*(i+1), s*j:s*(j+1), :] = img
+                if i*c+j in (indc_idx_1-50):
+                    all_imgs[s*i:s*i+d, s*j:s*(j+1), :] = top_bot
+                    all_imgs[s*(i+1)-d:s*(i+1), s*j:s*(j+1), :] = top_bot
+                    all_imgs[s*i:s*(i+1), s*j:s*j+d, :] = lef_rigt
+                    all_imgs[s*i:s*(i+1), s*(j+1)-d:s*(j+1), :] = lef_rigt
+
+        ax: plt.Axes = fig.add_subplot(1, 1, 1)
+        ax = clear_ax(ax)
+        ax.axis("off")
+        ax.imshow(all_imgs.astype('uint8'))
+        fig.suptitle(f'class 1, [50/100]', fontsize=8) 
+         # (Distance from left, distance from above, width, height)
+        mngr = plt.get_current_fig_manager()
+        mngr.window.setGeometry(50, 200, 800, 500) 
+        fig.subplots_adjust(
+        top=0.882,
+        bottom=0.044,
+        left=0.025,
+        right=0.975,
+        hspace=0.2,
+        wspace=0.2
+        )
+     
+        os.makedirs(f'./save_img/task_{k}', exist_ok=True)
+        fig.savefig(f'./save_img/task_{k}/support_images_1.png')
+        # plt.show()
+        plt.close(4)
 
     def denormalize(self, tensor):
         means = [0.485, 0.456, 0.406]

@@ -533,7 +533,7 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
         #                                         eps, tol, max_itr, device, verbose)
         with torch.no_grad():
             active, alpha, gamma, beta, mu_m, U = Fast_RVM_regression(kernel_matrix, target, beta, N, config, align_threshold,
-                                                        False, eps, tol, max_itr, device, verbose, task_id)
+                                                        False, eps, tol, max_itr, device, verbose, task_id, classification)
 
         # index = np.argsort(active)
         # active = active[index]
@@ -711,7 +711,7 @@ def get_inducing_points_regression(base_covar_module, inputs, targets, sparse_me
         print(f'No method')
 
     if classification:
-        return IP(inducing_points, IP_index, num_IP, alpha, gamma, None, mu_m, scales_m, U), acc
+        return IP(inducing_points, IP_index, num_IP, alpha, gamma, beta, mu_m, scales_m, U), acc
     else:
         return IP(inducing_points, IP_index, num_IP, alpha, gamma, beta, mu_m, scales_m, U), mse_r
  

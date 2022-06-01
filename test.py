@@ -249,7 +249,7 @@ def single_test(params):
 
     if not params.method in ['baseline', 'baseline++'] : 
         best = True
-        last = True
+        last = False
         best_rvm = True
         print(f'\n{checkpoint_dir}\n')
         modelfile = None

@@ -12,7 +12,7 @@ from sklearn.svm import SVR
 from sklearn.metrics import mean_squared_error as mse
 
 
-def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol, max_itr=3000, device='cuda', verbose=True, task_id=None):
+def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol, max_itr=3000, device='cuda', verbose=True, task_id=None, classification=False):
     
 
     M = K.shape[1]
@@ -351,7 +351,12 @@ def Fast_RVM_regression(K, targets, beta, N, config, align_thr, gamma, eps, tol,
                 terminate = False
             # else: 
             #     print(f'No change in beta')
-
+        if classification:
+            with torch.no_grad():
+                    Sigma_m, mu_m, S, Q, s, q, logML, Gamma, U = Statistics(K_m, KK_m, KK_mm, K, KK_diag, Kt, K_mt, alpha_m, active_m, beta, targets, N)
+            count = count + 1
+            logMarginalLog.append(logML.item())
+            # terminate = False
 
 
         if terminate:
