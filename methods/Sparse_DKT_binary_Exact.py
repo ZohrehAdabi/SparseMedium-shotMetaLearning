@@ -89,6 +89,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
 
     def init_summary(self, id, dataset):
         self.id = id
+        self.dataset = dataset
         if(IS_TBX_INSTALLED):
             path = f'./Sparse_DKT_binary_Exact_{dataset}_log'
             time_string = strftime("%d%m%Y_%H%M", gmtime())
@@ -629,7 +630,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
                                 inducing_points.alpha, inducing_points.gamma, 
                                 x_support[inducing_points.index], y_support[inducing_points.index], None, None)
                 self.plot_test_train(x_support, y_support, inducing_points.index, i)
-                self.plot_test(x_query, y_query, y_pred, inducing_points, acc, acc_r, K_m, K_m_idx_sorted, i)
+                self.plot_test(x_query, y_query, y_pred, y_pred_r, inducing_points, acc, acc_r, K_m, K_m_idx_sorted, i)
 
 
         return float(top1_correct), count_this, avg_loss/float(N+1e-10), inducing_points.count, float(top1_correct_r), acc_most_sim
@@ -643,7 +644,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         acc_most_sim_all = []
         num_sv_list  = []
         iter_num = len(test_loader)
-        self.show_plot = True #iter_num < 5
+        self.show_plot = False #iter_num < 5
         self.frvm_acc = []
         for i, (x,_) in enumerate(test_loader):
             self.n_query = x.size(1) - self.n_support
@@ -687,7 +688,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         else: return acc_mean, result
 
     
-    def plot_test(self, x_query, y_query, y_pred, inducing_points, acc, acc_rvm, K_m, K_m_idx_sorted, k):
+    def plot_test(self, x_query, y_query, y_pred, y_pred_rvm, inducing_points, acc, acc_rvm, K_m, K_m_idx_sorted, k):
         def clear_ax(ax):
             ax.clear()
             ax.set_xticks([])
@@ -699,16 +700,18 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
                 ax.spines[axis].set_linewidth(0)
             return ax
         
-        
+        out_path = f'./save_img/Sp_DKT_Bi_Exact/{self.dataset}'
         
         if y_query.shape[0] > 30:
             x_q       = torch.vstack([x_query[0:5], x_query[15:20]])
             y_q       = np.hstack([y_query[0:5], y_query[15:20]])
             y_pred_   = np.hstack([y_pred[0:5], y_pred[15:20]])
+            y_pred_r  = np.hstack([y_pred_rvm[0:5], y_pred_rvm[15:20]])
         else:
             x_q     = x_query    
             y_q     = y_query
             y_pred_ = y_pred
+            y_pred_r = y_pred_rvm
         r = 2
         c = 10
         fig: plt.Figure = plt.figure(1, figsize=(10, 4), tight_layout=False, dpi=150, frameon=True)
@@ -716,6 +719,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             x = self.denormalize(x_q[i])
             y = y_q[i]
             y_p = y_pred_[i]
+            y_p_r = y_pred_r[i]
             ax: plt.Axes = fig.add_subplot(r, c, i+1)
             ax = clear_ax(ax)
             # ax.axis('off')
@@ -732,7 +736,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
                 # ax.spines['left'].set_visible(True)
                 ax.set_ylabel('real: 1', fontsize=7)
                 
-            ax.set_title(f'pred: {y_p:.0f}', fontsize=7, pad=2)
+            ax.set_title(f'pred: {y_p_r:.0f}|{y_p:.0f}', fontsize=7, pad=2)
         
         fig.suptitle(f'RVM ACC: {acc_rvm:.2f}%, ACC: {acc:.2f}%')
         mngr = plt.get_current_fig_manager()
@@ -751,14 +755,14 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         wspace=0.001
         )
      
-        os.makedirs(f'./save_img/task_{k}', exist_ok=True)
-        fig.savefig(f'./save_img/task_{k}/query_images.png', bbox_inches='tight')
+        os.makedirs(f'{out_path}/task_{k}', exist_ok=True)
+        fig.savefig(f'{out_path}/task_{k}/query_images.png', bbox_inches='tight')
         # fig.savefig(f'./save_img/task_{k}/query_images.png')
         # plt.show()
         plt.close(1)
         
         
-        fig: plt.Figure = plt.figure(2, figsize=(4, 4), tight_layout=False, dpi=150)
+       
         # subpfigs = fig.subfigures(1, 2, wspace=0.005, width_ratios=[1, 1])
         # ax_0 = subpfigs[0]#.subplots(4, 15, sharex=True, sharey=True)
         indc_x, indc_y = inducing_points.x, inducing_points.y
@@ -778,7 +782,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         #     # ax.set_title(f'{y:.0f}')
 
         # fig.suptitle(f'{m}/100', fontsize=8) 
-        fig: plt.Figure = plt.figure(2, figsize=(10, 10), tight_layout=False, dpi=150)
+        fig: plt.Figure = plt.figure(2, figsize=(4, 4), tight_layout=False, dpi=150)
         all_imgs = np.ones(indc_x[0].shape[::-1] * np.array([r, c, 1]))
         s = indc_x_0[0].shape[2]
         for i in range(r):
@@ -802,18 +806,18 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         mngr.window.setGeometry(50, 200, 800, 500) 
         fig.subplots_adjust(
         top=0.932,
-        bottom=0.044,
+        bottom=0.244,
         left=0.025,
         right=0.975,
         hspace=0.002,
         wspace=0.002
         )
-        os.makedirs(f'./save_img/task_{k}', exist_ok=True)
-        fig.savefig(f'./save_img/task_{k}/SV_images_0.png')
+        os.makedirs(f'{out_path}/task_{k}', exist_ok=True)
+        fig.savefig(f'{out_path}/task_{k}/SV_images_0.png', bbox_inches='tight')
         # plt.show()
         plt.close(2)
 
-        fig: plt.Figure = plt.figure(3, figsize=(4, 4), tight_layout=False, dpi=150)
+       
         idx_1 = indc_y==1
         indc_x_1 = indc_x[idx_1]
         indc_y_1 = indc_y[idx_1]
@@ -830,7 +834,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         #     # ax.set_title(f'{y:.0f}')
             
         # fig.suptitle(f'{m}/100', fontsize=8) 
-        fig: plt.Figure = plt.figure(3, figsize=(10, 10), tight_layout=False, dpi=150)
+        fig: plt.Figure = plt.figure(3, figsize=(4, 4), tight_layout=False, dpi=150)
         all_imgs = np.ones(indc_x[0].shape[::-1] * np.array([r, c, 1]))
         s = indc_x_1[0].shape[2]
         for i in range(r):
@@ -854,14 +858,14 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         mngr.window.setGeometry(50, 200, 800, 500) 
         fig.subplots_adjust(
         top=0.932,
-        bottom=0.100,
+        bottom=0.244,
         left=0.025,
         right=0.975,
         hspace=0.002,
         wspace=0.002
         )
-        os.makedirs(f'./save_img/task_{k}', exist_ok=True)
-        fig.savefig(f'./save_img/task_{k}/SV_images_1.png')
+        os.makedirs(f'{out_path}/task_{k}', exist_ok=True)
+        fig.savefig(f'{out_path}/task_{k}/SV_images_1.png', bbox_inches='tight')
         # plt.show()
         plt.close(3)
 
@@ -891,7 +895,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         c = m + 1
         c = int(np.ceil(m/3)) + 1
       
-        fig: plt.Figure = plt.figure(4, figsize=(10, 10), tight_layout=False, dpi=200)
+        fig: plt.Figure = plt.figure(4, figsize=(10, 10), tight_layout=False, dpi=150)
         all_imgs = np.ones(indc_x[0].shape[::-1] * np.array([r, c, 1]))
         gap = 5
         x_gap = torch.ones([3, all_imgs.shape[0], gap])
@@ -906,10 +910,10 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
                 if j==0:
                     x = self.denormalize(x_q[i])
                     y = y_q[i]
-                    y_p = y_pred_[i]
+                    y_p_r = y_pred_r[i]
                     img = transforms.ToPILImage()(x.cpu()).convert("RGB")
                     all_imgs[s*i:s*(i+1), s*j:s*(j+1), :] = img
-                    if y==y_p:
+                    if y==y_p_r:
                         all_imgs[s*i:s*(i+1), s*(j+1)-d:s*(j+1), :] = rigt_grn
                     else:
                         all_imgs[s*i:s*(i+1), s*(j+1)-d:s*(j+1), :] = rigt_red
@@ -933,15 +937,15 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         mngr = plt.get_current_fig_manager()
         mngr.window.setGeometry(50, 200, 800, 500) 
         fig.subplots_adjust(
-        top=0.995,
+        top=0.940,
         bottom=0.044,
         left=0.025,
         right=0.975,
         hspace=0.002,
         wspace=0.002
         )
-        os.makedirs(f'./save_img/task_{k}', exist_ok=True)
-        fig.savefig(f'./save_img/task_{k}/Query_SV_sim_1.png', bbox_inches='tight')
+        os.makedirs(f'{out_path}/task_{k}', exist_ok=True)
+        fig.savefig(f'{out_path}/task_{k}/Query_SV_sim_1.png', bbox_inches='tight')
         # plt.show()
         plt.close(4)
 
@@ -953,7 +957,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         c = m + 1
         c = int(np.ceil(m/3)) + 1
       
-        fig: plt.Figure = plt.figure(5, figsize=(10, 10), tight_layout=False, dpi=200)
+        fig: plt.Figure = plt.figure(5, figsize=(10, 10), tight_layout=False, dpi=150)
         all_imgs = np.ones(indc_x[0].shape[::-1] * np.array([r, c, 1]))
         gap = 5
         x_gap = torch.ones([3, all_imgs.shape[0], gap])
@@ -969,10 +973,10 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
                     x = self.denormalize(x_q[i+r])
                     # y = indc_y_1[i]
                     y = y_q[i+r]
-                    y_p = y_pred_[i+r]
+                    y_p_r = y_pred_r[i+r]
                     img = transforms.ToPILImage()(x.cpu()).convert("RGB")
                     all_imgs[s*i:s*(i+1), s*j:s*(j+1), :] = img
-                    if y==y_p:
+                    if y==y_p_r:
                         all_imgs[s*i:s*(i+1), s*(j+1)-d:s*(j+1), :] = rigt_grn
                     else:
                         all_imgs[s*i:s*(i+1), s*(j+1)-d:s*(j+1), :] = rigt_red
@@ -996,15 +1000,15 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         mngr = plt.get_current_fig_manager()
         mngr.window.setGeometry(50, 200, 800, 500) 
         fig.subplots_adjust(
-        top=0.995,
+        top=0.940,
         bottom=0.044,
         left=0.025,
         right=0.975,
         hspace=0.002,
         wspace=0.002
         )
-        os.makedirs(f'./save_img/task_{k}', exist_ok=True)
-        fig.savefig(f'./save_img/task_{k}/Query_SV_sim_2.png', bbox_inches='tight')
+        os.makedirs(f'{out_path}/task_{k}', exist_ok=True)
+        fig.savefig(f'{out_path}/task_{k}/Query_SV_sim_2.png', bbox_inches='tight')
         # plt.show()
         plt.close(5)
 
@@ -1019,7 +1023,8 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             ax.set_yticklabels([])
             ax.set_aspect('equal')
             return ax
-                
+
+        out_path = f'./save_img/Sp_DKT_Bi_Exact/{self.dataset}'      
         r = 5
         c = 10
         # i = 1
@@ -1063,7 +1068,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         fig: plt.Figure = plt.figure(2, figsize=(10, 10), tight_layout=False, dpi=100)
         all_imgs = np.ones(x_s[0].shape[::-1] * np.array([r, c, 1]))
         s = x_s[0].shape[2]
-        d = 1
+        d = 2
         top_bot = torch.zeros([3, d, 84])
         top_bot[0, :, :] = 1
         top_bot = transforms.ToPILImage()(top_bot).convert("RGB")
@@ -1100,8 +1105,8 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         wspace=0.2
         )
      
-        os.makedirs(f'./save_img/task_{k}', exist_ok=True)
-        fig.savefig(f'./save_img/task_{k}/support_images_0.png')
+        os.makedirs(f'{out_path}/task_{k}', exist_ok=True)
+        fig.savefig(f'{out_path}/task_{k}/support_images_0.png')
         # plt.show()
         plt.close(2)
         # fig: plt.Figure = plt.figure(3, figsize=(2, 2), tight_layout=False, dpi=100)
@@ -1181,8 +1186,8 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         wspace=0.2
         )
      
-        os.makedirs(f'./save_img/task_{k}', exist_ok=True)
-        fig.savefig(f'./save_img/task_{k}/support_images_1.png')
+        os.makedirs(f'{out_path}/task_{k}', exist_ok=True)
+        fig.savefig(f'{out_path}/task_{k}/support_images_1.png')
         # plt.show()
         plt.close(4)
 

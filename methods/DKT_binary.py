@@ -7,6 +7,9 @@ from torch.autograd import Variable
 import numpy as np
 import torch.nn.functional as F
 from methods.meta_template import MetaTemplate
+import torchvision.transforms as transforms
+import matplotlib.pyplot as plt
+import os
 from colorama import Fore
 ## Our packages
 import gpytorch
@@ -53,8 +56,9 @@ class DKT_binary(MetaTemplate):
         else:
             self.normalize=normalize
 
-    def init_summary(self, id):
+    def init_summary(self, id, dataset):
         self.id = id
+        self.dataset = dataset
         if(IS_TBX_INSTALLED):
             time_string = strftime("%d%m%Y_%H%M", gmtime())
             writer_path = "./log/" + id #+'_'+ time_string 
@@ -241,7 +245,7 @@ class DKT_binary(MetaTemplate):
         if(self.writer is not None): self.writer.add_scalar('Loss', np.mean(self.mll_list), self.iteration)
         if(self.writer is not None): self.writer.add_scalar('GP_query_accuracy', np.mean(self.acc_test_list), self.iteration)
 
-    def correct(self, x, N=0, laplace=False):
+    def correct(self, x, i=0, N=0, laplace=False):
         self.model.eval()
         self.likelihood.eval()
         self.feature_extractor.eval()
@@ -334,10 +338,15 @@ class DKT_binary(MetaTemplate):
             count_this = len(y_query)
 
             K = self.model.covar_module(z_query, z_train).evaluate()
-            max_similar_idx_q_s = np.argmax(K.detach().cpu().numpy(), axis=1)
+            K = K.detach().cpu().numpy()
+            max_similar_idx_q_s = np.argmax(K, axis=1)
             most_sim_y_s = target[max_similar_idx_q_s].detach().cpu().numpy().squeeze()
             most_sim_y_s[most_sim_y_s==-1] = 0
             acc_most_sim = np.sum(most_sim_y_s == y_query)
+
+        if False:
+            K_idx_sorted = np.argsort(K, axis=1)
+            self.plot_test(x_query, y_query, y_pred, top1_correct, x_support, y_support, K, K_idx_sorted, i)
 
         return float(top1_correct), count_this, avg_loss/float(N+1e-10), acc_most_sim
 
@@ -373,6 +382,218 @@ class DKT_binary(MetaTemplate):
         
         if(return_std): return acc_mean, acc_std, result
         else: return acc_mean, result
+
+    def plot_test(self, x_query, y_query, y_pred, acc, x_support, y_support, K, K_idx_sorted, k):
+        def clear_ax(ax):
+            ax.clear()
+            ax.set_xticks([])
+            ax.set_xticklabels([])
+            ax.set_yticks([])
+            ax.set_yticklabels([])
+            ax.set_aspect('equal')
+            for axis in ['top','bottom','left','right']:
+                ax.spines[axis].set_linewidth(0)
+            return ax
+        
+        out_path = f'./save_img/DKT_Bi/{self.dataset}'
+        
+        if y_query.shape[0] > 30:
+            x_q       = torch.vstack([x_query[0:5], x_query[15:20]])
+            y_q       = np.hstack([y_query[0:5], y_query[15:20]])
+            y_pred_   = np.hstack([y_pred[0:5], y_pred[15:20]])
+            
+        else:
+            x_q     = x_query    
+            y_q     = y_query
+            y_pred_ = y_pred
+         
+        r = 2
+        c = 10
+        fig: plt.Figure = plt.figure(1, figsize=(10, 4), tight_layout=False, dpi=150, frameon=True)
+        for i in range(r*c):
+            x = self.denormalize(x_q[i])
+            y = y_q[i]
+            y_p = y_pred_[i]
+          
+            ax: plt.Axes = fig.add_subplot(r, c, i+1)
+            ax = clear_ax(ax)
+            # ax.axis('off')
+            ax.axes.get_yaxis().set_visible(False)
+            ax.axes.get_xaxis().set_visible(False)
+            img = transforms.ToPILImage()(x.cpu()).convert("RGB")
+            ax.imshow(img)
+            if i==0: 
+                ax.axes.get_yaxis().set_visible(True)
+                # ax.spines['left'].set_visible(True)
+                ax.set_ylabel('real: 0', fontsize=7)
+            if i==10: 
+                ax.axes.get_yaxis().set_visible(True)
+                # ax.spines['left'].set_visible(True)
+                ax.set_ylabel('real: 1', fontsize=7)
+                
+            ax.set_title(f'pred: {y_p:.0f}', fontsize=7, pad=2)
+        
+        fig.suptitle(f'ACC: {acc:.2f}%')
+        mngr = plt.get_current_fig_manager()
+        mngr.window.setGeometry(200, 200, 1500, 600) 
+        # plt.show()
+        fig.subplots_adjust(
+        # top=0.955,
+        # bottom=0.445,
+        # left=0.055,
+        # right=0.965,
+        top=0.855,
+        bottom=0.250,
+        left=0.055,
+        right=0.975,
+        hspace=0.001,
+        wspace=0.001
+        )
+     
+        os.makedirs(f'{out_path}/task_{k}', exist_ok=True)
+        fig.savefig(f'{out_path}/task_{k}/query_images.png', bbox_inches='tight')
+        # fig.savefig(f'./save_img/task_{k}/query_images.png')
+        # plt.show()
+        plt.close(1)
+        
+       
+
+       
+        x_s, y_s = x_support, y_support
+        d = 3
+        top_red = torch.zeros([3, d, 84])
+        top_red[0, :, :] = 1
+        top_red = transforms.ToPILImage()(top_red).convert("RGB")
+        top_grn = torch.zeros([3, d, 84])
+        top_grn[1, :, :] = 1
+        top_grn = transforms.ToPILImage()(top_grn).convert("RGB")
+        rigt_red = torch.zeros([3, 84, d])
+        rigt_red[0, :, :] = 1
+        rigt_red = transforms.ToPILImage()(rigt_red).convert("RGB")
+        rigt_grn = torch.zeros([3, 84, d])
+        rigt_grn[1, :, :] = 1
+        rigt_grn = transforms.ToPILImage()(rigt_grn).convert("RGB")
+
+        m = 10
+        r = y_q.shape[0] // 2
+        c = m + 1
+        # c = int(np.ceil(m/3)) + 1
+      
+        fig: plt.Figure = plt.figure(4, figsize=(10, 10), tight_layout=False, dpi=150)
+        all_imgs = np.ones(x_s[0].shape[::-1] * np.array([r, c, 1]))
+        gap = 5
+        x_gap = torch.ones([3, all_imgs.shape[0], gap])
+        gap_img = transforms.ToPILImage()(x_gap).convert("RGB")
+        all_imgs = np.concatenate([all_imgs, np.ones([all_imgs.shape[0], gap, 3])], axis=1)
+        s = x_s[0].shape[2]
+        for i in range(r):
+            idx_sim = K_idx_sorted[i, :]
+            idx_sim = idx_sim[::-1]
+            # query_i_sim = indc_x[idx_sim[::-1]]
+            for j in range(c):
+                if j==0:
+                    x = self.denormalize(x_q[i])
+                    y = y_q[i]
+                    y_p = y_pred_[i]
+                    img = transforms.ToPILImage()(x.cpu()).convert("RGB")
+                    all_imgs[s*i:s*(i+1), s*j:s*(j+1), :] = img
+                    if y==y_p:
+                        all_imgs[s*i:s*(i+1), s*(j+1)-d:s*(j+1), :] = rigt_grn
+                    else:
+                        all_imgs[s*i:s*(i+1), s*(j+1)-d:s*(j+1), :] = rigt_red
+                else:
+                    jj = idx_sim[j-1]
+                    x = self.denormalize(x_s[jj])
+                    # y = indc_y_0[i]
+                    img = transforms.ToPILImage()(x.cpu()).convert("RGB")
+                    all_imgs[s*i:s*(i+1), (s*j) + gap:(s*(j+1))+gap, :] = img
+                    if y_s[jj]==y:
+                        all_imgs[s*i:s*i+d, (s*j) + gap:(s*(j+1)) + gap, :] = top_grn
+                    else:
+                        all_imgs[s*i:s*i+d, (s*j) + gap:(s*(j+1)) + gap, :] = top_red
+        
+        all_imgs[:, s: s + gap, :] = gap_img
+        ax: plt.Axes = fig.add_subplot(1, 1, 1)
+        ax = clear_ax(ax)
+        ax.axis("off")
+        ax.imshow(all_imgs.astype('uint8'))
+        fig.suptitle(f'Similarity between Query and SV images [{m}/100]', fontsize=8)
+        mngr = plt.get_current_fig_manager()
+        mngr.window.setGeometry(50, 200, 800, 500) 
+        fig.subplots_adjust(
+        top=0.940,
+        bottom=0.044,
+        left=0.025,
+        right=0.975,
+        hspace=0.002,
+        wspace=0.002
+        )
+        os.makedirs(f'{out_path}/task_{k}', exist_ok=True)
+        fig.savefig(f'{out_path}/task_{k}/Query_Support_sim_1.png', bbox_inches='tight')
+        # plt.show()
+        plt.close(4)
+
+
+       
+        m = 10
+        r = y_q.shape[0] //2
+        c = m + 1
+        # c = int(np.ceil(m/3)) + 1
+      
+        fig: plt.Figure = plt.figure(5, figsize=(10, 10), tight_layout=False, dpi=150)
+        all_imgs = np.ones(x_s[0].shape[::-1] * np.array([r, c, 1]))
+        gap = 5
+        x_gap = torch.ones([3, all_imgs.shape[0], gap])
+        gap_img = transforms.ToPILImage()(x_gap).convert("RGB")
+        all_imgs = np.concatenate([all_imgs, np.ones([all_imgs.shape[0], gap, 3])], axis=1)
+        s = x_s[0].shape[2]
+        for i in range(r):
+            idx_sim = K_idx_sorted[i+r, :]
+            idx_sim = idx_sim[::-1]
+            # query_i_sim = indc_x[idx_sim[::-1]]
+            for j in range(c):
+                if j==0:
+                    x = self.denormalize(x_q[i+r])
+                    # y = indc_y_1[i]
+                    y = y_q[i+r]
+                    y_p_r = y_pred_[i+r]
+                    img = transforms.ToPILImage()(x.cpu()).convert("RGB")
+                    all_imgs[s*i:s*(i+1), s*j:s*(j+1), :] = img
+                    if y==y_p_r:
+                        all_imgs[s*i:s*(i+1), s*(j+1)-d:s*(j+1), :] = rigt_grn
+                    else:
+                        all_imgs[s*i:s*(i+1), s*(j+1)-d:s*(j+1), :] = rigt_red
+                else:
+                    jj = idx_sim[j-1]
+                    x = self.denormalize(x_s[jj])
+                    # y = indc_y_0[i]
+                    img = transforms.ToPILImage()(x.cpu()).convert("RGB")
+                    all_imgs[s*i:s*(i+1), (s*j) + gap:(s*(j+1))+gap, :] = img
+                    if y_s[jj]==y:
+                        all_imgs[s*i:s*i+d, (s*j) + gap:(s*(j+1)) + gap, :] = top_grn
+                    else:
+                        all_imgs[s*i:s*i+d, (s*j) + gap:(s*(j+1)) + gap, :] = top_red
+        
+        all_imgs[:, s: s + gap, :] = gap_img
+        ax: plt.Axes = fig.add_subplot(1, 1, 1)
+        ax = clear_ax(ax)
+        ax.axis("off")
+        ax.imshow(all_imgs.astype('uint8'))
+        fig.suptitle(f'Similarity between Query and SV images [{m}/100]', fontsize=8)
+        mngr = plt.get_current_fig_manager()
+        mngr.window.setGeometry(50, 200, 800, 500) 
+        fig.subplots_adjust(
+        top=0.940,
+        bottom=0.044,
+        left=0.025,
+        right=0.975,
+        hspace=0.002,
+        wspace=0.002
+        )
+        os.makedirs(f'{out_path}/task_{k}', exist_ok=True)
+        fig.savefig(f'{out_path}/task_{k}/Query_Support_sim_2.png', bbox_inches='tight')
+        # plt.show()
+        plt.close(5)
 
     def get_logits(self, x):
         self.n_query = x.size(1) - self.n_support
@@ -413,6 +634,18 @@ class DKT_binary(MetaTemplate):
                 predictions_list.append(gaussian.mean) #.cpu().detach().numpy())
             y_pred = torch.stack(predictions_list, 1)
         return y_pred
+
+    def denormalize(self, tensor):
+        means = [0.485, 0.456, 0.406]
+        stds = [0.229, 0.224, 0.225]
+
+        denormalized = tensor.clone()
+
+        for channel, mean, std in zip(denormalized, means, stds):
+            channel.mul_(std).add_(mean)
+
+        return denormalized
+
 
 class ExactGPLayer(gpytorch.models.ExactGP):
     '''

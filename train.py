@@ -439,7 +439,7 @@ if __name__ == '__main__':
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
-            model.init_summary(id=id)
+            model.init_summary(id=id, dataset=params.dataset)
         
         elif(params.method == 'DKT_binary'):
             model = DKT_binary(model_dict[params.model], params.kernel_type, **train_few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
@@ -452,7 +452,7 @@ if __name__ == '__main__':
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
-            model.init_summary(id=id)
+            model.init_summary(id=id, dataset=params.dataset)
         
         elif(params.method == 'DKT_binary_new_loss'):
             model = DKT_binary_new_loss(model_dict[params.model], params.kernel_type, **train_few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
