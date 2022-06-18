@@ -81,28 +81,29 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
         # if (epoch) in [50]:
         #         optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.1
         model.eval()
-        if ((epoch+1)%2==0 and (epoch+1) > 50) or ((epoch+1)%10==0 and (epoch+1)<=50):
-            if not os.path.isdir(params.checkpoint_dir):
-                os.makedirs(params.checkpoint_dir)
-            print(Fore.GREEN,"-"*50 ,f'\nValidation {params.method}\n', Fore.RESET)
-            acc, result = model.test_loop(val_loader)
-            acc_val_list.append(acc)
-            if acc > max_acc:  # for baseline and baseline++, we don't use validation here so we let acc = -1
-                print("--> Best model! save...")
-                max_acc = acc
-                outfile = os.path.join(params.checkpoint_dir, 'best_model.tar')
-                torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
-            if 'rvm acc' in result.keys():
-                acc_rvm = result['rvm acc']
-                if acc_rvm > max_acc_rvm:  # for baseline and baseline++, we don't use validation here so we let acc = -1
-                    print("--> Best RVM model! save...")
-                    max_acc_rvm = acc_rvm
-                    outfile = os.path.join(params.checkpoint_dir, 'best_model_rvm.tar')
+        if params.method not in ['baseline', 'baseline++']:
+            if ((epoch+1)%2==0 and (epoch+1) > 50) or ((epoch+1)%10==0 and (epoch+1)<=50):
+                if not os.path.isdir(params.checkpoint_dir):
+                    os.makedirs(params.checkpoint_dir)
+                print(Fore.GREEN,"-"*50 ,f'\nValidation {params.method}\n', Fore.RESET)
+                acc, result = model.test_loop(val_loader)
+                acc_val_list.append(acc)
+                if acc > max_acc:  # for baseline and baseline++, we don't use validation here so we let acc = -1
+                    print("--> Best model! save...")
+                    max_acc = acc
+                    outfile = os.path.join(params.checkpoint_dir, 'best_model.tar')
                     torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
-           
-            print(Fore.YELLOW, f'ACC: {acc:4.2f}\n', Fore.RESET)
-            print(Fore.YELLOW, f'Avg. Val ACC: {np.mean(acc_val_list):4.2f}\n', Fore.RESET)
-            print(Fore.GREEN,"-"*50 ,'\n', Fore.RESET)
+                if 'rvm acc' in result.keys():
+                    acc_rvm = result['rvm acc']
+                    if acc_rvm > max_acc_rvm:  # for baseline and baseline++, we don't use validation here so we let acc = -1
+                        print("--> Best RVM model! save...")
+                        max_acc_rvm = acc_rvm
+                        outfile = os.path.join(params.checkpoint_dir, 'best_model_rvm.tar')
+                        torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
+            
+                print(Fore.YELLOW, f'ACC: {acc:4.2f}\n', Fore.RESET)
+                print(Fore.YELLOW, f'Avg. Val ACC: {np.mean(acc_val_list):4.2f}\n', Fore.RESET)
+                print(Fore.GREEN,"-"*50 ,'\n', Fore.RESET)
         toc = time.process_time()
         eTime = toc - tic 
         print(f'Elapsed time during the whole program in seconds: {eTime}')

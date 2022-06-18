@@ -111,6 +111,7 @@ class MAML(MetaTemplate):
         avg_loss=0
         task_count = 0
         loss_all = []
+        loss_list = []
         optimizer.zero_grad()
              
         #train
@@ -127,8 +128,8 @@ class MAML(MetaTemplate):
             if task_count == self.n_task: #MAML update several tasks at one time
                 loss_q = torch.stack(loss_all).sum(0)
                 loss_q.backward()
-
                 optimizer.step()
+                loss_list.append(loss_all.mean().item())
                 task_count = 0
                 loss_all = []
             optimizer.zero_grad()
@@ -136,7 +137,9 @@ class MAML(MetaTemplate):
             if(self.writer is not None): self.writer.add_scalar('Loss', loss.item(), self.iteration)
             if i % print_freq==0:
                 print('Epoch {:d} | Batch {:d}/{:d} | Loss {:f}'.format(epoch, i, len(train_loader), avg_loss/float(i+1)))
-                      
+                
+        if(self.writer is not None): self.writer.add_scalar('Loss_[mean]', np.mean(loss_list), self.iteration)
+
     def test_loop(self, test_loader, return_std = False, dataset=None, show_plot=False): #overwrite parrent function
         correct =0
         count = 0
