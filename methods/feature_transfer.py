@@ -90,7 +90,7 @@ class FeatureTransfer(MetaTemplate):
             if not mini_batch:
                 loss = self.set_forward_loss(x, y)
                 avg_loss = avg_loss+loss.item()#.data[0]
-                loss_all.append(loss)
+                loss_all.append(loss.item())
                 batch_count += 1
                 if batch_count == self.n_batch: #Transfer update after several batch (task)
                     loss = torch.stack(loss_all).sum(0) / batch_count
