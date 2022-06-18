@@ -611,7 +611,7 @@ if __name__ == '__main__':
             if params.freeze: id += '_freeze'
             params.checkpoint_dir += id
         
-        elif params.method in ['MetaOptNet', 'transfer'] 
+        elif params.method in ['MetaOptNet', 'transfer']:
             id=f'_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}'
             if params.normalize: id += '_norm'
             if params.train_aug: id += '_aug'
