@@ -69,7 +69,7 @@ class MetaTemplate(nn.Module):
                 #print(optimizer.state_dict()['param_groups'][0]['lr'])
                 print('Epoch {:d} | Batch {:d}/{:d} | Loss {:f}'.format(epoch, i, len(train_loader), avg_loss/float(i+1)))
 
-    def test_loop(self, test_loader, record = None):
+    def test_loop(self, test_loader, record = None, dataset=None, show_plot=False):
         correct =0
         count = 0
         acc_all = []
@@ -112,8 +112,8 @@ class MetaTemplate(nn.Module):
         linear_clf = nn.Linear(self.feat_dim, self.n_way)
         linear_clf = linear_clf.cuda()
 
-        set_optimizer = torch.optim.SGD(linear_clf.parameters(), lr = 0.01, momentum=0.9, dampening=0.9, weight_decay=0.001)
-
+        # set_optimizer = torch.optim.SGD(linear_clf.parameters(), lr = 0.01, momentum=0.9, dampening=0.9, weight_decay=0.001)
+        set_optimizer = torch.optim.Adam(linear_clf.parameters(), lr = 0.01)
         loss_function = nn.CrossEntropyLoss()
         loss_function = loss_function.cuda()
         

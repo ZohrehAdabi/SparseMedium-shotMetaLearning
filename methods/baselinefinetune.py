@@ -13,9 +13,9 @@ class BaselineFinetune(MetaTemplate):
         self.normalize = normalize
 
     def set_forward(self,x,is_feature = True):
-        return self.set_forward_adaptation(x,is_feature); #Baseline always do adaptation
+        return self.set_forward_adaptation(x, is_feature); #Baseline always do adaptation
  
-    def set_forward_adaptation(self,x,is_feature = True):
+    def set_forward_adaptation(self, x,is_feature = True):
         assert is_feature == True, 'Baseline only support testing with feature'
         z_support, z_query  = self.parse_feature(x,is_feature)
 
@@ -25,7 +25,8 @@ class BaselineFinetune(MetaTemplate):
         if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1)
         if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
         y_support = torch.from_numpy(np.repeat(range( self.n_way ), self.n_support ))
-        y_support = Variable(y_support.cuda())
+        # y_support = y_support.to(dtype=torch.float64).cuda()
+        y_support = y_support.type(torch.LongTensor).cuda()
 
         if self.loss_type == 'softmax':
             linear_clf = nn.Linear(self.feat_dim, self.n_way)
@@ -33,7 +34,8 @@ class BaselineFinetune(MetaTemplate):
             linear_clf = backbone.distLinear(self.feat_dim, self.n_way)
         linear_clf = linear_clf.cuda()
 
-        set_optimizer = torch.optim.SGD(linear_clf.parameters(), lr = 0.01, momentum=0.9, dampening=0.9, weight_decay=0.001)
+        # set_optimizer = torch.optim.SGD(linear_clf.parameters(), lr = 0.01, momentum=0.9, dampening=0.9, weight_decay=0.001)
+        set_optimizer = torch.optim.Adam(linear_clf.parameters(), lr = 0.01)
 
         loss_function = nn.CrossEntropyLoss()
         loss_function = loss_function.cuda()
@@ -45,13 +47,13 @@ class BaselineFinetune(MetaTemplate):
             for i in range(0, support_size , batch_size):
                 set_optimizer.zero_grad()
                 selected_id = torch.from_numpy( rand_id[i: min(i+batch_size, support_size) ]).cuda()
-                z_batch = z_support[selected_id]
-                y_batch = y_support[selected_id] 
-                scores = linear_clf(z_batch)
-                loss = loss_function(scores,y_batch)
+                z_batch = z_support[selected_id.to(dtype=torch.long)]
+                y_batch = y_support[selected_id.to(dtype=torch.long)] 
+                scores = linear_clf(z_batch.to(dtype=torch.float64))
+                loss = loss_function(scores, y_batch)
                 loss.backward()
                 set_optimizer.step()
-        scores = linear_clf(z_query)
+        scores = linear_clf(z_query.to(dtype=torch.float64))
         return scores
 
 

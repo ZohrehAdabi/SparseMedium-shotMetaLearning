@@ -70,9 +70,15 @@ if __name__ == '__main__':
     else:
         loadfile = configs.data_dir[params.dataset] + split + '.json'
 
-    checkpoint_dir = '%s/checkpoints/%s/%s_%s' %(configs.save_dir, params.dataset, params.model, params.method)
-    if params.train_aug:
-        checkpoint_dir += '_aug'
+    # checkpoint_dir = '%s/checkpoints/%s/%s_%s' %(configs.save_dir, params.dataset, params.model, params.method)
+    checkpoint_dir = '%s/checkpoints/%s/%s_%s_seed_%s' % (configs.save_dir, params.dataset, params.model, params.method, params.seed)
+    id = f'{params.method}_{params.model}_n_class_{params.num_classes}'
+    if params.normalize: id += '_norm'
+    if params.lr_decay: id += '_lr_decay'
+    if params.train_aug: id += '_aug'
+    
+    # if params.train_aug:
+    #     checkpoint_dir += '_aug'
     if not params.method in ['baseline', 'baseline++'] :
         checkpoint_dir += '_%dway_%dshot' %( params.train_n_way, params.n_shot)
 

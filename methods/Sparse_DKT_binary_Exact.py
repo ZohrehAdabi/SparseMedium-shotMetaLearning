@@ -635,7 +635,9 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
 
         return float(top1_correct), count_this, avg_loss/float(N+1e-10), inducing_points.count, float(top1_correct_r), acc_most_sim
 
-    def test_loop(self, test_loader, record=None, return_std=False):
+    def test_loop(self, test_loader, record=None, return_std=False, dataset=None, show_plot=False):
+        self.dataset = dataset
+        self.show_plot = show_plot
         print_freq = 10
         correct =0
         count = 0
@@ -644,7 +646,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         acc_most_sim_all = []
         num_sv_list  = []
         iter_num = len(test_loader)
-        self.show_plot = False #iter_num < 5
+        #iter_num < 5
         self.frvm_acc = []
         for i, (x,_) in enumerate(test_loader):
             self.n_query = x.size(1) - self.n_support
@@ -730,13 +732,14 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
             if i==0: 
                 ax.axes.get_yaxis().set_visible(True)
                 # ax.spines['left'].set_visible(True)
-                ax.set_ylabel('real: 0', fontsize=7)
+                ax.set_ylabel('real: 0', fontsize=10)
             if i==10: 
                 ax.axes.get_yaxis().set_visible(True)
                 # ax.spines['left'].set_visible(True)
-                ax.set_ylabel('real: 1', fontsize=7)
+                ax.set_ylabel('real: 1', fontsize=10)
                 
-            ax.set_title(f'pred: {y_p_r:.0f}|{y_p:.0f}', fontsize=7, pad=2)
+            # ax.set_title(f'pred: {y_p_r:.0f}|{y_p:.0f}', fontsize=7, pad=2)
+            ax.set_title(f'pred: {y_p_r:.0f}', fontsize=10, pad=2)
         
         fig.suptitle(f'RVM ACC: {acc_rvm:.2f}%, ACC: {acc:.2f}%')
         mngr = plt.get_current_fig_manager()
@@ -801,7 +804,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         ax = clear_ax(ax)
         ax.axis("off")
         ax.imshow(all_imgs.astype('uint8'))
-        fig.suptitle(f'class 0, [{m}/100]', fontsize=8)
+        fig.suptitle(f'class 0, [{m}/50]', fontsize=8)
         mngr = plt.get_current_fig_manager()
         mngr.window.setGeometry(50, 200, 800, 500) 
         fig.subplots_adjust(
@@ -853,7 +856,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         ax = clear_ax(ax)
         ax.axis("off")
         ax.imshow(all_imgs.astype('uint8'))
-        fig.suptitle(f'class 1, [{m}/100]', fontsize=8)
+        fig.suptitle(f'class 1, [{m}/50]', fontsize=8)
         mngr = plt.get_current_fig_manager()
         mngr.window.setGeometry(50, 200, 800, 500) 
         fig.subplots_adjust(
@@ -1150,7 +1153,7 @@ class Sparse_DKT_binary_Exact(MetaTemplate):
         x_s_1 = x_s[idx_1]
         y_s_1 = y_s[idx_1]
         indc_idx_1 = indc_idx[idx_1[indc_idx]]
-        d = 1
+        d = 2
         top_bot = torch.zeros([3, d, 84])
         top_bot[0, :, :] = 1
         top_bot = transforms.ToPILImage()(top_bot).convert("RGB")

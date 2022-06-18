@@ -624,7 +624,9 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
 
         return float(top1_correct), count_this, avg_loss/float(N+1e-10), inducing_points.count, top1_correct_r
 
-    def test_loop(self, test_loader, record=None, return_std=False):
+    def test_loop(self, test_loader, record=None, return_std=False, dataset=None, show_plot=False):
+        self.dataset = dataset
+        self.show_plot = show_plot
         print_freq = 10
         correct =0
         count = 0

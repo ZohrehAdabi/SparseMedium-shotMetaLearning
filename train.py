@@ -52,7 +52,7 @@ def _set_seed(seed, verbose=True):
 def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch, lr_gp, lr_net, params):
     print("Tot epochs: " + str(stop_epoch))
     if optimization == 'Adam':
-        if params.method in ['MAML', 'MetaOptNet', 'MetaOptNet_binary']:
+        if params.method in ['MAML', 'MetaOptNet', 'MetaOptNet_binary', 'baseline']:
             optimizer = torch.optim.Adam([{'params': model.parameters(), 'lr': lr_net}])
         else:
             optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr': lr_gp},
@@ -174,6 +174,13 @@ if __name__ == '__main__':
             model = BaselineTrain(model_dict[params.model], params.num_classes, normalize=params.normalize)
         elif params.method == 'baseline++':
             model = BaselineTrain(model_dict[params.model], params.num_classes, normalize=params.normalize, loss_type='dist')
+        
+        id = f'{params.method}_{params.model}_n_class_{params.num_classes}'
+        if params.normalize: id += '_norm'
+        if params.lr_decay: id += '_lr_decay'
+        if params.train_aug: id += '_aug'
+        
+        model.init_summary(id=id, dataset=params.dataset)
 
     elif params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_RVM', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss', 
                             'Sparse_DKT_binary_Exact', 'Sp_DKT_Bin_Exact_NLoss', 
@@ -521,6 +528,7 @@ if __name__ == '__main__':
     
             model.init_summary(id=id)
         print(f'\n{id}\n')
+    
     else:
         raise ValueError('Unknown method')
 
@@ -624,6 +632,7 @@ if __name__ == '__main__':
             stop_epoch = start_epoch + stop_epoch
             model.load_state_dict(tmp['state'])
             print(f'\nResume \n')
+    
     elif params.warmup:  # We also support warmup from pretrained baseline feature, but we never used in our paper
 
         

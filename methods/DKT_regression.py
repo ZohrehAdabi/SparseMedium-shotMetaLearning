@@ -468,6 +468,109 @@ class DKT_regression(nn.Module):
 
     def update_plots_test(self, plots, train_x, train_y, train_z, test_z, embedded_z,   
                                     test_x, test_y, test_y_pred, similar_idx_x_s, mll, mse, person):
+        def clear_ax(ax, i, j):
+            ax[i, j].clear()
+            ax[i, j].set_xticks([])
+            ax[i, j].set_xticklabels([])
+            ax[i, j].set_yticks([])
+            ax[i, j].set_yticklabels([])
+            ax[i, j].set_aspect('equal')
+            return ax
+        
+        def color_ax(ax, i, j, color, lw=0):
+            if lw > 0:
+                for axis in ['top','bottom','left','right']:
+                    ax[i, j].spines[axis].set_linewidth(lw)
+            #magenta, orange
+            for axis in ['top','bottom','left','right']:
+                ax[i, j].spines[axis].set_color(color)
+
+            return ax
+        
+        out_path = f'./save_img/DKT_Exact_regression/QMUL'
+
+        if self.show_plots_pred:
+            fig = plt.figure(4, dpi=100, figsize=(20,10))
+            # fig.suptitle(f"Sparse DKT ({self.sparse_method}), person {person}, MSE: {mse:.4f}, num IP: {inducing_points.count}")
+            subpfigs = fig.subfigures(1, 2, wspace=0.005, width_ratios=[3, 1])
+            ax_tr = subpfigs[0].subplots(4, 15, sharex=True, sharey=True)
+            ax_ts = subpfigs[1].subplots(4, 3, sharex=True, sharey=True)
+            subpfigs[0].suptitle(f" DKT , person {person}, MSE: {mse:.4f}")
+            y = get_unnormalized_label(train_y)#  ((train_y + 1) * 60 / 2) + 60
+            y_q = get_unnormalized_label(test_y)
+            y_mean = test_y_pred.mean.detach().cpu().numpy()
+            y_var = test_y_pred.variance.detach().cpu().numpy()
+            y_pred = get_unnormalized_label(y_mean)
+            # tilt = [60, 70, 80, 90, 100, 110, 120]
+           
+            tilt = np.unique(y)
+            num = 0
+            for i,t in enumerate(tilt):
+                idx = np.where(y==(t))[0]
+                x = train_x[idx]
+            
+                #train
+                for j in range(0, idx.shape[0]): 
+                    img = transforms.ToPILImage()(x[j].cpu()).convert("RGB")
+                    clear_ax(ax_tr, i, j)
+                    color_ax(ax_tr, i, j, 'black', lw=0.5)
+                    ax_tr[i, j].imshow(img)
+                    # ax[i, j].set_title(f'{num}', fontsize=8)
+                    num += 1
+                ax_tr[i, 0].set_ylabel(f'{90 - t:.0f}', fontsize=10, rotation='horizontal', ha='right', labelpad=5, va='center')
+
+                #test
+                idx = np.where(y_q==(t))[0]
+                x = test_x[idx]
+                y_p = 90 - y_pred[idx] 
+                for j in range(idx.shape[0]): 
+                    img = transforms.ToPILImage()(x[j].cpu()).convert("RGB")
+                    clear_ax(ax_ts, i, j)
+                    color_ax(ax_ts, i, j, 'black', lw=0.5)
+                    ax_ts[i, j].imshow(img)
+                    ax_ts[i, j].set_title(f'{y_p[j]:.1f}', fontsize=8)
+                    num += 1
+                ax_ts[i, 0].set_ylabel(f'{90-t:.0f}', fontsize=8, rotation='horizontal', ha='right', labelpad=5, va='center')
+
+
+            subpfigs[0].subplots_adjust(
+            top=0.86,
+            bottom=0.500,
+            left=0.092,
+            right=0.975,
+            hspace=0.01,
+            wspace=0.040
+            )
+            subpfigs[1].subplots_adjust(
+            top=0.912,
+            bottom=0.440,
+            left=0.04,
+            right=0.57,
+            hspace=0.38,
+            wspace=0.035
+            )
+            
+            os.makedirs(f'{out_path}/task_{self.test_i}', exist_ok=True)
+            fig.savefig(f'{out_path}/task_{self.test_i}/test.png') #, bbox_inches='tight'
+            # plt.show()
+            plt.close(4)
+        
+        
+        if self.show_plots_features:
+            #features
+            y = get_unnormalized_label(train_y)#((train_y + 1) * 60 / 2) + 60
+            tilt = np.unique(y)
+            plots.ax_feature.clear()
+            for t in tilt:
+                idx = np.where(y==(t))[0]
+                z_t = embedded_z[idx]
+                
+                plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
+
+            plots.ax_feature.legend()
+
+    def update_plots_test_old(self, plots, train_x, train_y, train_z, test_z, embedded_z,   
+                                    test_x, test_y, test_y_pred, similar_idx_x_s, mll, mse, person):
         def clear_ax(plots, i, j):
             plots.ax[i, j].clear()
             plots.ax[i, j].set_xticks([])

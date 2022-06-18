@@ -409,6 +409,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
             
             kernel_matrix = K(z_query, inducing_points.z_values).evaluate().detach().cpu().numpy()
             max_similar_idx_x_ip = np.argmax(kernel_matrix, axis=1)
+            K_m_idx_sorted = np.argsort(kernel_matrix, axis=1)
             if self.test_i%20==0:
                 print(Fore.LIGHTGREEN_EX, f'target of most similar in IP set (K kernel): {inducing_points.y[max_similar_idx_x_ip]}', Fore.RESET)
 
@@ -422,8 +423,8 @@ class Sparse_DKT_regression_Exact(nn.Module):
                 embedded_z_support = TSNE(n_components=2).fit_transform(z_support.detach().cpu().numpy())
             self.update_plots_test_fast_rvm(self.plots, x_support, y_support.detach().cpu().numpy(), 
                                             z_support.detach(), z_query.detach(), embedded_z_support,
-                                            inducing_points, x_query, y_query.detach().cpu().numpy(), pred, 
-                                            max_similar_idx_x_s, max_similar_idx_x_ip, None, mse, test_person)
+                                            inducing_points, x_query, y_query.detach().cpu().numpy(), pred, y_pred_r, 
+                                            max_similar_idx_x_s, max_similar_idx_x_ip, K_m_idx_sorted, None, mse_r, test_person)
             if self.show_plots_pred:
                 self.plots.fig.canvas.draw()
                 self.plots.fig.canvas.flush_events()
@@ -940,6 +941,394 @@ class Sparse_DKT_regression_Exact(nn.Module):
             plots.ax_feature.set_title(f'epoch {epoch}')  
 
     def update_plots_test_fast_rvm(self, plots, train_x, train_y, train_z, test_z, embedded_z, inducing_points,   
+                                    test_x, test_y, test_y_pred, y_pred_rvm, similar_idx_x_s, similar_idx_x_ip, K_m_idx_sorted, mll, mse, person):
+        def clear_plots_ax(plots, i, j):
+            plots.ax[i, j].clear()
+            plots.ax[i, j].set_xticks([])
+            plots.ax[i, j].set_xticklabels([])
+            plots.ax[i, j].set_yticks([])
+            plots.ax[i, j].set_yticklabels([])
+            plots.ax[i, j].set_aspect('equal')
+            return plots
+        
+        def color_plots_ax(plots, i, j, color, lw=0):
+            if lw > 0:
+                for axis in ['top','bottom','left','right']:
+                    plots.ax[i, j].spines[axis].set_linewidth(lw)
+            #magenta, orange
+            for axis in ['top','bottom','left','right']:
+                plots.ax[i, j].spines[axis].set_color(color)
+
+            return plots
+        
+        def clear_ax(ax, i, j):
+            ax[i, j].clear()
+            ax[i, j].set_xticks([])
+            ax[i, j].set_xticklabels([])
+            ax[i, j].set_yticks([])
+            ax[i, j].set_yticklabels([])
+            ax[i, j].set_aspect('equal')
+            return ax
+        
+        def color_ax(ax, i, j, color, lw=0):
+            if lw > 0:
+                for axis in ['top','bottom','left','right']:
+                    ax[i, j].spines[axis].set_linewidth(lw)
+            #magenta, orange
+            for axis in ['top','bottom','left','right']:
+                ax[i, j].spines[axis].set_color(color)
+
+            return ax
+
+        def clear_ax2(ax):
+            ax.clear()
+            ax.set_xticks([])
+            ax.set_xticklabels([])
+            ax.set_yticks([])
+            ax.set_yticklabels([])
+            ax.set_aspect('equal')
+            for axis in ['top','bottom','left','right']:
+                ax.spines[axis].set_linewidth(0)
+            return ax
+
+        out_path = f'./save_img/Sp_DKT_Exact_regression/QMUL'
+        if self.show_plots_pred:
+            r = 4
+            c = 19
+            plt.figure(3)
+            fig, ax = plt.subplots(r, c, figsize=(16,8), sharex=True, sharey=True, dpi=100) 
+            plt.subplots_adjust(wspace=0.03,  
+                                hspace=0.001)
+            fig.suptitle(f"Sparse DKT ({self.sparse_method}), person {person}")
+
+            y = get_unnormalized_label(train_y)#  ((train_y + 1) * 60 / 2) + 60
+            y_q = get_unnormalized_label(test_y)
+            # tilt = [60, 70, 80, 90, 100, 110, 120]
+            tilt = np.unique(y)
+            num = 1
+            
+            for i,t in enumerate(tilt):
+                idx = np.where(y==(t))[0]
+                if idx.shape[0]==0:
+                    # i = int(t/10-6)
+                    for j in range(0, 19):
+                        clear_ax(ax, i, j)
+                        color_ax(ax, i, j, 'black', lw=0.5)
+                else:    
+                    x = train_x[idx]
+                    # i = int(t/10-6)
+                    # z = train_z[idx]
+                    for j in range(0, idx.shape[0]): 
+                        img = transforms.ToPILImage()(x[j].cpu()).convert("RGB")
+                        clear_ax(ax, i, j)
+                        color_ax(ax, i, j, 'black', lw=0.5)
+                        ax[i, j].imshow(img)
+                        # ax[i, j].set_title(f'{num}', fontsize=8)
+                        num += 1
+                    idx = np.where(y_q==(t))[0]
+                    x = test_x[idx]
+                    for j in range(idx.shape[0]): 
+                        img = transforms.ToPILImage()(x[j].cpu()).convert("RGB")
+                        clear_ax(ax, i, j + 16)
+                        color_ax(ax, i, j + 16, 'black', lw=0.5)
+                        ax[i, j + 16].imshow(img)
+                        # ax[i, j].set_title(f'{num}', fontsize=8)
+                        num += 1
+                    ax[i, 0].set_ylabel(f'{90 - t:.0f}',  fontsize=10, rotation='horizontal', ha='right', labelpad=5, va='center')
+            
+            for i in range(r):
+                    clear_ax(ax, i, 15)
+                    color_ax(ax, i, 15, 'white', lw=0.5)
+            # mngr = plt.get_current_fig_manager()
+            # #(Distance from left, distance from above, width, height)
+            # mngr.window.setGeometry(50, 200, 1800, 467) 
+            fig.subplots_adjust(
+            top=0.815,
+            bottom=0.420,
+            left=0.100,
+            right=0.92,
+            hspace=0.001,
+            wspace=0.042
+    )
+            os.makedirs(f'{out_path}/task_{self.test_i}', exist_ok=True)
+            fig.savefig(f'{out_path}/task_{self.test_i}/task.png', bbox_inches='tight')
+            # plt.show()
+            plt.close(3)
+
+
+
+        if self.show_plots_pred:
+            fig = plt.figure(4, dpi=100, figsize=(20,10))
+            # fig.suptitle(f"Sparse DKT ({self.sparse_method}), person {person}, MSE: {mse:.4f}, num IP: {inducing_points.count}")
+            subpfigs = fig.subfigures(1, 2, wspace=0.005, width_ratios=[3, 1])
+            ax_tr = subpfigs[0].subplots(4, 15, sharex=True, sharey=True)
+            ax_ts = subpfigs[1].subplots(4, 3, sharex=True, sharey=True)
+            subpfigs[0].suptitle(f"Sparse DKT ({self.sparse_method}), person {person}, MSE: {mse:.4f}, num IP: {inducing_points.count}")
+            y = get_unnormalized_label(train_y)#  ((train_y + 1) * 60 / 2) + 60
+            y_q = get_unnormalized_label(test_y)
+            y_mean = test_y_pred.mean.detach().cpu().numpy()
+            y_var = test_y_pred.variance.detach().cpu().numpy()
+            # y_pred = get_unnormalized_label(y_mean)
+            y_pred = get_unnormalized_label(y_pred_rvm)
+            # tilt = [60, 70, 80, 90, 100, 110, 120]
+            # inducing points
+            indc_index = np.copy(inducing_points.i_idx)
+            id_indc = np.unique(indc_index)
+            k = 0
+            for s in id_indc:
+                idx_s = np.where(indc_index==s)
+                indc_index[idx_s] = k
+                k += 1
+            #
+            tilt = np.unique(y)
+            num = 0
+            for i,t in enumerate(tilt):
+                idx = np.where(y==(t))[0]
+                x = train_x[idx]
+            
+                #train
+                for j in range(0, idx.shape[0]): 
+                    img = transforms.ToPILImage()(x[j].cpu()).convert("RGB")
+                    clear_ax(ax_tr, i, j)
+                    color_ax(ax_tr, i, j, 'black', lw=0.5)
+                    ax_tr[i, j].imshow(img)
+                    # ax[i, j].set_title(f'{num}', fontsize=8)
+                    num += 1
+                ax_tr[i, 0].set_ylabel(f'{90 - t:.0f}', fontsize=10, rotation='horizontal', ha='right', labelpad=5, va='center')
+
+                #inducing points
+                indc_j = inducing_points.j_idx
+                for l in range(inducing_points.index.shape[0]):
+                    
+                    # t = inducing_points.y[r]
+                    # i = int(t/10-6)
+                    color_ax(ax_tr, indc_index[l], indc_j[l], 'black', lw=1) 
+                    ax_tr[indc_index[l], indc_j[l]].spines['bottom'].set_color('red')  
+                    ax_tr[indc_index[l], indc_j[l]].spines['bottom'].set_linewidth(3) 
+                    # ax[indc_index[r], indc_j[r]].set_xlabel(i+1, fontsize=10) 
+
+                #test
+                idx = np.where(y_q==(t))[0]
+                x = test_x[idx]
+                y_p = 90 - y_pred[idx]
+                for j in range(idx.shape[0]): 
+                    img = transforms.ToPILImage()(x[j].cpu()).convert("RGB")
+                    clear_ax(ax_ts, i, j)
+                    color_ax(ax_ts, i, j, 'black', lw=0.5)
+                    ax_ts[i, j].imshow(img)
+                    ax_ts[i, j].set_title(f'{y_p[j]:.1f}', fontsize=10)
+                    num += 1
+                ax_ts[i, 0].set_ylabel(f'{90 - t:.0f}', fontsize=10, rotation='horizontal', ha='right', labelpad=5, va='center')
+
+
+            subpfigs[0].subplots_adjust(
+            top=0.86,
+            bottom=0.500,
+            left=0.092,
+            right=0.975,
+            hspace=0.01,
+            wspace=0.040
+            )
+            subpfigs[1].subplots_adjust(
+            top=0.912,
+            bottom=0.440,
+            left=0.04,
+            right=0.57,
+            hspace=0.38,
+            wspace=0.035
+            )
+            
+            os.makedirs(f'{out_path}/task_{self.test_i}', exist_ok=True)
+            fig.savefig(f'{out_path}/task_{self.test_i}/meta_test.png', bbox_inches='tight') #
+            # plt.show()
+            plt.close(4)
+
+        if self.show_plots_pred:
+            indc_x, indc_y = inducing_points.x, inducing_points.y
+            d = 3
+            top_red = torch.zeros([3, d, 100])
+            top_red[0, :, :] = 1
+            top_red = transforms.ToPILImage()(top_red).convert("RGB")
+            top_grn = torch.zeros([3, d, 100])
+            top_grn[1, :, :] = 1
+            top_grn = transforms.ToPILImage()(top_grn).convert("RGB")
+            rigt_red = torch.zeros([3, 100, d])
+            rigt_red[0, :, :] = 1
+            rigt_red = transforms.ToPILImage()(rigt_red).convert("RGB")
+            rigt_grn = torch.zeros([3, 100, d])
+            rigt_grn[1, :, :] = 1
+            rigt_grn = transforms.ToPILImage()(rigt_grn).convert("RGB")
+            rigt_wht = torch.ones([3, 100, 2])
+            # rigt_wht[1, :, :] = 1
+            rigt_wht = transforms.ToPILImage()(rigt_wht).convert("RGB")
+
+            x_q = test_x
+            y_pred_r = y_pred_rvm
+            m = indc_y.shape[0]
+            r = y_q.shape[0] // 2
+            c = m + 1
+            c = int(np.ceil(m/2)) + 1
+        
+            fig: plt.Figure = plt.figure(4, figsize=(5, 5), tight_layout=False, dpi=150)
+            all_imgs = np.ones(indc_x[0].shape[::-1] * np.array([r, c, 1]))
+            gap = 15
+            x_gap = torch.ones([3, all_imgs.shape[0], gap])
+            gap_img = transforms.ToPILImage()(x_gap).convert("RGB")
+            all_imgs = np.concatenate([all_imgs, np.ones([all_imgs.shape[0], gap, 3])], axis=1)
+            s = indc_x[0].shape[2]
+
+            
+            k = 0
+            idx_sorted = np.argsort(y_q)
+            x_sorted = x_q[idx_sorted]
+            y_q_sorted = y_q[idx_sorted]
+            y_pred_r_sorted = y_pred_r[idx_sorted]
+            K_m_idx_sorted2 = K_m_idx_sorted[idx_sorted]
+            tilt = np.unique(y_q_sorted[:r])
+            for t in tilt:
+                idx = np.where(y_q_sorted[:r]==(t))[0]
+                x_selected = x_sorted[idx]
+                y_q_selected = y_q_sorted[idx]
+                y_pred_r_selected = y_pred_r_sorted[idx]
+                K_m_idx_sorted_selected = K_m_idx_sorted2[idx]
+                # query_i_sim = indc_x[idx_sim[::-1]]
+                for i in range(idx.shape[0]):
+                    idx_sim = K_m_idx_sorted_selected[i, :]
+                    idx_sim = idx_sim[::-1]
+                    for j in range(c):
+                        if j==0:
+                        
+                            y = y_q_selected[i]
+                            y_p_r = y_pred_r_selected[i]
+                            img = transforms.ToPILImage()(x_selected[i].cpu()).convert("RGB")
+                            all_imgs[s*k:s*(k+1), s*j:s*(j+1), :] = img
+                            # if y==y_p_r:
+                            #     all_imgs[s*i:s*(i+1), s*(j+1)-d:s*(j+1), :] = rigt_grn
+                            # else:
+                            #     all_imgs[s*i:s*(i+1), s*(j+1)-d:s*(j+1), :] = rigt_red
+                        else:
+                            jj = idx_sim[j-1]
+                    
+                            img = transforms.ToPILImage()(torch.from_numpy(indc_x[jj])).convert("RGB")
+                            all_imgs[s*k:s*(k+1), (s*j) + gap:(s*(j+1))+gap, :] = img
+                            all_imgs[s*k:s*(k+1), s*(j+1) + gap -2:s*(j+1) + gap, :]  = rigt_wht
+                            if indc_y[jj]==y:
+                                all_imgs[s*k:s*k+d, (s*j) + gap:(s*(j+1)) + gap, :] = top_grn
+                            else:
+                                all_imgs[s*k:s*k+d, (s*j) + gap:(s*(j+1)) + gap, :] = top_red
+
+                    k +=1
+
+            all_imgs[:, s: s + gap, :] = gap_img
+            ax: plt.Axes = fig.add_subplot(1, 1, 1)
+            ax = clear_ax2(ax)
+            ax.axis("off")
+            ax.imshow(all_imgs.astype('uint8'))
+            fig.suptitle(f'Similarity between Query and SV images [{m}/100]', fontsize=8)
+            mngr = plt.get_current_fig_manager()
+            mngr.window.setGeometry(50, 200, 800, 500) 
+            fig.subplots_adjust(
+            top=0.940,
+            bottom=0.200,
+            left=0.025,
+            right=0.975,
+            hspace=0.002,
+            wspace=0.002
+            )
+            os.makedirs(f'{out_path}/task_{self.test_i}', exist_ok=True)
+            fig.savefig(f'{out_path}/task_{self.test_i}/Query_SV_sim_1.png', bbox_inches='tight')
+            # plt.show()
+            plt.close(4)
+
+
+            indc_x, indc_y = inducing_points.x, inducing_points.y
+        
+            m = indc_y.shape[0]
+            r = y_q.shape[0] //2
+            c = m + 1
+            c = int(np.ceil(m/2)) + 1
+        
+            fig: plt.Figure = plt.figure(5, figsize=(5, 5), tight_layout=False, dpi=150)
+            all_imgs = np.ones(indc_x[0].shape[::-1] * np.array([r, c, 1]))
+            gap = 15
+            x_gap = torch.ones([3, all_imgs.shape[0], gap])
+            gap_img = transforms.ToPILImage()(x_gap).convert("RGB")
+            all_imgs = np.concatenate([all_imgs, np.ones([all_imgs.shape[0], gap, 3])], axis=1)
+            s = indc_x[0].shape[2]
+            k= 0
+            
+            tilt = np.unique(y_q_sorted[r:])
+            for t in tilt:
+                idx = np.where(y_q_sorted[r:]==(t))[0] + r
+                x_selected = x_sorted[idx]
+                y_q_selected = y_q_sorted[idx]
+                y_pred_r_selected = y_pred_r_sorted[idx]
+                K_m_idx_sorted_selected = K_m_idx_sorted2[idx]
+                # query_i_sim = indc_x[idx_sim[::-1]]
+                for i in range(idx.shape[0]):
+                    idx_sim = K_m_idx_sorted_selected[i, :]
+                    idx_sim = idx_sim[::-1]
+                    for j in range(c):
+                        if j==0:
+                            
+                            y = y_q_selected[i]
+                            y_p_r = y_pred_r_selected[i]
+                            img = transforms.ToPILImage()(x_selected[i].cpu()).convert("RGB")
+                            all_imgs[s*k:s*(k+1), s*j:s*(j+1), :] = img
+                            # if y==y_p_r:
+                            #     all_imgs[s*i:s*(i+1), s*(j+1)-d:s*(j+1), :] = rigt_grn
+                            # else:
+                            #     all_imgs[s*i:s*(i+1), s*(j+1)-d:s*(j+1), :] = rigt_red
+                        else:
+                            jj = idx_sim[j-1]
+                            
+                            img = transforms.ToPILImage()(torch.from_numpy(indc_x[jj])).convert("RGB")
+                            all_imgs[s*k:s*(k+1), (s*j) + gap:(s*(j+1))+gap, :] = img
+                            all_imgs[s*k:s*(k+1), s*(j+1) + gap -2:s*(j+1) + gap, :]  = rigt_wht
+                            if indc_y[jj]==y:
+                                all_imgs[s*k:s*k+d, (s*j) + gap:(s*(j+1)) + gap, :] = top_grn
+                            else:
+                                all_imgs[s*k:s*k+d, (s*j) + gap:(s*(j+1)) + gap, :] = top_red
+            
+                    k +=1
+
+            all_imgs[:, s: s + gap, :] = gap_img
+            ax: plt.Axes = fig.add_subplot(1, 1, 1)
+            ax = clear_ax2(ax)
+            ax.axis("off")
+            ax.imshow(all_imgs.astype('uint8'))
+            fig.suptitle(f'Similarity between Query and SV images [{m}/100]', fontsize=8)
+            mngr = plt.get_current_fig_manager()
+            mngr.window.setGeometry(50, 200, 800, 500) 
+            fig.subplots_adjust(
+            top=0.940,
+            bottom=0.200,
+            left=0.025,
+            right=0.975,
+            hspace=0.002,
+            wspace=0.002
+            )
+            os.makedirs(f'{out_path}/task_{self.test_i}', exist_ok=True)
+            fig.savefig(f'{out_path}/task_{self.test_i}/Query_SV_sim_2.png', bbox_inches='tight')
+            # plt.show()
+            plt.close(5)
+
+        
+        if self.show_plots_features:
+            #features
+            y = get_unnormalized_label(train_y) #((train_y + 1) * 60 / 2) + 60
+            tilt = np.unique(y)
+            plots.ax_feature.clear()
+            for t in tilt:
+                idx = np.where(y==(t))[0]
+                z_t = embedded_z[idx]
+                
+                plots.ax_feature.scatter(z_t[:, 0], z_t[:, 1], label=f'{t}')
+            plots.fig_feature.suptitle(f"Sparse DKT ({self.sparse_method}), person {person}, MSE: {mse:.4f}, num IP: {inducing_points.count}")
+            plots.ax_feature.legend()
+
+
+    def update_plots_test_fast_rvm_old(self, plots, train_x, train_y, train_z, test_z, embedded_z, inducing_points,   
                                     test_x, test_y, test_y_pred, similar_idx_x_s, similar_idx_x_ip, mll, mse, person):
         def clear_ax(plots, i, j):
             plots.ax[i, j].clear()
@@ -987,7 +1376,7 @@ class Sparse_DKT_regression_Exact(nn.Module):
                         plots.ax[i, j].imshow(img)
                         plots.ax[i, j].set_title(f'{num}', fontsize=8)
                         num += 1
-                    plots.ax[i, 0].set_ylabel(f'{t}',  fontsize=10)
+                    plots.ax[i, 0].set_ylabel(f'{t}',  fontsize=10, rotation='horizontal', ha='right', labelpad=5, va='center')
                 
         
             # test images

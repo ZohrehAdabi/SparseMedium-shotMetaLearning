@@ -336,7 +336,7 @@ class DKT_binary(MetaTemplate):
 
             top1_correct = np.sum(y_pred == y_query)
             count_this = len(y_query)
-
+            acc = (top1_correct/ count_this)*100
             K = self.model.covar_module(z_query, z_train).evaluate()
             K = K.detach().cpu().numpy()
             max_similar_idx_q_s = np.argmax(K, axis=1)
@@ -344,13 +344,15 @@ class DKT_binary(MetaTemplate):
             most_sim_y_s[most_sim_y_s==-1] = 0
             acc_most_sim = np.sum(most_sim_y_s == y_query)
 
-        if False:
+        if self.show_plot:
             K_idx_sorted = np.argsort(K, axis=1)
-            self.plot_test(x_query, y_query, y_pred, top1_correct, x_support, y_support, K, K_idx_sorted, i)
+            self.plot_test(x_query, y_query, y_pred, acc, x_support, y_support, K, K_idx_sorted, i)
 
         return float(top1_correct), count_this, avg_loss/float(N+1e-10), acc_most_sim
 
-    def test_loop(self, test_loader, record=None, return_std=False):
+    def test_loop(self, test_loader, record=None, return_std=False, dataset=None, show_plot=False):
+        self.dataset = dataset
+        self.show_plot = show_plot
         print_freq = 10
         correct =0
         count = 0
@@ -361,7 +363,7 @@ class DKT_binary(MetaTemplate):
             self.n_query = x.size(1) - self.n_support
             if self.change_way:
                 self.n_way  = x.size(0)
-            correct_this, count_this, loss_value, acc_most_sim = self.correct(x)
+            correct_this, count_this, loss_value, acc_most_sim = self.correct(x, i)
             acc_all.append(correct_this/ count_this*100)
             acc_most_sim_all.append((acc_most_sim/ count_this)*100)
             if(i % 10==0):
@@ -425,13 +427,13 @@ class DKT_binary(MetaTemplate):
             if i==0: 
                 ax.axes.get_yaxis().set_visible(True)
                 # ax.spines['left'].set_visible(True)
-                ax.set_ylabel('real: 0', fontsize=7)
+                ax.set_ylabel('real: 0', fontsize=10)
             if i==10: 
                 ax.axes.get_yaxis().set_visible(True)
                 # ax.spines['left'].set_visible(True)
-                ax.set_ylabel('real: 1', fontsize=7)
+                ax.set_ylabel('real: 1', fontsize=10)
                 
-            ax.set_title(f'pred: {y_p:.0f}', fontsize=7, pad=2)
+            ax.set_title(f'pred: {y_p:.0f}', fontsize=10, pad=2)
         
         fig.suptitle(f'ACC: {acc:.2f}%')
         mngr = plt.get_current_fig_manager()

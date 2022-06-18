@@ -434,7 +434,7 @@ def single_test(params):
         if best_rvm and (best_modelfile_rvm is not None):
             print(f'\nBest RVM model epoch {best_epoch}\n')
             best_model_rvm.eval()
-            acc_mean, acc_std, result = best_model_rvm.test_loop(novel_loader, return_std = True)
+            acc_mean, acc_std, result = best_model_rvm.test_loop(novel_loader, return_std = True, dataset=params.dataset, show_plot=True)
             if params.save_result:
                 f.write('"best rvm model":\n')
                 json.dump(result, f, indent=2)
@@ -445,7 +445,7 @@ def single_test(params):
         if best:
             print(f'\nBest model epoch {best_epoch}\n')
             best_model.eval()
-            acc_mean, acc_std, result = best_model.test_loop(novel_loader, return_std = True)
+            acc_mean, acc_std, result = best_model.test_loop(novel_loader, return_std = True, dataset=params.dataset, show_plot=True)
             if params.save_result:
                 f.write('"best model":\n')
                 json.dump(result, f, indent=2)
@@ -461,7 +461,7 @@ def single_test(params):
         cl_data_file = feat_loader.init_loader(novel_file)
 
         for i in range(iter_num):
-            acc = feature_evaluation(cl_data_file, model, n_query = 15, adaptation = params.adaptation, **few_shot_params)
+            acc = feature_evaluation(cl_data_file, model, n_query = 5, adaptation = params.adaptation, **few_shot_params)
             acc_all.append(acc)
 
         acc_all  = np.asarray(acc_all)
