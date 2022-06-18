@@ -85,15 +85,15 @@ def single_test(params):
         assert params.model == 'Conv4' and not params.train_aug ,'omniglot only support Conv4 without augmentation'
         params.model = 'Conv4S'
     if params.method == 'transfer':
-        id=f'Transfer_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}'
+        # id=f'Transfer_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}'
          
-        if params.normalize: id += '_norm'
-        if params.lr_decay: id += '_lr_decay'
-        if params.train_aug: id += '_aug'
-
-        model           = FeatureTransfer( model_dict[params.model], normalize=params.normalize, **few_shot_params )
-        last_model      = FeatureTransfer( model_dict[params.model], normalize=params.normalize, **few_shot_params )
-        best_model      = FeatureTransfer( model_dict[params.model], normalize=params.normalize, **few_shot_params )
+        # if params.normalize: id += '_norm'
+        # if params.lr_decay: id += '_lr_decay'
+        # if params.train_aug: id += '_aug'
+        # if params.mini_batches: id += '_mini_batch'
+        model           = FeatureTransfer( model_dict[params.model], normalize=params.normalize, mini_batches=params.mini_batches, **few_shot_params )
+        last_model      = FeatureTransfer( model_dict[params.model], normalize=params.normalize, mini_batches=params.mini_batches, **few_shot_params )
+        best_model      = FeatureTransfer( model_dict[params.model], normalize=params.normalize, mini_batches=params.mini_batches, **few_shot_params )
     elif params.method == 'baseline':
         model           = BaselineFinetune( model_dict[params.model], normalize=params.normalize, **few_shot_params )
     elif params.method == 'baseline++':
@@ -252,6 +252,7 @@ def single_test(params):
         if params.first_order: id += '_first_order'
         if params.warmup:  id += '_warmup'
         if params.freeze: id += '_freeze'
+        if params.mini_batches: id += '_mini_batch'
         if params.sparse_method in ['Random', 'KMeans', 'augmFRVM', 'constFRVM']:  
             if params.num_ip is not None:
                     id += f'_ip_{params.num_ip}'

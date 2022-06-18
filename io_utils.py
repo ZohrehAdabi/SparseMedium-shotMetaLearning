@@ -56,6 +56,7 @@ def parse_args(script):
     parser.add_argument('--first_order'        , action='store_true', help='First order approx. of MAML') 
     if script == 'train':
         parser.add_argument('--num_classes'     , default=200, type=int, help='total number of classes in softmax, only used in baseline') #make it larger than the maximum label value in base class
+        parser.add_argument('--mini_batches'    , action='store_true', help='only used in feature_transfer')
         parser.add_argument('--save_model'      , action='store_true', help='save model in some epochs.')
         parser.add_argument('--save_freq'       , default=50, type=int, help='Save frequency')
         parser.add_argument('--start_epoch'     , default=0, type=int,help ='Starting epoch')

@@ -18,7 +18,7 @@ except ImportError:
     IS_TBX_INSTALLED = False
 
 class FeatureTransfer(MetaTemplate):
-    def __init__(self, model_func,  n_way, n_support, normalize=False):
+    def __init__(self, model_func,  n_way, n_support, normalize=False, mini_batches=False):
         super(FeatureTransfer, self).__init__(model_func,  n_way, n_support)
 
         self.loss_fn = nn.CrossEntropyLoss()
@@ -27,7 +27,8 @@ class FeatureTransfer(MetaTemplate):
         self.classifier.bias.data.fill_(0)
 
         self.normalize = normalize
-        self.n_batch = 1
+        self.n_batch = 2
+        self.mini_batch = mini_batches
         self.writer = None       
 
                
@@ -61,10 +62,11 @@ class FeatureTransfer(MetaTemplate):
         batch_count = 0
         loss_all = []
         loss_list = []
+        batch_loss_list = []
         optimizer.zero_grad()
         # y = torch.tensor( np.repeat(range( self.n_way ), (self.n_support + self.n_query) ), dtype=torch.long ).cuda()  
         batch_size = 16  
-        mini_batch = False 
+       
         #train
         for i, (x,_) in enumerate(train_loader):  
             # x = x.reshape([-1, x.shape[2], x.shape[3], x.shape[4]]).shape      
@@ -74,7 +76,7 @@ class FeatureTransfer(MetaTemplate):
             x = x.contiguous().view( self.n_way* (self.n_support+ self.n_query), *x.size()[2:])
             y = torch.tensor( np.repeat(range( self.n_way ), (self.n_support + self.n_query) ), dtype=torch.long ).cuda()
             
-            if mini_batch:
+            if self.mini_batch:
                 number_of_batches = int(np.ceil(x.shape[0] / batch_size))
                 optimizer.zero_grad()
                 for b in range(number_of_batches):
@@ -85,23 +87,26 @@ class FeatureTransfer(MetaTemplate):
                     optimizer.step()
                     optimizer.zero_grad()
                     loss_all.append(loss.item())
+                    avg_loss = avg_loss+loss.item()
 
             # Batch of task as batch
-            if not mini_batch:
+            if not self.mini_batch:
                 loss = self.set_forward_loss(x, y)
                 avg_loss = avg_loss+loss.item()#.data[0]
                 loss_all.append(loss.item())
+                batch_loss_list.append(loss)
                 batch_count += 1
                 if batch_count == self.n_batch: #Transfer update after several batch (task)
-                    loss = torch.stack(loss_all).sum(0) / batch_count
+                    loss = torch.stack(batch_loss_list).sum(0) / batch_count
                     loss.backward()
                     optimizer.step()
                     loss_list.append(np.mean(loss_all))
                     batch_count = 0
                     loss_all = []
+                    batch_loss_list = []
                     optimizer.zero_grad()
 
-            if mini_batch: loss_list.append(np.mean(loss_all))
+            if self.mini_batch: loss_list.append(np.mean(loss_all))
             self.iteration = i+(epoch*len(train_loader))
             if(self.writer is not None): self.writer.add_scalar('Loss', np.mean(loss_all), self.iteration)
             if i % print_freq==0:

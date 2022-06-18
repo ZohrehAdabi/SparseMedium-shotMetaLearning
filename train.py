@@ -176,7 +176,8 @@ if __name__ == '__main__':
             if params.normalize: id += '_norm'
             if params.lr_decay: id += '_lr_decay'
             if params.train_aug: id += '_aug'
-            model = FeatureTransfer(model_dict[params.model], normalize=params.normalize, **train_few_shot_params)
+            if params.mini_batches: id += '_mini_batch'
+            model = FeatureTransfer(model_dict[params.model], normalize=params.normalize, mini_batches=params.mini_batches, **train_few_shot_params)
     
             model.init_summary(id=id, dataset=params.dataset)
         else:
@@ -561,7 +562,8 @@ if __name__ == '__main__':
     if not params.method in ['baseline', 'baseline++']:
         
         if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_RVM', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 
-                                'Sp_DKT_Bin_Nyst_NLoss', 'Sparse_DKT_binary_Exact', 'Sp_DKT_Bin_Exact_NLoss']:
+                                'Sp_DKT_Bin_Nyst_NLoss', 'Sparse_DKT_binary_Exact', 'Sp_DKT_Bin_Exact_NLoss',
+                                'transfer']:
             if params.dirichlet:
                 id = f'_{params.sparse_method}_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
@@ -582,7 +584,6 @@ if __name__ == '__main__':
             if params.rvm_mll_only: id += f'_rvm_mll_only'
             if params.rvm_ll_only: id += f'_rvm_ll_only'
             if params.train_aug: id += '_aug'
-   
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
             if params.sparse_method in ['Random', 'KMeans', 'augmFRVM', 'constFRVM']:  
@@ -610,13 +611,14 @@ if __name__ == '__main__':
             if params.freeze: id += '_freeze'
             params.checkpoint_dir += id
         
-        else: 
+        elif params.method in ['MetaOptNet', 'transfer'] 
             id=f'_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}'
             if params.normalize: id += '_norm'
             if params.train_aug: id += '_aug'
             if params.first_order: id += '_first_order'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
+            if params.mini_batches: id += '_mini_batch'
             params.checkpoint_dir += id
 
     if not os.path.isdir(params.checkpoint_dir):
