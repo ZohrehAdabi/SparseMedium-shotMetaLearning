@@ -77,6 +77,7 @@ class FeatureTransfer(MetaTemplate):
             y = torch.tensor( np.repeat(range( self.n_way ), (self.n_support + self.n_query) ), dtype=torch.long ).cuda()
             
             if self.mini_batch:
+                loss_all = []
                 number_of_batches = int(np.ceil(x.shape[0] / batch_size))
                 optimizer.zero_grad()
                 for b in range(number_of_batches):
@@ -88,6 +89,12 @@ class FeatureTransfer(MetaTemplate):
                     optimizer.zero_grad()
                     loss_all.append(loss.item())
                     avg_loss = avg_loss+loss.item()
+
+            if self.mini_batch: loss_list.append(np.mean(loss_all))
+            self.iteration = i+(epoch*len(train_loader))
+            if(self.writer is not None): 
+                if self.mini_batch:
+                    self.writer.add_scalar('Loss', np.mean(loss_all), self.iteration)
 
             # Batch of task as batch
             if not self.mini_batch:
@@ -106,9 +113,11 @@ class FeatureTransfer(MetaTemplate):
                     batch_loss_list = []
                     optimizer.zero_grad()
 
-            if self.mini_batch: loss_list.append(np.mean(loss_all))
-            self.iteration = i+(epoch*len(train_loader))
-            if(self.writer is not None): self.writer.add_scalar('Loss', np.mean(loss_all), self.iteration)
+                    if(self.writer is not None): 
+                        self.writer.add_scalar('Loss', loss_list[-1], self.iteration)
+
+            
+
             if i % print_freq==0:
                 print('Epoch {:d} | Batch {:d}/{:d} | Loss {:f}'.format(epoch, i, len(train_loader), avg_loss/float(i+1)))
         
