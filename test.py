@@ -33,6 +33,7 @@ from methods.relationnet import RelationNet
 from methods.MAML import MAML
 from methods.MetaOptNet import MetaOptNet
 from methods.MetaOptNet_binary import MetaOptNet_binary
+from methods.feature_transfer import FeatureTransfer
 from io_utils import model_dict, get_resume_file, parse_args, get_best_file , get_assigned_file
 from configs import run_float64
 
@@ -83,8 +84,17 @@ def single_test(params):
     if params.dataset in ['omniglot', 'cross_char']:
         assert params.model == 'Conv4' and not params.train_aug ,'omniglot only support Conv4 without augmentation'
         params.model = 'Conv4S'
+    if params.method == 'transfer':
+        id=f'Transfer_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}'
+         
+        if params.normalize: id += '_norm'
+        if params.lr_decay: id += '_lr_decay'
+        if params.train_aug: id += '_aug'
 
-    if params.method == 'baseline':
+        model           = FeatureTransfer( model_dict[params.model], normalize=params.normalize, **few_shot_params )
+        last_model      = FeatureTransfer( model_dict[params.model], normalize=params.normalize, **few_shot_params )
+        best_model      = FeatureTransfer( model_dict[params.model], normalize=params.normalize, **few_shot_params )
+    elif params.method == 'baseline':
         model           = BaselineFinetune( model_dict[params.model], normalize=params.normalize, **few_shot_params )
     elif params.method == 'baseline++':
         model           = BaselineFinetune( model_dict[params.model], normalize=params.normalize, loss_type = 'dist', **few_shot_params )
@@ -222,10 +232,11 @@ def single_test(params):
          #MAML, MetaOptNet
         elif  params.method in ['MAML']: 
             id=f'_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}_loop_{params.inner_loop}_inner_lr_{params.inner_lr}'
-        else:
+        elif  params.method in ['MetaOptNet', 'transfer']: 
 
             id=f'_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}'
-       
+        else:
+            raise ValueError('Unknown method')
 
         if params.normalize: id += '_norm'
         if params.separate: id += '_separate'
@@ -356,7 +367,8 @@ def single_test(params):
     else:
         split_str = split
     if params.method in ['MAML', 'maml_approx', 'MetaOptNet', 'MetaOptNet_binary', 'DKT', 'DKT_binary', 'DKT_binary_new_loss', 'Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_RVM',
-                            'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss', 'Sparse_DKT_binary_Exact', 'Sp_DKT_Bin_Exact_NLoss']: #maml do not support testing with feature
+                            'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss', 'Sparse_DKT_binary_Exact', 'Sp_DKT_Bin_Exact_NLoss',
+                            'transfer']: #maml do not support testing with feature
         if 'Conv' in params.model:
             if params.dataset in ['omniglot', 'cross_char']:
                 image_size = 28

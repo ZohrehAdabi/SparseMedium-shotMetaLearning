@@ -32,6 +32,7 @@ from methods.relationnet import RelationNet
 from methods.MAML import MAML
 from methods.MetaOptNet import MetaOptNet
 from methods.MetaOptNet_binary import MetaOptNet_binary
+from methods.feature_transfer import FeatureTransfer
 from io_utils import model_dict, parse_args, get_resume_file
 from configs import run_float64
 
@@ -52,7 +53,7 @@ def _set_seed(seed, verbose=True):
 def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch, lr_gp, lr_net, params):
     print("Tot epochs: " + str(stop_epoch))
     if optimization == 'Adam':
-        if params.method in ['MAML', 'MetaOptNet', 'MetaOptNet_binary', 'baseline']:
+        if params.method in ['MAML', 'MetaOptNet', 'MetaOptNet_binary', 'baseline', 'baseline++', 'transfer']:
             optimizer = torch.optim.Adam([{'params': model.parameters(), 'lr': lr_net}])
         else:
             optimizer = torch.optim.Adam([{'params': model.model.parameters(), 'lr': lr_gp},
@@ -159,29 +160,48 @@ if __name__ == '__main__':
             else:
                 params.stop_epoch = 100  # default*******************
 
-    if params.method in ['baseline', 'baseline++']:
-        base_datamgr = SimpleDataManager(image_size, batch_size=16)
-        base_loader = base_datamgr.get_data_loader(base_file, aug=params.train_aug)
-        val_datamgr = SimpleDataManager(image_size, batch_size=64)
-        val_loader = val_datamgr.get_data_loader(val_file, aug=False)
+    if params.method in ['baseline', 'baseline++', 'transfer']:
 
-        if params.dataset == 'omniglot':
-            assert params.num_classes >= 4112, 'class number need to be larger than max label id in base class'
-        if params.dataset == 'cross_char':
-            assert params.num_classes >= 1597, 'class number need to be larger than max label id in base class'
+        if params.method in ['transfer']:
+            train_few_shot_params = dict(n_way=params.train_n_way, n_support=params.n_shot)
+            base_datamgr = SetDataManager(image_size, **train_few_shot_params, n_query=params.n_query, n_eposide=params.n_task) #n_eposide=100
+            base_loader = base_datamgr.get_data_loader(base_file, aug=params.train_aug)
 
-        if params.method == 'baseline':
-            model = BaselineTrain(model_dict[params.model], params.num_classes, normalize=params.normalize)
-        elif params.method == 'baseline++':
-            model = BaselineTrain(model_dict[params.model], params.num_classes, normalize=params.normalize, loss_type='dist')
+            test_few_shot_params = dict(n_way=params.test_n_way, n_support=params.n_shot)
+            val_datamgr = SetDataManager(image_size, **test_few_shot_params, n_query=params.n_query, n_eposide=params.n_task)
+            val_loader = val_datamgr.get_data_loader(val_file, aug=False)
+
+            id=f'Transfer_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}'
+         
+            if params.normalize: id += '_norm'
+            if params.lr_decay: id += '_lr_decay'
+            if params.train_aug: id += '_aug'
+            model = FeatureTransfer(model_dict[params.model], normalize=params.normalize, **train_few_shot_params)
+    
+            model.init_summary(id=id, dataset=params.dataset)
+        else:
+            base_datamgr = SimpleDataManager(image_size, batch_size=16)
+            base_loader = base_datamgr.get_data_loader(base_file, aug=params.train_aug)
+            val_datamgr = SimpleDataManager(image_size, batch_size=64)
+            val_loader = val_datamgr.get_data_loader(val_file, aug=False)
+
+            if params.dataset == 'omniglot':
+                assert params.num_classes >= 4112, 'class number need to be larger than max label id in base class'
+            if params.dataset == 'cross_char':
+                assert params.num_classes >= 1597, 'class number need to be larger than max label id in base class'
+
+            if params.method == 'baseline':
+                model = BaselineTrain(model_dict[params.model], params.num_classes, normalize=params.normalize)
+            elif params.method == 'baseline++':
+                model = BaselineTrain(model_dict[params.model], params.num_classes, normalize=params.normalize, loss_type='dist')
+            
+            id = f'{params.method}_{params.model}_n_class_{params.num_classes}'
+            if params.normalize: id += '_norm'
+            if params.lr_decay: id += '_lr_decay'
+            if params.train_aug: id += '_aug'
         
-        id = f'{params.method}_{params.model}_n_class_{params.num_classes}'
-        if params.normalize: id += '_norm'
-        if params.lr_decay: id += '_lr_decay'
-        if params.train_aug: id += '_aug'
+            model.init_summary(id=id, dataset=params.dataset)
         
-        model.init_summary(id=id, dataset=params.dataset)
-
     elif params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_RVM', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss', 
                             'Sparse_DKT_binary_Exact', 'Sp_DKT_Bin_Exact_NLoss', 
                             'DKT', 'DKT_binary', 'DKT_binary_new_loss', 'protonet', 
@@ -527,6 +547,7 @@ if __name__ == '__main__':
             model = MetaOptNet_binary(model_dict[params.model], normalize=params.normalize, **train_few_shot_params)
     
             model.init_summary(id=id)
+        
         print(f'\n{id}\n')
     
     else:

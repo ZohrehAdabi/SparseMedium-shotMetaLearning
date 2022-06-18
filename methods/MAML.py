@@ -137,7 +137,7 @@ class MAML(MetaTemplate):
             if i % print_freq==0:
                 print('Epoch {:d} | Batch {:d}/{:d} | Loss {:f}'.format(epoch, i, len(train_loader), avg_loss/float(i+1)))
                       
-    def test_loop(self, test_loader, return_std = False): #overwrite parrent function
+    def test_loop(self, test_loader, return_std = False, dataset=None, show_plot=False): #overwrite parrent function
         correct =0
         count = 0
         acc_all = []

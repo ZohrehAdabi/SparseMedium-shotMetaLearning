@@ -17,17 +17,17 @@ try:
 except ImportError:
     IS_TBX_INSTALLED = False
 
-class FatureTransfer(MetaTemplate):
+class FeatureTransfer(MetaTemplate):
     def __init__(self, model_func,  n_way, n_support, normalize=False):
-        super(FatureTransfer, self).__init__(model_func,  n_way, n_support)
+        super(FeatureTransfer, self).__init__(model_func,  n_way, n_support)
 
         self.loss_fn = nn.CrossEntropyLoss()
         # self.classifier = backbone.Linear_fw(self.feat_dim, n_way)
-        self.classifier = nn.Linear(feat_dim, num_class)
+        self.classifier = nn.Linear(self.feat_dim, n_way)
         self.classifier.bias.data.fill_(0)
 
         self.normalize = normalize
-        self.n_batch = 4
+        self.n_batch = 2
         self.writer = None       
 
                
@@ -58,14 +58,17 @@ class FatureTransfer(MetaTemplate):
     def train_loop(self, epoch, train_loader, optimizer): #overwrite parrent function
         print_freq = 50
         avg_loss=0
-        task_count = 0
+        batch_count = 0
         loss_all = []
         optimizer.zero_grad()
              
         #train
-        for i, (x,_) in enumerate(train_loader):        
+        for i, (x,_) in enumerate(train_loader):  
+            # x = x.reshape([-1, x.shape[2], x.shape[3], x.shape[4]]).shape      
+            
             self.n_query = x.size(1) - self.n_support
             assert self.n_way  ==  x.size(0), "MAML do not support way change"
+            x = x.contiguous().view( self.n_way* (self.n_support+ self.n_query), *x.size()[2:])
 
             loss = self.set_forward_loss(x)
             avg_loss = avg_loss+loss.item()#.data[0]
@@ -87,7 +90,7 @@ class FatureTransfer(MetaTemplate):
             if i % print_freq==0:
                 print('Epoch {:d} | Batch {:d}/{:d} | Loss {:f}'.format(epoch, i, len(train_loader), avg_loss/float(i+1)))
                       
-    def test_loop(self, test_loader, return_std = False): #overwrite parrent function
+    def test_loop(self, test_loader, return_std = False, dataset=None, show_plot=False): #overwrite parrent function
         correct =0
         count = 0
         acc_all = []
@@ -98,6 +101,9 @@ class FatureTransfer(MetaTemplate):
             assert self.n_way  ==  x.size(0), "MAML do not support way change"
             correct_this, count_this = self.correct(x)
             acc_all.append(correct_this/ count_this *100 )
+            if(i % 10==0):
+                acc_mean = np.mean(np.asarray(acc_all))
+                print('Test | Batch {:d}/{:d} | Acc {:f}'.format(i, len(test_loader), acc_mean))
 
         acc_all  = np.asarray(acc_all)
         acc_mean = np.mean(acc_all)
@@ -128,8 +134,8 @@ class FatureTransfer(MetaTemplate):
         # assert is_feature == True, 'Baseline only support testing with feature'
         z_support, z_query  = self.parse_feature(x, is_feature)
 
-        z_support   = z_support.contiguous().view(self.n_way* self.n_support, -1 )
-        z_query     = z_query.contiguous().view(self.n_way* self.n_query, -1 )
+        z_support   = z_support.contiguous().view(self.n_way* self.n_support, -1 ).detach()
+        z_query     = z_query.contiguous().view(self.n_way* self.n_query, -1 ).detach()
 
         if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1)
         if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
@@ -137,10 +143,10 @@ class FatureTransfer(MetaTemplate):
         # y_support = y_support.to(dtype=torch.float64).cuda()
         y_support = y_support.type(torch.LongTensor).cuda()
 
-        if self.loss_type == 'softmax':
-            linear_clf = nn.Linear(self.feat_dim, self.n_way)
-        elif self.loss_type == 'dist':        
-            linear_clf = backbone.distLinear(self.feat_dim, self.n_way)
+        # if self.loss_type == 'softmax':
+        linear_clf = nn.Linear(self.feat_dim, self.n_way)
+        # elif self.loss_type == 'dist':        
+        #     linear_clf = backbone.distLinear(self.feat_dim, self.n_way)
         linear_clf = linear_clf.cuda()
 
         # set_optimizer = torch.optim.SGD(linear_clf.parameters(), lr = 0.01, momentum=0.9, dampening=0.9, weight_decay=0.001)
@@ -171,19 +177,19 @@ class FatureTransfer(MetaTemplate):
         return logits
 
 # ==============================================================================================
-    def set_forward(self, x, is_feature = False):
-        assert is_feature == False, 'MAML do not support fixed feature' 
-        x = x.cuda()
-        # x_var = x
-        # x_a_i = x_var[:,:self.n_support,:,:,:].contiguous().view( self.n_way* self.n_support, *x.size()[2:]) #support data 
-        # x_b_i = x_var[:,self.n_support:,:,:,:].contiguous().view( self.n_way* self.n_query,   *x.size()[2:]) #query data
-        # y_a_i = torch.tensor( np.repeat(range( self.n_way ), self.n_support ), dtype=torch.long ).cuda() #label for support data
+    # def set_forward(self, x, is_feature = False):
+    #     assert is_feature == False, 'MAML do not support fixed feature' 
+    #     x = x.cuda()
+    #     # x_var = x
+    #     # x_a_i = x_var[:,:self.n_support,:,:,:].contiguous().view( self.n_way* self.n_support, *x.size()[2:]) #support data 
+    #     # x_b_i = x_var[:,self.n_support:,:,:,:].contiguous().view( self.n_way* self.n_query,   *x.size()[2:]) #query data
+    #     # y_a_i = torch.tensor( np.repeat(range( self.n_way ), self.n_support ), dtype=torch.long ).cuda() #label for support data
 
-        y = torch.tensor( np.repeat(range( self.n_way ), (self.n_support + self.n_query) ), dtype=torch.long ).cuda()
+    #     y = torch.tensor( np.repeat(range( self.n_way ), (self.n_support + self.n_query) ), dtype=torch.long ).cuda()
              
-        scores = self.forward(x)
-        return scores
+    #     scores = self.forward(x)
+    #     return scores
 
-    def set_forward_adaptation(self,x, is_feature = False): #overwrite parrent function
-        raise ValueError('MAML performs further adapation simply by increasing task_upate_num')
+    # def set_forward_adaptation(self,x, is_feature = False): #overwrite parrent function
+    #     raise ValueError('MAML performs further adapation simply by increasing task_upate_num')
 

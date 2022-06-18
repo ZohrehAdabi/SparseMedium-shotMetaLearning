@@ -139,7 +139,7 @@ class MetaOptNet(MetaTemplate):
            
         return accuracy_query, num_SV
 
-    def test_loop(self, test_loader, record=None, return_std=False):
+    def test_loop(self, test_loader, record=None, return_std=False, dataset=None, show_plot=False):
         print_freq = 10
         correct =0
         count = 0
