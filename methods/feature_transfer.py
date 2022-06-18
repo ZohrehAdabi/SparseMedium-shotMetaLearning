@@ -27,7 +27,7 @@ class FeatureTransfer(MetaTemplate):
         self.classifier.bias.data.fill_(0)
 
         self.normalize = normalize
-        self.n_batch = 2
+        self.n_batch = 1
         self.writer = None       
 
                
@@ -47,10 +47,10 @@ class FeatureTransfer(MetaTemplate):
         return scores
 
 
-    def set_forward_loss(self, x):
+    def set_forward_loss(self, x, y):
         scores = self.forward(x, is_feature = False)
         # y_b_i = torch.tensor( np.repeat(range( self.n_way ), self.n_query), dtype=torch.long ).cuda()
-        y = torch.tensor( np.repeat(range( self.n_way ), (self.n_support + self.n_query) ), dtype=torch.long ).cuda()
+        
         loss = self.loss_fn(scores, y)
 
         return loss
@@ -60,8 +60,11 @@ class FeatureTransfer(MetaTemplate):
         avg_loss=0
         batch_count = 0
         loss_all = []
+        loss_list = []
         optimizer.zero_grad()
-             
+        # y = torch.tensor( np.repeat(range( self.n_way ), (self.n_support + self.n_query) ), dtype=torch.long ).cuda()  
+        batch_size = 16  
+        mini_batch = False 
         #train
         for i, (x,_) in enumerate(train_loader):  
             # x = x.reshape([-1, x.shape[2], x.shape[3], x.shape[4]]).shape      
@@ -69,27 +72,43 @@ class FeatureTransfer(MetaTemplate):
             self.n_query = x.size(1) - self.n_support
             assert self.n_way  ==  x.size(0), "MAML do not support way change"
             x = x.contiguous().view( self.n_way* (self.n_support+ self.n_query), *x.size()[2:])
-
-            loss = self.set_forward_loss(x)
-            avg_loss = avg_loss+loss.item()#.data[0]
-            loss_all.append(loss)
-
-            batch_count += 1
-
-            if batch_count == self.n_batch: #Transfer update after several batch (task)
-                loss_q = torch.stack(loss_all).sum(0)
-                loss_q.backward()
-
-                optimizer.step()
-                batch_count = 0
-                loss_all = []
+            y = torch.tensor( np.repeat(range( self.n_way ), (self.n_support + self.n_query) ), dtype=torch.long ).cuda()
+            
+            if mini_batch:
+                number_of_batches = int(np.ceil(x.shape[0] / batch_size))
                 optimizer.zero_grad()
+                for b in range(number_of_batches):
+                    x_batch = x[b*batch_size:(b+1)*batch_size,:, :, :]
+                    y_batch = y[b * batch_size:(b + 1) * batch_size]
+                    loss = self.set_forward_loss(x_batch, y_batch)
+                    loss.backward()
+                    optimizer.step()
+                    optimizer.zero_grad()
+                    loss_all.append(loss.item())
 
+            # Batch of task as batch
+            if not mini_batch:
+                loss = self.set_forward_loss(x, y)
+                avg_loss = avg_loss+loss.item()#.data[0]
+                loss_all.append(loss)
+                batch_count += 1
+                if batch_count == self.n_batch: #Transfer update after several batch (task)
+                    loss = torch.stack(loss_all).sum(0) / batch_count
+                    loss.backward()
+                    optimizer.step()
+                    loss_list.append(np.mean(loss_all))
+                    batch_count = 0
+                    loss_all = []
+                    optimizer.zero_grad()
+
+            if mini_batch: loss_list.append(np.mean(loss_all))
             self.iteration = i+(epoch*len(train_loader))
-            if(self.writer is not None): self.writer.add_scalar('Loss', loss.item(), self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('Loss', np.mean(loss_all), self.iteration)
             if i % print_freq==0:
                 print('Epoch {:d} | Batch {:d}/{:d} | Loss {:f}'.format(epoch, i, len(train_loader), avg_loss/float(i+1)))
-                      
+        
+        if(self.writer is not None): self.writer.add_scalar('Loss_[mean]', np.mean(loss_list), self.iteration)  
+
     def test_loop(self, test_loader, return_std = False, dataset=None, show_plot=False): #overwrite parrent function
         correct =0
         count = 0
