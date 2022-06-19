@@ -175,7 +175,8 @@ def single_test(params):
         backbone.SimpleBlock.maml = True
         backbone.BottleneckBlock.maml = True
         backbone.ResNet.maml = True
-        model = MAML(  model_dict[params.model], inner_loop=params.inner_loop, inner_lr=params.inner_lr, first_order=params.first_order, normalize=params.normalize, **few_shot_params )
+        model = MAML(  model_dict[params.model], inner_loop=params.inner_loop, inner_lr=params.inner_lr, first_order=params.first_order, 
+                            normalize=params.normalize,  mini_batches=params.mini_batches, **few_shot_params)
         # if params.dataset in ['omniglot', 'cross_char']: #maml use different parameter in omniglot
         #     model.n_task     = 32
         #     model.task_update_num = 1

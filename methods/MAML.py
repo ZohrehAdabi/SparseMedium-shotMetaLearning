@@ -18,7 +18,7 @@ except ImportError:
     IS_TBX_INSTALLED = False
 
 class MAML(MetaTemplate):
-    def __init__(self, model_func,  n_way, n_support, inner_loop=5, inner_lr=1e-3, first_order=False, normalize=False):
+    def __init__(self, model_func,  n_way, n_support, inner_loop=5, inner_lr=1e-3, first_order=False, normalize=False, mini_batches=False):
         super(MAML, self).__init__( model_func,  n_way, n_support, change_way = False)
 
         self.loss_fn = nn.CrossEntropyLoss()
@@ -30,7 +30,7 @@ class MAML(MetaTemplate):
         self.task_update_num = inner_loop #5
         self.train_lr = inner_lr
         self.approx = first_order #first order approx.
-
+        self.mini_batch = mini_batches
         self.writer = None       
 
                
@@ -49,13 +49,15 @@ class MAML(MetaTemplate):
         scores  = self.classifier.forward(out)
         return scores
 
-    def set_forward(self, x, is_feature = False):
+    def set_forward(self, x_support, x_query, y_support, is_feature = False):
         assert is_feature == False, 'MAML do not support fixed feature' 
-        x = x.cuda()
-        x_var = x
-        x_a_i = x_var[:,:self.n_support,:,:,:].contiguous().view( self.n_way* self.n_support, *x.size()[2:]) #support data 
-        x_b_i = x_var[:,self.n_support:,:,:,:].contiguous().view( self.n_way* self.n_query,   *x.size()[2:]) #query data
-        y_a_i = torch.tensor( np.repeat(range( self.n_way ), self.n_support ), dtype=torch.long ).cuda() #label for support data
+        x_a_i = x_support.cuda()
+        y_a_i = y_support
+        x_b_i = x_query.cuda()
+        # x_var = x
+        # x_a_i = x_var[:,:self.n_support,:,:,:].contiguous().view( self.n_way* self.n_support, *x.size()[2:]) #support data 
+        # x_b_i = x_var[:,self.n_support:,:,:,:].contiguous().view( self.n_way* self.n_query,   *x.size()[2:]) #query data
+        # y_a_i = torch.tensor( np.repeat(range( self.n_way ), self.n_support ), dtype=torch.long ).cuda() #label for support data
         
         fast_parameters = list(self.parameters()) #the first gradient calcuated in line 45 is based on original weight
         for weight in self.parameters():
@@ -99,10 +101,10 @@ class MAML(MetaTemplate):
         raise ValueError('MAML performs further adapation simply by increasing task_upate_num')
 
 
-    def set_forward_loss(self, x):
-        scores = self.set_forward(x, is_feature = False)
-        y_b_i = torch.tensor( np.repeat(range( self.n_way ), self.n_query), dtype=torch.long ).cuda()
-        loss = self.loss_fn(scores, y_b_i)
+    def set_forward_loss(self, x_support, x_query, y_support, y_query):
+        scores = self.set_forward(x_support, x_query, y_support, is_feature = False)
+        # y_b_i = torch.tensor( np.repeat(range( self.n_way ), self.n_query), dtype=torch.long ).cuda()
+        loss = self.loss_fn(scores, y_query)
 
         return loss
 
@@ -113,28 +115,59 @@ class MAML(MetaTemplate):
         loss_all = []
         loss_list = []
         optimizer.zero_grad()
-             
+        batch_size = 16      
         #train
         for i, (x,_) in enumerate(train_loader):        
             self.n_query = x.size(1) - self.n_support
             assert self.n_way  ==  x.size(0), "MAML do not support way change"
 
-            loss = self.set_forward_loss(x)
-            avg_loss = avg_loss+loss.item()#.data[0]
-            loss_all.append(loss)
-
-            task_count += 1
-
-            if task_count == self.n_task: #MAML update several tasks at one time
-                loss_q = torch.stack(loss_all).sum(0)
-                loss_q.backward()
-                optimizer.step()
-                loss_list.append(loss_all.mean().item())
-                task_count = 0
-                loss_all = []
-            optimizer.zero_grad()
             self.iteration = i+(epoch*len(train_loader))
-            if(self.writer is not None): self.writer.add_scalar('Loss', loss.item(), self.iteration)
+ 
+            x_a_i = x[:,:self.n_support,:,:,:].contiguous().view( self.n_way* self.n_support, *x.size()[2:]) #support data 
+            x_b_i = x[:,self.n_support:,:,:,:].contiguous().view( self.n_way* self.n_query,   *x.size()[2:]) #query data
+            y_a_i = torch.tensor( np.repeat(range( self.n_way ), self.n_support ), dtype=torch.long ).cuda() #label for support data
+            y_b_i = torch.tensor( np.repeat(range( self.n_way ), self.n_query), dtype=torch.long ).cuda()
+
+            idx_permuted = torch.randperm(x_a_i.shape[0])
+            x_a_i = x_a_i[idx_permuted]
+            y_a_i = y_a_i[idx_permuted]
+            if self.mini_batch:
+                loss_all = []
+                number_of_batches = int(np.ceil(x_a_i.shape[0] / batch_size))
+                optimizer.zero_grad()
+                for b in range(number_of_batches):
+                    x_batch = x_a_i[b*batch_size:(b+1)*batch_size,:, :, :]
+                    y_batch = y_a_i[b * batch_size:(b + 1) * batch_size]
+                    loss = self.set_forward_loss(x_batch, x_b_i, y_batch, y_b_i)
+                    loss.backward()
+                    optimizer.step()
+                    optimizer.zero_grad()
+                    loss_all.append(loss.item())
+                    avg_loss = avg_loss+loss.item()
+
+                loss_list.append(np.mean(loss_all))
+            
+                if(self.writer is not None): 
+                        self.writer.add_scalar('Loss', np.mean(loss_all), self.iteration)    
+            else:
+                loss = self.set_forward_loss(x_a_i, x_b_i, y_a_i, y_b_i)
+                avg_loss = avg_loss+loss.item()#.data[0]
+                loss_all.append(loss)
+
+                task_count += 1
+
+                if task_count == self.n_task: #MAML update several tasks at one time
+                    loss_q = torch.stack(loss_all).sum(0)
+                    loss_q.backward()
+                    optimizer.step()
+                    loss_list.append(loss_all.mean().item())
+                    task_count = 0
+                    loss_all = []
+                    optimizer.zero_grad()
+
+                    if(self.writer is not None): 
+                            self.writer.add_scalar('Loss', loss_list[-1], self.iteration)
+
             if i % print_freq==0:
                 print('Epoch {:d} | Batch {:d}/{:d} | Loss {:f}'.format(epoch, i, len(train_loader), avg_loss/float(i+1)))
                 
@@ -167,6 +200,18 @@ class MAML(MetaTemplate):
             return acc_mean, acc_std, result
         else:
             return acc_mean, result
+
+    def correct(self, x):  
+        x_a_i = x[:,:self.n_support,:,:,:].contiguous().view( self.n_way* self.n_support, *x.size()[2:]) #support data 
+        x_b_i = x[:,self.n_support:,:,:,:].contiguous().view( self.n_way* self.n_query,   *x.size()[2:]) #query data
+        y_a_i = torch.tensor( np.repeat(range( self.n_way ), self.n_support ), dtype=torch.long ).cuda() #label for support data     
+        scores = self.set_forward(x_support=x_a_i, x_query=x_b_i, y_support=y_a_i)
+        y_query = np.repeat(range( self.n_way ), self.n_query )
+
+        topk_scores, topk_labels = scores.data.topk(1, 1, True, True)
+        topk_ind = topk_labels.cpu().numpy()
+        top1_correct = np.sum(topk_ind[:,0] == y_query)
+        return float(top1_correct), len(y_query)
 
     def get_logits(self, x):
         self.n_query = x.size(1) - self.n_support

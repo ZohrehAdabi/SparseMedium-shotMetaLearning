@@ -82,7 +82,7 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
         #         optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.1
         model.eval()
         if params.method not in ['baseline', 'baseline++']:
-            if ((epoch+1)%2==0 and (epoch+1) > 50) or ((epoch+1)%10==0 and (epoch+1)<=50):
+            if epoch==0 or ((epoch+1)%2==0 and (epoch+1) > 50) or ((epoch+1)%10==0 and (epoch+1)<=50):
                 if not os.path.isdir(params.checkpoint_dir):
                     os.makedirs(params.checkpoint_dir)
                 print(Fore.GREEN,"-"*50 ,f'\nValidation {params.method}\n', Fore.RESET)
@@ -523,7 +523,9 @@ if __name__ == '__main__':
             if params.lr_decay: id += '_lr_decay'
             if params.train_aug: id += '_aug'
             if params.first_order: id += '_first_order'
-            model = MAML(model_dict[params.model], inner_loop=params.inner_loop, inner_lr=params.inner_lr, first_order=params.first_order, normalize=params.normalize, **train_few_shot_params)
+            if params.mini_batches: id += '_mini_batch'
+            model = MAML(model_dict[params.model], inner_loop=params.inner_loop, inner_lr=params.inner_lr, first_order=params.first_order, 
+                                        normalize=params.normalize, mini_batches=params.mini_batches, **train_few_shot_params)
             # if params.dataset in ['omniglot', 'cross_char']:  # maml use different parameter in omniglot
             #     model.n_task = 32
             #     model.task_update_num = 1
@@ -608,6 +610,7 @@ if __name__ == '__main__':
             if params.normalize: id += '_norm'
             if params.train_aug: id += '_aug'
             if params.first_order: id += '_first_order'
+            if params.mini_batches: id += '_mini_batch'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
             params.checkpoint_dir += id

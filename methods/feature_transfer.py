@@ -75,7 +75,9 @@ class FeatureTransfer(MetaTemplate):
             assert self.n_way  ==  x.size(0), "MAML do not support way change"
             x = x.contiguous().view( self.n_way* (self.n_support+ self.n_query), *x.size()[2:])
             y = torch.tensor( np.repeat(range( self.n_way ), (self.n_support + self.n_query) ), dtype=torch.long ).cuda()
-            
+            idx_permuted = torch.randperm(x.shape[0])
+            x = x[idx_permuted]
+            y = y[idx_permuted]
             if self.mini_batch:
                 loss_all = []
                 number_of_batches = int(np.ceil(x.shape[0] / batch_size))
