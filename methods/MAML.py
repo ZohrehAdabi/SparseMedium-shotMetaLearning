@@ -160,7 +160,7 @@ class MAML(MetaTemplate):
                     loss_q = torch.stack(loss_all).sum(0)
                     loss_q.backward()
                     optimizer.step()
-                    loss_list.append(loss_all.mean().item())
+                    loss_list.append(torch.mean(torch.stack(loss_all)).item())
                     task_count = 0
                     loss_all = []
                     optimizer.zero_grad()
