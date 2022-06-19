@@ -26,7 +26,7 @@ class MAML(MetaTemplate):
         self.classifier.bias.data.fill_(0)
 
         self.normalize = normalize
-        self.n_task     = 4
+        self.n_task     = 1
         self.task_update_num = inner_loop #5
         self.train_lr = inner_lr
         self.approx = first_order #first order approx.
