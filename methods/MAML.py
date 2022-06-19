@@ -184,6 +184,9 @@ class MAML(MetaTemplate):
             assert self.n_way  ==  x.size(0), "MAML do not support way change"
             correct_this, count_this = self.correct(x)
             acc_all.append(correct_this/ count_this *100 )
+            if(i % 10==0):
+                acc_mean = np.mean(np.asarray(acc_all))
+                print('Test | Batch {:d}/{:d} | Acc {:f}'.format(i, len(test_loader), acc_mean))
 
         acc_all  = np.asarray(acc_all)
         acc_mean = np.mean(acc_all)
