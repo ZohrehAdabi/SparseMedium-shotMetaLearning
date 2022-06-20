@@ -82,7 +82,7 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
         #         optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.1
         model.eval()
         if params.method not in ['baseline', 'baseline++']:
-            if epoch==0 or ((epoch+1)%2==0 and (epoch+1) > 50) or ((epoch+1)%10==0 and (epoch+1)<=50):
+            if ((epoch+1)%3==0 and (epoch+1) > 50) or ((epoch+1)%10==0 and (epoch+1)<=50)  or (epoch == stop_epoch - 1):
                 if not os.path.isdir(params.checkpoint_dir):
                     os.makedirs(params.checkpoint_dir)
                 print(Fore.GREEN,"-"*50 ,f'\nValidation {params.method}\n', Fore.RESET)

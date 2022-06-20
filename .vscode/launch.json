@@ -646,9 +646,9 @@
             "program": "${workspaceFolder}/train.py",
             "console": "integratedTerminal",
            "args": ["--method","baseline", "--dataset", "CUB", 
-            "--num_classes", "147", 
+            "--num_classes", "72", 
             "--seed","1" , "--train_aug"]  //
-         // python train.py --method "baseline"  --dataset "CUB"  --num_classes 147 --seed 1  --train_aug --lr_net  1e-3 
+         // python train.py --method "baseline"  --dataset "CUB"  --num_classes 72 --seed 1  --train_aug --lr_net  1e-3 
          },
          {
             "name": "Baseline [save_features] [CUB]: test ",
@@ -657,10 +657,10 @@
             "program": "${workspaceFolder}/save_features.py",
             "console": "integratedTerminal",
            "args": ["--method","baseline", "--dataset", "CUB", 
-            "--num_classes", "147",
+            "--num_classes", "72",
             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10", 
             "--seed","1" ]  //
-         // python save_features.py --method "baseline"  --dataset "CUB"  --num_classes 147 --test_n_way 2 --n_shot 50 --n_query 10 --seed 1 --train_aug --lr_net  1e-3 
+         // python save_features.py --method "baseline"  --dataset "CUB"  --num_classes 72 --test_n_way 2 --n_shot 50 --n_query 10 --seed 1 --train_aug --lr_net  1e-3 
          },
          {
             "name": "Baseline [CUB]: test ",
@@ -670,8 +670,42 @@
             "console": "integratedTerminal",
            "args": ["--method","baseline", "--dataset", "CUB", 
             "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "1", "--n_query", "10", 
-            "--seed","1" ]  //
+            "--seed","1", "--train_aug" ]  //
          // python test.py --method "baseline"  --dataset "CUB"  --train_n_way 2 --test_n_way 2 --n_shot 50 --n_query 10 --seed 1  --train_aug --lr_net  1e-3 
+         },
+         {
+            "name": "Baseline [miniImagenet]: train ",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/train.py",
+            "console": "integratedTerminal",
+           "args": ["--method","baseline", "--dataset", "miniImagenet", 
+            "--num_classes", "64", 
+            "--seed","1" , "--train_aug"]  //
+         // python train.py --method "baseline"  --dataset "miniImagenet"  --num_classes 64 --seed 1  --train_aug --lr_net  1e-3 
+         },
+         {
+            "name": "Baseline [save_features] [miniImagenet]: test ",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/save_features.py",
+            "console": "integratedTerminal",
+           "args": ["--method","baseline", "--dataset", "miniImagenet", 
+            "--num_classes", "64",
+            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "125", "--n_query", "15", 
+            "--seed","1" ]  //
+         // python save_features.py --method "baseline"  --dataset "miniImagenet"  --num_classes 64 --test_n_way 2 --n_shot 50 --n_query 10 --seed 1 --train_aug --lr_net  1e-3 
+         },
+         {
+            "name": "Baseline [miniImagenet]: test ",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/test.py",
+            "console": "integratedTerminal",
+           "args": ["--method","baseline", "--dataset", "miniImagenet", 
+            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "125", "--n_query", "15", 
+            "--seed","1", "--train_aug" ]  //
+         // python test.py --method "baseline"  --dataset "miniImagenet"  --train_n_way 2 --test_n_way 2 --n_shot 50 --n_query 10 --seed 1  --train_aug --lr_net  1e-3 
          },
 
         //*****************************************************************
