@@ -11,7 +11,7 @@ dataset =  'CUB' #'miniImagenet' # 'CUB
 lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['001']
-n_task = 50 #20
+n_task = 200 #20
 if dataset=='CUB':
     n_shot = 50 
     n_query = 10 
@@ -23,7 +23,7 @@ tol_rvm = 1e-4
 max_itr = -1
 stop_epoch = 200
 resume = False
-seed_list = [1]
+seed_list = [1, 2, 3]
 method_list = ['Sparse_DKT_binary_Exact'] 
 for config in config_list:
     for lr_gp in lr_gp_list:
@@ -80,14 +80,14 @@ for config in config_list:
                 ]
                 if resume: L.append('--resume')
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
+                run(L)
         
                 if dataset=='CUB':
                     lambda_rvm_list = [100.0] 
                 if dataset=='miniImagenet':
                     lambda_rvm_list = [100.0] 
 
-                lambda_rvm_list = [0.5, 1.0, 5.0, 10, 25, 50, 80, 100] 
+                # lambda_rvm_list = [0.5, 1.0, 5.0, 10, 25, 50, 80, 100] 
                 # method_list = ['Sparse_DKT_binary_Exact'] 
                 
                 # rvm_mll
@@ -106,7 +106,7 @@ for config in config_list:
                             ]
                             if resume: L.append('--resume')
                             print(f'\n{" ".join(L)} \n')
-                            run(L)
+                            # run(L)
             
                 # rvm_ll
                 for lambda_rvm in lambda_rvm_list:
