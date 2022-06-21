@@ -103,9 +103,9 @@ def single_test(params):
     elif params.method == 'DKT':
         model           = DKT(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
     elif params.method == 'DKT_binary':
-        model           = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
+        # model           = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
         last_model      = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
-        best_model      = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
+        # best_model      = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
 
     elif params.method == 'DKT_binary_new_loss':
         model           = DKT_binary_new_loss(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)   
@@ -243,7 +243,7 @@ def single_test(params):
     else:
        raise ValueError('Unknown method')
 
-    model = model.cuda()
+    # model = model.cuda()
 
     checkpoint_dir = '%s/checkpoints/%s/%s_%s_seed_%s' % (configs.save_dir, params.dataset, params.model, params.method, params.seed)
     # if params.train_aug:
