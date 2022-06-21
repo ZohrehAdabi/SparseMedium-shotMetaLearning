@@ -299,8 +299,8 @@ def single_test(params):
     #modelfile   = get_resume_file(checkpoint_dir)
 
     if not params.method in ['baseline', 'baseline++'] : 
-        # best = False
-        best = True
+        best = False
+        # best = True
         last = False
         best_rvm = True
         if params.method in ['DKT', 'DKT_binary']:
