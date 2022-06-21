@@ -45,6 +45,7 @@ class DKT_binary(MetaTemplate):
         self.writer=None
         self.dirichlet = dirichlet
         self.feature_extractor = self.feature
+        # self.feature_extractor = model_func
         self.kernel_type = kernel_type
         self.get_model_likelihood_mll() #Init model, likelihood, and mll
         if(kernel_type=="cossim"):

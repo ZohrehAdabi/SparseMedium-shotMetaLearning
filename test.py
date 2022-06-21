@@ -374,8 +374,8 @@ def single_test(params):
                     tmp['state'][f'model.models.{i}.covar_module.inducing_points'] = IP
                     tmp['state'][f'mll.mlls.{i}.model.covar_module.inducing_points'] = IP
                     tmp['state'][f'mll.model.models.{i}.covar_module.inducing_points'] = IP
-            # last_model.load_state_dict(tmp['state'])
-            last_model.feature_extractor.load_state_dict(tmp['state'])
+            last_model.load_state_dict(tmp['state'])
+            # last_model.feature_extractor.load_state_dict(tmp['state'])
 
         if best and (best_modelfile is not None):
             tmp = torch.load(best_modelfile)
@@ -393,8 +393,8 @@ def single_test(params):
                     tmp['state'][f'mll.mlls.{i}.model.covar_module.inducing_points'] = IP
                     tmp['state'][f'mll.model.models.{i}.covar_module.inducing_points'] = IP
             
-            # best_model.load_state_dict(tmp['state'])
-            best_model.feature_extractor.load_state_dict(tmp['state'])
+            best_model.load_state_dict(tmp['state'])
+            # best_model.feature_extractor.load_state_dict(tmp['state'])
         
         else:
             if best:
