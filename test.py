@@ -104,8 +104,8 @@ def single_test(params):
         model           = DKT(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
     elif params.method == 'DKT_binary':
         # model           = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
-        last_model      = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
-        # best_model      = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
+        # last_model      = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
+        best_model      = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
 
     elif params.method == 'DKT_binary_new_loss':
         model           = DKT_binary_new_loss(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)   
@@ -299,13 +299,13 @@ def single_test(params):
     #modelfile   = get_resume_file(checkpoint_dir)
 
     if not params.method in ['baseline', 'baseline++'] : 
-        best = False
-        # best = True
+        # best = False
+        best = True
         last = False
         best_rvm = True
         if params.method in ['DKT', 'DKT_binary']:
-            # last = False
-            last = True
+            last = False
+            # last = True
             best_rvm = False 
         print(f'\n{checkpoint_dir}\n')
         modelfile = None
