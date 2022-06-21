@@ -85,12 +85,12 @@ def single_test(params):
         assert params.model == 'Conv4' and not params.train_aug ,'omniglot only support Conv4 without augmentation'
         params.model = 'Conv4S'
     if params.method == 'transfer':
-        # id=f'Transfer_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}'
+        # id_=f'Transfer_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}'
          
-        # if params.normalize: id += '_norm'
-        # if params.lr_decay: id += '_lr_decay'
-        # if params.train_aug: id += '_aug'
-        # if params.mini_batches: id += '_mini_batch'
+        # if params.normalize: id_+= '_norm'
+        # if params.lr_decay: id_+= '_lr_decay'
+        # if params.train_aug: id_+= '_aug'
+        # if params.mini_batches: id_+= '_mini_batch'
         model           = FeatureTransfer( model_dict[params.model], normalize=params.normalize, mini_batches=params.mini_batches, **few_shot_params )
         last_model      = FeatureTransfer( model_dict[params.model], normalize=params.normalize, mini_batches=params.mini_batches, **few_shot_params )
         best_model      = FeatureTransfer( model_dict[params.model], normalize=params.normalize, mini_batches=params.mini_batches, **few_shot_params )
@@ -104,6 +104,9 @@ def single_test(params):
         model           = DKT(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
     elif params.method == 'DKT_binary':
         model           = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
+        last_model      = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
+        best_model      = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
+
     elif params.method == 'DKT_binary_new_loss':
         model           = DKT_binary_new_loss(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)   
     elif params.method == 'Sparse_DKT_Nystrom':
@@ -137,6 +140,21 @@ def single_test(params):
                                 maxItr_rvm=params.maxItr_rvm, tol_rvm=params.tol_rvm, regression=params.regression, num_inducing_points=params.num_ip,
                                 normalize=params.normalize, scale=params.scale,
                                 config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
+        last_model           = Sparse_DKT_binary_Exact(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
+                                add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, add_rvm_mll_one=params.rvm_mll_one, lambda_rvm=params.lambda_rvm, 
+                                maxItr_rvm=params.maxItr_rvm, tol_rvm=params.tol_rvm, regression=params.regression, num_inducing_points=params.num_ip,
+                                normalize=params.normalize, scale=params.scale,
+                                config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
+        best_model           = Sparse_DKT_binary_Exact(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
+                                add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, add_rvm_mll_one=params.rvm_mll_one, lambda_rvm=params.lambda_rvm, 
+                                maxItr_rvm=params.maxItr_rvm, tol_rvm=params.tol_rvm, regression=params.regression, num_inducing_points=params.num_ip,
+                                normalize=params.normalize, scale=params.scale,
+                                config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
+        best_model_rvm           = Sparse_DKT_binary_Exact(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
+                                add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, add_rvm_mll_one=params.rvm_mll_one, lambda_rvm=params.lambda_rvm, 
+                                maxItr_rvm=params.maxItr_rvm, tol_rvm=params.tol_rvm, regression=params.regression, num_inducing_points=params.num_ip,
+                                normalize=params.normalize, scale=params.scale,
+                                config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
     elif params.method == 'Sparse_DKT_binary_RVM':
         model           = Sparse_DKT_binary_RVM(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
                                 add_rvm_mll=params.rvm_mll, add_rvm_mll_one=params.rvm_mll_one, lambda_rvm=params.lambda_rvm, 
@@ -144,6 +162,25 @@ def single_test(params):
                                 rvm_mll_only=params.rvm_mll_only, rvm_ll_only=params.rvm_ll_only, num_inducing_points=params.num_ip,
                                 normalize=params.normalize, scale=params.scale,
                                 config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
+        last_model           = Sparse_DKT_binary_RVM(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
+                                add_rvm_mll=params.rvm_mll, add_rvm_mll_one=params.rvm_mll_one, lambda_rvm=params.lambda_rvm, 
+                                maxItr_rvm=params.maxItr_rvm, tol_rvm=params.tol_rvm, regression=params.regression, 
+                                rvm_mll_only=params.rvm_mll_only, rvm_ll_only=params.rvm_ll_only, num_inducing_points=params.num_ip,
+                                normalize=params.normalize, scale=params.scale,
+                                config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
+        best_model           = Sparse_DKT_binary_RVM(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
+                                add_rvm_mll=params.rvm_mll, add_rvm_mll_one=params.rvm_mll_one, lambda_rvm=params.lambda_rvm, 
+                                maxItr_rvm=params.maxItr_rvm, tol_rvm=params.tol_rvm, regression=params.regression, 
+                                rvm_mll_only=params.rvm_mll_only, rvm_ll_only=params.rvm_ll_only, num_inducing_points=params.num_ip,
+                                normalize=params.normalize, scale=params.scale,
+                                config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
+        best_model_rvm           = Sparse_DKT_binary_RVM(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
+                                add_rvm_mll=params.rvm_mll, add_rvm_mll_one=params.rvm_mll_one, lambda_rvm=params.lambda_rvm, 
+                                maxItr_rvm=params.maxItr_rvm, tol_rvm=params.tol_rvm, regression=params.regression, 
+                                rvm_mll_only=params.rvm_mll_only, rvm_ll_only=params.rvm_ll_only, num_inducing_points=params.num_ip,
+                                normalize=params.normalize, scale=params.scale,
+                                config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
+
 
     elif params.method == 'Sp_DKT_Bin_Nyst_NLoss':
         model           = Sparse_DKT_binary_Nystrom_new_loss(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
@@ -170,6 +207,7 @@ def single_test(params):
             feature_model = lambda: model_dict[params.model]( flatten = False )
         loss_type = 'mse' if params.method == 'relationnet' else 'softmax'
         model           = RelationNet( feature_model, loss_type = loss_type , **few_shot_params )
+    
     elif params.method in ['MAML' , 'maml_approx']:
         backbone.ConvBlock.maml = True
         backbone.SimpleBlock.maml = True
@@ -183,21 +221,21 @@ def single_test(params):
         #     model.train_lr = 0.1
     elif params.method in ['MetaOptNet']:
             
-            id=f'MetaOptNet_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}'
+            id_=f'MetaOptNet_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}'
          
-            if params.normalize: id += '_norm'
-            if params.lr_decay: id += '_lr_decay'
-            if params.train_aug: id += '_aug'
+            if params.normalize: id_+= '_norm'
+            if params.lr_decay: id_+= '_lr_decay'
+            if params.train_aug: id_+= '_aug'
             model = MetaOptNet(model_dict[params.model], normalize=params.normalize, **few_shot_params)
             last_model = MetaOptNet(model_dict[params.model], normalize=params.normalize, **few_shot_params)
             best_model = MetaOptNet(model_dict[params.model], normalize=params.normalize, **few_shot_params)
             
     elif params.method in ['MetaOptNet_binary']: 
-            id=f'MetaOptNet_binary_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}'
+            id_=f'MetaOptNet_binary_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}'
          
-            if params.normalize: id += '_norm'
-            if params.lr_decay: id += '_lr_decay'
-            if params.train_aug: id += '_aug'
+            if params.normalize: id_+= '_norm'
+            if params.lr_decay: id_+= '_lr_decay'
+            if params.train_aug: id_+= '_aug'
             model = MetaOptNet_binary(model_dict[params.model], normalize=params.normalize, **few_shot_params)
             last_model = MetaOptNet_binary(model_dict[params.model], normalize=params.normalize, **few_shot_params)
             best_model = MetaOptNet_binary(model_dict[params.model], normalize=params.normalize, **few_shot_params)
@@ -215,81 +253,93 @@ def single_test(params):
         if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_RVM', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss', 
         'Sparse_DKT_binary_Exact', 'Sp_DKT_Bin_Exact_NLoss']:
             if params.dirichlet:
-                id = f'_{params.sparse_method}_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+                id_= f'_{params.sparse_method}_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
-                id = f'_{params.sparse_method}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'           
+                id_= f'_{params.sparse_method}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'           
 
             if params.sparse_method in ['FRVM', 'augmFRVM', 'constFRVM']: 
-                id += f'_confg_{params.config}_{params.align_thr}'
-                if params.gamma: id += '_gamma'
-                if params.scale: id += '_scale'
+                id_+= f'_confg_{params.config}_{params.align_thr}'
+                if params.gamma: id_+= '_gamma'
+                if params.scale: id_+= '_scale'
             
         elif  params.method in ['DKT', 'DKT_binary']:
             if params.dirichlet:
-                id=f'_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+                id_=f'_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
-                id=f'_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
+                id_=f'_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
          
          #MAML, MetaOptNet
         elif  params.method in ['MAML']: 
-            id=f'_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}_loop_{params.inner_loop}_inner_lr_{params.inner_lr}'
+            id_=f'_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}_loop_{params.inner_loop}_inner_lr_{params.inner_lr}'
         elif  params.method in ['MetaOptNet', 'transfer']: 
 
-            id=f'_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}'
+            id_=f'_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}'
         else:
             raise ValueError('Unknown method')
 
-        if params.normalize: id += '_norm'
-        if params.separate: id += '_separate'
-        if params.rvm_mll: id += f'_rvm_mll_{params.lambda_rvm}'
-        if params.rvm_ll: id += f'_rvm_ll_{params.lambda_rvm}'
-        if params.rvm_mll_one: id += f'_rvm_mll_one_{params.lambda_rvm}'
-        if params.maxItr_rvm!=-1: id += f'_maxItr_rvm_{params.maxItr_rvm}'
-        if params.tol_rvm!=1e-4: id += f'_tol_rvm_{params.tol_rvm}'
-        if params.regression: id += f'_regression'
-        if params.rvm_mll_only: id += f'_rvm_mll_only'
-        if params.rvm_ll_only: id += f'_rvm_ll_only'
-        if params.train_aug: id += '_aug'
-        if params.first_order: id += '_first_order'
-        if params.warmup:  id += '_warmup'
-        if params.freeze: id += '_freeze'
-        if params.mini_batches: id += '_mini_batch'
+        if params.normalize: id_+= '_norm'
+        if params.separate: id_+= '_separate'
+        if params.rvm_mll: id_+= f'_rvm_mll_{params.lambda_rvm}'
+        if params.rvm_ll: id_+= f'_rvm_ll_{params.lambda_rvm}'
+        if params.rvm_mll_one: id_+= f'_rvm_mll_one_{params.lambda_rvm}'
+        if params.maxItr_rvm!=-1: id_+= f'_maxItr_rvm_{params.maxItr_rvm}'
+        if params.tol_rvm!=1e-4: id_+= f'_tol_rvm_{params.tol_rvm}'
+        if params.regression: id_+= f'_regression'
+        if params.rvm_mll_only: id_+= f'_rvm_mll_only'
+        if params.rvm_ll_only: id_+= f'_rvm_ll_only'
+        if params.train_aug: id_+= '_aug'
+        if params.first_order: id_+= '_first_order'
+        if params.warmup:  id_+= '_warmup'
+        if params.freeze: id_+= '_freeze'
+        if params.mini_batches: id_+= '_mini_batch'
         if params.sparse_method in ['Random', 'KMeans', 'augmFRVM', 'constFRVM']:  
             if params.num_ip is not None:
-                    id += f'_ip_{params.num_ip}'
-        checkpoint_dir += id
+                    id_+= f'_ip_{params.num_ip}'
+        checkpoint_dir += id_
     #modelfile   = get_resume_file(checkpoint_dir)
 
     if not params.method in ['baseline', 'baseline++'] : 
+        # best = False
         best = True
         last = False
         best_rvm = True
+        if params.method in ['DKT', 'DKT_binary']:
+            # last = False
+            last = True
+            best_rvm = False 
         print(f'\n{checkpoint_dir}\n')
         modelfile = None
         if params.save_iter != -1:
             print(f'\nModel at epoch {params.save_iter}\n')
             modelfile   = get_assigned_file(checkpoint_dir, params.save_iter)
+        
+        
         if last:
             if  params.method in ['MetaOptNet_binary', 'MetaOptNet']:
                 last_model = last_model.cuda()
             else:
-                last_model = deepcopy(model)
+                # last_model = deepcopy(model)
+                last_model = last_model.cuda()
+
             files = os.listdir(checkpoint_dir)
             nums =  [int(f.split('.')[0]) for f in files if 'best' not in f]
             num = max(nums)
             print(f'\nModel at last epoch {num}\n')
             last_modelfile = os.path.join(checkpoint_dir, '{:d}.tar'.format(num))
             print(f'\nlast model {last_modelfile}\n')
+        
         if best: #else:
             if  params.method in ['MetaOptNet_binary', 'MetaOptNet']:
                 best_model = best_model.cuda()
             else:
-                best_model = deepcopy(model)
+                # best_model = deepcopy(model)
+                best_model = best_model.cuda()
             best_modelfile   = get_best_file(checkpoint_dir)
             print(f'\nBest model {best_modelfile}\n')
+
         if best_rvm: #else:
-            best_model_rvm = deepcopy(model)
-                        
+            # best_model_rvm = deepcopy(model)
+            best_model_rvm = best_model_rvm.cuda()            
             best_modelfile_rvm   = os.path.join(checkpoint_dir, 'best_model_rvm.tar')
             if not os.path.isfile(best_modelfile_rvm):
                 best_modelfile_rvm = None
@@ -310,7 +360,7 @@ def single_test(params):
                     tmp['state'][f'mll.model.models.{i}.covar_module.inducing_points'] = IP
 
             model.load_state_dict(tmp['state'])
-
+        
         if last and (last_modelfile is not None):
             tmp = torch.load(last_modelfile)
             if params.method in ['Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss']:
@@ -324,7 +374,8 @@ def single_test(params):
                     tmp['state'][f'model.models.{i}.covar_module.inducing_points'] = IP
                     tmp['state'][f'mll.mlls.{i}.model.covar_module.inducing_points'] = IP
                     tmp['state'][f'mll.model.models.{i}.covar_module.inducing_points'] = IP
-            last_model.load_state_dict(tmp['state'])
+            # last_model.load_state_dict(tmp['state'])
+            last_model.feature_extractor.load_state_dict(tmp['state'])
 
         if best and (best_modelfile is not None):
             tmp = torch.load(best_modelfile)
@@ -341,27 +392,36 @@ def single_test(params):
                     tmp['state'][f'model.models.{i}.covar_module.inducing_points'] = IP
                     tmp['state'][f'mll.mlls.{i}.model.covar_module.inducing_points'] = IP
                     tmp['state'][f'mll.model.models.{i}.covar_module.inducing_points'] = IP
-            best_model.load_state_dict(tmp['state'])
+            
+            # best_model.load_state_dict(tmp['state'])
+            best_model.feature_extractor.load_state_dict(tmp['state'])
         
-        if best_rvm and (best_modelfile_rvm is not None):
-            tmp = torch.load(best_modelfile_rvm)
-            best_epoch_rvm = tmp['epoch']
-            if params.method in ['Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss']:
-                
-                IP = torch.ones(100, 64).cuda()
-                tmp['state']['model.covar_module.inducing_points'] = IP
-                tmp['state']['mll.model.covar_module.inducing_points'] = IP
-            if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_RVM']:
-                
-                IP = torch.ones(100, 64).cuda()
-                for i in range(params.test_n_way):
-                    tmp['state'][f'model.models.{i}.covar_module.inducing_points'] = IP
-                    tmp['state'][f'mll.mlls.{i}.model.covar_module.inducing_points'] = IP
-                    tmp['state'][f'mll.model.models.{i}.covar_module.inducing_points'] = IP
-            best_model_rvm.load_state_dict(tmp['state'])
-
         else:
-            print("[WARNING] Cannot find 'best_file.tar' in: " + str(checkpoint_dir))
+            if best:
+                print("[WARNING] Cannot find 'best_file.tar' in: " + str(checkpoint_dir))
+
+
+        if params.method not in ['DKT', 'DKT_binary']:
+            if best_rvm and (best_modelfile_rvm is not None):
+                tmp = torch.load(best_modelfile_rvm)
+                best_epoch_rvm = tmp['epoch']
+                if params.method in ['Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss']:
+                    
+                    IP = torch.ones(100, 64).cuda()
+                    tmp['state']['model.covar_module.inducing_points'] = IP
+                    tmp['state']['mll.model.covar_module.inducing_points'] = IP
+                if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_RVM']:
+                    
+                    IP = torch.ones(100, 64).cuda()
+                    for i in range(params.test_n_way):
+                        tmp['state'][f'model.models.{i}.covar_module.inducing_points'] = IP
+                        tmp['state'][f'mll.mlls.{i}.model.covar_module.inducing_points'] = IP
+                        tmp['state'][f'mll.model.models.{i}.covar_module.inducing_points'] = IP
+                best_model_rvm.load_state_dict(tmp['state'])
+
+            else:
+                if best_rvm:
+                    print("[WARNING] Cannot find 'best_file_rvm.tar' in: " + str(checkpoint_dir))
 
     split = params.split
     if params.save_iter != -1:
@@ -432,6 +492,9 @@ def single_test(params):
             print("-----------------------------")
             print('Test Acc model at epoch %d = %4.2f%% +- %4.2f%%' %(params.save_iter, acc_mean, acc_std))
             print("-----------------------------") 
+
+
+
         if last:
             print(f'\nModel at last epoch {num}\n')
             last_model.eval()
@@ -445,21 +508,11 @@ def single_test(params):
             print("-----------------------------")
             print('Test Acc last model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
             print("-----------------------------") 
-        if best_rvm and (best_modelfile_rvm is not None):
-            print(f'\nBest RVM model epoch {best_epoch}\n')
-            best_model_rvm.eval()
-            acc_mean, acc_std, result = best_model_rvm.test_loop(novel_loader, return_std = True, dataset=params.dataset, show_plot=True)
-            if params.save_result:
-                f.write('"best rvm model":\n')
-                json.dump(result, f, indent=2)
-                f.write(',\n')
-            print("-----------------------------")
-            print('Test Acc GP at best RVM model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
-            print("-----------------------------") 
+        
         if best:
             print(f'\nBest model epoch {best_epoch}\n')
             best_model.eval()
-            acc_mean, acc_std, result = best_model.test_loop(novel_loader, return_std = True, dataset=params.dataset, show_plot=True)
+            acc_mean, acc_std, result = best_model.test_loop(novel_loader, return_std = True, dataset=params.dataset, show_plot=False)
             if params.save_result:
                 f.write('"best model":\n')
                 json.dump(result, f, indent=2)
@@ -467,9 +520,22 @@ def single_test(params):
             print("-----------------------------")
             print('Test Acc best model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
             print("-----------------------------") 
+               
+        if best_rvm and (best_modelfile_rvm is not None):
+            print(f'\nBest RVM model epoch {best_epoch}\n')
+            best_model_rvm.eval()
+            acc_mean, acc_std, result = best_model_rvm.test_loop(novel_loader, return_std = True, dataset=params.dataset, show_plot=False)
+            if params.save_result:
+                f.write('"best rvm model":\n')
+                json.dump(result, f, indent=2)
+                f.write(',\n')
+            print("-----------------------------")
+            print('Test Acc GP at best RVM model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
+            print("-----------------------------") 
+        
         
         if params.save_result: f.close()
-        print(f'\n{id}\n')
+        print(f'\n{id_}\n')
     else:
         novel_file = os.path.join( checkpoint_dir.replace("checkpoints","features"), split_str +".hdf5") #defaut split = novel, but you can also test base or val classes
         cl_data_file = feat_loader.init_loader(novel_file)

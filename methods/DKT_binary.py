@@ -353,7 +353,7 @@ class DKT_binary(MetaTemplate):
     def test_loop(self, test_loader, record=None, return_std=False, dataset=None, show_plot=False):
         self.dataset = dataset
         self.show_plot = show_plot
-        print_freq = 10
+        print_freq = 20
         correct =0
         count = 0
         acc_all = []
@@ -366,7 +366,7 @@ class DKT_binary(MetaTemplate):
             correct_this, count_this, loss_value, acc_most_sim = self.correct(x, i)
             acc_all.append(correct_this/ count_this*100)
             acc_most_sim_all.append((acc_most_sim/ count_this)*100)
-            if(i % 10==0):
+            if(i % print_freq==0):
                 acc_mean = np.mean(np.asarray(acc_all))
                 acc_most_sim_mean = np.mean(np.asarray(acc_most_sim_all))
                 print(f'ACC based on most similar support: {acc_most_sim_mean:.4f}')

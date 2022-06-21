@@ -188,8 +188,8 @@
             "console": "integratedTerminal",
            "args": ["--method","Sparse_DKT_binary_RVM", "--sparse_method", "FRVM", "--dataset", "CUB", 
             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
-              "--seed","1", "--scale", "--config", "011", "--align_thr", "1e-3", "--lr_gp", "1e-3", "--lr_net", "1e-3",
-              "--kernel_type", "linear", "--normalize", "--n_task", "30", "--rvm_mll_only",  "--regression"] // ,"--train_aug"
+              "--seed","1", "--scale", "--config", "001", "--align_thr", "1e-2", "--lr_gp", "1e-3", "--lr_net", "1e-3",
+              "--kernel_type", "linear", "--normalize", "--n_task", "100", "--rvm_mll_only",  "--regression", "--train_aug"] // ,"--train_aug"
     // python test.py --method "Sparse_DKT_binary_RVM"  --sparse_method "FRVM" --dataset "CUB"  --train_n_way 2 --test_n_way 2 --n_shot 50  --n_query 10 --seed 1 --scale --config "010" --align_thr 1e-3  --lr_gp 1e-1 --lr_net 1e-3 --kernel_type "linear"  --train_aug
         },
         {
@@ -341,6 +341,8 @@
               "--kernel_type", "linear"]
     // python test.py --method "Sparse_DKT_Nystrom"  --sparse_method "FRVM" --dataset "miniImagenet"  --train_n_way 5 --test_n_way 5  --n_shot 50 --n_query 10 --seed 1 --scale --config "010" --align_thr 1e-3 --lr_gp  1e-2 --lr_net  1e-3 --kernel_type "linear" --train_aug
         },
+
+
         //*********************
         // DKT
         //**********************
@@ -388,7 +390,7 @@
            "args": ["--method","DKT_binary", "--dataset", "CUB", 
             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50",  "--n_query", "10",  "--lr_gp", "1e-3", "--lr_net", "1e-3",
             "--seed","1",  "--kernel_type",  "linear",  "--n_task", "100","--normalize", "--train_aug"]  // "--resume", "--train_aug"
-         // python test.py --method "DKT_binary"  --dataset "CUB"  --train_n_way 2 --test_n_way 2 --n_shot 50 --n_query 10 --seed 1 --lr_gp  1e-2 --lr_net  1e-3  --kernel_type "linear" --train_aug
+         // python test.py --method "DKT_binary"  --dataset "CUB"  --train_n_way 2 --test_n_way 2 --n_shot 50 --n_query 10 --seed 1 --normalize --lr_gp  1e-3 --lr_net  1e-3  --kernel_type "linear" --n_task 100  --train_aug
         },
         {
             "name": "DKT_binary_new_loss: train [CUB]",
