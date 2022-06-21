@@ -299,8 +299,8 @@ def single_test(params):
     #modelfile   = get_resume_file(checkpoint_dir)
 
     if not params.method in ['baseline', 'baseline++'] : 
-        best = False
-        # best = True
+        # best = False
+        best = True
         last = False
         best_rvm = True
         if params.method in ['DKT', 'DKT_binary']:
@@ -495,6 +495,19 @@ def single_test(params):
 
 
 
+       
+        if best:
+            print(f'\nBest model epoch {best_epoch}\n')
+            best_model.eval()
+            acc_mean, acc_std, result = best_model.test_loop(novel_loader, return_std = True, dataset=params.dataset, show_plot=False)
+            if params.save_result:
+                f.write('"best model":\n')
+                json.dump(result, f, indent=2)
+                f.write('\n}\n]')
+            print("-----------------------------")
+            print('Test Acc best model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
+            print("-----------------------------") 
+
         if last:
             print(f'\nModel at last epoch {num}\n')
             last_model.eval()
@@ -508,19 +521,7 @@ def single_test(params):
             print("-----------------------------")
             print('Test Acc last model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
             print("-----------------------------") 
-        
-        if best:
-            print(f'\nBest model epoch {best_epoch}\n')
-            best_model.eval()
-            acc_mean, acc_std, result = best_model.test_loop(novel_loader, return_std = True, dataset=params.dataset, show_plot=False)
-            if params.save_result:
-                f.write('"best model":\n')
-                json.dump(result, f, indent=2)
-                f.write('\n}\n]')
-            print("-----------------------------")
-            print('Test Acc best model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
-            print("-----------------------------") 
-               
+              
         if best_rvm and (best_modelfile_rvm is not None):
             print(f'\nBest RVM model epoch {best_epoch}\n')
             best_model_rvm.eval()
