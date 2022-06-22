@@ -304,7 +304,7 @@ def single_test(params):
         best = False
         # best = True
         last = False
-        best_rvm = False
+        best_rvm = True
         if params.method in ['DKT', 'DKT_binary']:
             last = False
             # last = True
