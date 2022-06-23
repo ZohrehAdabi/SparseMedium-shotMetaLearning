@@ -134,7 +134,7 @@ class DKT_binary(MetaTemplate):
         #                               {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
         self.acc_test_list = []
         self.mll_list = []
-        for i, (x,_) in enumerate(train_loader):
+        for i, (x,y) in enumerate(train_loader):
             self.n_query = x.size(1) - self.n_support
             if self.change_way: self.n_way  = x.size(0)
             x_all = x.contiguous().view(self.n_way * (self.n_support + self.n_query), *x.size()[2:]).cuda()
@@ -302,8 +302,8 @@ class DKT_binary(MetaTemplate):
         optimizer = torch.optim.Adam([{'params': self.model.parameters()}], lr=1e-3)
 
         self.model.train()
-        self.likelihood.train()
-        self.feature_extractor.train()
+        self.likelihood.eval()
+        self.feature_extractor.eval()
 
         avg_loss=0.0
         for i in range(0, N):
@@ -360,10 +360,14 @@ class DKT_binary(MetaTemplate):
         acc_all = []
         acc_most_sim_all = []
         iter_num = len(test_loader)
+        # outscale  = self.model.covar_module.outputscale.clone().detach()
         for i, (x,_) in enumerate(test_loader):
             self.n_query = x.size(1) - self.n_support
             if self.change_way:
                 self.n_way  = x.size(0)
+
+            # self.model.covar_module.outputscale = outscale
+            # if(i % print_freq==0): print(f'{self.model.covar_module.outputscale}')
             correct_this, count_this, loss_value, acc_most_sim = self.correct(x, i)
             acc_all.append(correct_this/ count_this*100)
             acc_most_sim_all.append((acc_most_sim/ count_this)*100)

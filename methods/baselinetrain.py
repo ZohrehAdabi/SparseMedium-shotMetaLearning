@@ -21,7 +21,7 @@ class BaselineTrain(nn.Module):
         super(BaselineTrain, self).__init__()
         self.feature    = model_func()
         if loss_type == 'softmax':
-            self.classifier = nn.Linear(self.feature.final_feat_dim, num_class)
+            self.classifier = nn.Linear(self.feature.final_feat_dim, num_class) #CUB: train class = 72, val = 36, novel= 36-----#miniImagenet: train class = 64, val = 16, novel= 20
             self.classifier.bias.data.fill_(0)
         elif loss_type == 'dist': #Baseline ++
             self.classifier = backbone.distLinear(self.feature.final_feat_dim, num_class)
@@ -40,7 +40,7 @@ class BaselineTrain(nn.Module):
 
 
     def forward(self,x):
-        x    = Variable(x.cuda())
+        x    = x.cuda()
         out  = self.feature.forward(x)
         if(self.normalize): out = F.normalize(out, p=2, dim=1)
         scores  = self.classifier.forward(out)
@@ -48,7 +48,8 @@ class BaselineTrain(nn.Module):
 
     def forward_loss(self, x, y):
         scores = self.forward(x)
-        y = Variable(y.cuda())
+        # y = torch.tensor(y, dtype=torch.long).cuda()
+        y = y.to(dtype=torch.long).cuda()
         return self.loss_fn(scores, y )
     
     def train_loop(self, epoch, train_loader, optimizer):

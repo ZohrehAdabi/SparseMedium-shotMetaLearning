@@ -217,7 +217,7 @@ if __name__ == '__main__':
         base_loader = base_datamgr.get_data_loader(base_file, aug=params.train_aug)
 
         test_few_shot_params = dict(n_way=params.test_n_way, n_support=params.n_shot)
-        val_datamgr = SetDataManager(image_size, **test_few_shot_params, n_query=params.n_query, n_eposide=params.n_task)
+        val_datamgr = SetDataManager(image_size, **test_few_shot_params, n_query=params.n_query, n_eposide=100)
         val_loader = val_datamgr.get_data_loader(val_file, aug=False)
         # a batch for SetDataManager: a [n_way, n_support + n_query, dim, w, h] tensor
 

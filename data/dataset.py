@@ -11,11 +11,15 @@ class SimpleDataset:
     def __init__(self, data_file, transform, target_transform=identity):
         with open(data_file, 'r') as f:
             self.meta = json.load(f)
+            if 'CUB/base' in data_file:
+                self.meta['image_labels'] = np.repeat(np.arange(72), 60)
+            if 'CUB/val' in data_file:
+                self.meta['image_labels'] = np.repeat(np.arange(36), 60)
         self.transform = transform
         self.target_transform = target_transform
 
 
-    def __getitem__(self,i):
+    def __getitem__(self, i):
         image_path = os.path.join(self.meta['image_names'][i])
         img = Image.open(image_path).convert('RGB')
         img = self.transform(img)
