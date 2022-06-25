@@ -368,7 +368,7 @@
             "program": "${workspaceFolder}/test.py",
             "console": "integratedTerminal",
         "args": ["--method","DKT", "--dataset", "CUB", 
-            "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "50",  "--n_query", "10",  "--lr_gp", "1e-3", "--lr_net", "1e-3", "--stop_epoch", "400",
+            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50",  "--n_query", "10",  "--lr_gp", "1e-3", "--lr_net", "1e-3", 
             "--seed","1",  "--kernel_type", "linear", "--n_task", "100", "--normalize", "--train_aug"]
             // python test.py --method "DKT"  --dataset "CUB"  --train_n_way 5 --test_n_way 5 --n_shot 50 --n_query 10 --seed 1 --lr_gp  1e-3 --lr_net  1e-3 --normalize --kernel_type "linear" --train_aug  --n_task 20 
         },

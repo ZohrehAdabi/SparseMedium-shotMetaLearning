@@ -504,7 +504,7 @@ def single_test(params):
             print("-----------------------------") 
 
 
-        tasks = []
+        # tasks = []
         # for i in range(5):
 
         #     data_0  = torch.randn([60, 3, 84, 84])
