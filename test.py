@@ -505,30 +505,29 @@ def single_test(params):
 
 
         tasks = []
-        import torchvision.transforms as transforms
-        for i in range(5):
+        # for i in range(5):
 
-            data_0  = torch.randn([60, 3, 84, 84])
-            data_1  = torch.randn([60, 3, 84, 84])
-            data = torch.stack([data_0, data_1])
-            tasks.append(data)
+        #     data_0  = torch.randn([60, 3, 84, 84])
+        #     data_1  = torch.randn([60, 3, 84, 84])
+        #     data = torch.stack([data_0, data_1])
+        #     tasks.append(data)
        
        
         if last:
             print(f'\nModel at last epoch {num}\n')
             last_model.eval()
-            # acc_mean, acc_std, result = last_model.test_loop( novel_loader, return_std = True)
-            acc_all = []
-            acc_most_sim_all = []
-            for i, task in enumerate(tasks):
+            acc_mean, acc_std, result = last_model.test_loop( novel_loader, return_std = True)
+            # acc_all = []
+            # acc_most_sim_all = []
+            # for i, task in enumerate(tasks):
                 
-                correct_this, count_this, loss_value, acc_most_sim = last_model.correct(task, i)
-                acc_all.append(correct_this/ count_this*100)
-                acc_most_sim_all.append((acc_most_sim/ count_this)*100)
-            acc_all  = np.asarray(acc_all)
-            acc_mean = np.mean(acc_all)
-            acc_std  = np.std(acc_all)
-            acc_most_sim_mean = np.mean(np.asarray(acc_most_sim_all))
+            #     correct_this, count_this, loss_value, acc_most_sim = last_model.correct(task, i)
+            #     acc_all.append(correct_this/ count_this*100)
+            #     acc_most_sim_all.append((acc_most_sim/ count_this)*100)
+            # acc_all  = np.asarray(acc_all)
+            # acc_mean = np.mean(acc_all)
+            # acc_std  = np.std(acc_all)
+            # acc_most_sim_mean = np.mean(np.asarray(acc_most_sim_all))
             if params.save_result:
                 f.write('{\n"time": ')
                 f.write(f'"{timestamp}",\n')
@@ -542,18 +541,18 @@ def single_test(params):
         if best:
             print(f'\nBest model epoch {best_epoch}\n')
             best_model.eval()
-            # acc_mean, acc_std, result = best_model.test_loop(novel_loader, return_std = True, dataset=params.dataset, show_plot=False)
-            acc_all = []
-            acc_most_sim_all = []
-            for i, task in enumerate(tasks):
+            acc_mean, acc_std, result = best_model.test_loop(novel_loader, return_std = True, dataset=params.dataset, show_plot=False)
+            # acc_all = []
+            # acc_most_sim_all = []
+            # for i, task in enumerate(tasks):
                 
-                correct_this, count_this, loss_value, acc_most_sim = best_model.correct(task, i)
-                acc_all.append(correct_this/ count_this*100)
-                acc_most_sim_all.append((acc_most_sim/ count_this)*100)
-            acc_all  = np.asarray(acc_all)
-            acc_mean = np.mean(acc_all)
-            acc_std  = np.std(acc_all)
-            acc_most_sim_mean = np.mean(np.asarray(acc_most_sim_all))
+            #     correct_this, count_this, loss_value, acc_most_sim = best_model.correct(task, i)
+            #     acc_all.append(correct_this/ count_this*100)
+            #     acc_most_sim_all.append((acc_most_sim/ count_this)*100)
+            # acc_all  = np.asarray(acc_all)
+            # acc_mean = np.mean(acc_all)
+            # acc_std  = np.std(acc_all)
+            # acc_most_sim_mean = np.mean(np.asarray(acc_most_sim_all))
             if params.save_result:
                 f.write('"best model":\n')
                 json.dump(result, f, indent=2)
