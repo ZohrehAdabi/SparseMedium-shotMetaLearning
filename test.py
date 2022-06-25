@@ -1,3 +1,4 @@
+from timeit import repeat
 import torch
 import numpy as np
 import random
@@ -54,7 +55,9 @@ def _set_seed(seed, verbose=True):
 def feature_evaluation(cl_data_file, model, n_way = 5, n_support = 5, n_query = 15, adaptation = False):
     class_list = cl_data_file.keys()
 
-    select_class = random.sample(class_list,n_way)
+    # select_class = random.sample(class_list, n_way)
+    select_class = list(np.random.choice(list(class_list), n_way, replace=False))
+    print(f'selected classes {select_class}')
     z_all  = []
     for cl in select_class:
         img_feat = cl_data_file[cl]
@@ -101,7 +104,9 @@ def single_test(params):
     elif params.method == 'protonet':
         model           = ProtoNet( model_dict[params.model], **few_shot_params )
     elif params.method == 'DKT':
-        model           = DKT(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
+        # model           = DKT(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
+        # last_model      = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
+        best_model      = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
     elif params.method == 'DKT_binary':
         # model           = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
         # last_model      = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
@@ -499,24 +504,31 @@ def single_test(params):
             print("-----------------------------") 
 
 
+        tasks = []
+        import torchvision.transforms as transforms
+        for i in range(5):
 
+            data_0  = torch.randn([60, 3, 84, 84])
+            data_1  = torch.randn([60, 3, 84, 84])
+            data = torch.stack([data_0, data_1])
+            tasks.append(data)
        
-        if best:
-            print(f'\nBest model epoch {best_epoch}\n')
-            best_model.eval()
-            acc_mean, acc_std, result = best_model.test_loop(novel_loader, return_std = True, dataset=params.dataset, show_plot=False)
-            if params.save_result:
-                f.write('"best model":\n')
-                json.dump(result, f, indent=2)
-                f.write('\n}\n]')
-            print("-----------------------------")
-            print('Test Acc best model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
-            print("-----------------------------") 
-
+       
         if last:
             print(f'\nModel at last epoch {num}\n')
             last_model.eval()
-            acc_mean, acc_std, result = last_model.test_loop( novel_loader, return_std = True)
+            # acc_mean, acc_std, result = last_model.test_loop( novel_loader, return_std = True)
+            acc_all = []
+            acc_most_sim_all = []
+            for i, task in enumerate(tasks):
+                
+                correct_this, count_this, loss_value, acc_most_sim = last_model.correct(task, i)
+                acc_all.append(correct_this/ count_this*100)
+                acc_most_sim_all.append((acc_most_sim/ count_this)*100)
+            acc_all  = np.asarray(acc_all)
+            acc_mean = np.mean(acc_all)
+            acc_std  = np.std(acc_all)
+            acc_most_sim_mean = np.mean(np.asarray(acc_most_sim_all))
             if params.save_result:
                 f.write('{\n"time": ')
                 f.write(f'"{timestamp}",\n')
@@ -526,7 +538,33 @@ def single_test(params):
             print("-----------------------------")
             print('Test Acc last model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
             print("-----------------------------") 
-              
+
+        if best:
+            print(f'\nBest model epoch {best_epoch}\n')
+            best_model.eval()
+            # acc_mean, acc_std, result = best_model.test_loop(novel_loader, return_std = True, dataset=params.dataset, show_plot=False)
+            acc_all = []
+            acc_most_sim_all = []
+            for i, task in enumerate(tasks):
+                
+                correct_this, count_this, loss_value, acc_most_sim = best_model.correct(task, i)
+                acc_all.append(correct_this/ count_this*100)
+                acc_most_sim_all.append((acc_most_sim/ count_this)*100)
+            acc_all  = np.asarray(acc_all)
+            acc_mean = np.mean(acc_all)
+            acc_std  = np.std(acc_all)
+            acc_most_sim_mean = np.mean(np.asarray(acc_most_sim_all))
+            if params.save_result:
+                f.write('"best model":\n')
+                json.dump(result, f, indent=2)
+                f.write('\n}\n]')
+            
+            print("-----------------------------")
+            print('Test Acc best model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
+            print("-----------------------------") 
+
+
+
         if best_rvm and (best_modelfile_rvm is not None):
             print(f'\nBest RVM model epoch {best_epoch_rvm}\n')
             best_model_rvm.eval()
@@ -547,7 +585,7 @@ def single_test(params):
         cl_data_file = feat_loader.init_loader(novel_file)
 
         for i in range(iter_num):
-            acc = feature_evaluation(cl_data_file, model, n_query = 5, adaptation = params.adaptation, **few_shot_params)
+            acc = feature_evaluation(cl_data_file, model, n_query = params.n_query, adaptation = params.adaptation, **few_shot_params)
             acc_all.append(acc)
 
         acc_all  = np.asarray(acc_all)

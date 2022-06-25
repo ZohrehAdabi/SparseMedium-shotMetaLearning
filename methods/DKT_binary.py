@@ -250,6 +250,8 @@ class DKT_binary(MetaTemplate):
         self.model.eval()
         self.likelihood.eval()
         self.feature_extractor.eval()
+        self.n_query = 10
+        self.show_plot = False
         ##Dividing input x in query and support set
         x_support = x[:,:self.n_support,:,:,:].contiguous().view(self.n_way * (self.n_support), *x.size()[2:]).cuda()
         y_support = torch.from_numpy(np.repeat(range(self.n_way), self.n_support)).cuda()
