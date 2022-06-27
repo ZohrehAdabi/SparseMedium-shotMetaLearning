@@ -5,7 +5,8 @@ import argparse
 import backbone
 
 model_dict = dict(
-            Conv2 = backbone.Conv2,
+            Conv4_16ch = backbone.Conv4_16ch,
+            Conv4_128ch = backbone.Conv4_128ch,
             Conv4 = backbone.Conv4,
             Conv4S = backbone.Conv4S,
             Conv6 = backbone.Conv6,
@@ -20,13 +21,14 @@ def parse_args(script):
     parser.add_argument('--seed'                , default=0, type=int,  help='Seed for Numpy and pyTorch. Default: 0 (None)')
     parser.add_argument('--dataset'             , default='CUB',        help='CUB/miniImagenet/cross/omniglot/cross_char')
     parser.add_argument('--model'               , default='Conv4',      help='model: Conv{4|6} / ResNet{10|18|34|50|101}') # 50 and 101 are not used in the paper
+    #parser.add_argument('--num_channels'        , default=64, type=int,  help='number of channels for Conv4 model') 
     parser.add_argument('--kernel_type'         , default='linear',      help='linear, rbf, 2rbf, spectral (regression only), matern, poli1, poli2, cossim, bncossim ') 
     parser.add_argument('--method'              , default='DKT',   help='DKT/baseline/baseline++/protonet/matchingnet/relationnet{_softmax}/maml{_approx}') #relationnet_softmax replace L2 norm with softmax to expedite training, maml_approx use first-order approximation in the gradient for efficiency
     parser.add_argument('--train_n_way'         , default=5, type=int,  help='class num to classify for training') #baseline and baseline++ would ignore this parameter
     parser.add_argument('--test_n_way'          , default=5, type=int,  help='class num to classify for testing (validation) ') #baseline and baseline++ only use this parameter in finetuning
     parser.add_argument('--n_shot'              , default=5, type=int,  help='number of labeled data in each class, same as n_support') 
     parser.add_argument('--n_query'             , default=2, type=int,  help='number of test labeled data in each class') 
-    parser.add_argument('--n_task'              , default=10, type=int,  help='number of task for meta-train and validation')
+    parser.add_argument('--n_task'              , default=10, type=int,  help='number of task for meta-train and validation') 
     parser.add_argument('--train_aug'           , action='store_true',  help='perform data augmentation or not during training ') #still required for save_features.py and test.py to find the model path correctly
     parser.add_argument('--config'              , default='011', type=str, help='config for Fast RVM = {delete_priority|add_priority|align_test}')
     parser.add_argument('--align_thr'           , default=1e-3, type=float, help='1e-3, larger value leads to more rejection and sparseness')

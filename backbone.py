@@ -248,12 +248,12 @@ class BottleneckBlock(nn.Module):
 
 
 class ConvNet(nn.Module):
-    def __init__(self, depth, flatten = True):
+    def __init__(self, depth, num_channels=64, flatten = True):
         super(ConvNet,self).__init__()
         trunk = []
         for i in range(depth):
-            indim = 3 if i == 0 else 64
-            outdim = 64
+            indim = 3 if i == 0 else num_channels
+            outdim = num_channels
             B = ConvBlock(indim, outdim, pool = ( i <4 ) ) #only pooling for fist 4 layers
             trunk.append(B)
 
@@ -449,11 +449,16 @@ class Conv3(nn.Module):
 def Conv3R(flatten):
     return Conv3(flatten)
 
-def Conv2():
-    return ConvNet(2)
-    
+# def Conv2():
+#     return ConvNet(2)
+def Conv4_16ch():
+    return ConvNet(4, num_channels=16)   
+
+def Conv4_128ch():
+    return ConvNet(4, num_channels=128)  
+
 def Conv4():
-    return ConvNet(4)
+    return ConvNet(4, num_channels=64)
 
 def Conv6():
     return ConvNet(6)
