@@ -651,10 +651,10 @@
             "request": "launch",
             "program": "${workspaceFolder}/train.py",
             "console": "integratedTerminal",
-           "args": ["--method","baseline", "--dataset", "CUB", 
+           "args": ["--method","baseline", "--dataset", "CUB", "--normalize", "--model", "Conv2",
             "--num_classes", "72", 
             "--seed","1" , "--train_aug"]  //
-         // python train.py --method "baseline"  --dataset "CUB"  --num_classes 72 --seed 1  --train_aug --lr_net  1e-3 
+         // python train.py --method "baseline"  --dataset "CUB"  --num_classes 72 --seed 1  --train_aug --normalize --model Conv2  --lr_net  1e-3 
          },
          {
             "name": "Baseline [save_features] [CUB]: test ",
