@@ -262,6 +262,10 @@ class ConvNet(nn.Module):
 
         self.trunk = nn.Sequential(*trunk)
         self.final_feat_dim = 1600
+        if num_channels==16:
+            self.final_feat_dim = 400
+        if num_channels==128:
+            self.final_feat_dim = 3200
 
     def forward(self,x):
         out = self.trunk(x)

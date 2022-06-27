@@ -651,7 +651,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/train.py",
             "console": "integratedTerminal",
-           "args": ["--method","baseline", "--dataset", "CUB", "--normalize", "--model", "Conv2",
+           "args": ["--method","baseline", "--dataset", "CUB", "--normalize", "--model", "Conv4_16ch",
             "--num_classes", "72", 
             "--seed","1" , "--train_aug"]  //
          // python train.py --method "baseline"  --dataset "CUB"  --num_classes 72 --seed 1  --train_aug --normalize --model Conv2  --lr_net  1e-3 
