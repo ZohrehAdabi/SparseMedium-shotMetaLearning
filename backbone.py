@@ -449,6 +449,9 @@ class Conv3(nn.Module):
 def Conv3R(flatten):
     return Conv3(flatten)
 
+def Conv2():
+    return ConvNet(2)
+    
 def Conv4():
     return ConvNet(4)
 

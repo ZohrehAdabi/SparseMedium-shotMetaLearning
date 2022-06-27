@@ -92,7 +92,10 @@ if __name__ == '__main__':
     if params.save_iter != -1:
         outfile = os.path.join( checkpoint_dir.replace("checkpoints","features"), split + "_" + str(params.save_iter)+ ".hdf5") 
     else:
-        outfile = os.path.join( checkpoint_dir.replace("checkpoints","features"), split + ".hdf5") 
+        if params.DKT_features:
+            outfile = os.path.join( checkpoint_dir.replace("checkpoints","features"), split+'_DKT' + ".hdf5")
+        else:
+            outfile = os.path.join( checkpoint_dir.replace("checkpoints","features"), split + ".hdf5") 
 
     datamgr         = SimpleDataManager(image_size, batch_size = 64)
     data_loader      = datamgr.get_data_loader(loadfile, aug = False)
@@ -110,19 +113,70 @@ if __name__ == '__main__':
        raise ValueError('MAML do not support save feature')
     else:
         model = model_dict[params.model]()
-
-    model = model.cuda()
-    tmp = torch.load(modelfile)
-    state = tmp['state']
-    state_keys = list(state.keys())
-    for i, key in enumerate(state_keys):
-        if "feature." in key:
-            newkey = key.replace("feature.","")  # an architecture model has attribute 'feature', load architecture feature to backbone by casting name from 'feature.trunk.xx' to 'trunk.xx'  
-            state[newkey] = state.pop(key)
-        else:
-            state.pop(key)
+    if params.DKT_features:
+        from methods.DKT import DKT
+        from methods.DKT_binary import DKT_binary
+        best = True
+        binary = False
+        few_shot_params = dict(n_way = params.test_n_way , n_support = params.n_shot) 
+        if best:
+            if binary:
+                best_model      = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
+            else:
+                best_model      = DKT(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
             
-    model.load_state_dict(state)
+        
+            best_model = best_model.cuda()
+        else:
+            if binary:
+                last_model      = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
+            else:
+                last_model      = DKT(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
+            
+            last_model = last_model.cuda()
+        if binary:
+            chkpt_dir = f'./save/checkpoints/CUB/Conv4_DKT_binary_seed_1_n_task_200_way_2_shot_50_query_10_lr_0.001_0.001_linear_norm_aug'
+        else:
+            chkpt_dir = f'./save/checkpoints/CUB/Conv4_DKT_seed_1_n_task_100_way_2_shot_50_query_10_lr_0.001_0.001_linear_norm_aug'
+            chkpt_dir = f'./save/checkpoints/CUB/Conv4_DKT_aug_5way_1shot'
+        
+        if best:
+            best_modelfile   = get_best_file(chkpt_dir)
+            print(f'\nBest model {best_modelfile}')
+            tmp = torch.load(best_modelfile)
+            best_epoch = tmp['epoch']
+            best_model.load_state_dict(tmp['state'])
+            print(f'\nModel at Best epoch {best_epoch}\n')
+        else:    
+            files = os.listdir(chkpt_dir)
+            nums =  [int(f.split('.')[0]) for f in files if 'best' not in f]
+            num = max(nums)
+            print(f'\nModel at last epoch {num}')
+            last_modelfile = os.path.join(chkpt_dir, '{:d}.tar'.format(num))
+            print(f'\nlast model {last_modelfile}')
+
+    if params.DKT_features:
+        print("DKT_features")
+        # model = best_model.feature_extractor
+        if best:
+            model.load_state_dict(best_model.feature_extractor.state_dict())
+        else:
+            model.load_state_dict(last_model.feature_extractor.state_dict())
+        model = model.cuda()
+    else:
+        model = model.cuda()
+        tmp = torch.load(modelfile)
+        state = tmp['state']
+        state_keys = list(state.keys())
+        for i, key in enumerate(state_keys):
+            if "feature." in key:
+                newkey = key.replace("feature.","")  # an architecture model has attribute 'feature', load architecture feature to backbone by casting name from 'feature.trunk.xx' to 'trunk.xx'  
+                state[newkey] = state.pop(key)
+            else:
+                state.pop(key)
+                
+        model.load_state_dict(state)
+
     model.eval()
 
     dirname = os.path.dirname(outfile)

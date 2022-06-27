@@ -57,7 +57,7 @@ def feature_evaluation(cl_data_file, model, n_way = 5, n_support = 5, n_query = 
 
     # select_class = random.sample(class_list, n_way)
     select_class = list(np.random.choice(list(class_list), n_way, replace=False))
-    print(f'selected classes {select_class}')
+    # print(f'selected classes {select_class}')
     z_all  = []
     for cl in select_class:
         img_feat = cl_data_file[cl]
@@ -306,21 +306,19 @@ def single_test(params):
     #modelfile   = get_resume_file(checkpoint_dir)
 
     if not params.method in ['baseline', 'baseline++'] : 
-        best = False
-        # best = True
-        # last = False
-        last = True
-        best_rvm = False
+        best, last = False, True
+        # best, last = True, False
+        # best, last = True, True
+        best_rvm = True
         if params.method in ['DKT', 'DKT_binary']:
-            last = False
-            # last = True
-            # best = False
-            best = True
+            # best, last = False, True
+            best, last = True, False
+            # best, last = True, True
             best_rvm = False 
         print(f'\n{checkpoint_dir}\n')
         modelfile = None
         if params.save_iter != -1:
-            print(f'\nModel at epoch {params.save_iter}\n')
+            print(f'\nModel at epoch {params.save_iter}')
             modelfile   = get_assigned_file(checkpoint_dir, params.save_iter)
         
         
@@ -334,9 +332,9 @@ def single_test(params):
             files = os.listdir(checkpoint_dir)
             nums =  [int(f.split('.')[0]) for f in files if 'best' not in f]
             num = max(nums)
-            print(f'\nModel at last epoch {num}\n')
+            print(f'\nModel at last epoch {num}')
             last_modelfile = os.path.join(checkpoint_dir, '{:d}.tar'.format(num))
-            print(f'\nlast model {last_modelfile}\n')
+            print(f'\nlast model {last_modelfile}')
         
         if best: #else:
             if  params.method in ['MetaOptNet_binary', 'MetaOptNet']:
@@ -344,8 +342,12 @@ def single_test(params):
             else:
                 # best_model = deepcopy(model)
                 best_model = best_model.cuda()
-            best_modelfile   = get_best_file(checkpoint_dir)
-            print(f'\nBest model {best_modelfile}\n')
+            if params.Baseline_features:
+                chkpt_dir = f'./save/checkpoints/CUB/Conv4_DKT_aug_5way_1shot'
+                best_modelfile   = get_best_file(chkpt_dir)
+            else:
+                best_modelfile   = get_best_file(checkpoint_dir)
+            print(f'\nBest model {best_modelfile}')
 
         if best_rvm: #else:
             # best_model_rvm = deepcopy(model)
@@ -353,7 +355,7 @@ def single_test(params):
             best_modelfile_rvm   = os.path.join(checkpoint_dir, 'best_model_rvm.tar')
             if not os.path.isfile(best_modelfile_rvm):
                 best_modelfile_rvm = None
-            print(f'\nBest RVM model {best_modelfile_rvm}\n')
+            print(f'\nBest RVM model {best_modelfile_rvm}')
 
         if modelfile is not None:
             tmp = torch.load(modelfile)
@@ -388,6 +390,22 @@ def single_test(params):
             # last_model.feature_extractor.load_state_dict(tmp['state'])
 
         if best and (best_modelfile is not None):
+            if params.Baseline_features:
+                chkpt_dir = f'./save/checkpoints/CUB/Conv4_baseline_seed_1'
+                modelfile   = get_resume_file(chkpt_dir)
+                tmp = torch.load(modelfile)
+                state = tmp['state']
+                state_keys = list(state.keys())
+                for i, key in enumerate(state_keys):
+                    if "feature." in key:
+                        newkey = key.replace("feature.","")  # an architecture model has attribute 'feature', load architecture feature to backbone by casting name from 'feature.trunk.xx' to 'trunk.xx'  
+                        state[newkey] = state.pop(key)
+                    else:
+                        state.pop(key)
+                baseline_model = model_dict[params.model]()  
+                baseline_model = baseline_model.cuda()      
+                baseline_model.load_state_dict(state)
+            
             tmp = torch.load(best_modelfile)
             best_epoch = tmp['epoch']
             if params.method in ['Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss']:
@@ -405,6 +423,10 @@ def single_test(params):
             
             best_model.load_state_dict(tmp['state'])
             # best_model.feature_extractor.load_state_dict(tmp['state'])
+            if params.Baseline_features:
+                print("Baseline_features")
+                # best_model.feature = baseline_model
+                best_model.feature.load_state_dict(baseline_model.state_dict())
         
         else:
             if best:
@@ -540,6 +562,7 @@ def single_test(params):
 
         if best:
             print(f'\nBest model epoch {best_epoch}\n')
+            
             best_model.eval()
             acc_mean, acc_std, result = best_model.test_loop(novel_loader, return_std = True, dataset=params.dataset, show_plot=False)
             # acc_all = []
@@ -580,7 +603,12 @@ def single_test(params):
         if params.save_result: f.close()
         print(f'\n{id_}\n')
     else:
-        novel_file = os.path.join( checkpoint_dir.replace("checkpoints","features"), split_str +".hdf5") #defaut split = novel, but you can also test base or val classes
+        # Baseline 94.85 | 94.80 with DKT features
+        if params.DKT_features:
+            print("DKT_features")
+            novel_file = os.path.join( checkpoint_dir.replace("checkpoints","features"), split_str+'_DKT' +".hdf5")
+        else:
+            novel_file = os.path.join( checkpoint_dir.replace("checkpoints","features"), split_str +".hdf5") #defaut split = novel, but you can also test base or val classes
         cl_data_file = feat_loader.init_loader(novel_file)
 
         for i in range(iter_num):
