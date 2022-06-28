@@ -5,6 +5,7 @@ import argparse
 import backbone
 
 model_dict = dict(
+            Conv4_2ch = backbone.Conv4_2ch,
             Conv4_16ch = backbone.Conv4_16ch,
             Conv4_128ch = backbone.Conv4_128ch,
             Conv4 = backbone.Conv4,

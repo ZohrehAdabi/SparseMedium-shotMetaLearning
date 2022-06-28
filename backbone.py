@@ -458,7 +458,7 @@ def Conv3R(flatten):
 
 # def Conv2():
 #     return ConvNet(2)
-def Conv4_16ch():
+def Conv4_2ch():
     return ConvNet(4, num_channels=2) 
 
 def Conv4_16ch():
