@@ -656,7 +656,7 @@
            "args": ["--method","baseline", "--dataset", "CUB", "--normalize", "--model", "Conv4_128ch",
             "--num_classes", "72", 
             "--seed","1" , "--train_aug"]  //
-         // python train.py --method "baseline"  --dataset "CUB"  --num_classes 72 --seed 1  --train_aug --normalize --model Conv2  --lr_net  1e-3 
+         // python train.py --method "baseline"  --dataset "CUB"  --num_classes 72 --seed 1  --train_aug --normalize --model Conv4  --lr_net  1e-3 
          },
          {
             "name": "Baseline [save_features] [CUB]: test ",

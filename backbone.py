@@ -261,7 +261,10 @@ class ConvNet(nn.Module):
             trunk.append(Flatten())
 
         self.trunk = nn.Sequential(*trunk)
+        
         self.final_feat_dim = 1600
+        if num_channels==2:
+            self.final_feat_dim = 50
         if num_channels==16:
             self.final_feat_dim = 400
         if num_channels==128:
@@ -455,6 +458,9 @@ def Conv3R(flatten):
 
 # def Conv2():
 #     return ConvNet(2)
+def Conv4_16ch():
+    return ConvNet(4, num_channels=2) 
+
 def Conv4_16ch():
     return ConvNet(4, num_channels=16)   
 
