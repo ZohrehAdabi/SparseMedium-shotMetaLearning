@@ -395,7 +395,7 @@ def single_test(params):
             if params.Baseline_features:
                 chkpt_dir = f'./save/checkpoints/CUB/Conv4_baseline_seed_1'
                 chkpt_dir = f'./save/checkpoints/CUB/Conv4_16ch_baseline_seed_1'
-                # chkpt_dir = f'./save/checkpoints/CUB/Conv4_128ch_baseline_seed_1'
+                chkpt_dir = f'./save/checkpoints/CUB/Conv4_128ch_baseline_seed_1'
                 modelfile   = get_resume_file(chkpt_dir)
                 tmp = torch.load(modelfile)
                 state = tmp['state']

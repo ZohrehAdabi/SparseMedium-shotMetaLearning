@@ -371,7 +371,7 @@
         "args": ["--method","DKT", "--dataset", "CUB", 
             // "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "1",  
             "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "20",
-            "--n_query", "10",  "--model", "Conv4_128ch",  //"--Baseline_features",
+            "--n_query", "10",  "--model", "Conv4_128ch",  "--Baseline_features",
              "--lr_gp", "1e-3", "--lr_net", "1e-3", 
             "--seed","1",  "--kernel_type", "linear", "--n_task", "100", "--normalize", "--train_aug"]
             // python test.py --method "DKT"  --dataset "CUB"  --train_n_way 5 --test_n_way 5 --n_shot 50 --n_query 10 --seed 1 --lr_gp  1e-3 --lr_net  1e-3 --normalize --kernel_type "linear" --train_aug --model "Conv2"  --n_task 20 
@@ -668,7 +668,7 @@
             "--num_classes", "72", "--model", "Conv4_128ch",
             "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "20",
             //"--train_n_way", "2", "--test_n_way", "2", "--n_shot", "1", 
-            "--n_query", "10", "--DKT_features",
+            "--n_query", "10", //"--DKT_features",
             "--seed","1" ]  //
          // python save_features.py --method "baseline"  --dataset "CUB"  --num_classes 72 --model Conv4 --test_n_way 2 --n_shot 50 --n_query 10 --seed 1 --train_aug --lr_net  1e-3 
          },
