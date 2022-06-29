@@ -105,8 +105,13 @@ def single_test(params):
         model           = ProtoNet( model_dict[params.model], **few_shot_params )
     elif params.method == 'DKT':
         # model           = DKT(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
-        # last_model      = DKT(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
-        best_model      = DKT(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
+        if params.best:
+            best, last = True, False
+            best_model      = DKT(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
+        else:
+            best, last = False, True
+            last_model      = DKT(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
+        
     elif params.method == 'DKT_binary':
         # model           = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
         # last_model      = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
@@ -306,16 +311,18 @@ def single_test(params):
     #modelfile   = get_resume_file(checkpoint_dir)
 
     if not params.method in ['baseline', 'baseline++'] : 
-        best, last = False, True
-        # best, last = True, False
-        # best, last = True, True
-        best_rvm = True
+        
         if params.method in ['DKT', 'DKT_binary']:
             # best, last = False, True
-            best, last = True, False
+            # best, last = True, False
             # best, last = True, True
             best_rvm = False 
-        print(f'\n{checkpoint_dir}\n')
+        else:
+            best, last = False, True
+            # best, last = True, False
+            # best, last = True, True
+            best_rvm = True
+        print(f'{checkpoint_dir}\n')
         modelfile = None
         if params.save_iter != -1:
             print(f'\nModel at epoch {params.save_iter}')
@@ -359,6 +366,24 @@ def single_test(params):
                 best_modelfile_rvm = None
             print(f'\nBest RVM model {best_modelfile_rvm}')
 
+        if params.Baseline_features:
+            chkpt_dir = f'./save/checkpoints/CUB/Conv4_baseline_seed_1'
+            chkpt_dir = f'./save/checkpoints/CUB/Conv4_16ch_baseline_seed_1'
+            chkpt_dir = f'./save/checkpoints/CUB/Conv4_128ch_baseline_seed_1'
+            modelfile   = get_resume_file(chkpt_dir)
+            tmp = torch.load(modelfile)
+            state = tmp['state']
+            state_keys = list(state.keys())
+            for i, key in enumerate(state_keys):
+                if "feature." in key:
+                    newkey = key.replace("feature.","")  # an architecture model has attribute 'feature', load architecture feature to backbone by casting name from 'feature.trunk.xx' to 'trunk.xx'  
+                    state[newkey] = state.pop(key)
+                else:
+                    state.pop(key)
+            baseline_model = model_dict[params.model]()  
+            baseline_model = baseline_model.cuda()      
+            baseline_model.load_state_dict(state)
+
         if modelfile is not None:
             tmp = torch.load(modelfile)
             if params.method in ['Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss']:
@@ -390,26 +415,13 @@ def single_test(params):
                     tmp['state'][f'mll.model.models.{i}.covar_module.inducing_points'] = IP
             last_model.load_state_dict(tmp['state'])
             # last_model.feature_extractor.load_state_dict(tmp['state'])
+            if params.Baseline_features:
+                print("Baseline_features")
+                # best_model.feature = baseline_model
+                last_model.feature.load_state_dict(baseline_model.state_dict())
 
         if best and (best_modelfile is not None):
-            if params.Baseline_features:
-                chkpt_dir = f'./save/checkpoints/CUB/Conv4_baseline_seed_1'
-                chkpt_dir = f'./save/checkpoints/CUB/Conv4_16ch_baseline_seed_1'
-                chkpt_dir = f'./save/checkpoints/CUB/Conv4_128ch_baseline_seed_1'
-                modelfile   = get_resume_file(chkpt_dir)
-                tmp = torch.load(modelfile)
-                state = tmp['state']
-                state_keys = list(state.keys())
-                for i, key in enumerate(state_keys):
-                    if "feature." in key:
-                        newkey = key.replace("feature.","")  # an architecture model has attribute 'feature', load architecture feature to backbone by casting name from 'feature.trunk.xx' to 'trunk.xx'  
-                        state[newkey] = state.pop(key)
-                    else:
-                        state.pop(key)
-                baseline_model = model_dict[params.model]()  
-                baseline_model = baseline_model.cuda()      
-                baseline_model.load_state_dict(state)
-            
+                        
             tmp = torch.load(best_modelfile)
             best_epoch = tmp['epoch']
             if params.method in ['Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss']:
