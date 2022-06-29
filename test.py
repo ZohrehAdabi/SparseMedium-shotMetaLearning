@@ -342,14 +342,14 @@ def single_test(params):
             else:
                 # best_model = deepcopy(model)
                 best_model = best_model.cuda()
-            if params.Baseline_features:
-                chkpt_dir = f'./save/checkpoints/CUB/Conv4_DKT_aug_5way_1shot'
-                chkpt_dir = f'./save/checkpoints/CUB/Conv4_16ch_DKT_seed_1_n_task_100_way_5_shot_1_query_10_lr_0.001_0.001_linear_norm_aug'
-                chkpt_dir = f'./save/checkpoints/CUB/Conv4_128ch_DKT_seed_1_n_task_100_way_2_shot_50_query_10_lr_0.001_0.001_linear_norm_aug'
-                best_modelfile   = get_best_file(chkpt_dir)
-            else:
+            # if params.Baseline_features:
+            #     chkpt_dir = f'./save/checkpoints/CUB/Conv4_DKT_aug_5way_1shot'
+            #     chkpt_dir = f'./save/checkpoints/CUB/Conv4_16ch_DKT_seed_1_n_task_100_way_5_shot_1_query_10_lr_0.001_0.001_linear_norm_aug'
+            #     chkpt_dir = f'./save/checkpoints/CUB/Conv4_128ch_DKT_seed_1_n_task_100_way_2_shot_50_query_10_lr_0.001_0.001_linear_norm_aug'
+            #     best_modelfile   = get_best_file(chkpt_dir)
+            # else:
                 best_modelfile   = get_best_file(checkpoint_dir)
-            print(f'\nBest model {best_modelfile}')
+                print(f'\nBest model {best_modelfile}')
 
         if best_rvm: #else:
             # best_model_rvm = deepcopy(model)
