@@ -72,6 +72,7 @@ def parse_args(script):
         parser.add_argument('--save_iter'       , default=-1, type=int,help ='save feature from the model trained in x epoch, use the best model if x is -1')
         parser.add_argument('--num_classes'     , default=200, type=int, help='total number of classes in softmax, only used in baseline') #make it larger than the maximum label value in base class
         parser.add_argument('--DKT_features'    , action='store_true', help='use DKT features in baseline')
+        parser.add_argument('--best'            , action='store_true', help='use best model or last model')
     elif script == 'test':
         parser.add_argument('--split'           , default='novel', help='base/val/novel') #default novel, but you can also test base/val class accuracy if you want
         parser.add_argument('--save_iter'       , default=-1, type=int,help ='saved feature from the model trained in x epoch, use the best model if x is -1')

@@ -116,7 +116,7 @@ if __name__ == '__main__':
     if params.DKT_features:
         from methods.DKT import DKT
         from methods.DKT_binary import DKT_binary
-        best = True
+        best = params.best
         binary = False
         few_shot_params = dict(n_way = params.test_n_way , n_support = params.n_shot) 
         if best:
