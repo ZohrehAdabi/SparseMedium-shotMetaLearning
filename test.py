@@ -366,23 +366,7 @@ def single_test(params):
                 best_modelfile_rvm = None
             print(f'\nBest RVM model {best_modelfile_rvm}')
 
-        if params.Baseline_features:
-            chkpt_dir = f'./save/checkpoints/CUB/Conv4_baseline_seed_1'
-            chkpt_dir = f'./save/checkpoints/CUB/Conv4_16ch_baseline_seed_1'
-            chkpt_dir = f'./save/checkpoints/CUB/Conv4_128ch_baseline_seed_1'
-            modelfile   = get_resume_file(chkpt_dir)
-            tmp = torch.load(modelfile)
-            state = tmp['state']
-            state_keys = list(state.keys())
-            for i, key in enumerate(state_keys):
-                if "feature." in key:
-                    newkey = key.replace("feature.","")  # an architecture model has attribute 'feature', load architecture feature to backbone by casting name from 'feature.trunk.xx' to 'trunk.xx'  
-                    state[newkey] = state.pop(key)
-                else:
-                    state.pop(key)
-            baseline_model = model_dict[params.model]()  
-            baseline_model = baseline_model.cuda()      
-            baseline_model.load_state_dict(state)
+        
 
         if modelfile is not None:
             tmp = torch.load(modelfile)
@@ -400,6 +384,24 @@ def single_test(params):
 
             model.load_state_dict(tmp['state'])
         
+        if params.Baseline_features:
+            chkpt_dir = f'./save/checkpoints/CUB/Conv4_baseline_seed_1'
+            chkpt_dir = f'./save/checkpoints/CUB/Conv4_16ch_baseline_seed_1'
+            chkpt_dir = f'./save/checkpoints/CUB/Conv4_128ch_baseline_seed_1'
+            modelfile   = get_resume_file(chkpt_dir)
+            tmp = torch.load(modelfile)
+            state = tmp['state']
+            state_keys = list(state.keys())
+            for i, key in enumerate(state_keys):
+                if "feature." in key:
+                    newkey = key.replace("feature.","")  # an architecture model has attribute 'feature', load architecture feature to backbone by casting name from 'feature.trunk.xx' to 'trunk.xx'  
+                    state[newkey] = state.pop(key)
+                else:
+                    state.pop(key)
+            baseline_model = model_dict[params.model]()  
+            baseline_model = baseline_model.cuda()      
+            baseline_model.load_state_dict(state)
+            
         if last and (last_modelfile is not None):
             tmp = torch.load(last_modelfile)
             if params.method in ['Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss']:
