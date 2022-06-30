@@ -72,11 +72,12 @@ if __name__ == '__main__':
 
     # checkpoint_dir = '%s/checkpoints/%s/%s_%s' %(configs.save_dir, params.dataset, params.model, params.method)
     checkpoint_dir = '%s/checkpoints/%s/%s_%s_seed_%s' % (configs.save_dir, params.dataset, params.model, params.method, params.seed)
-    id = f'{params.method}_{params.model}_n_class_{params.num_classes}'
+    id = f'_n_class_{params.num_classes}'
     if params.normalize: id += '_norm'
     if params.lr_decay: id += '_lr_decay'
     if params.train_aug: id += '_aug'
-    
+    if params.batch_size!=16: id += f'_batch_size_{params.batch_size}'
+    checkpoint_dir += id
     # if params.train_aug:
     #     checkpoint_dir += '_aug'
     if not params.method in ['baseline', 'baseline++'] :
