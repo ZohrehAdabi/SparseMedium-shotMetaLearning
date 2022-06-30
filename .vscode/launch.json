@@ -354,8 +354,8 @@
             "program": "${workspaceFolder}/train.py",
             "console": "integratedTerminal",
            "args": ["--method","DKT", "--dataset", "CUB", 
-            "--train_n_way", "5", "--test_n_way", "5","--n_shot", "50",  "--n_query", "10",  "--model", "Conv4_16ch",
-            "--lr_gp", "1e-3", "--lr_net", "1e-3", "--stop_epoch", "200",
+            "--train_n_way", "5", "--test_n_way", "5","--n_shot", "10",  "--n_query", "10",  "--model", "Conv4_16ch",
+            "--lr_gp", "1e-3", "--lr_net", "1e-3", "--stop_epoch", "200", "--batch_size", "15",
             "--seed","1",  "--kernel_type", "linear", "--n_task", "100", "--normalize", "--train_aug"
             ]  //, "--train_aug"
          // python train.py --method "DKT"  --dataset "CUB"  --train_n_way 5 --test_n_way 5 --n_shot 50 --n_query 10 --seed 1 --lr_gp  1e-3 --lr_net  1e-3 --normalize --kernel_type "linear" --train_aug  --model "Conv4" --stop_epoch 400 --n_task 20 

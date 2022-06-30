@@ -132,6 +132,7 @@ class DKT(MetaTemplate):
         #                               {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
         self.mll_list = []
         self.acc_test_list = []
+        total_loss = 0
         for i, (x,_) in enumerate(train_loader):
             self.n_query = x.size(1) - self.n_support
             if self.change_way: self.n_way  = x.size(0)
@@ -164,7 +165,7 @@ class DKT(MetaTemplate):
             lenghtscale = 0.0
             noise = 0.0
             outputscale = 0.0
-            total_loss = 0
+            
             # print(Fore.LIGHTMAGENTA_EX, f'epoch:{epoch+1}', Fore.RESET)
             for idx, single_model in enumerate(self.model.models):
                 # print(Fore.LIGHTMAGENTA_EX, f'model:{idx+1}', Fore.RESET)
@@ -196,7 +197,7 @@ class DKT(MetaTemplate):
                 loss = -self.mll(output, transformed_targets).sum()
             else:
                 loss = -self.mll(output, self.model.train_targets)
-            total_loss += (loss)
+            total_loss += loss
             if ((i % self.batch_size)==0 or i==(len(train_loader)-1)):
                 if i % self.batch_size ==0:
                     total_loss = total_loss / self.batch_size
