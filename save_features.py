@@ -141,8 +141,11 @@ if __name__ == '__main__':
             chkpt_dir = f'./save/checkpoints/CUB/Conv4_DKT_seed_1_n_task_100_way_2_shot_50_query_10_lr_0.001_0.001_linear_norm_aug'
             chkpt_dir = f'./save/checkpoints/CUB/Conv4_16ch_DKT_seed_1_n_task_100_way_2_shot_1_query_10_lr_0.001_0.001_linear_norm_aug'
             # chkpt_dir = f'./save/checkpoints/CUB/Conv4_16ch_DKT_seed_1_n_task_100_way_5_shot_1_query_10_lr_0.001_0.001_linear_norm_aug'
-            chkpt_dir = f'./save/checkpoints/CUB/{params.model}_DKT_seed_1_n_task_100_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_linear_norm_aug'
+            chkpt_dir = f'./save/checkpoints/CUB/{params.model}_DKT_seed_1_n_task_100_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_linear'
+
             # chkpt_dir = f'./save/checkpoints/CUB/Conv4_128ch_DKT_seed_1_n_task_100_way_5_shot_20_query_10_lr_0.001_0.001_linear_norm_aug'
+            if params.normalize: chkpt_dir += '_norm'
+            if params.train_aug: chkpt_dir += '_aug'
         print(chkpt_dir)
         if best:
             best_modelfile   = get_best_file(chkpt_dir)
