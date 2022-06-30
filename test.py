@@ -307,6 +307,7 @@ def single_test(params):
         if params.warmup:  id_+= '_warmup'
         if params.freeze: id_+= '_freeze'
         if params.mini_batches: id_+= '_mini_batch'
+        if params.batch_size!=1: id_ += f'_batch_size_{params.batch_size}'
         if params.sparse_method in ['Random', 'KMeans', 'augmFRVM', 'constFRVM']:  
             if params.num_ip is not None:
                     id_+= f'_ip_{params.num_ip}'
@@ -624,6 +625,12 @@ def single_test(params):
         if params.save_result: f.close()
         print(f'\n{id_}\n')
     else:
+        id_ = f'_n_class_{params.num_classes}'
+        if params.normalize: id_ += '_norm'
+        if params.lr_decay: id_ += '_lr_decay'
+        if params.train_aug: id_ += '_aug'
+        if params.batch_size!=16: id_ += f'_batch_size_{params.batch_size}'
+        checkpoint_dir += id_
         # Baseline 94.85 | 94.80 with DKT features
         if params.DKT_features:
             print("DKT_features")

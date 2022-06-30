@@ -172,17 +172,17 @@ if __name__ == '__main__':
             val_datamgr = SetDataManager(image_size, **test_few_shot_params, n_query=params.n_query, n_eposide=params.n_task)
             val_loader = val_datamgr.get_data_loader(val_file, aug=False)
 
-            id=f'Transfer_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}'
+            id_ =f'Transfer_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}'
          
-            if params.normalize: id += '_norm'
-            if params.lr_decay: id += '_lr_decay'
-            if params.train_aug: id += '_aug'
-            if params.mini_batches: id += '_mini_batch'
+            if params.normalize: id_ += '_norm'
+            if params.lr_decay: id_ += '_lr_decay'
+            if params.train_aug: id_ += '_aug'
+            if params.mini_batches: id_ += '_mini_batch'
             model = FeatureTransfer(model_dict[params.model], normalize=params.normalize, mini_batches=params.mini_batches, **train_few_shot_params)
     
-            model.init_summary(id=id, dataset=params.dataset)
+            model.init_summary(id=id_, dataset=params.dataset)
         else:
-            base_datamgr = SimpleDataManager(image_size, batch_size=16)
+            base_datamgr = SimpleDataManager(image_size, batch_size=params.batch_size)
             base_loader = base_datamgr.get_data_loader(base_file, aug=params.train_aug)
             val_datamgr = SimpleDataManager(image_size, batch_size=64)
             val_loader = val_datamgr.get_data_loader(val_file, aug=False)
@@ -197,12 +197,13 @@ if __name__ == '__main__':
             elif params.method == 'baseline++':
                 model = BaselineTrain(model_dict[params.model], params.num_classes, normalize=params.normalize, loss_type='dist')
             
-            id = f'{params.method}_{params.model}_n_class_{params.num_classes}'
-            if params.normalize: id += '_norm'
-            if params.lr_decay: id += '_lr_decay'
-            if params.train_aug: id += '_aug'
+            id_ = f'{params.method}_{params.model}_n_class_{params.num_classes}'
+            if params.normalize: id_ += '_norm'
+            if params.lr_decay: id_ += '_lr_decay'
+            if params.train_aug: id_ += '_aug'
+            if params.batch_size!=16: id_ += f'_batch_size_{params.batch_size}'
         
-            model.init_summary(id=id, dataset=params.dataset)
+            model.init_summary(id=id_, dataset=params.dataset)
         
     elif params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_RVM', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss', 
                             'Sparse_DKT_binary_Exact', 'Sp_DKT_Bin_Exact_NLoss', 
@@ -211,7 +212,8 @@ if __name__ == '__main__':
         # for fewshot setting
         # n_query = max(1, int(
         #     16 * params.test_n_way / params.train_n_way))  # if test_n_way is smaller than train_n_way, reduce n_query to keep batch size small
-
+        
+        if params.batch_size==16: params.batch_size = 1 #one task per iteration (default value)
         train_few_shot_params = dict(n_way=params.train_n_way, n_support=params.n_shot)
         base_datamgr = SetDataManager(image_size, **train_few_shot_params, n_query=params.n_query, n_eposide=params.n_task) #n_eposide=100
         base_loader = base_datamgr.get_data_loader(base_file, aug=params.train_aug)
@@ -589,6 +591,7 @@ if __name__ == '__main__':
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
+            if params.batch_size!=1: id += f'_batch_size_{params.batch_size}'
             if params.sparse_method in ['Random', 'KMeans', 'augmFRVM', 'constFRVM']:  
                 if params.num_ip is not None:
                     id += f'_ip_{params.num_ip}'
@@ -603,6 +606,7 @@ if __name__ == '__main__':
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
+            if params.batch_size!=1: id += f'_batch_size_{params.batch_size}'
             params.checkpoint_dir += id
         #MAML, MetaOptNet
         elif params.method in ['MAML']:
@@ -613,6 +617,7 @@ if __name__ == '__main__':
             if params.mini_batches: id += '_mini_batch'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
+            if params.batch_size!=1: id += f'_batch_size_{params.batch_size}'
             params.checkpoint_dir += id
         
         elif params.method in ['MetaOptNet', 'transfer']:
@@ -623,7 +628,17 @@ if __name__ == '__main__':
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
             if params.mini_batches: id += '_mini_batch'
+            if params.batch_size!=1: id += f'_batch_size_{params.batch_size}'
             params.checkpoint_dir += id
+
+    else:
+        if params.method in ['baseline', 'baseline++']:
+            id_ = f'_n_class_{params.num_classes}'
+            if params.normalize: id_ += '_norm'
+            if params.lr_decay: id_ += '_lr_decay'
+            if params.train_aug: id_ += '_aug'
+            if params.batch_size!=16: id_ += f'_batch_size_{params.batch_size}'
+            params.checkpoint_dir += id_
 
     if not os.path.isdir(params.checkpoint_dir):
         os.makedirs(params.checkpoint_dir)

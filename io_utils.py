@@ -65,6 +65,7 @@ def parse_args(script):
         parser.add_argument('--save_freq'       , default=50, type=int, help='Save frequency')
         parser.add_argument('--start_epoch'     , default=0, type=int,help ='Starting epoch')
         parser.add_argument('--stop_epoch'      , default=-1, type=int, help ='Stopping epoch') #for meta-learning methods, each epoch contains 100 episodes. The default epoch number is dataset dependent. See train.py
+        parser.add_argument('--batch_size'      , default=16, type=int, help ='mini batch_size for Baseline and task batch_size for Meta-learning')
         parser.add_argument('--resume'          , action='store_true', help='continue from previous trained model with largest epoch')
         
     elif script == 'save_features':
