@@ -201,7 +201,7 @@ class DKT(MetaTemplate):
                 if i % self.batch_size ==0:
                     total_loss = total_loss / self.batch_size
                 else:
-                    total_loss = total_loss / i
+                    total_loss = total_loss / (i % self.batch_size)
                 total_loss.backward()
                 optimizer.step()
             loss = loss.item()
