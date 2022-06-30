@@ -30,7 +30,7 @@ except ImportError:
 #python3 train.py --dataset="CUB" --method="DKT" --train_n_way=5 --test_n_way=5 --n_shot=5 --train_aug
 
 class DKT(MetaTemplate):
-    def __init__(self, model_func, kernel_type, n_way, n_support, normalize=False, dirichlet=False):
+    def __init__(self, model_func, kernel_type, n_way, n_support, batch_size=1, normalize=False, dirichlet=False):
         super(DKT, self).__init__(model_func, n_way, n_support)
         ## GP parameters
         self.leghtscale_list = None
@@ -41,6 +41,7 @@ class DKT(MetaTemplate):
         self.dirichlet = dirichlet
         self.feature_extractor = self.feature
         self.kernel_type = kernel_type
+        self.batch_size = batch_size
         self.get_model_likelihood_mll() #Init model, likelihood, and mll
         if(kernel_type=="cossim"):
             self.normalize=True
@@ -163,6 +164,7 @@ class DKT(MetaTemplate):
             lenghtscale = 0.0
             noise = 0.0
             outputscale = 0.0
+            total_loss = 0
             # print(Fore.LIGHTMAGENTA_EX, f'epoch:{epoch+1}', Fore.RESET)
             for idx, single_model in enumerate(self.model.models):
                 # print(Fore.LIGHTMAGENTA_EX, f'model:{idx+1}', Fore.RESET)
@@ -194,8 +196,14 @@ class DKT(MetaTemplate):
                 loss = -self.mll(output, transformed_targets).sum()
             else:
                 loss = -self.mll(output, self.model.train_targets)
-            loss.backward()
-            optimizer.step()
+            total_loss += (loss)
+            if ((i % self.batch_size)==0 or i==(len(train_loader)-1)):
+                if i % self.batch_size ==0:
+                    total_loss = total_loss / self.batch_size
+                else:
+                    total_loss = total_loss / i
+                total_loss.backward()
+                optimizer.step()
             loss = loss.item()
             self.mll_list.append(loss)
             self.iteration = i+(epoch*len(train_loader))

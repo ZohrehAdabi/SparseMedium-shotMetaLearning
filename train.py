@@ -212,7 +212,7 @@ if __name__ == '__main__':
         # for fewshot setting
         # n_query = max(1, int(
         #     16 * params.test_n_way / params.train_n_way))  # if test_n_way is smaller than train_n_way, reduce n_query to keep batch size small
-        
+
         if params.batch_size==16: params.batch_size = 1 #one task per iteration (default value)
         train_few_shot_params = dict(n_way=params.train_n_way, n_support=params.n_shot)
         base_datamgr = SetDataManager(image_size, **train_few_shot_params, n_query=params.n_query, n_eposide=params.n_task) #n_eposide=100
@@ -459,7 +459,7 @@ if __name__ == '__main__':
             model.init_summary(id=id, dataset=params.dataset)
 
         elif(params.method == 'DKT'):
-            model = DKT(model_dict[params.model], params.kernel_type, **train_few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
+            model = DKT(model_dict[params.model], params.kernel_type, **train_few_shot_params, batch_size=params.batch_size, normalize=params.normalize, dirichlet=params.dirichlet)
             if params.dirichlet:
                 id=f'DKT_{params.model}_{params.dataset}_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
@@ -470,10 +470,11 @@ if __name__ == '__main__':
             if params.train_aug: id += '_aug'
             if params.warmup:  id += '_warmup'
             if params.freeze: id += '_freeze'
+            if params.batch_size!=1: id += f'_batch_size_{params.batch_size}'
             model.init_summary(id=id, dataset=params.dataset)
         
         elif(params.method == 'DKT_binary'):
-            model = DKT_binary(model_dict[params.model], params.kernel_type, **train_few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
+            model = DKT_binary(model_dict[params.model], params.kernel_type, **train_few_shot_params, batch_size=params.batch_size, normalize=params.normalize, dirichlet=params.dirichlet)
             if params.dirichlet:
                 id=f'DKT_binary_{params.model}_{params.dataset}_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:
