@@ -82,7 +82,9 @@ def single_test(params):
 
     iter_num = 100 #600
 
-    few_shot_params = dict(n_way = params.test_n_way , n_support = params.n_shot) 
+    few_shot_params = dict(n_way = params.test_n_way , n_support = params.n_shot)
+
+    print('2 way') 
     few_shot_params = dict(n_way = 2 , n_support = params.n_shot) 
 
     if params.dataset in ['omniglot', 'cross_char']:
