@@ -60,8 +60,9 @@ def parse_args(script):
     parser.add_argument('--first_order'        , action='store_true', help='First order approx. of MAML') 
     parser.add_argument('--mini_batches'       , action='store_true', help='only used in feature_transfer')
     parser.add_argument('--batch_size'      , default=16, type=int, help ='mini batch_size for Baseline and task batch_size for Meta-learning')
+    parser.add_argument('--num_classes'     , default=200, type=int, help='total number of classes in softmax, only used in baseline') #make it larger than the maximum label value in base class
     if script == 'train':
-        parser.add_argument('--num_classes'     , default=200, type=int, help='total number of classes in softmax, only used in baseline') #make it larger than the maximum label value in base class
+        #parser.add_argument('--num_classes'     , default=200, type=int, help='total number of classes in softmax, only used in baseline') #make it larger than the maximum label value in base class
         parser.add_argument('--save_model'      , action='store_true', help='save model in some epochs.')
         parser.add_argument('--save_freq'       , default=50, type=int, help='Save frequency')
         parser.add_argument('--start_epoch'     , default=0, type=int,help ='Starting epoch')
@@ -71,7 +72,7 @@ def parse_args(script):
     elif script == 'save_features':
         parser.add_argument('--split'           , default='novel', help='base/val/novel') #default novel, but you can also test base/val class accuracy if you want
         parser.add_argument('--save_iter'       , default=-1, type=int,help ='save feature from the model trained in x epoch, use the best model if x is -1')
-        parser.add_argument('--num_classes'     , default=200, type=int, help='total number of classes in softmax, only used in baseline') #make it larger than the maximum label value in base class
+        
         parser.add_argument('--DKT_features'    , action='store_true', help='use DKT features in baseline')
         parser.add_argument('--best'            , action='store_true', help='use best model or last model')
     elif script == 'test':
