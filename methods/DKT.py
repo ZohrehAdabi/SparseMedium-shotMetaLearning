@@ -205,6 +205,7 @@ class DKT(MetaTemplate):
                 total_loss.backward()
                 optimizer.step()
                 total_loss = 0
+                
             loss = loss.item()
             self.mll_list.append(loss)
             self.iteration = i+(epoch*len(train_loader))
