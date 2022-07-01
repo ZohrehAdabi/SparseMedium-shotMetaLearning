@@ -199,7 +199,7 @@ class DKT(MetaTemplate):
                 loss = -self.mll(output, self.model.train_targets)
             total_loss += loss
             if ((i % self.batch_size)==0 or i==(len(train_loader)-1)):
-                print(f'total loss {total_loss}')
+                # print(f'total loss {total_loss}')
                 if i % self.batch_size ==0 or (len(train_loader) % self.batch_size==0):
                     total_loss = total_loss / self.batch_size
                 else:
