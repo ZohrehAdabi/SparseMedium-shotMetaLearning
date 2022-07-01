@@ -474,7 +474,7 @@ if __name__ == '__main__':
             model.init_summary(id=id, dataset=params.dataset)
         
         elif(params.method == 'DKT_binary'):
-            model = DKT_binary(model_dict[params.model], params.kernel_type, **train_few_shot_params, batch_size=params.batch_size, normalize=params.normalize, dirichlet=params.dirichlet)
+            model = DKT_binary(model_dict[params.model], params.kernel_type, **train_few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
             if params.dirichlet:
                 id=f'DKT_binary_{params.model}_{params.dataset}_n_task_{params.n_task}_dirichlet_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_gp}_{params.lr_net}_{params.kernel_type}'
             else:

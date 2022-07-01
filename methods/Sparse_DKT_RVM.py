@@ -166,6 +166,9 @@ class Sparse_DKT_RVM(MetaTemplate):
         #                             {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
         l = self.lambda_rvm
         self.frvm_acc = []
+        self.frvm_acc_test_list = []
+        self.rvm_mll_list = []
+        self.loss_list = []
         for i, (x,_) in enumerate(train_loader):
             self.n_query = x.size(1) - self.n_support
             if self.change_way: self.n_way  = x.size(0)
@@ -314,6 +317,8 @@ class Sparse_DKT_RVM(MetaTemplate):
 
             rvm_mll = rvm_mll.item()
             mll = mll.item()
+            self.rvm_mll_list.append(-rvm_mll)
+            self.loss_list.append(loss.item())
             self.iteration = i+(epoch*len(train_loader))
             if(self.writer is not None): self.writer.add_scalar('Loss', loss.item(), self.iteration)
             if(self.writer is not None): self.writer.add_scalar('MLL', -mll, self.iteration)
@@ -366,10 +371,11 @@ class Sparse_DKT_RVM(MetaTemplate):
                 y_pred = np.vstack(predictions_list).argmax(axis=0) #[model, classes]
                 accuracy_query = (np.sum(y_pred==y_query) / float(len(y_query))) * 100.0
 
-                          #FRVM ACC on query
+                #FRVM ACC on query
                 y_pred_r = np.vstack(acc_rvm).argmax(axis=0)
                 top1_correct_r = np.sum(y_pred_r==y_query)
                 acc_rvm = (top1_correct_r / len(y_query))* 100
+                self.frvm_acc_test_list.append(acc_rvm)
 
                 if(self.writer is not None): self.writer.add_scalar('GP_query_accuracy', accuracy_query, self.iteration)
                 if(self.writer is not None): self.writer.add_scalar('RVM_query_accuracy', acc_rvm, self.iteration)
@@ -382,6 +388,10 @@ class Sparse_DKT_RVM(MetaTemplate):
                 else:
                     print(Fore.LIGHTRED_EX,'Epoch [{:d}] [{:d}/{:d}] | Outscale {:f} | Lenghtscale {:f} | Noise {:f} | Loss {:f} | MLL {:f} | RVM ML {:f}| Supp. acc {:f} | Query acc {:f}'.format(epoch, i, len(train_loader),
                         outputscale, lenghtscale, noise, loss.item(),  -mll, -rvm_mll, 0, accuracy_query), Fore.RESET)
+        
+        if(self.writer is not None): self.writer.add_scalar('RVM_query_accuracy', np.mean(self.frvm_acc_test_list), self.iteration)
+        if(self.writer is not None): self.writer.add_scalar('Loss [mean]', np.mean(self.loss_list), self.iteration)
+        if(self.writer is not None): self.writer.add_scalar('RVM MLL [mean]', np.mean(self.rvm_mll_list), self.iteration)
 
     def get_inducing_points(self, base_covar_module, inputs, targets, verbose=True):
 
@@ -586,13 +596,15 @@ class Sparse_DKT_RVM(MetaTemplate):
             top1_correct = np.sum(y_pred == y_query)
             count_this = len(y_query)
             ip_predicted_class = -1
-            if True:
+            if False:
                 s=0
                 for i in range(self.n_way):
                     c = np.sum(y_pred==i)
                     s += c * ip_count[i]
                 ip_predicted_class = s /count_this
 
+            ip_predicted_class = np.mean(ip_count)
+            
             #FRVM ACC on query
             y_pred_r = np.vstack(acc_rvm).argmax(axis=0)
             top1_correct_r = np.sum(y_pred_r==y_query)
