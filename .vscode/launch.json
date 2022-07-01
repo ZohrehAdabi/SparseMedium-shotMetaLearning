@@ -421,7 +421,7 @@
             // "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "1",  
             "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "20",
             "--n_query", "10",  "--model", "Conv4_16ch",  //"--Baseline_features",
-            "--best", "--batch_size", "15",
+            "--best", "--batch_size", "14",
              "--lr_gp", "1e-3", "--lr_net", "1e-3", 
             "--seed","1",  "--kernel_type", "linear", "--n_task", "100", "--normalize", "--train_aug"]
             // python test.py --method "DKT"  --dataset "CUB"  --train_n_way 5 --test_n_way 5 --n_shot 50 --n_query 10 --seed 1 --lr_gp  1e-3 --lr_net  1e-3 --normalize --kernel_type "linear" --train_aug --model "Conv2"  --n_task 20 
