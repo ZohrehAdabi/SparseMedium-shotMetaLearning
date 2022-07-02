@@ -128,10 +128,11 @@ class MAML(MetaTemplate):
             y_a_i = torch.tensor( np.repeat(range( self.n_way ), self.n_support ), dtype=torch.long ).cuda() #label for support data
             y_b_i = torch.tensor( np.repeat(range( self.n_way ), self.n_query), dtype=torch.long ).cuda()
 
-            idx_permuted = torch.randperm(x_a_i.shape[0])
-            x_a_i = x_a_i[idx_permuted]
-            y_a_i = y_a_i[idx_permuted]
+            
             if self.mini_batch:
+                idx_permuted = torch.randperm(x_a_i.shape[0])
+                x_a_i = x_a_i[idx_permuted]
+                y_a_i = y_a_i[idx_permuted]
                 loss_all = []
                 number_of_batches = int(np.ceil(x_a_i.shape[0] / batch_size))
                 optimizer.zero_grad()
