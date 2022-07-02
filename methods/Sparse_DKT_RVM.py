@@ -19,7 +19,7 @@ from methods.Fast_RVM import Fast_RVM
 from methods.Inducing_points import get_inducing_points, rvm_ML, rvm_ML_full, rvm_ML_regression_full, rvm_ML_regression, get_inducing_points_regression, rvm_ML_regression_full_rvm
 #Check if tensorboardx is installed
 try:
-    # tensorboard --logdir=./Sparse_DKT_Nystrom_CUB_log/ --host localhost --port 8089
+    # tensorboard --logdir=./Sparse_DKT_RVM_CUB_log/ --host localhost --port 8089
     from tensorboardX import SummaryWriter
     IS_TBX_INSTALLED = True
 except ImportError:
