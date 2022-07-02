@@ -295,6 +295,7 @@ def single_test(params):
     # if params.train_aug:
     #     checkpoint_dir += '_aug'
     if not params.method in ['baseline', 'baseline++'] :
+        if params.batch_size==16: params.batch_size = 1
         # checkpoint_dir += '_%dway_%dshot' %( params.train_n_way, params.n_shot)
         if params.method in ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact', 'Sparse_DKT_RVM', 'Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_RVM', 'Sp_DKT_Bin_Nyst_NLoss', 
         'Sparse_DKT_binary_Exact', 'Sp_DKT_Bin_Exact_NLoss']:
