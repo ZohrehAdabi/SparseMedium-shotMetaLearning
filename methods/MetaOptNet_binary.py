@@ -108,10 +108,12 @@ class MetaOptNet_binary(MetaTemplate):
             if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
             scale = 0
             n_way = 2
+            sv_count = []
             for j, single_model in enumerate(self.SVM):
                
                
                 logit_query, num_SV = single_model(query=z_query, support=z_support,  support_labels=target_list[j], n_way=n_way,  n_shot=self.n_support)
+                sv_count.append(num_SV)
                 # logit_query_list.append(logit_query.detach().max(axis=2)[0])
                 logit_query_list.append(logit_query.detach()[:, :, 1][0])
               
@@ -126,7 +128,7 @@ class MetaOptNet_binary(MetaTemplate):
 
                 scale += single_model.scale
             scale /= self.n_way
-
+            if i==0: print(f'#SV {sv_count}')
             loss_list.append(torch.stack(all_loss).mean())
             loss_history.append(loss_list[-1].detach().cpu().numpy())
             if update==5:
@@ -198,11 +200,11 @@ class MetaOptNet_binary(MetaTemplate):
             for j, single_model in enumerate(self.SVM):
                 
                 logit_query, num_SV = single_model(query=z_query, support=z_support,  support_labels=target_list[j], n_way=n_way,  n_shot=self.n_support)
-                if j==0: print(f'#SV {num_SV}')
+                
                 # logit_query_list.append(logit_query.detach().max(axis=2)[0])
                 logit_query_list.append(logit_query.detach()[:, :, 1][0])
                 sv_count.append(num_SV)
-
+            #print(f'#SV {sv_count}')
             y_pred = torch.vstack(logit_query_list).argmax(axis=0)
             accuracy_query = (torch.sum(y_pred==y_query.reshape(-1)).item() / y_pred.shape[0]) * 100
 
