@@ -64,6 +64,7 @@ class MetaOptNet_binary(MetaTemplate):
         #                               {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
         update = 4
         loss_list = []
+        loss_history = []
         for i, (x,_) in enumerate(train_loader):
             self.n_query = x.size(1) - self.n_support
             if self.change_way: self.n_way  = x.size(0)
@@ -127,7 +128,8 @@ class MetaOptNet_binary(MetaTemplate):
             scale /= self.n_way
 
             loss_list.append(torch.stack(all_loss).mean())
-            if update==4:
+            loss_history.append(loss_list[-1].detach().cpu().numpy())
+            if update==5:
                 ## Optimize
                 loss = torch.stack(loss_list).mean()
                 loss_list = []
@@ -139,7 +141,7 @@ class MetaOptNet_binary(MetaTemplate):
             update +=1
 
             self.iteration = i+(epoch*len(train_loader))
-            if(self.writer is not None): self.writer.add_scalar('loss', loss.item(), self.iteration)
+            if(self.writer is not None): self.writer.add_scalar('loss', loss_history[-1], self.iteration)
 
             with torch.no_grad():
                 y_pred = torch.vstack(logit_query_list).argmax(axis=0)
@@ -149,7 +151,9 @@ class MetaOptNet_binary(MetaTemplate):
             if i % print_freq==0:
                 if(self.writer is not None): self.writer.add_histogram('z_support', z_support, self.iteration)
                 print(Fore.LIGHTRED_EX, 'Epoch [{:d}] [{:d}/{:d}] | Loss {:f} | OutScale {:f} | Supp. {:f} | Query {:f}'.format(epoch, i, len(train_loader), 
-                                loss.item(), scale.item(), 0, accuracy_query), Fore.RESET)
+                                loss_history[-1], scale.item(), 0, accuracy_query), Fore.RESET)
+
+        if(self.writer is not None): self.writer.add_scalar('Loss [mean]', np.mean(loss_history), self.iteration)
 
     def correct(self, x, N=0, laplace=False):
         self.SVM.eval()
@@ -201,12 +205,13 @@ class MetaOptNet_binary(MetaTemplate):
             y_pred = torch.vstack(logit_query_list).argmax(axis=0)
             accuracy_query = (torch.sum(y_pred==y_query.reshape(-1)).item() / y_pred.shape[0]) * 100
 
-            if True:
-                s=0
-                for t in range(self.n_way):
-                    c = np.sum(y_pred.cpu().numpy()==t)
-                    s += c * sv_count[t]
-                sv_predicted_class = s /y_pred.shape[0]
+            # if True:
+            #     s=0
+            #     for t in range(self.n_way):
+            #         c = np.sum(y_pred.cpu().numpy()==t)
+            #         s += c * sv_count[t]
+            #     sv_predicted_class = s /y_pred.shape[0]
+        sv_predicted_class = np.mean(sv_count)
         return accuracy_query, sv_predicted_class
 
     def test_loop(self, test_loader, record=None, return_std=False):
