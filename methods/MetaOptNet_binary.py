@@ -196,8 +196,9 @@ class MetaOptNet_binary(MetaTemplate):
             n_way = 2
             sv_count = []
             for j, single_model in enumerate(self.SVM):
-               
+                
                 logit_query, num_SV = single_model(query=z_query, support=z_support,  support_labels=target_list[j], n_way=n_way,  n_shot=self.n_support)
+                if j==0: print(f'#SV {num_SV}')
                 # logit_query_list.append(logit_query.detach().max(axis=2)[0])
                 logit_query_list.append(logit_query.detach()[:, :, 1][0])
                 sv_count.append(num_SV)

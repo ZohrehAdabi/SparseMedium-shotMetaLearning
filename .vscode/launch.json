@@ -624,8 +624,8 @@
             "console": "integratedTerminal",
            "args": ["--method","MetaOptNet", "--dataset", "CUB", 
             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10", "--n_task", "20", "--model", "Conv4_16ch", "--lr_net", "1e-3",
-            "--seed","1" , "--train_aug"]  // --normalize is  bad
-         // python train.py --method "MetaOptNet"  --dataset "CUB"  --train_n_way 5 --test_n_way 5 --n_shot 30 --n_query 10 --seed 1 --model Conv4_16ch  --lr_net  1e-3 --n_task 100  --train_aug stop_epoch 100 
+            "--seed","1" , "--train_aug"]  // --normalize is  bad?
+         // python train.py --method "MetaOptNet"  --dataset "CUB"  --train_n_way 5 --test_n_way 5 --n_shot 30 --n_query 10 --seed 1 --model Conv4_16ch  --lr_net  1e-3 --n_task 100  --train_aug --stop_epoch 100 
          },
          {
             "name": "MetaOptNet [CUB]: test ",
