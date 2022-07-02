@@ -488,8 +488,8 @@ def Conv4S():
     return ConvNetS(4)
 
 def Conv4S_16ch():
-    return ConvNet(4, num_channels=16)
-    
+    return ConvNetS(4, num_channels=16)
+
 def Conv4SNP():
     return ConvNetSNopool(4)
 

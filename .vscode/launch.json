@@ -354,7 +354,7 @@
                 "--kernel_type", "linear", "--rvm_mll_only", //"--lambda_rvm" , "0.1",
                 //,"--dirichlet"
                 "--seed","1"]  //--train_aug //  "--normalize" is bad
-//python train.py  --method "Sparse_DKT_RVM"  --sparse_method "FRVM" --dataset "omniglot" --train_n_way 2 --test_n_way 2  --n_shot 15 --n_query 5 --seed 1 --scale --config "010" --align_thr 0    --lr_gp 1e-1 --lr_net 1e-3 --kernel_type "linear"
+//python train.py  --method "Sparse_DKT_RVM"  --sparse_method "FRVM" --dataset "omniglot" --train_n_way 5 --test_n_way 5  --n_shot 15 --n_query 5 --seed 1 --scale --config "001" --align_thr 0    --lr_gp 1e-3 --lr_net 1e-3 --kernel_type "linear" --model Conv4_16ch --n_task 100 --stop_epoch 100
     },
         {
             "name": "Sparse_DKT_RVM [omniglot]: test",
@@ -553,7 +553,7 @@
             "console": "integratedTerminal",
            "args": ["--method","MAML", "--dataset", "omniglot", 
             "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "15", "--n_query", "5",
-            "--seed","1", "--lr_net",  "1e-3", "--inner_lr", "1e-3", "--inner_loop", "5"]  //, "--train_aug"
+            "--seed","1", "--lr_net",  "1e-3", "--inner_lr", "1e-2", "--inner_loop", "3", "--model", "Conv4_16ch", "--stop_epoch", "100"]  //, "--train_aug"
             ,"justMyCode": true
          // python train.py --method "MAML"  --dataset "omniglot"  --train_n_way 5 --test_n_way 5 --n_shot 15 --n_query 5 --seed 1 --lr_net  1e-3   --inner_lr 1e-3  --inner_loop 5
          },
