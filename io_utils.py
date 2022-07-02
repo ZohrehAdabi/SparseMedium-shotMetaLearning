@@ -10,6 +10,7 @@ model_dict = dict(
             Conv4_128ch = backbone.Conv4_128ch,
             Conv4 = backbone.Conv4,
             Conv4S = backbone.Conv4S,
+            Conv4S_16ch = backbone.Conv4S_16ch,
             Conv6 = backbone.Conv6,
             ResNet10 = backbone.ResNet10,
             ResNet18 = backbone.ResNet18,

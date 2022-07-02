@@ -137,8 +137,10 @@ if __name__ == '__main__':
         image_size = 224
 
     if params.dataset in ['omniglot', 'cross_char']:
-        assert params.model == 'Conv4' and not params.train_aug, 'omniglot only support Conv4 without augmentation'
-        params.model = 'Conv4S'
+        assert 'Conv4'  in params.model  
+        assert not params.train_aug# 'omniglot only support Conv4 without augmentation'
+        assert not params.normalize
+        params.model = params.model.replace('Conv4', 'Conv4S')
 
     optimization = 'Adam'
 

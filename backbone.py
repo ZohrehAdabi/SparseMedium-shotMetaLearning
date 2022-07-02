@@ -292,12 +292,12 @@ class ConvNetNopool(nn.Module): #Relation net use a 4 layer conv with pooling in
         return out
 
 class ConvNetS(nn.Module): #For omniglot, only 1 input channel, output dim is 64
-    def __init__(self, depth, flatten = True):
+    def __init__(self, depth, num_channels=64, flatten = True):
         super(ConvNetS,self).__init__()
         trunk = []
         for i in range(depth):
-            indim = 1 if i == 0 else 64
-            outdim = 64
+            indim = 1 if i == 0 else num_channels
+            outdim = num_channels
             B = ConvBlock(indim, outdim, pool = ( i <4 ) ) #only pooling for fist 4 layers
             trunk.append(B)
 
@@ -309,7 +309,12 @@ class ConvNetS(nn.Module): #For omniglot, only 1 input channel, output dim is 64
         #trunk.append(nn.Linear(64, 64))     #TODO remove
         self.trunk = nn.Sequential(*trunk)
         self.final_feat_dim = 64
-
+        if num_channels==2:
+            self.final_feat_dim = 2
+        if num_channels==16:
+            self.final_feat_dim = 16
+        if num_channels==128:
+            self.final_feat_dim = 128
     def forward(self,x):
         out = x[:,0:1,:,:] #only use the first dimension
         out = self.trunk(out)
@@ -482,6 +487,9 @@ def Conv6NP():
 def Conv4S():
     return ConvNetS(4)
 
+def Conv4S_16ch():
+    return ConvNet(4, num_channels=16)
+    
 def Conv4SNP():
     return ConvNetSNopool(4)
 
