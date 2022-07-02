@@ -15,6 +15,10 @@ class SimpleDataset:
                 self.meta['image_labels'] = np.repeat(np.arange(72), 60)
             if 'CUB/val' in data_file:
                 self.meta['image_labels'] = np.repeat(np.arange(36), 60)
+            # if 'miniImagnet/base' in data_file:
+            #     self.meta['image_labels'] = np.repeat(np.arange(64), 100)
+            # if 'miniImagnet/val' in data_file:
+            #     self.meta['image_labels'] = np.repeat(np.arange(16), 100)
         self.transform = transform
         self.target_transform = target_transform
 

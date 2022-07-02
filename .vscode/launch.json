@@ -771,7 +771,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/train.py",
             "console": "integratedTerminal",
-           "args": ["--method","baseline", "--dataset", "miniImagenet", 
+           "args": ["--method","baseline", "--dataset", "miniImagenet",  "--normalize", "--model", "Conv4_16ch",
             "--num_classes", "64", 
             "--seed","1" , "--train_aug"]  //
          // python train.py --method "baseline"  --dataset "miniImagenet"  --num_classes 64 --seed 1  --train_aug --lr_net  1e-3 

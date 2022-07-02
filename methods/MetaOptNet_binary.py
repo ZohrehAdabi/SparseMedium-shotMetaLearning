@@ -131,7 +131,7 @@ class MetaOptNet_binary(MetaTemplate):
             if i==0: print(f'#SV {sv_count}')
             loss_list.append(torch.stack(all_loss).mean())
             loss_history.append(loss_list[-1].detach().cpu().numpy())
-            if update==2:
+            if update==5:
                 ## Optimize
                 loss = torch.stack(loss_list).mean()
                 loss_list = []
