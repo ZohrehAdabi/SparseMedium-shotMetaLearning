@@ -589,8 +589,8 @@
             "program": "${workspaceFolder}/test.py",
             "console": "integratedTerminal",
         "args": ["--method","MAML", "--dataset", "CUB", 
-            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50",  "--n_query", "10", "--normalize",
-             "--seed","1",   "--lr_net",  "1e-3", "--inner_lr", "1e-3", "--inner_loop", "5", "--n_task", "200", "--train_aug"]
+            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50",  "--n_query", "10", 
+             "--seed","1",   "--lr_net",  "1e-3", "--inner_lr", "1e-3", "--inner_loop", "5", "--n_task", "200", "--train_aug"] //"--normalize" is bad
             // python test.py --method "MAML"  --dataset "CUB"  --train_n_way 2 --test_n_way 2 --n_shot 50  --n_query 10 --seed 1 --normalize --lr_net  1e-3  --inner_lr 1e-3  --inner_loop 5 --n_task 200 --first_order --train_aug
         },
         {
