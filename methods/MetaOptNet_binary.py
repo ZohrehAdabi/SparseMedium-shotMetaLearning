@@ -131,7 +131,7 @@ class MetaOptNet_binary(MetaTemplate):
             if i==0: print(f'#SV {sv_count}')
             loss_list.append(torch.stack(all_loss).mean())
             loss_history.append(loss_list[-1].detach().cpu().numpy())
-            if update==5:
+            if update==2:
                 ## Optimize
                 loss = torch.stack(loss_list).mean()
                 loss_list = []
@@ -170,7 +170,7 @@ class MetaOptNet_binary(MetaTemplate):
             self.SVM.eval()
             self.feature_extractor.eval()
             z_support = self.feature_extractor.forward(x_support)
-            if(self.normalize): z_train = F.normalize(z_train, p=2, dim=1)
+            if(self.normalize): z_support = F.normalize(z_support, p=2, dim=1)
             z_query = self.feature_extractor.forward(x_query)
             if(self.normalize): z_query = F.normalize(z_query, p=2, dim=1)
 
