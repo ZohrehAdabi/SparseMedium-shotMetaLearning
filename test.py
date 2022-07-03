@@ -152,6 +152,7 @@ def single_test(params):
                                 normalize=params.normalize, scale=params.scale,
                                 config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
             best_rvm, last = True, False
+            best = False
         else:
             last_model           = Sparse_DKT_RVM(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
                                 add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, lambda_rvm=params.lambda_rvm, maxItr_rvm=params.maxItr_rvm, 
@@ -160,6 +161,7 @@ def single_test(params):
                                 normalize=params.normalize, scale=params.scale,
                                 config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
             best_rvm, last = False, True
+            best = False
 
     elif params.method == 'Sparse_DKT_binary_Nystrom':
         model           = Sparse_DKT_binary_Nystrom(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
