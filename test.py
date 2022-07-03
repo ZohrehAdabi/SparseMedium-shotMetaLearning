@@ -318,7 +318,7 @@ def single_test(params):
          #MAML, MetaOptNet
         elif  params.method in ['MAML']: 
             id_=f'_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}_loop_{params.inner_loop}_inner_lr_{params.inner_lr}'
-        elif  params.method in ['MetaOptNet', 'transfer']: 
+        elif  params.method in ['MetaOptNet', 'MetaOptNet_binary', 'transfer']: 
 
             id_=f'_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}'
         else:
@@ -348,7 +348,7 @@ def single_test(params):
 
     if not params.method in ['baseline', 'baseline++'] : 
         
-        if params.method in ['DKT', 'DKT_binary', 'MAML', 'MetaOptNet']:
+        if params.method in ['DKT', 'DKT_binary', 'MAML', 'MetaOptNet', 'MetaOptnet_binary']:
             # best, last = False, True
             # best, last = True, False
             # best, last = True, True
