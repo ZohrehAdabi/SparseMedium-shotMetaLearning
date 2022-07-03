@@ -592,7 +592,7 @@ class Sparse_DKT_Exact(MetaTemplate):
 
         return float(top1_correct), count_this, avg_loss/float(N+1e-10), ip_predicted_class, top1_correct_r
 
-    def test_loop(self, test_loader, record=None, return_std=False):
+    def test_loop(self, test_loader, record=None, return_std=False, dataset=None, show_plot=False):
         print_freq = 10
         correct =0
         count = 0
