@@ -398,8 +398,8 @@ def single_test(params):
             #     chkpt_dir = f'./save/checkpoints/CUB/Conv4_128ch_DKT_seed_1_n_task_100_way_2_shot_50_query_10_lr_0.001_0.001_linear_norm_aug'
             #     best_modelfile   = get_best_file(chkpt_dir)
             # else:
-                best_modelfile   = get_best_file(checkpoint_dir)
-                print(f'\nBest model {best_modelfile}')
+            best_modelfile   = get_best_file(checkpoint_dir)
+            print(f'\nBest model {best_modelfile}')
 
         if best_rvm: #else:
             # best_model_rvm = deepcopy(model)
