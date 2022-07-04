@@ -355,7 +355,7 @@ def single_test(params):
 
     if not params.method in ['baseline', 'baseline++'] : 
         
-        if params.method in ['DKT', 'DKT_binary', 'MAML', 'MetaOptNet', 'MetaOptnet_binary']:
+        if params.method in ['DKT', 'DKT_binary', 'MAML', 'MetaOptNet', 'MetaOptNet_binary']:
             # best, last = False, True
             # best, last = True, False
             # best, last = True, True
@@ -373,7 +373,7 @@ def single_test(params):
         
         
         if last:
-            if  params.method in ['MetaOptNet_binary', 'MetaOptNet']:
+            if  params.method in ['MetaOptNet_binary', 'MetaOptNet', 'MAMl']:
                 last_model = last_model.cuda()
             else:
                 # last_model = deepcopy(model)
@@ -387,7 +387,7 @@ def single_test(params):
             print(f'\nlast model {last_modelfile}')
         
         if best: #else:
-            if  params.method in ['MetaOptNet_binary', 'MetaOptNet']:
+            if  params.method in ['MetaOptNet_binary', 'MetaOptNet', 'MAMl']:
                 best_model = best_model.cuda()
             else:
                 # best_model = deepcopy(model)
