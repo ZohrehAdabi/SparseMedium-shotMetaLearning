@@ -144,7 +144,7 @@ def single_test(params):
         #                         rvm_mll_only=params.rvm_mll_only, rvm_ll_only=params.rvm_ll_only, num_inducing_points=params.num_ip, 
         #                         normalize=params.normalize, scale=params.scale,
         #                         config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
-        if params.best:
+        if params.best: 
             best_model_rvm           = Sparse_DKT_RVM(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
                                 add_rvm_mll=params.rvm_mll, add_rvm_ll=params.rvm_ll, lambda_rvm=params.lambda_rvm, maxItr_rvm=params.maxItr_rvm, 
                                 tol_rvm=params.tol_rvm, regression=params.regression, 
