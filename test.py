@@ -494,7 +494,7 @@ def single_test(params):
                 print("[WARNING] Cannot find 'best_file.tar' in: " + str(checkpoint_dir))
 
 
-        if params.method not in ['DKT', 'DKT_binary']:
+        if params.method not in ['DKT', 'DKT_binary', 'MetaOptNet_binary', 'MetaOptNet', 'MAMl']:
             if best_rvm and (best_modelfile_rvm is not None):
                 tmp = torch.load(best_modelfile_rvm)
                 best_epoch_rvm = tmp['epoch']
