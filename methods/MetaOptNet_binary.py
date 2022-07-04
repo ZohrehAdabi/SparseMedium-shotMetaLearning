@@ -217,7 +217,7 @@ class MetaOptNet_binary(MetaTemplate):
         sv_predicted_class = np.mean(sv_count)
         return accuracy_query, sv_predicted_class
 
-    def test_loop(self, test_loader, record=None, return_std=False):
+    def test_loop(self, test_loader, record=None, return_std=False, dataset=None, show_plot=False):
         print_freq = 10
         correct =0
         count = 0
