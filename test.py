@@ -89,8 +89,12 @@ def single_test(params):
     # few_shot_params = dict(n_way = 2 , n_support = params.n_shot) 
 
     if params.dataset in ['omniglot', 'cross_char']:
-        assert params.model == 'Conv4' and not params.train_aug ,'omniglot only support Conv4 without augmentation'
-        params.model = 'Conv4S'
+        # assert params.model == 'Conv4' and not params.train_aug ,'omniglot only support Conv4 without augmentation'
+        # params.model = 'Conv4S'
+        assert 'Conv4'  in params.model  
+        assert not params.train_aug# 'omniglot only support Conv4 without augmentation'
+        assert not params.normalize
+        params.model = params.model.replace('Conv4', 'Conv4S')
     if params.method == 'transfer':
         # id_=f'Transfer_{params.model}_{params.dataset}_n_task_{params.n_task}_way_{params.train_n_way}_shot_{params.n_shot}_query_{params.n_query}_lr_{params.lr_net}'
          
