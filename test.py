@@ -672,6 +672,12 @@ def single_test(params):
         if params.save_result: f.close()
         print(f'\n{id_}\n')
     else:
+        if params.save_result:
+            info_path = checkpoint_dir
+            info_path = info_path.replace('//', '/')
+            info_path = info_path.replace('\\', '/')
+            info = info_path.split('/')
+            info = '_'.join(info[3:]) 
         id_ = f'_n_class_{params.num_classes}'
         if params.normalize: id_ += '_norm'
         if params.lr_decay: id_ += '_lr_decay'
