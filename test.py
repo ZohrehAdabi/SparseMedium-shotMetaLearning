@@ -285,8 +285,13 @@ def single_test(params):
             if params.lr_decay: id_+= '_lr_decay'
             if params.train_aug: id_+= '_aug'
             model = MetaOptNet_binary(model_dict[params.model], normalize=params.normalize, **few_shot_params)
-            last_model = MetaOptNet_binary(model_dict[params.model], normalize=params.normalize, **few_shot_params)
-            best_model = MetaOptNet_binary(model_dict[params.model], normalize=params.normalize, **few_shot_params)
+            
+            if params.best:
+                best_model = MetaOptNet_binary(model_dict[params.model], normalize=params.normalize, **few_shot_params)
+                best, last = True, False
+            else:
+                last_model = MetaOptNet_binary(model_dict[params.model], normalize=params.normalize, **few_shot_params)
+                best, last = False, True
     
     else:
        raise ValueError('Unknown method')
@@ -611,7 +616,8 @@ def single_test(params):
                 f.write(f'"{timestamp}",\n')
                 f.write('"last model":\n')
                 json.dump(result, f, indent=2) #f.write(json.dumps(result))
-                f.write(',\n')
+                # f.write(',\n')
+                f.write('\n}\n]')
             print("-----------------------------")
             print('Test Acc last model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
             print("-----------------------------") 
@@ -633,6 +639,9 @@ def single_test(params):
             # acc_std  = np.std(acc_all)
             # acc_most_sim_mean = np.mean(np.asarray(acc_most_sim_all))
             if params.save_result:
+                f.write('{\n"time": ')
+                f.write(f'"{timestamp}",\n')
+
                 f.write('"best model":\n')
                 json.dump(result, f, indent=2)
                 f.write('\n}\n]')
@@ -648,9 +657,13 @@ def single_test(params):
             best_model_rvm.eval()
             acc_mean, acc_std, result = best_model_rvm.test_loop(novel_loader, return_std = True, dataset=params.dataset, show_plot=False)
             if params.save_result:
+                f.write('{\n"time": ')
+                f.write(f'"{timestamp}",\n')
+
                 f.write('"best rvm model":\n')
                 json.dump(result, f, indent=2)
-                f.write(',\n')
+                # f.write(',\n')
+                f.write('\n}\n]')
             print("-----------------------------")
             print('Test Acc GP at best RVM model = %4.2f%% +- %4.2f%%' %(acc_mean, acc_std))
             print("-----------------------------") 
