@@ -364,11 +364,11 @@ def single_test(params):
             # best, last = True, False
             # best, last = True, True
             best_rvm = False 
-        else:
-            # best, last = False, True
-            # best, last = True, False
-            # best, last = True, True
-            best_rvm = True
+        # else:
+        #     # best, last = False, True
+        #     # best, last = True, False
+        #     # best, last = True, True
+        #     best_rvm = True
         print(f'{checkpoint_dir}\n')
         modelfile = None
         if params.save_iter != -1:
