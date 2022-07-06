@@ -189,8 +189,8 @@
             "console": "integratedTerminal",
            "args": ["--method","Sparse_DKT_binary_RVM", "--sparse_method", "FRVM", "--dataset", "CUB", 
             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
-              "--seed","1", "--scale", "--config", "001", "--align_thr", "1e-2", "--lr_gp", "1e-3", "--lr_net", "1e-3",
-              "--kernel_type", "linear", "--normalize", "--n_task", "100", "--rvm_mll_only",  "--regression", "--train_aug"] // ,"--train_aug"
+              "--seed","1", "--scale", "--config", "001", "--align_thr", "3e-2", "--lr_gp", "1e-3", "--lr_net", "1e-3",
+              "--kernel_type", "linear", "--normalize", "--n_task", "20", "--rvm_mll_only",  "--regression", "--train_aug", "--best"] // ,"--train_aug"
     // python test.py --method "Sparse_DKT_binary_RVM"  --sparse_method "FRVM" --dataset "CUB"  --train_n_way 2 --test_n_way 2 --n_shot 50  --n_query 10 --seed 1 --scale --normalize --config "001" --align_thr 1e-2  --lr_gp 1e-3 --lr_net 1e-3 --kernel_type "linear" --n_task 100 --train_aug --rvm_mll_only --regression
         },
         {

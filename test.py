@@ -201,25 +201,25 @@ def single_test(params):
         #                         rvm_mll_only=params.rvm_mll_only, rvm_ll_only=params.rvm_ll_only, num_inducing_points=params.num_ip,
         #                         normalize=params.normalize, scale=params.scale,
         #                         config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
-        last_model           = Sparse_DKT_binary_RVM(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
+        
+        if params.best: 
+            best_model_rvm           = Sparse_DKT_binary_RVM(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
+                                    add_rvm_mll=params.rvm_mll, add_rvm_mll_one=params.rvm_mll_one, lambda_rvm=params.lambda_rvm, 
+                                    maxItr_rvm=params.maxItr_rvm, tol_rvm=params.tol_rvm, regression=params.regression, 
+                                    rvm_mll_only=params.rvm_mll_only, rvm_ll_only=params.rvm_ll_only, num_inducing_points=params.num_ip,
+                                    normalize=params.normalize, scale=params.scale,
+                                    config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
+            best_rvm, last = True, False
+            best = False
+        else:
+            last_model           = Sparse_DKT_binary_RVM(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
                                 add_rvm_mll=params.rvm_mll, add_rvm_mll_one=params.rvm_mll_one, lambda_rvm=params.lambda_rvm, 
                                 maxItr_rvm=params.maxItr_rvm, tol_rvm=params.tol_rvm, regression=params.regression, 
                                 rvm_mll_only=params.rvm_mll_only, rvm_ll_only=params.rvm_ll_only, num_inducing_points=params.num_ip,
                                 normalize=params.normalize, scale=params.scale,
                                 config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
-        best_model           = Sparse_DKT_binary_RVM(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
-                                add_rvm_mll=params.rvm_mll, add_rvm_mll_one=params.rvm_mll_one, lambda_rvm=params.lambda_rvm, 
-                                maxItr_rvm=params.maxItr_rvm, tol_rvm=params.tol_rvm, regression=params.regression, 
-                                rvm_mll_only=params.rvm_mll_only, rvm_ll_only=params.rvm_ll_only, num_inducing_points=params.num_ip,
-                                normalize=params.normalize, scale=params.scale,
-                                config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
-        best_model_rvm           = Sparse_DKT_binary_RVM(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
-                                add_rvm_mll=params.rvm_mll, add_rvm_mll_one=params.rvm_mll_one, lambda_rvm=params.lambda_rvm, 
-                                maxItr_rvm=params.maxItr_rvm, tol_rvm=params.tol_rvm, regression=params.regression, 
-                                rvm_mll_only=params.rvm_mll_only, rvm_ll_only=params.rvm_ll_only, num_inducing_points=params.num_ip,
-                                normalize=params.normalize, scale=params.scale,
-                                config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
-
+            best_rvm, last = False, True
+            best = False
 
     elif params.method == 'Sp_DKT_Bin_Nyst_NLoss':
         model           = Sparse_DKT_binary_Nystrom_new_loss(model_dict[params.model], params.kernel_type, **few_shot_params, sparse_method=params.sparse_method, 
@@ -232,6 +232,8 @@ def single_test(params):
                                 add_rvm_mll=params.rvm_mll, lambda_rvm=params.lambda_rvm, num_inducing_points=params.num_ip,
                                 normalize=params.normalize, scale=params.scale,
                                 config=params.config, align_threshold=params.align_thr, gamma=params.gamma, dirichlet=params.dirichlet)
+        best_rvm, last = False, True
+        best = False
 
     elif params.method == 'matchingnet':
         model           = MatchingNet( model_dict[params.model], **few_shot_params )
@@ -659,7 +661,7 @@ def single_test(params):
         if best_rvm and (best_modelfile_rvm is not None):
             print(f'\nBest RVM model epoch {best_epoch_rvm}\n')
             best_model_rvm.eval()
-            acc_mean, acc_std, result = best_model_rvm.test_loop(novel_loader, return_std = True, dataset=params.dataset, show_plot=False)
+            acc_mean, acc_std, result = best_model_rvm.test_loop(novel_loader, return_std = True, dataset=params.dataset, show_plot=True)
             if params.save_result:
                 f.write('{\n"time": ')
                 f.write(f'"{timestamp}",\n')

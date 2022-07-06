@@ -890,7 +890,7 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
         m = indc_y.shape[0]
         r = y_q.shape[0] // 2
         c = m + 1
-        c = int(np.ceil(m/3)) + 1
+        # c = int(np.ceil(m/3)) + 1
       
         fig: plt.Figure = plt.figure(4, figsize=(10, 10), tight_layout=False, dpi=150)
         all_imgs = np.ones(indc_x[0].shape[::-1] * np.array([r, c, 1]))
@@ -952,7 +952,7 @@ class Sparse_DKT_binary_RVM(MetaTemplate):
         m = indc_y.shape[0]
         r = y_q.shape[0] //2
         c = m + 1
-        c = int(np.ceil(m/3)) + 1
+        # c = int(np.ceil(m/3)) + 1
       
         fig: plt.Figure = plt.figure(5, figsize=(10, 10), tight_layout=False, dpi=150)
         all_imgs = np.ones(indc_x[0].shape[::-1] * np.array([r, c, 1]))
