@@ -122,8 +122,13 @@ def single_test(params):
         
     elif params.method == 'DKT_binary':
         # model           = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
-        # last_model      = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
-        best_model      = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
+        if params.best:
+            best, last = True, False
+            best_model      =  DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
+        else:
+            best, last = False, True
+            last_model      = DKT_binary(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)
+       
 
     elif params.method == 'DKT_binary_new_loss':
         model           = DKT_binary_new_loss(model_dict[params.model], params.kernel_type, **few_shot_params, normalize=params.normalize, dirichlet=params.dirichlet)   
