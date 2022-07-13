@@ -17,13 +17,13 @@ if dataset=='CUB':
     n_query = 10 
 if dataset=='miniImagenet':
     n_shot = 125 
-    n_query = 15
+    n_query = 10
 
 tol_rvm = 1e-4
 max_itr = -1
 stop_epoch = 200
 resume = False
-seed_list = [1, 2, 3]
+seed_list = [2, 3]
 method_list = ['Sparse_DKT_binary_Exact'] 
 for config in config_list:
     for lr_gp in lr_gp_list:
@@ -80,7 +80,7 @@ for config in config_list:
                 ]
                 if resume: L.append('--resume')
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
+                run(L)
         
                 if dataset=='CUB':
                     lambda_rvm_list = [100.0] 
@@ -133,8 +133,8 @@ for config in config_list:
 
                 # MetaOptNet
                 L = ['python', f'./train.py', 
-                            "--method","MetaOptNet", "--dataset", "CUB", 
-                            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
+                            "--method","MetaOptNet", "--dataset", f"{dataset}", 
+                            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", f"{n_shot}", "--n_query", f"{n_query}",
                                 "--seed",  f"{sd}",  
                                 "--lr_net", f"{lr_net}", 
                                 "--stop_epoch", f"{stop_epoch}",
@@ -143,48 +143,48 @@ for config in config_list:
                 ]
                 if resume: L.append('--resume')
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
+                run(L)
 
-                L = ['python', f'./train.py', 
-                            "--method","MetaOptNet", "--dataset", "miniImagenet", 
-                            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "125", "--n_query", "15",
-                                "--seed",  f"{sd}",  
-                                "--lr_net", f"{lr_net}", 
-                                "--stop_epoch", f"{stop_epoch}",
-                                "--save_model", "--n_task",  f"{n_task}",  '--train_aug' #'--normalize',
+                # L = ['python', f'./train.py', 
+                #             "--method","MetaOptNet", "--dataset", "miniImagenet", 
+                #             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "125", "--n_query", "15",
+                #                 "--seed",  f"{sd}",  
+                #                 "--lr_net", f"{lr_net}", 
+                #                 "--stop_epoch", f"{stop_epoch}",
+                #                 "--save_model", "--n_task",  f"{n_task}",  '--train_aug' #'--normalize',
                             
-                ]
-                if resume: L.append('--resume')
-                print(f'\n{" ".join(L)} \n')
-                # run(L)
+                # ]
+                # if resume: L.append('--resume')
+                # print(f'\n{" ".join(L)} \n')
+                # # run(L)
 
                 # MAML
                 inner_lr = 0.01
                 L = ['python', f'./train.py', 
-                            "--method","MAML", "--dataset", "CUB", 
-                            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "50", "--n_query", "10",
+                            "--method","MAML",  "--dataset", f"{dataset}",
+                            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", f"{n_shot}", "--n_query", f"{n_query}",
                                 "--seed",  f"{sd}",  
                                 "--lr_net", f"{lr_net}", "--inner_lr", f"{inner_lr}", '--inner_loop', '10', '--first_order',
                                 "--stop_epoch", f"{stop_epoch}",
-                                "--save_model", "--n_task",  f"{n_task}",  '--train_aug', '--normalize',
+                                "--save_model", "--n_task",  f"{n_task}",  '--train_aug'#, '--normalize',
                             
                 ]
                 
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
+                run(L)
 
-                inner_lr = 0.01
-                L = ['python', f'./train.py', 
-                            "--method","MAML", "--dataset", "miniImagenet", 
-                            "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "125", "--n_query", "15",
-                                "--seed",  f"{sd}",  
-                                "--lr_net", f"{lr_net}", "--inner_lr", f"{inner_lr}", '--inner_loop', '10', '--first_order',
-                                "--stop_epoch", f"{stop_epoch}",
-                                "--save_model", "--n_task", "20",  '--train_aug', '--normalize',
+                # inner_lr = 0.01
+                # L = ['python', f'./train.py', 
+                #             "--method","MAML", "--dataset", "miniImagenet", 
+                #             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", "125", "--n_query", "10",
+                #                 "--seed",  f"{sd}",  
+                #                 "--lr_net", f"{lr_net}", "--inner_lr", f"{inner_lr}", '--inner_loop', '10', '--first_order',
+                #                 "--stop_epoch", f"{stop_epoch}",
+                #                 "--save_model", "--n_task", "20",  '--train_aug' #, '--normalize',
                             
-                ]
-                print(f'\n{" ".join(L)} \n')
-                # run(L)
+                # ]
+                # print(f'\n{" ".join(L)} \n')
+                # # run(L)
 
             L = ['python', f'./Sparse_DKT_FRVM_run_test.py'
             ]
