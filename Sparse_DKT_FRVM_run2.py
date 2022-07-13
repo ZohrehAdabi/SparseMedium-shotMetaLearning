@@ -10,8 +10,10 @@ lr_net_list = [0.01, 0.001, 0.0001]
 lr_gp_list = [0.001]
 lr_net_list = [0.001]
 config_list = ['001']
-seed_list = [1]
+seed_list = [1, 2, 3]
 # method_list = ['Sparse_DKT_Nystrom']
+n_task = 200 #20
+stop_epoch = 200
 for config in config_list:
     for lr_gp in lr_gp_list:
         for lr_net in lr_net_list:
@@ -24,12 +26,12 @@ for config in config_list:
                             "--method","DKT", "--dataset", "omniglot", 
                             "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "15", "--n_query", "5",
                                 "--seed",  f"{sd}",  
-                                "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100",
-                                '--kernel_type', 'linear', "--save_model", "--n_task", "30"
+                                "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", f"{stop_epoch}",
+                                '--kernel_type', 'linear', "--save_model", "--n_task",  f"{n_task}"
                             
                 ]
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
+                run(L)
                 
                 method_list = ['Sparse_DKT_Exact']
                 lambda_rvm_list = [1.0]
@@ -84,14 +86,14 @@ for config in config_list:
                                     "--method", f"Sparse_DKT_RVM", "--sparse_method", "FRVM", "--dataset", "omniglot", 
                                     "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "15", "--n_query", "5",
                                         "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
-                                        "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", "100",
-                                        '--kernel_type', 'linear', "--scale", "--save_model", "--n_task", "30",
+                                        "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", "--stop_epoch", f"{stop_epoch}",
+                                        '--kernel_type', 'linear', "--scale", "--save_model", "--n_task",  f"{n_task}",
                                         "--regression", 
                                         "--rvm_mll_only"
                                     
                         ]
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
+                run(L)
 
                
 
@@ -101,8 +103,8 @@ for config in config_list:
                             "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "15", "--n_query", "5",
                                 "--seed",  f"{sd}",  
                                 "--lr_net", f"{lr_net}", "--inner_lr", f"{inner_lr}", '--inner_loop', '10', '--first_order',
-                                "--stop_epoch", "100",
-                                "--save_model", "--n_task", "30"
+                                "--stop_epoch", f"{stop_epoch}",
+                                "--save_model", "--n_task",  f"{n_task}"
                             
                 ]
                 print(f'\n{" ".join(L)} \n')
@@ -110,11 +112,11 @@ for config in config_list:
 
                 L = ['python', f'./train.py', 
                             "--method","baseline", "--dataset", "omniglot", 
-                            "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "15", "--n_query", "5",
+                            "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "15", "--n_query", "5", "--num_classes ", "4200",
                                 "--seed",  f"{sd}",  
                                 "--lr_net", f"{lr_net}", 
-                                "--stop_epoch", "100",
-                                "--save_model", "--n_task", "30"
+                                "--stop_epoch", f"{stop_epoch}",
+                                "--save_model", "--n_task",  f"{n_task}"
                             
                 ]
                 print(f'\n{" ".join(L)} \n')
@@ -125,8 +127,8 @@ for config in config_list:
                             "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "15", "--n_query", "5",
                                 "--seed",  f"{sd}",  
                                 "--lr_net", f"{lr_net}", 
-                                "--stop_epoch", "100",
-                                "--save_model", "--n_task", "30"
+                                "--stop_epoch", f"{stop_epoch}",
+                                "--save_model", "--n_task",  f"{n_task}"
                             
                 ]
                 print(f'\n{" ".join(L)} \n')
@@ -137,6 +139,6 @@ for config in config_list:
             L = ['python', f'./Sparse_DKT_FRVM_run_test2.py'
                     ]
             print(f'\n{" ".join(L)} \n')
-            run(L)
+            # run(L)
 
      
