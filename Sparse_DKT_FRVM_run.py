@@ -133,7 +133,7 @@ for config in config_list:
 
                 # MetaOptNet
                 L = ['python', f'./train.py', 
-                            "--method","MetaOptNet", "--dataset", f"{dataset}", 
+                            "--method","MetaOptNet_binary", "--dataset", f"{dataset}", 
                             "--train_n_way", "2", "--test_n_way", "2", "--n_shot", f"{n_shot}", "--n_query", f"{n_query}",
                                 "--seed",  f"{sd}",  
                                 "--lr_net", f"{lr_net}", 
