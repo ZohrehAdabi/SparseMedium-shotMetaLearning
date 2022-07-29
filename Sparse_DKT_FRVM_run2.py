@@ -82,6 +82,8 @@ for config in config_list:
                         print(f'\n{" ".join(L)} \n')
                         # run(L)
 
+
+                #Sparse DKT RVM (rvm_mll_only)
                 L = ['python', f'./train.py', 
                                     "--method", f"Sparse_DKT_RVM", "--sparse_method", "FRVM", "--dataset", "omniglot", 
                                     "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "15", "--n_query", "5",
