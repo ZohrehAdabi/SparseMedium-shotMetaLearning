@@ -48,7 +48,7 @@ for config in config_list:
                 ]
                 if resume: L.append('--resume')
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
+                run(L)
 
                 # Sparse DKT_binary
                 # Exact GP
@@ -80,7 +80,7 @@ for config in config_list:
                 ]
                 if resume: L.append('--resume')
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
+                run(L)
         
                 if dataset=='CUB':
                     lambda_rvm_list = [100.0] 
