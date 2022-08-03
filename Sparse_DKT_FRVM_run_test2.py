@@ -7,9 +7,12 @@ method_list = ['Sparse_DKT_Nystrom', 'Sparse_DKT_Exact'] # , 'DKT_binary'
 lr_gp_list = [0.1, 0.01, 0.001, 0.0001]
 lr_net_list = [0.01, 0.001, 0.0001]
 
-lr_gp_list = [0.001]
+
+lr_gp_list = [0.0001]
 lr_net_list = [0.001]
 config_list = ['001']
+n_task = 200
+
 seed_list = [1, 2, 3]
 method_list = ['Sparse_DKT_Exact']
 save_result = True
@@ -27,13 +30,13 @@ for config in config_list:
                             "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "15", "--n_query", "5",
                                 "--seed",  f"{sd}",  
                                 "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}",
-                                '--kernel_type', 'linear', "--n_task", "30"
+                                '--kernel_type', 'linear', "--n_task", f"{n_task}",
                             
                 ]
                 if save_result: L.append('--save_result')
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
-                
+                run(L)
+                #Sparse DKT Exact
                 for method in method_list:
                     L = ['python', f'./test.py', 
                                 "--method", f"{method}", "--sparse_method", "FRVM", "--dataset", "omniglot", 
@@ -90,14 +93,14 @@ for config in config_list:
                                     "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "15", "--n_query", "5",
                                         "--seed",  f"{sd}", "--config", f"{config}", "--align_thr", f"{align_thr}" , 
                                         "--lr_gp", f"{lr_gp}", "--lr_net", f"{lr_net}", 
-                                        '--kernel_type', 'linear', "--scale",  "--n_task", "30",
+                                        '--kernel_type', 'linear', "--scale",  "--n_task", f"{n_task}",
                                         "--regression", 
                                         "--rvm_mll_only"
                                     
                         ]
                 if save_result: L.append('--save_result')
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
+                run(L)
 
                 inner_lr = 0.01
                 L = ['python', f'./test.py', 
@@ -106,7 +109,7 @@ for config in config_list:
                                 "--seed",  f"{sd}",  
                                 "--lr_net", f"{lr_net}", "--inner_lr", f"{inner_lr}", '--inner_loop', '10', '--first_order',
                                 
-                                "--n_task", "30"
+                                "--n_task",  f"{n_task}",
                             
                 ]
                 if save_result: L.append('--save_result')
@@ -129,10 +132,10 @@ for config in config_list:
                                 "--method","MetaOptNet_binary", "--dataset", "omniglot", 
                                 "--train_n_way", "5", "--test_n_way", "5", "--n_shot", "15", "--n_query", "5",
                                     "--seed",  f"{sd}",  
-                                    "--lr_net", f"{lr_net}", "--n_task", "30"
+                                    "--lr_net", f"{lr_net}", "--n_task",  f"{n_task}",
                                 
                     ]
                 if save_result: L.append('--save_result')
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
+                run(L)
      
