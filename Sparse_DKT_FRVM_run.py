@@ -7,7 +7,7 @@ method_list = ['Sparse_DKT_binary_Nystrom', 'Sparse_DKT_binary_Exact'] # , 'DKT_
 
 lr_gp_list = [0.1, 0.01, 0.001, 0.0001]
 lr_net_list = [0.01, 0.001, 0.0001]
-dataset =  'CUB' #'miniImagenet' # 'CUB
+dataset =  'miniImagenet' #'miniImagenet' # 'CUB
 lr_gp_list = [0.0001]
 lr_net_list = [0.001]
 config_list = ['001']
@@ -23,7 +23,7 @@ tol_rvm = 1e-4
 max_itr = -1
 stop_epoch = 200
 resume = False
-seed_list = [1]
+seed_list = [2, 3]
 method_list = ['Sparse_DKT_binary_Exact'] 
 for config in config_list:
     for lr_gp in lr_gp_list:
