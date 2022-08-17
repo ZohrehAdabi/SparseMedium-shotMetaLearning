@@ -62,7 +62,7 @@ class MetaOptNet_binary(MetaTemplate):
     def train_loop(self, epoch, train_loader, optimizer, print_freq=5):
         # optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': 1e-4},
         #                               {'params': self.feature_extractor.parameters(), 'lr': 1e-3}])
-        update = 0
+        update = 1
         loss_list = []
         loss_history = []
         for i, (x,_) in enumerate(train_loader):

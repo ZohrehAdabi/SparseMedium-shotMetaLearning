@@ -23,7 +23,7 @@ tol_rvm = 1e-4
 max_itr = -1
 stop_epoch = 200
 resume = False
-seed_list = [2, 3]
+seed_list = [1]
 method_list = ['Sparse_DKT_binary_Exact'] 
 for config in config_list:
     for lr_gp in lr_gp_list:
@@ -80,7 +80,7 @@ for config in config_list:
                 ]
                 if resume: L.append('--resume')
                 print(f'\n{" ".join(L)} \n')
-                run(L)
+                # run(L)
         
                 if dataset=='CUB':
                     lambda_rvm_list = [100.0] 
