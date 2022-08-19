@@ -22,6 +22,7 @@ tol_rvm = 1e-4
 max_itr = -1
 seed_list = [1, 2, 3]
 save_result = True
+best = False
 method_list = ['Sparse_DKT_binary_Exact'] 
 for config in config_list:
     for lr_gp in lr_gp_list:
@@ -46,6 +47,7 @@ for config in config_list:
                                 "--train_aug"
                 ]
                 if save_result: L.append('--save_result')
+                if best: L.append('--best')
                 print(f'\n{" ".join(L)} \n')
                 run(L)
 
@@ -116,6 +118,7 @@ for config in config_list:
                                 "--train_aug"
                 ]
                 if save_result: L.append('--save_result')
+                if best: L.append('--best')
                 print(f'\n{" ".join(L)} \n')
                 run(L)
 
@@ -130,6 +133,7 @@ for config in config_list:
                             
                 ]
                 if save_result: L.append('--save_result')
+                if best: L.append('--best')
                 print(f'\n{" ".join(L)} \n')
                 run(L)
 
@@ -157,6 +161,7 @@ for config in config_list:
                             
                 ]
                 if save_result: L.append('--save_result')
+                if best: L.append('--best')
                 print(f'\n{" ".join(L)} \n')
                 run(L)
 

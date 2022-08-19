@@ -134,7 +134,7 @@ for config in config_list:
                             
                 ]
                 print(f'\n{" ".join(L)} \n')
-                # run(L)
+                run(L)
             
              
             
