@@ -16,7 +16,7 @@ n_task = 200
 seed_list = [1, 2, 3]
 method_list = ['Sparse_DKT_Exact']
 save_result = True
-best = False
+best = True
 for config in config_list:
     for lr_gp in lr_gp_list:
         for lr_net in lr_net_list:
