@@ -16,6 +16,7 @@ n_task = 200
 seed_list = [1, 2, 3]
 method_list = ['Sparse_DKT_Exact']
 save_result = True
+best = False
 for config in config_list:
     for lr_gp in lr_gp_list:
         for lr_net in lr_net_list:
@@ -34,6 +35,7 @@ for config in config_list:
                             
                 ]
                 if save_result: L.append('--save_result')
+                if best: L.append('--best')
                 print(f'\n{" ".join(L)} \n')
                 run(L)
                 #Sparse DKT Exact
@@ -99,6 +101,7 @@ for config in config_list:
                                     
                         ]
                 if save_result: L.append('--save_result')
+                if best: L.append('--best')
                 print(f'\n{" ".join(L)} \n')
                 run(L)
 
@@ -113,6 +116,7 @@ for config in config_list:
                             
                 ]
                 if save_result: L.append('--save_result')
+                if best: L.append('--best')
                 print(f'\n{" ".join(L)} \n')
                 run(L)
 
@@ -136,6 +140,7 @@ for config in config_list:
                                 
                     ]
                 if save_result: L.append('--save_result')
+                if best: L.append('--best')
                 print(f'\n{" ".join(L)} \n')
                 run(L)
      
