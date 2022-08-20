@@ -666,7 +666,7 @@ def single_test(params):
         if best_rvm and (best_modelfile_rvm is not None):
             print(f'\nBest RVM model epoch {best_epoch_rvm}\n')
             best_model_rvm.eval()
-            acc_mean, acc_std, result = best_model_rvm.test_loop(novel_loader, return_std = True, dataset=params.dataset, show_plot=True)
+            acc_mean, acc_std, result = best_model_rvm.test_loop(novel_loader, return_std = True, dataset=params.dataset, show_plot=False)
             if params.save_result:
                 f.write('{\n"time": ')
                 f.write(f'"{timestamp}",\n')
