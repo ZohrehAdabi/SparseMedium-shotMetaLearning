@@ -22,7 +22,7 @@ tol_rvm = 1e-4
 max_itr = -1
 seed_list = [1, 2, 3]
 save_result = True
-best = False
+best = True
 method_list = ['Sparse_DKT_binary_Exact'] 
 for config in config_list:
     for lr_gp in lr_gp_list:
@@ -124,7 +124,7 @@ for config in config_list:
 
                 # MetaOptNet
                 L = ['python', f'./test.py', 
-                            "--method","MetaOptNet", "--dataset", f"{dataset}",
+                            "--method","MetaOptNet_binary", "--dataset", f"{dataset}",
                             "--train_n_way", "2", "--test_n_way", "2", "--n_shot",  f"{n_shot}", "--n_query", f"{n_query}",
                                 "--seed",  f"{sd}",  
                                 "--lr_net", f"{lr_net}", 
